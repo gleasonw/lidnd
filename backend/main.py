@@ -31,12 +31,23 @@ async def close_pool():
 
 
 class Creature(BaseModel):
+    id: int
     name: str
     initiative: int
-    icon: str
+
+
+class CreatureData(BaseModel):
+    name: str
+    initiative: int
+
+
+class EncounterData(BaseModel):
+    name: str
+    description: str
 
 
 class Encounter(BaseModel):
+    id: int
     name: str
     description: str
     started_at: Optional[int] = None
@@ -79,7 +90,9 @@ async def list_encounters(user=Depends(get_discord_user)):
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(Encounter)) as cur:
             await cur.execute("SELECT * FROM encounters WHERE user_id = %s", (user.id,))
-            return {"encounters": await cur.fetchall()}
+            responses = await cur.fetchall()
+            print(responses)
+            return {"encounters": responses}
 
 
 @app.get("/api/encounters/{encounter_id}")
@@ -97,7 +110,9 @@ async def get_encounter(encounter_id: int, user=Depends(get_discord_user)):
 
 
 @app.post("/api/encounters")
-async def create_encounter(encounter_data: Encounter, user=Depends(get_discord_user)):
+async def create_encounter(
+    encounter_data: EncounterData, user=Depends(get_discord_user)
+):
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
@@ -110,7 +125,7 @@ async def create_encounter(encounter_data: Encounter, user=Depends(get_discord_u
 
 @app.put("/api/encounters/{encounter_id}")
 async def update_encounter(
-    encounter_id: int, encounter_data: Encounter, user=Depends(get_discord_user)
+    encounter_id: int, encounter_data: EncounterData, user=Depends(get_discord_user)
 ):
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
@@ -175,7 +190,7 @@ async def stop_encounter(encounter_id: int, user=Depends(get_discord_user)):
 
 @app.post("/api/encounters/{encounter_id}/creatures")
 async def add_creature(
-    encounter_id: int, creature: Creature, user=Depends(get_discord_user)
+    encounter_id: int, creature: CreatureData, user=Depends(get_discord_user)
 ):
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
@@ -190,12 +205,11 @@ async def add_creature(
 
             # Insert the new creature
             await cur.execute(
-                "INSERT INTO creatures (encounter_id, name, initiative, icon) VALUES (%s, %s, %s, %s) RETURNING id",
+                "INSERT INTO creatures (encounter_id, name, initiative) VALUES (%s, %s, %s) RETURNING id",
                 (
                     encounter_id,
                     creature.name,
                     creature.initiative,
-                    creature.icon,
                 ),
             )
             creature_id = await cur.fetchone()
@@ -206,7 +220,7 @@ async def add_creature(
 async def update_creature(
     encounter_id: int,
     creature_id: int,
-    creature: Creature,
+    creature: CreatureData,
     user=Depends(get_discord_user),
 ):
     async with pool.connection() as conn:
@@ -220,11 +234,10 @@ async def update_creature(
                 raise HTTPException(status_code=404, detail="Encounter not found")
 
             await cur.execute(
-                "UPDATE creatures SET name=%s, initiative=%s, icon=%s WHERE id=%s AND encounter_id=%s",
+                "UPDATE creatures SET name=%s, initiative=%s WHERE id=%s AND encounter_id=%s",
                 (
                     creature.name,
                     creature.initiative,
-                    creature.icon,
                     creature_id,
                     encounter_id,
                 ),
@@ -255,3 +268,16 @@ async def delete_creature(
             if cur.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Creature not found")
             return {"result": "Creature deleted"}
+
+
+@app.get("/api/encounters/{encounter_id}/creatures")
+async def list_creatures(encounter_id: int, user=Depends(get_discord_user)):
+    print(user)
+    async with pool.connection() as conn:
+        async with conn.cursor(row_factory=class_row(Creature)) as cur:
+            await cur.execute(
+                "SELECT * FROM creatures WHERE encounter_id = %s", (encounter_id,)
+            )
+            responses = await cur.fetchall()
+            print(responses)
+            return {"creatures": responses}
