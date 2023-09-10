@@ -1,16 +1,14 @@
 "use client";
 
-import { LoadingButton } from "@/app/components/LoadingButton";
 import { addCreature } from "@/app/encounters/[id]/page";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Flex } from "@radix-ui/themes";
 import Input from "@/app/components/Input";
 
 export default function CreatureAddForm({ add }: { add: typeof addCreature }) {
   const [creatureData, setCreatureData] = useState({
     name: "",
-    initiative: 0,
+    max_hp: 0,
     icon: "",
     stat_block: "",
   });
@@ -20,7 +18,7 @@ export default function CreatureAddForm({ add }: { add: typeof addCreature }) {
   const token = document.cookie.split("token=")[1];
 
   return (
-    <div className="flex flex-col gap-5 shadow m-5">
+    <div className="flex flex-col gap-5">
       <div className={"gap-11 flex flex-col jutsify-center"}>
         <Input
           placeholder="Name"
@@ -31,15 +29,15 @@ export default function CreatureAddForm({ add }: { add: typeof addCreature }) {
           value={creatureData.name}
         />
         <Input
-          placeholder="Initiative"
+          placeholder="Max hp"
           type="number"
           onChange={(e) =>
             setCreatureData({
               ...creatureData,
-              initiative: parseInt(e.target.value),
+              max_hp: parseInt(e.target.value),
             })
           }
-          value={creatureData.initiative}
+          value={creatureData.max_hp}
         />
         <Input
           placeholder="Icon"
@@ -59,7 +57,9 @@ export default function CreatureAddForm({ add }: { add: typeof addCreature }) {
         />
       </div>
       <form action={async () => await add({ id, token, creatureData })}>
-        <LoadingButton type={"submit"}>Add creature</LoadingButton>
+        <button type={"submit"} className="p-5 border">
+          + Add creature
+        </button>
       </form>
     </div>
   );

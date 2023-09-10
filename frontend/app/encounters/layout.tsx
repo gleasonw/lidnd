@@ -9,12 +9,14 @@ export default function EncountersLayout({
   return (
     <section>
       {/* Include shared UI here e.g. a header or sidebar */}
-      <nav className="border-b">
+      <nav className="">
         <Link href="/encounters" className="p-5">
           Encounters
         </Link>
       </nav>
-      <Providers>{children}</Providers>
+      <Providers>
+        <div className="m-5">{children}</div>
+      </Providers>
     </section>
   );
 }

@@ -5,18 +5,16 @@ import { useState } from "react";
 export function LoadingButton({
   type,
   children,
+  className,
 }: {
   children?: React.ReactNode;
   type: "button" | "submit";
+  className?: string;
 }) {
   const [clicked, setClicked] = useState(false);
 
   return (
-    <button
-      type={type}
-      className="bg-indigo-500 p-5 rounded-lg"
-      onClick={() => setClicked(true)}
-    >
+    <button type={type} className={className} onClick={() => setClicked(true)}>
       {clicked ? (
         <>
           <svg

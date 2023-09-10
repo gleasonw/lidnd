@@ -5,9 +5,9 @@ import os
 from fastapi.security import OAuth2PasswordBearer
 from psycopg_pool import AsyncConnectionPool
 from psycopg.rows import class_row
-from pydantic import BaseModel
+from pydantic import BaseModel, NaiveDatetime
 
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException, Depends
 
 load_dotenv()
 
@@ -30,33 +30,36 @@ async def close_pool():
     await pool.close()
 
 
-class Creature(BaseModel):
+class CreatureRequest(BaseModel):
+    name: str
+    icon: str
+    stat_block: str
+    max_hp: int
+
+
+class CreatureResponse(CreatureRequest):
     id: int
-    name: str
+
+
+class EncounterParticipant(BaseModel):
+    creature_id: int
+    encounter_id: int
+    hp: int
     initiative: int
-    icon: str
-    stat_block: str
 
 
-class CreatureData(BaseModel):
-    name: str
-    initiative: int
-    icon: str
-    stat_block: str
-
-
-class EncounterData(BaseModel):
+class EncounterRequest(BaseModel):
     name: str
     description: str
 
 
-class Encounter(BaseModel):
+class EncounterResponse(BaseModel):
     id: int
     name: str
     description: str
-    started_at: Optional[int] = None
-    ended_at: Optional[int] = None
-    creatures: Optional[List[Creature]] = None
+    started_at: Optional[NaiveDatetime] = None
+    ended_at: Optional[NaiveDatetime] = None
+    creatures: Optional[List[CreatureResponse]] = None
 
 
 class DiscordUser(BaseModel):
@@ -91,7 +94,7 @@ async def get_discord_user(token: Annotated[str, Depends(oauth2_scheme)]):
 @app.get("/api/encounters")
 async def list_encounters(user=Depends(get_discord_user)):
     async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(Encounter)) as cur:
+        async with conn.cursor(row_factory=class_row(EncounterResponse)) as cur:
             await cur.execute("SELECT * FROM encounters WHERE user_id = %s", (user.id,))
             responses = await cur.fetchall()
             return {"encounters": responses}
@@ -100,7 +103,7 @@ async def list_encounters(user=Depends(get_discord_user)):
 @app.get("/api/encounters/{encounter_id}")
 async def get_encounter(encounter_id: int, user=Depends(get_discord_user)):
     async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(Encounter)) as cur:
+        async with conn.cursor(row_factory=class_row(EncounterResponse)) as cur:
             await cur.execute(
                 "SELECT * FROM encounters WHERE id = %s AND user_id = %s",
                 (encounter_id, user.id),
@@ -113,7 +116,7 @@ async def get_encounter(encounter_id: int, user=Depends(get_discord_user)):
 
 @app.post("/api/encounters")
 async def create_encounter(
-    encounter_data: EncounterData, user=Depends(get_discord_user)
+    encounter_data: EncounterRequest, user=Depends(get_discord_user)
 ):
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
@@ -127,7 +130,7 @@ async def create_encounter(
 
 @app.put("/api/encounters/{encounter_id}")
 async def update_encounter(
-    encounter_id: int, encounter_data: EncounterData, user=Depends(get_discord_user)
+    encounter_id: int, encounter_data: EncounterRequest, user=Depends(get_discord_user)
 ):
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
@@ -192,7 +195,7 @@ async def stop_encounter(encounter_id: int, user=Depends(get_discord_user)):
 
 @app.post("/api/encounters/{encounter_id}/creatures")
 async def add_creature(
-    encounter_id: int, creature: CreatureData, user=Depends(get_discord_user)
+    encounter_id: int, creature: CreatureRequest, user=Depends(get_discord_user)
 ):
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
@@ -205,45 +208,46 @@ async def add_creature(
             if not encounter:
                 raise HTTPException(status_code=404, detail="Encounter not found")
 
-            # Insert the new creature
+            # Create the new creature
             await cur.execute(
-                "INSERT INTO creatures (encounter_id, name, initiative, icon, stat_block) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                "INSERT INTO creatures (user_id, name, icon, stat_block, max_hp) VALUES (%s, %s, %s, %s, %s) RETURNING id",
                 (
-                    encounter_id,
+                    user.id,
                     creature.name,
-                    creature.initiative,
                     creature.icon,
                     creature.stat_block,
+                    creature.max_hp,
                 ),
             )
             creature_id = await cur.fetchone()
+
+            # Create a link between the encounter and the creature
+            await cur.execute(
+                "INSERT INTO encounter_participants (encounter_id, creature_id, hp, initiative) VALUES (%s, %s, %s, %s)",
+                (encounter_id, creature_id, creature.max_hp, 0),
+            )
+
             return {"creature": {"id": creature_id}}
 
 
-@app.put("/api/encounters/{encounter_id}/creatures/{creature_id}")
+@app.put("/api/creatures/{creature_id}")
 async def update_creature(
     encounter_id: int,
     creature_id: int,
-    creature: CreatureData,
+    creature: CreatureRequest,
     user=Depends(get_discord_user),
 ):
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                "SELECT id FROM encounters WHERE id=%s AND user_id=%s",
-                (encounter_id, user.id),
-            )
-            encounter = await cur.fetchone()
-            if not encounter:
-                raise HTTPException(status_code=404, detail="Encounter not found")
-
-            await cur.execute(
-                "UPDATE creatures SET name=%s, initiative=%s WHERE id=%s AND encounter_id=%s",
+                "UPDATE creatures SET name=%s, max_hp=%s, icon=%s, stat_block=%s, WHERE id=%s AND user_id=%s",
                 (
                     creature.name,
-                    creature.initiative,
+                    creature.max_hp,
+                    creature.icon,
+                    creature.stat_block,
                     creature_id,
-                    encounter_id,
+                    user.id,
                 ),
             )
             if cur.rowcount == 0:
@@ -251,7 +255,7 @@ async def update_creature(
             return {"creature": {"id": creature_id, "updated": True}}
 
 
-@app.delete("/api/encounters/{encounter_id}/creatures/{creature_id}")
+@app.delete("/api/creatures/{creature_id}")
 async def delete_creature(
     encounter_id: int, creature_id: int, user=Depends(get_discord_user)
 ):
@@ -277,7 +281,7 @@ async def delete_creature(
 @app.get("/api/encounters/{encounter_id}/creatures")
 async def list_creatures(encounter_id: int, user=Depends(get_discord_user)):
     async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(Creature)) as cur:
+        async with conn.cursor(row_factory=class_row(CreatureResponse)) as cur:
             await cur.execute(
                 "SELECT * FROM creatures WHERE encounter_id = %s", (encounter_id,)
             )
