@@ -90,12 +90,10 @@ async def get_discord_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 @app.get("/api/encounters")
 async def list_encounters(user=Depends(get_discord_user)):
-    print(user)
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(Encounter)) as cur:
             await cur.execute("SELECT * FROM encounters WHERE user_id = %s", (user.id,))
             responses = await cur.fetchall()
-            print(responses)
             return {"encounters": responses}
 
 
@@ -278,12 +276,10 @@ async def delete_creature(
 
 @app.get("/api/encounters/{encounter_id}/creatures")
 async def list_creatures(encounter_id: int, user=Depends(get_discord_user)):
-    print(user)
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(Creature)) as cur:
             await cur.execute(
                 "SELECT * FROM creatures WHERE encounter_id = %s", (encounter_id,)
             )
             responses = await cur.fetchall()
-            print(responses)
             return {"creatures": responses}
