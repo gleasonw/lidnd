@@ -14,7 +14,7 @@ export function LoadingButton({
   return (
     <button
       type={type}
-      className="bg-indigo-500 "
+      className="bg-indigo-500 p-5 rounded-lg"
       onClick={() => setClicked(true)}
     >
       {clicked ? (

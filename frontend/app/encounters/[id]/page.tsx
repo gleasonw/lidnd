@@ -3,6 +3,7 @@ import { LoadingButton } from "@/app/components/LoadingButton";
 import CreatureAddForm from "@/app/encounters/[id]/CreatureAddForm";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import Image from "next/image";
 
 export async function addCreature({
   id,
@@ -28,7 +29,6 @@ export async function addCreature({
     },
     body: JSON.stringify(creatureData),
   });
-  const parsedResponse = await response.json();
   revalidatePath(`/encounters/${id}`);
 }
 
@@ -62,14 +62,32 @@ export default async function Encounter({
 
   const { creatures } = await creaturesResponse.json();
 
+  function getGoogleDriveImageLink(url: string) {
+    const regex = /file\/d\/(.*?)\/view/;
+    const match = url.match(regex);
+    if (match && match[1]) {
+      const id = match[1];
+      return `https://drive.google.com/uc?export=view&id=${id}`;
+    }
+    return "";
+  }
+
   return (
     <>
       {creatures.map((creature) => (
         <div key={creature.id}>
-          {creature.name} {creature.initiative}
+          <div className="flex gap-5 flex-wrap">
+            {creature.name} {creature.initiative}
+            <Image
+              src={getGoogleDriveImageLink(creature.icon)}
+              alt={creature.name}
+              width={40}
+              height={40}
+            />
+          </div>
         </div>
       ))}
-      <CreatureAddForm addCreature={addCreature} />
+      <CreatureAddForm add={addCreature} />
       <form action={startEncounter}>
         <LoadingButton type={"submit"}>Start encounter</LoadingButton>
       </form>

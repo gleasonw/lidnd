@@ -34,11 +34,15 @@ class Creature(BaseModel):
     id: int
     name: str
     initiative: int
+    icon: str
+    stat_block: str
 
 
 class CreatureData(BaseModel):
     name: str
     initiative: int
+    icon: str
+    stat_block: str
 
 
 class EncounterData(BaseModel):
@@ -205,11 +209,13 @@ async def add_creature(
 
             # Insert the new creature
             await cur.execute(
-                "INSERT INTO creatures (encounter_id, name, initiative) VALUES (%s, %s, %s) RETURNING id",
+                "INSERT INTO creatures (encounter_id, name, initiative, icon, stat_block) VALUES (%s, %s, %s, %s, %s) RETURNING id",
                 (
                     encounter_id,
                     creature.name,
                     creature.initiative,
+                    creature.icon,
+                    creature.stat_block,
                 ),
             )
             creature_id = await cur.fetchone()
