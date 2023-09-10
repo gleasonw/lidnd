@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { LoadingButton } from "@/app/components/LoadingButton";
+import Link from "next/link";
 
 export default async function Encounters() {
   const cookieStore = cookies();
@@ -13,8 +14,10 @@ export default async function Encounters() {
       Authorization: `Bearer ${token}`,
     },
   });
+  if (response.status === 401) {
+    redirect("/");
+  }
   const parsedResponse = await response.json();
-  console.log(parsedResponse.detail);
   const encounters = parsedResponse.encounters;
 
   async function createEncounter() {
@@ -36,16 +39,20 @@ export default async function Encounters() {
   }
 
   return (
-    <>
+    <div className="flex flex-col gap-10">
       <form action={createEncounter}>
         <LoadingButton type={"submit"}>Create encounter</LoadingButton>
       </form>
       {encounters &&
         encounters.map((encounter) => (
-          <div key={encounter.id}>
+          <Link
+            key={encounter.id}
+            href={`/encounters/${encounter.id}`}
+            className="p-5 border hover:bg-white transition-all"
+          >
             {encounter.name} {encounter.id}
-          </div>
+          </Link>
         ))}
-    </>
+    </div>
   );
 }
