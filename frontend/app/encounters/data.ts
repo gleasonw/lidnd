@@ -1,5 +1,7 @@
 import apiURL from "@/app/apiURL";
 import { cookies } from "next/headers";
+import { paths, components } from "@/app/schema";
+
 
 export function token() {
   // check if server or client
