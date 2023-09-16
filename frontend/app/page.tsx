@@ -1,6 +1,11 @@
-import Image from "next/image";
+import { token } from "@/app/encounters/data";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+export default async function Home() {
+  const user = await verifyDiscordToken();
+  if (user) {
+    redirect("/encounters");
+  }
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="flex flex-col">
@@ -13,4 +18,17 @@ export default function Home() {
       </div>
     </main>
   );
+}
+
+export async function verifyDiscordToken() {
+  const response = await fetch("https://discord.com/api/users/@me", {
+    headers: {
+      Authorization: `Bearer ${token()}`,
+    },
+  });
+  if (response.status === 200) {
+    return (await response.json()) as unknown;
+  } else {
+    return null;
+  }
 }

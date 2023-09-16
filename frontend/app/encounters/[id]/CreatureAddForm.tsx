@@ -1,20 +1,20 @@
 "use client";
 
 import { addCreature } from "@/app/encounters/[id]/page";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Input from "@/app/components/Input";
+import { useEncounterId } from "@/app/encounters/hooks";
 
 export default function CreatureAddForm({ add }: { add: typeof addCreature }) {
   const [creatureData, setCreatureData] = useState({
     name: "",
-    max_hp: 0,
+    max_hp: "",
     icon: "",
     stat_block: "",
   });
 
-  const pathname = usePathname();
-  const id = pathname.split("/")[2];
+  const id = useEncounterId();
+
   const token = document.cookie.split("token=")[1];
 
   return (
@@ -30,11 +30,11 @@ export default function CreatureAddForm({ add }: { add: typeof addCreature }) {
         />
         <Input
           placeholder="Max hp"
-          type="number"
+          type="text"
           onChange={(e) =>
             setCreatureData({
               ...creatureData,
-              max_hp: parseInt(e.target.value),
+              max_hp: !isNaN(parseInt(e.target.value)) ? e.target.value : "",
             })
           }
           value={creatureData.max_hp}

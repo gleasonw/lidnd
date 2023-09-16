@@ -6,6 +6,7 @@ import { getGoogleDriveImageLink } from "@/app/encounters/utils";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export async function addCreature({
@@ -56,31 +57,30 @@ export default async function Encounter({
   }
 
   const { creatures } = await getCreatures(params.id);
+  console.log(creatures);
 
   return (
     <>
       {creatures.map((creature) => (
         <div key={creature.id}>
           <div className="flex gap-5 flex-wrap items-center">
-            {creature.name} {creature.max_hp}
             <Image
               src={getGoogleDriveImageLink(creature.icon)}
               alt={creature.name}
               width={80}
               height={80}
             />
+            {creature.name} {creature.max_hp}
           </div>
         </div>
       ))}
       <CreatureAddForm add={addCreature} />
-      <form action={startEncounter}>
-        <LoadingButton
-          type={"submit"}
-          className="w-full h-24 bg-green-400 hover:bg-green-700 transition-all"
-        >
-          Start encounter
-        </LoadingButton>
-      </form>
+      <Link
+        href={`/encounters/${params.id}/roll`}
+        className="w-full h-24 bg-green-400 hover:bg-green-700 transition-all"
+      >
+        Roll initiative!
+      </Link>
     </>
   );
 }
