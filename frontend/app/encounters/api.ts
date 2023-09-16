@@ -41,7 +41,7 @@ export async function getUserEncounters() {
     },
   });
   if (response.status !== 200) {
-    console.log(response.text);
+    console.log(await response.text());
   }
   return data;
 }
@@ -49,7 +49,7 @@ export async function getUserEncounters() {
 export async function getEncounterCreatures(
   params: paths["/api/encounters/{encounter_id}/creatures"]["get"]["parameters"]["path"]
 ) {
-  const { data, error } = await GET(
+  const { data, error, response } = await GET(
     `/api/encounters/{encounter_id}/creatures`,
     {
       params: { path: params },
@@ -58,7 +58,8 @@ export async function getEncounterCreatures(
       },
     }
   );
-  if (error) {
+  if (response.status !== 200) {
+    console.log(await response.text());
     throw error;
   }
 
@@ -68,13 +69,17 @@ export async function getEncounterCreatures(
 export async function getEncounter(
   params: paths["/api/encounters/{encounter_id}"]["get"]["parameters"]["path"]
 ) {
-  const { data, error } = await GET(`/api/encounters/{encounter_id}`, {
-    params: { path: params },
-    headers: {
-      Authorization: `Bearer ${serverToken()}`,
-    },
-  });
-  if (error) {
+  const { data, error, response } = await GET(
+    `/api/encounters/{encounter_id}`,
+    {
+      params: { path: params },
+      headers: {
+        Authorization: `Bearer ${serverToken()}`,
+      },
+    }
+  );
+  if (response.status !== 200) {
+    console.log(await response.text());
     throw error;
   }
 
@@ -86,7 +91,7 @@ export async function updateEncounterCreature(
   creature: components["schemas"]["EncounterParticipant"]
 ) {
   "use server";
-  const { data, error } = await PUT(
+  const { data, error, response } = await PUT(
     `/api/encounters/{encounter_id}/creatures/{creature_id}`,
     {
       params: { path: params },
@@ -96,7 +101,8 @@ export async function updateEncounterCreature(
       body: creature,
     }
   );
-  if (error) {
+  if (response.status !== 200) {
+    console.log(await response.text());
     throw error;
   }
 
@@ -108,7 +114,7 @@ export async function addCreatureToEncounter(
   creatureData: components["schemas"]["CreatureRequest"]
 ) {
   "use server";
-  const { data, error } = await POST(
+  const { data, error, response } = await POST(
     `/api/encounters/{encounter_id}/creatures`,
     {
       params: { path: params },
@@ -118,7 +124,8 @@ export async function addCreatureToEncounter(
       body: creatureData,
     }
   );
-  if (error) {
+  if (response.status !== 200) {
+    console.log(await response.text());
     throw error;
   }
   revalidatePath(`/encounters/${params.encounter_id}`);

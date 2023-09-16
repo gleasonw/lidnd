@@ -18,7 +18,7 @@ export default async function Encounter({
 
   return (
     <>
-      {creatures.map((creature) => (
+      {creatures?.map((creature) => (
         <div key={creature.id}>
           <div className="flex gap-5 flex-wrap items-center">
             <Image

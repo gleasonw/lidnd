@@ -13,7 +13,7 @@ export default async function Page({ params }: { params: { id: string } }) {
   return (
     <div>
       <EncounterDetails id={params.id} />
-      {creatures.map((creature) => (
+      {creatures?.map((creature) => (
         <div key={creature.id}>
           <div className="flex gap-5 items-center">
             <Image
