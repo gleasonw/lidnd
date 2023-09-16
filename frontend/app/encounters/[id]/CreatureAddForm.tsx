@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/encounters/hooks";
 import { addCreatureToEncounter } from "@/app/encounters/api";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export default function CreatureAddForm({
   add,
@@ -19,11 +21,9 @@ export default function CreatureAddForm({
 
   const id = useEncounterId();
 
-  const token = document.cookie.split("token=")[1];
-
   return (
     <div className="flex flex-col gap-5">
-      <div className={"gap-11 flex flex-col jutsify-center"}>
+      <Card className="max-w-sm flex flex-col gap-3 p-5">
         <Input
           placeholder="Name"
           type="text"
@@ -59,19 +59,19 @@ export default function CreatureAddForm({
           }
           value={creatureData.stat_block}
         />
-      </div>
-      <form
-        action={async () =>
-          await add(
-            { encounter_id: id },
-            { ...creatureData, max_hp: parseInt(creatureData.max_hp) }
-          )
-        }
-      >
-        <button type={"submit"} className="p-5 border">
-          + Add creature
-        </button>
-      </form>
+        <form
+          action={async () =>
+            await add(
+              { encounter_id: id },
+              { ...creatureData, max_hp: parseInt(creatureData.max_hp) }
+            )
+          }
+        >
+          <Button type={"submit"} className="p-5 border" variant={"secondary"}>
+            + Add creature
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }

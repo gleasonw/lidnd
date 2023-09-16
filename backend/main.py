@@ -101,9 +101,7 @@ async def list_encounters(user=Depends(get_discord_user)) -> List[EncounterRespo
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(EncounterResponse)) as cur:
             await cur.execute("SELECT * FROM encounters WHERE user_id = %s", (user.id,))
-            encounters = await cur.fetchall()
-            print(encounters)
-            return encounters
+            return await cur.fetchall()
 
 
 @app.get("/api/encounters/{encounter_id}")

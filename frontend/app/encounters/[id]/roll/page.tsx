@@ -1,15 +1,27 @@
 import InitiativeInput from "@/app/encounters/[id]/roll/InitiativeInput";
 import EncounterDetails from "@/app/encounters/components/encounter-details";
-import { getEncounterCreatures, getEncounter } from "@/app/encounters/api";
+import {
+  getEncounterCreatures,
+  getEncounter,
+  startEncounter,
+} from "@/app/encounters/api";
 import { getGoogleDriveImageLink } from "@/app/encounters/utils";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const creatures = await getEncounterCreatures({
     encounter_id: parseInt(params.id),
   });
+
+  async function begin() {
+    "use server";
+    await startEncounter({ encounter_id: parseInt(params.id) });
+    redirect(`/encounters/${params.id}/run`);
+  }
+
   return (
     <div>
       <EncounterDetails id={params.id} />
@@ -29,9 +41,11 @@ export default async function Page({ params }: { params: { id: string } }) {
           </div>
         </div>
       ))}
-      <Link href={`/encounters/${params.id}/run`}>
-        <Button variant="default">Let us do battle!</Button>
-      </Link>
+      <form action={begin}>
+        <Button variant="default" type="submit">
+          Let us do battle!
+        </Button>
+      </form>
     </div>
   );
 }

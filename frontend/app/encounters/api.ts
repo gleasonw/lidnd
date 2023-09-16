@@ -132,3 +132,23 @@ export async function addCreatureToEncounter(
 
   return data;
 }
+
+export async function startEncounter(
+  params: paths["/api/encounters/{encounter_id}/start"]["post"]["parameters"]["path"]
+) {
+  "use server";
+  const { data, error, response } = await POST(
+    `/api/encounters/{encounter_id}/start`,
+    {
+      params: { path: params },
+      headers: {
+        Authorization: `Bearer ${serverToken()}`,
+      },
+    }
+  );
+  if (response.status !== 200) {
+    console.log(await response.text());
+    throw error;
+  }
+  revalidatePath(`/encounters/${params.encounter_id}`);
+}
