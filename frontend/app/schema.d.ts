@@ -64,6 +64,40 @@ export interface components {
       /** Max Hp */
       max_hp: number;
     };
+    /** CreatureResponse */
+    CreatureResponse: {
+      /** Name */
+      name: string;
+      /** Icon */
+      icon: string;
+      /** Stat Block */
+      stat_block: string;
+      /** Max Hp */
+      max_hp: number;
+      /** Id */
+      id: number;
+    };
+    /** EncounterCreature */
+    EncounterCreature: {
+      /** Creature Id */
+      creature_id: number;
+      /** Encounter Id */
+      encounter_id: number;
+      /** Hp */
+      hp: number;
+      /** Initiative */
+      initiative: number;
+      /** Name */
+      name: string;
+      /** Icon */
+      icon: string;
+      /** Stat Block */
+      stat_block: string;
+      /** Max Hp */
+      max_hp: number;
+      /** Id */
+      id: number;
+    };
     /** EncounterParticipant */
     EncounterParticipant: {
       /** Creature Id */
@@ -81,6 +115,23 @@ export interface components {
       name: string;
       /** Description */
       description: string;
+    };
+    /** EncounterResponse */
+    EncounterResponse: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string | null;
+      /** Description */
+      description: string | null;
+      /** Started At */
+      started_at: string | null;
+      /** Ended At */
+      ended_at: string | null;
+      /** Creatures */
+      creatures: components["schemas"]["CreatureResponse"][] | null;
+      /** Active Creature Id */
+      active_creature_id: number | null;
     };
     /** HTTPValidationError */
     HTTPValidationError: {
@@ -127,7 +178,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["EncounterResponse"][];
         };
       };
     };
@@ -143,7 +194,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["EncounterResponse"];
         };
       };
       /** @description Validation Error */
@@ -165,7 +216,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["EncounterResponse"];
         };
       };
       /** @description Validation Error */
@@ -308,7 +359,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["EncounterCreature"][];
         };
       };
       /** @description Validation Error */

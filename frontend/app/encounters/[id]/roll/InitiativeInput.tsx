@@ -2,7 +2,7 @@
 
 import Input from "@/app/components/Input";
 import { useEncounterId } from "@/app/encounters/hooks";
-import { updateEncounterCreature } from "@/app/encounters/mutations";
+import { updateEncounterCreature } from "../../data";
 import { Button } from "@/components/ui/button";
 import React from "react";
 

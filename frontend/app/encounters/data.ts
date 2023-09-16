@@ -1,7 +1,9 @@
+import { paths, components } from "@/app/schema";
+import createClient from "openapi-fetch";
 import apiURL from "@/app/apiURL";
 import { cookies } from "next/headers";
-import { paths, components } from "@/app/schema";
 
+const { GET, PUT } = createClient<paths>({ baseUrl: apiURL });
 
 export function token() {
   // check if server or client
@@ -14,23 +16,60 @@ export function token() {
 }
 
 export async function getCreatures(id: string) {
-  const creaturesResponse = await fetch(
-    `${apiURL}/encounters/${id}/creatures`,
+  const { data, error, response } = await GET(
+    `/api/encounters/{encounter_id}/creatures`,
     {
+      params: { path: { encounter_id: parseInt(id) } },
       headers: {
         Authorization: `Bearer ${token()}`,
       },
     }
   );
+  if (error) {
+    throw error;
+  }
 
-  return await creaturesResponse.json();
+  return data;
 }
 
 export async function getEncounter(id: string) {
-  const encounterResponse = await fetch(`${apiURL}/encounters/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token()}`,
-    },
-  });
-  return await encounterResponse.json();
+  const { data, error, response } = await GET(
+    `/api/encounters/{encounter_id}`,
+    {
+      params: { path: { encounter_id: parseInt(id) } },
+      headers: {
+        Authorization: `Bearer ${token()}`,
+      },
+    }
+  );
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+export async function updateEncounterCreature(
+  creature: components["schemas"]["EncounterParticipant"],
+  encounterId: string
+) {
+  const { data, error, response } = await PUT(
+    `/api/encounters/{encounter_id}/creatures/{creature_id}`,
+    {
+      params: {
+        path: {
+          encounter_id: parseInt(encounterId),
+          creature_id: parseInt(creature.id),
+        },
+      },
+      headers: {
+        Authorization: `Bearer ${token()}`,
+      },
+      body: creature,
+    }
+  );
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
