@@ -1,18 +1,21 @@
 "use client";
 
-import Input from "@/app/components/Input";
+import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/encounters/hooks";
-import { updateEncounterCreature } from "../../data";
+import { EncounterCreature, updateEncounterCreature } from "../../api";
 import React from "react";
 
-export default function HpInput({ creature }: { creature: any }) {
-  const [hp, setHp] = React.useState(creature.hp);
+export default function HpInput({ creature }: { creature: EncounterCreature }) {
+  const [hp, setHp] = React.useState<string | number>(creature.hp);
   const id = useEncounterId();
 
   return (
     <form
       action={async () =>
-        await updateEncounterCreature({ ...creature, hp: hp }, id)
+        await updateEncounterCreature(
+          { creature_id: creature.id, encounter_id: id },
+          creature
+        )
       }
     >
       <Input

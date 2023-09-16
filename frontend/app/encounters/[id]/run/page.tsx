@@ -1,5 +1,5 @@
 import EncounterDetails from "@/app/encounters/components/encounter-details";
-import { getCreatures, getEncounter } from "@/app/encounters/data";
+import { getEncounterCreatures, getEncounter } from "@/app/encounters/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { getGoogleDriveImageLink } from "@/app/encounters/utils";
@@ -17,7 +17,7 @@ export default function Page({ params }: { params: { id: string } }) {
 }
 
 export async function InitiativeOrder({ id }: { id: string }) {
-  const { creatures } = await getCreatures(id);
+  const { creatures } = await getEncounterCreatures(id);
 
   function getCreaturePercentDamage(creature) {
     const missingHp = creature.max_hp - creature.hp;
@@ -67,7 +67,7 @@ export async function InitiativeOrder({ id }: { id: string }) {
 
 export async function CreatureTurn({ id }: { id: string }) {
   const encounter = await getEncounter(id);
-  const creatures = await getCreatures(id);
+  const creatures = await getEncounterCreatures(id);
 
   const activeCreature = creatures.find(
     (creature) => creature.id === encounter.active_creature_id

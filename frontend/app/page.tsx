@@ -1,4 +1,5 @@
-import { token } from "@/app/encounters/data";
+import { cookies } from "next/headers";
+
 import { redirect } from "next/navigation";
 
 export default async function Home() {
@@ -21,9 +22,11 @@ export default async function Home() {
 }
 
 export async function verifyDiscordToken() {
+  const cookieStore = cookies();
+  const token = cookieStore.get("token");
   const response = await fetch("https://discord.com/api/users/@me", {
     headers: {
-      Authorization: `Bearer ${token()}`,
+      Authorization: `Bearer ${token}`,
     },
   });
   if (response.status === 200) {

@@ -1,11 +1,15 @@
 "use client";
 
-import { addCreature } from "@/app/encounters/[id]/page";
 import { useState } from "react";
-import Input from "@/app/components/Input";
+import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/encounters/hooks";
+import { addCreatureToEncounter } from "@/app/encounters/api";
 
-export default function CreatureAddForm({ add }: { add: typeof addCreature }) {
+export default function CreatureAddForm({
+  add,
+}: {
+  add: typeof addCreatureToEncounter;
+}) {
   const [creatureData, setCreatureData] = useState({
     name: "",
     max_hp: "",
@@ -56,7 +60,14 @@ export default function CreatureAddForm({ add }: { add: typeof addCreature }) {
           value={creatureData.stat_block}
         />
       </div>
-      <form action={async () => await add({ id, token, creatureData })}>
+      <form
+        action={async () =>
+          await add(
+            { encounter_id: id },
+            { ...creatureData, max_hp: parseInt(creatureData.max_hp) }
+          )
+        }
+      >
         <button type={"submit"} className="p-5 border">
           + Add creature
         </button>

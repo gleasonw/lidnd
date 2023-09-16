@@ -1,13 +1,15 @@
 import InitiativeInput from "@/app/encounters/[id]/roll/InitiativeInput";
 import EncounterDetails from "@/app/encounters/components/encounter-details";
-import { getCreatures, getEncounter } from "@/app/encounters/data";
+import { getEncounterCreatures, getEncounter } from "@/app/encounters/api";
 import { getGoogleDriveImageLink } from "@/app/encounters/utils";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const { creatures } = await getCreatures(params.id);
+  const creatures = await getEncounterCreatures({
+    encounter_id: parseInt(params.id),
+  });
   return (
     <div>
       <EncounterDetails id={params.id} />

@@ -1,4 +1,4 @@
-import { getEncounter } from "@/app/encounters/data";
+import { getEncounter } from "@/app/encounters/api";
 
 export default async function EncounterDetails({ id }: { id: string }) {
   const { encounter } = await getEncounter(id);

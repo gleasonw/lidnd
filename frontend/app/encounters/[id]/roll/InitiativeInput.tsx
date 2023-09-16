@@ -1,21 +1,30 @@
 "use client";
 
-import Input from "@/app/components/Input";
+import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/encounters/hooks";
-import { updateEncounterCreature } from "../../data";
+import {
+  EncounterCreature,
+  updateEncounterCreature,
+} from "../../api";
 import { Button } from "@/components/ui/button";
 import React from "react";
 
-export default function InitiativeInput({ creature }: { creature: any }) {
-  const [initiative, setInitiative] = React.useState(creature.initiative);
+export default function InitiativeInput({
+  creature,
+}: {
+  creature: EncounterCreature;
+}) {
+  const [initiative, setInitiative] = React.useState<string | number>(
+    creature.initiative
+  );
   const id = useEncounterId();
 
   return (
     <form
       action={async () =>
         await updateEncounterCreature(
-          { ...creature, initiative: initiative },
-          id
+          { creature_id: creature.id, encounter_id: id },
+          creature
         )
       }
     >
