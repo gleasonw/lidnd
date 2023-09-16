@@ -152,3 +152,41 @@ export async function startEncounter(
   }
   revalidatePath(`/encounters/${params.encounter_id}`);
 }
+
+export async function nextTurn(
+  params: paths["/api/encounters/{encounter_id}/next_turn"]["post"]["parameters"]["path"]
+) {
+  const { data, response, error } = await POST(
+    `/api/encounters/{encounter_id}/next_turn`,
+    {
+      params: { path: params },
+      headers: {
+        Authorization: `Bearer ${serverToken()}`,
+      },
+    }
+  );
+  if (response.status !== 200) {
+    console.log(await response.text());
+    throw error;
+  }
+  revalidatePath(`/encounters/${params.encounter_id}/run`);
+}
+
+export async function previousTurn(
+  params: paths["/api/encounters/{encounter_id}/previous_turn"]["post"]["parameters"]["path"]
+) {
+  const { data, response, error } = await POST(
+    `/api/encounters/{encounter_id}/previous_turn`,
+    {
+      params: { path: params },
+      headers: {
+        Authorization: `Bearer ${serverToken()}`,
+      },
+    }
+  );
+  if (response.status !== 200) {
+    console.log(await response.text());
+    throw error;
+  }
+  revalidatePath(`/encounters/${params.encounter_id}/run`);
+}

@@ -23,6 +23,14 @@ export interface paths {
     /** Delete Encounter */
     delete: operations["delete_encounter_api_encounters__encounter_id__delete"];
   };
+  "/api/encounters/{encounter_id}/next_turn": {
+    /** Next Turn */
+    post: operations["next_turn_api_encounters__encounter_id__next_turn_post"];
+  };
+  "/api/encounters/{encounter_id}/previous_turn": {
+    /** Previous Turn */
+    post: operations["previous_turn_api_encounters__encounter_id__previous_turn_post"];
+  };
   "/api/encounters/{encounter_id}/creatures/{creature_id}": {
     /** Update Encounter Creature */
     put: operations["update_encounter_creature_api_encounters__encounter_id__creatures__creature_id__put"];
@@ -64,19 +72,6 @@ export interface components {
       /** Max Hp */
       max_hp: number;
     };
-    /** CreatureResponse */
-    CreatureResponse: {
-      /** Name */
-      name: string;
-      /** Icon */
-      icon: string;
-      /** Stat Block */
-      stat_block: string;
-      /** Max Hp */
-      max_hp: number;
-      /** Id */
-      id: number;
-    };
     /** EncounterCreature */
     EncounterCreature: {
       /** Creature Id */
@@ -87,6 +82,8 @@ export interface components {
       hp: number;
       /** Initiative */
       initiative: number;
+      /** Is Active */
+      is_active: boolean;
       /** Name */
       name: string;
       /** Icon */
@@ -108,6 +105,8 @@ export interface components {
       hp: number;
       /** Initiative */
       initiative: number;
+      /** Is Active */
+      is_active: boolean;
     };
     /** EncounterRequest */
     EncounterRequest: {
@@ -128,10 +127,6 @@ export interface components {
       started_at: string | null;
       /** Ended At */
       ended_at: string | null;
-      /** Creatures */
-      creatures: components["schemas"]["CreatureResponse"][] | null;
-      /** Active Creature Id */
-      active_creature_id: number | null;
     };
     /** HTTPValidationError */
     HTTPValidationError: {
@@ -256,6 +251,50 @@ export interface operations {
   };
   /** Delete Encounter */
   delete_encounter_api_encounters__encounter_id__delete: {
+    parameters: {
+      path: {
+        encounter_id: number;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /** Next Turn */
+  next_turn_api_encounters__encounter_id__next_turn_post: {
+    parameters: {
+      path: {
+        encounter_id: number;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /** Previous Turn */
+  previous_turn_api_encounters__encounter_id__previous_turn_post: {
     parameters: {
       path: {
         encounter_id: number;

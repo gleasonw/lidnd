@@ -46,6 +46,7 @@ class EncounterParticipant(BaseModel):
     encounter_id: int
     hp: int
     initiative: int
+    is_active: bool
 
 
 class EncounterCreature(CreatureResponse, EncounterParticipant):
@@ -63,8 +64,6 @@ class EncounterResponse(BaseModel):
     description: Optional[str] = None
     started_at: Optional[NaiveDatetime] = None
     ended_at: Optional[NaiveDatetime] = None
-    creatures: Optional[List[CreatureResponse]] = None
-    active_creature_id: Optional[int] = None
 
 
 class DiscordUser(BaseModel):
@@ -118,6 +117,122 @@ async def get_encounter(
             if not encounter:
                 raise HTTPException(status_code=404, detail="Encounter not found")
             return encounter
+
+
+@app.post("/api/encounters/{encounter_id}/next_turn")
+async def next_turn(encounter_id: int, user=Depends(get_discord_user)) -> None:
+    async with pool.connection() as conn:
+        async with conn.cursor(row_factory=class_row(EncounterParticipant)) as curs:
+            await curs.execute(
+                """
+                    SELECT *
+                    FROM encounter_participants
+                    WHERE encounter_id = %s
+                    ORDER BY initiative ASC
+                    """,
+                (encounter_id,),
+            )
+            participants = await curs.fetchall()
+            if not participants:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Encounter not found, or no participants",
+                )
+            current_active = [p for p in participants if p.is_active]
+            if len(current_active) == 0:
+                raise HTTPException(
+                    status_code=404, detail="No active participant found"
+                )
+            current_active = current_active[0]
+            greater_initiatives = [
+                p for p in participants if p.initiative > current_active.initiative
+            ]
+            if not greater_initiatives:
+                equal_initiatives = [
+                    p
+                    for p in participants
+                    if p.initiative == current_active.initiative
+                    and p.creature_id != current_active.creature_id
+                ]
+                if not equal_initiatives:
+                    next_active = participants[0]
+                else:
+                    next_active = equal_initiatives[0]
+            else:
+                next_active = greater_initiatives[0]
+            await curs.execute(
+                """
+                    UPDATE encounter_participants
+                    SET is_active = CASE 
+                        WHEN creature_id = %s THEN TRUE
+                        WHEN creature_id = %s THEN FALSE
+                        ELSE is_active
+                    END
+                    WHERE encounter_id = %s
+                    """,
+                (next_active.creature_id, current_active.creature_id, encounter_id),
+            )
+
+
+@app.post("/api/encounters/{encounter_id}/previous_turn")
+async def previous_turn(encounter_id: int, user=Depends(get_discord_user)) -> None:
+    async with pool.connection() as conn:
+        async with conn.cursor(row_factory=class_row(EncounterParticipant)) as curs:
+            await curs.execute(
+                """
+                    SELECT *
+                    FROM encounter_participants
+                    WHERE encounter_id = %s
+                    ORDER BY initiative DESC
+                    """,
+                (encounter_id,),
+            )
+            participants = await curs.fetchall()
+            if not participants:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Encounter not found, or no participants",
+                )
+            current_active = [p for p in participants if p.is_active]
+            if len(current_active) == 0:
+                raise HTTPException(
+                    status_code=404, detail="No active participant found"
+                )
+            current_active = current_active[0]
+            lesser_initiatives = [
+                p for p in participants if p.initiative < current_active.initiative
+            ]
+
+            if not lesser_initiatives:
+                equal_initiatives = [
+                    p
+                    for p in participants
+                    if p.initiative == current_active.initiative
+                    and p.creature_id != current_active.creature_id
+                ]
+                if not equal_initiatives:
+                    previous_active = participants[0]
+                else:
+                    previous_active = equal_initiatives[0]
+            else:
+                previous_active = lesser_initiatives[0]
+            print(previous_active)
+            await curs.execute(
+                """
+                    UPDATE encounter_participants
+                    SET is_active = CASE 
+                        WHEN creature_id = %s THEN TRUE
+                        WHEN creature_id = %s THEN FALSE
+                        ELSE is_active
+                    END
+                    WHERE encounter_id = %s
+                    """,
+                (
+                    previous_active.creature_id,
+                    current_active.creature_id,
+                    encounter_id,
+                ),
+            )
 
 
 @app.post("/api/encounters")

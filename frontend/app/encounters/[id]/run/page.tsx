@@ -3,6 +3,8 @@ import {
   getEncounterCreatures,
   getEncounter,
   EncounterCreature,
+  previousTurn,
+  nextTurn,
 } from "@/app/encounters/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
@@ -29,12 +31,22 @@ export async function BattleUI({ id }: { id: string }) {
     return (missingHp / creature.max_hp) * 100;
   }
 
-  const activeCreature = creatures?.find(
-    (creature) => creature.id === encounter?.active_creature_id
-  );
-
   const initiativeSortedCreatures = creatures?.sort(
     (a, b) => b.initiative - a.initiative
+  );
+
+  async function previous() {
+    "use server";
+    await previousTurn({ encounter_id: parseInt(id) });
+  }
+
+  async function next() {
+    "use server";
+    await nextTurn({ encounter_id: parseInt(id) });
+  }
+
+  const activeCreature = initiativeSortedCreatures?.find(
+    (creature) => creature.is_active
   );
 
   return (
@@ -48,7 +60,7 @@ export async function BattleUI({ id }: { id: string }) {
             <Card
               key={creature.id}
               className={`relative ${
-                creature.id === encounter?.active_creature_id &&
+                creature.is_active &&
                 `outline-4 outline-blue-500 outline transform scale-110 transition-all`
               }`}
             >
@@ -81,9 +93,11 @@ export async function BattleUI({ id }: { id: string }) {
         ))}
       </div>
       <div className="flex flex-col justify-between w-full p-4 md:flex-row">
-        <Button className="w-20">
-          <ChevronLeftIcon />
-        </Button>
+        <form action={previous}>
+          <Button className="w-20">
+            <ChevronLeftIcon />
+          </Button>
+        </form>
         {activeCreature?.stat_block && (
           <Image
             src={getGoogleDriveImageLink(activeCreature?.stat_block)}
@@ -92,9 +106,11 @@ export async function BattleUI({ id }: { id: string }) {
             width={600}
           />
         )}
-        <Button className="w-20">
-          <ChevronRightIcon />
-        </Button>
+        <form action={next}>
+          <Button className="w-20">
+            <ChevronRightIcon />
+          </Button>
+        </form>
       </div>
     </div>
   );
