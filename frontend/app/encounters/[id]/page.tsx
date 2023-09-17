@@ -1,10 +1,9 @@
-import CreatureAddForm from "@/app/encounters/[id]/CreatureAddForm";
+import CreatureAddForm from "@/app/encounters/[id]/creature-add-form";
 import {
   addCreatureToEncounter,
   getEncounter,
   getEncounterCreatures,
 } from "@/app/encounters/api";
-import EncounterDetails from "@/app/encounters/components/encounter-details";
 import { getGoogleDriveImageLink } from "@/app/encounters/utils";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -22,7 +21,6 @@ export default async function Encounter({
 
   return (
     <>
-      <EncounterDetails id={params.id} />
       {creatures?.map((creature) => (
         <div key={creature.id}>
           <div className="flex gap-5 flex-wrap items-center">

@@ -1,14 +1,8 @@
 import InitiativeInput from "@/app/encounters/[id]/roll/InitiativeInput";
-import EncounterDetails from "@/app/encounters/components/encounter-details";
-import {
-  getEncounterCreatures,
-  getEncounter,
-  startEncounter,
-} from "@/app/encounters/api";
+import { getEncounterCreatures, startEncounter } from "@/app/encounters/api";
 import { getGoogleDriveImageLink } from "@/app/encounters/utils";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 export default async function Page({ params }: { params: { id: string } }) {
@@ -24,7 +18,6 @@ export default async function Page({ params }: { params: { id: string } }) {
 
   return (
     <div>
-      <EncounterDetails id={params.id} />
       {creatures?.map((creature) => (
         <div key={creature.id}>
           <div className="flex gap-5 items-center">

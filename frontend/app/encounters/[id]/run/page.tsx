@@ -1,10 +1,9 @@
-import EncounterDetails from "@/app/encounters/components/encounter-details";
 import {
   getEncounterCreatures,
-  getEncounter,
   EncounterCreature,
   previousTurn,
   nextTurn,
+  updateEncounterCreature,
 } from "@/app/encounters/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
@@ -12,18 +11,19 @@ import { getGoogleDriveImageLink } from "@/app/encounters/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { StatBlock } from "@/app/encounters/[id]/run/stat-block";
+import { CreatureHealthForm } from "@/app/encounters/[id]/run/creature-health-form";
 
 export default function Page({ params }: { params: { id: string } }) {
+  console.log("render");
   return (
     <div>
-      <EncounterDetails id={params.id} />
       <BattleUI id={params.id} />
     </div>
   );
 }
 
 export async function BattleUI({ id }: { id: string }) {
-  const encounter = await getEncounter({ encounter_id: parseInt(id) });
   const creatures = await getEncounterCreatures({ encounter_id: parseInt(id) });
 
   function getCreaturePercentDamage(creature: EncounterCreature) {
@@ -32,7 +32,7 @@ export async function BattleUI({ id }: { id: string }) {
   }
 
   const initiativeSortedCreatures = creatures?.sort(
-    (a, b) => b.initiative - a.initiative
+    (a, b) => a.initiative - b.initiative
   );
 
   async function previous() {
@@ -43,6 +43,17 @@ export async function BattleUI({ id }: { id: string }) {
   async function next() {
     "use server";
     await nextTurn({ encounter_id: parseInt(id) });
+  }
+
+  async function editCreature(creature: EncounterCreature) {
+    "use server";
+    await updateEncounterCreature(
+      {
+        encounter_id: parseInt(id),
+        creature_id: creature.id,
+      },
+      creature
+    );
   }
 
   const activeCreature = initiativeSortedCreatures?.find(
@@ -57,6 +68,7 @@ export async function BattleUI({ id }: { id: string }) {
             key={creature.id}
             className={`flex flex-col gap-3 items-center w-40 }`}
           >
+            {creature.initiative}
             <Card
               key={creature.id}
               className={`relative ${
@@ -80,15 +92,7 @@ export async function BattleUI({ id }: { id: string }) {
                 />
               </CardContent>
             </Card>
-            <form className={"flex gap-2 flex-col"}>
-              <Input placeholder="Modify HP" type="text" />
-              <Button variant="default" className={"bg-red-700"}>
-                Damage
-              </Button>
-              <Button variant="default" className={"bg-green-700"}>
-                Heal
-              </Button>
-            </form>
+            <CreatureHealthForm creature={creature} edit={editCreature} />
           </div>
         ))}
       </div>
@@ -99,11 +103,10 @@ export async function BattleUI({ id }: { id: string }) {
           </Button>
         </form>
         {activeCreature?.stat_block && (
-          <Image
-            src={getGoogleDriveImageLink(activeCreature?.stat_block)}
-            alt={"stat block for " + activeCreature?.name}
-            height={600}
-            width={600}
+          <StatBlock
+            url={activeCreature.stat_block}
+            name={activeCreature.name}
+            key={activeCreature.id}
           />
         )}
         <form action={next}>

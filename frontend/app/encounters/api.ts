@@ -30,7 +30,6 @@ export async function createEncounter(
     console.log(error.detail);
     throw error;
   }
-  revalidatePath("/encounters");
   redirect(`/encounters/${data.id}`);
 }
 
@@ -105,6 +104,7 @@ export async function updateEncounterCreature(
     console.log(await response.text());
     throw error;
   }
+  revalidatePath(`/api/encounters/${params.encounter_id}/run`);
 
   return data;
 }
@@ -128,7 +128,6 @@ export async function addCreatureToEncounter(
     console.log(await response.text());
     throw error;
   }
-  revalidatePath(`/encounters/${params.encounter_id}`);
 
   return data;
 }
@@ -150,7 +149,6 @@ export async function startEncounter(
     console.log(await response.text());
     throw error;
   }
-  revalidatePath(`/encounters/${params.encounter_id}`);
 }
 
 export async function nextTurn(
@@ -169,7 +167,7 @@ export async function nextTurn(
     console.log(await response.text());
     throw error;
   }
-  revalidatePath(`/encounters/${params.encounter_id}/run`);
+  revalidatePath(`/api/encounters/${params.encounter_id}/run`);
 }
 
 export async function previousTurn(
@@ -188,5 +186,5 @@ export async function previousTurn(
     console.log(await response.text());
     throw error;
   }
-  revalidatePath(`/encounters/${params.encounter_id}/run`);
+  revalidatePath(`/api/encounters/${params.encounter_id}/run`);
 }

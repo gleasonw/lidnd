@@ -8,6 +8,13 @@ export default async function EncounterLayout({
   params: any;
 }) {
   const encounter = await getEncounter({ encounter_id: params.id });
-  console.log(encounter);
-  return <section>{children}</section>;
+  return (
+    <section>
+      <div className={"flex flex-col"}>
+        <h1>{encounter?.name}</h1>
+        <p>{encounter?.description}</p>
+      </div>
+      {children}
+    </section>
+  );
 }
