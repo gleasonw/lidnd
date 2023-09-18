@@ -11,7 +11,7 @@ export default async function EncounterLayout({
   return (
     <section>
       <div className={"flex flex-col"}>
-        <h1>{encounter?.name}</h1>
+        <h1 className={"text-2xl"}>{encounter?.name}</h1>
         <p>{encounter?.description}</p>
       </div>
       {children}

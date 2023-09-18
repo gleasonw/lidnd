@@ -1,6 +1,7 @@
 import { LoadingButton } from "@/app/components/LoadingButton";
 import Link from "next/link";
 import { createEncounter, getUserEncounters } from "@/app/encounters/api";
+import { Button } from "@/components/ui/button";
 
 async function createDefaultEncounter() {
   "use server";
@@ -23,9 +24,14 @@ export default async function Encounters() {
           <Link
             key={encounter.id}
             href={`/encounters/${encounter.id}`}
-            className="p-5 border hover:bg-white transition-all"
+            className="p-5 border hover:bg-white transition-all flex justify-between gap-5"
           >
-            {encounter.name} {encounter.id}
+            {encounter.name}
+            {encounter?.started_at ? (
+              <Link href={`/encounters/${encounter.id}/run`}>
+                <Button>Continue the battle!</Button>
+              </Link>
+            ) : null}
           </Link>
         ))}
     </div>

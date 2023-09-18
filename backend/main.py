@@ -133,6 +133,7 @@ async def next_turn(encounter_id: int, user=Depends(get_discord_user)) -> None:
                 (encounter_id,),
             )
             participants = await curs.fetchall()
+            participants = [p for p in participants if p.hp > 0]
             if not participants:
                 raise HTTPException(
                     status_code=404,
@@ -188,6 +189,8 @@ async def previous_turn(encounter_id: int, user=Depends(get_discord_user)) -> No
                 (encounter_id,),
             )
             participants = await curs.fetchall()
+            participants = [p for p in participants if p.hp > 0]
+
             if not participants:
                 raise HTTPException(
                     status_code=404,
@@ -283,11 +286,21 @@ async def update_encounter_creature(
         async with conn.cursor() as cur:
             await cur.execute(
                 """
-                UPDATE encounter_participants 
-                SET hp=%s, initiative=%s 
-                WHERE encounter_id=%s AND creature_id=%s
+                UPDATE encounter_participants
+                SET 
+                    hp = CASE 
+                        WHEN %s < 0 THEN 0
+                        WHEN %s > (SELECT max_hp FROM creatures WHERE id = %s) THEN (SELECT max_hp FROM creatures WHERE id = %s)
+                        ELSE %s
+                    END,
+                    initiative = %s
+                WHERE encounter_id = %s AND creature_id = %s
                 """,
                 (
+                    encounter_data.hp,
+                    encounter_data.hp,
+                    creature_id,
+                    creature_id,
                     encounter_data.hp,
                     encounter_data.initiative,
                     encounter_id,

@@ -16,7 +16,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <nav className="">
+      <nav className="border-bottom border">
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem className="text-2xl p-5">

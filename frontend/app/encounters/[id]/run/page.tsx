@@ -27,7 +27,8 @@ export async function BattleUI({ id }: { id: string }) {
   const creatures = await getEncounterCreatures({ encounter_id: parseInt(id) });
 
   function getCreaturePercentDamage(creature: EncounterCreature) {
-    const missingHp = creature.max_hp - creature.hp;
+    let missingHp = creature.max_hp - creature.hp;
+    missingHp = Math.min(missingHp, creature.max_hp);
     return (missingHp / creature.max_hp) * 100;
   }
 
@@ -78,7 +79,11 @@ export async function BattleUI({ id }: { id: string }) {
             >
               <div
                 style={{ height: `${getCreaturePercentDamage(creature)}%` }}
-                className={`absolute bottom-0 left-0 w-full bg-red-500 bg-opacity-50`}
+                className={`absolute bottom-0 left-0 w-full ${
+                  getCreaturePercentDamage(creature) === 100
+                    ? "bg-gray-500"
+                    : "bg-red-500"
+                } bg-opacity-50`}
               />
               <CardHeader>
                 <CardTitle>{creature.name}</CardTitle>
