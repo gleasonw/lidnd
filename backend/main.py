@@ -6,6 +6,9 @@ from fastapi.security import OAuth2PasswordBearer
 from psycopg_pool import AsyncConnectionPool
 from psycopg.rows import class_row
 from pydantic import BaseModel, NaiveDatetime
+import asyncio
+import discord
+
 
 from fastapi import FastAPI, HTTPException, Depends
 
@@ -21,7 +24,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @app.on_event("startup")
-async def open_pool():
+async def start_postgres_and_redis():
     await pool.open()
 
 
@@ -76,6 +79,9 @@ class DiscordUser(BaseModel):
     flags: int
     premium_type: int
     public_flags: int
+
+
+encounter_queue: asyncio.Queue[EncounterResponse] = asyncio.Queue()
 
 
 @app.get("/")
@@ -253,7 +259,9 @@ async def create_encounter(
                 raise HTTPException(
                     status_code=500, detail="Failed to create encounter"
                 )
-            return EncounterResponse(id=encounter_id[0])
+            new_encounter = EncounterResponse(id=encounter_id[0])
+            await encounter_queue.put(new_encounter)
+            return new_encounter
 
 
 @app.put("/api/encounters/{encounter_id}")
@@ -460,3 +468,46 @@ async def list_creatures(
                 (encounter_id,),
             )
             return await cur.fetchall()
+
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+client = discord.Client(intents=intents)
+
+
+STOPWORD = "STOP"
+
+
+async def listen_for_messages():
+    while True:
+        encounter = await encounter_queue.get()
+        if encounter is not None:
+            print(encounter)
+        await asyncio.sleep(1)
+
+
+@client.event
+async def on_ready():
+    await listen_for_messages()
+    print(f"We have logged in as {client.user}")
+
+
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+
+    if message.content.startswith("$hello"):
+        await message.channel.send("Hello!")
+
+
+token = os.getenv("BOT_TOKEN")
+assert token is not None, "BOT_TOKEN environment variable is not set"
+
+
+async def start_bot():
+    await client.start(token)
+
+
+asyncio.create_task(start_bot())
