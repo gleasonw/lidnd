@@ -392,15 +392,16 @@ async def update_encounter_creature(
 
 
 @app.delete("/api/encounters/{encounter_id}")
-async def delete_encounter(encounter_id: int, user=Depends(get_discord_user)) -> None:
+async def delete_encounter(encounter_id: int, user=Depends(get_discord_user)) -> int:
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                "DELETE FROM encounters WHERE id=%s AND user_id=%s",
+                "DELETE FROM encounters  WHERE id=%s AND user_id=%s",
                 (encounter_id, user.id),
             )
             if cur.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Encounter not found")
+            return encounter_id
 
 
 @app.post("/api/encounters/{encounter_id}/start")

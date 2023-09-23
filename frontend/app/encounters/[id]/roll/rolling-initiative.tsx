@@ -6,7 +6,7 @@ import { getGoogleDriveImageLink } from "@/app/encounters/utils";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
-export default async function RollingInitiative() {
+export default function RollingInitiative() {
   const { data: creatures } = useEncounterCreatures();
   const { mutate: startEncounter } = useStartEncounter();
 

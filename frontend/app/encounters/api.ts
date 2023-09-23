@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCookie } from "cookies-next";
 import { useEncounterId } from "@/app/encounters/hooks";
 
-const { GET, PUT, POST } = createClient<paths>({ baseUrl: apiURL });
+const { GET, PUT, POST, DELETE } = createClient<paths>({ baseUrl: apiURL });
 
 export type EncounterCreature = components["schemas"]["EncounterCreature"];
 
@@ -31,6 +31,38 @@ export function useCreateEncounter() {
         throw error;
       }
       queryClient.invalidateQueries({ queryKey: ["encounters"] });
+    },
+  });
+}
+
+export function useDeleteEncounter() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await DELETE(`/api/encounters/{encounter_id}`, {
+        params: {
+          path: {
+            encounter_id: id,
+          },
+        },
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+      });
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
+    },
+    onSuccess: (deleted_id) => {
+      queryClient.setQueryData(encountersQueryKey, (oldData) => {
+        console.log(oldData, deleted_id);
+        if (oldData && Array.isArray(oldData)) {
+          return oldData.filter((encounter) => encounter.id !== deleted_id);
+        } else {
+          return oldData;
+        }
+      });
     },
   });
 }
