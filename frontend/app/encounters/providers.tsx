@@ -16,21 +16,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <nav className="border-bottom border">
-        <NavigationMenu>
-          <NavigationMenuList>
-            <NavigationMenuItem className="text-2xl p-5">
-              The Init Tracker
-            </NavigationMenuItem>
-            <NavigationMenuItem className="cursor-pointer">
-              <Link href="/encounters" legacyBehavior>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Encounters
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
+      <nav className="border-bottom border flex">
+        <Link href={"/encounters"} className={"w-full p-5 text-center"}>
+          My encounters
+        </Link>
       </nav>
       {children}
     </QueryClientProvider>

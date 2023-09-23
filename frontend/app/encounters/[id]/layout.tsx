@@ -1,13 +1,15 @@
-import { getEncounter } from "@/app/encounters/api";
+"use client";
 
-export default async function EncounterLayout({
+import { useEncounter } from "@/app/encounters/api";
+
+export default function EncounterLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
   params: any;
 }) {
-  const encounter = await getEncounter({ encounter_id: params.id });
+  const { data: encounter } = useEncounter();
   return (
     <section>
       <div className={"flex flex-col"}>

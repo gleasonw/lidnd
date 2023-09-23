@@ -1,11 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { useEncounterId } from "@/app/encounters/hooks";
-import {
-  EncounterCreature,
-  updateEncounterCreature,
-} from "../../api";
+import { EncounterCreature, useUpdateEncounterCreature } from "../../api";
 import { Button } from "@/components/ui/button";
 import React from "react";
 
@@ -17,16 +13,17 @@ export default function InitiativeInput({
   const [initiative, setInitiative] = React.useState<string | number>(
     creature.initiative
   );
-  const id = useEncounterId();
+  const { mutate: updateCreature } = useUpdateEncounterCreature();
 
   return (
     <form
-      action={async () =>
-        await updateEncounterCreature(
-          { creature_id: creature.id, encounter_id: id },
-          creature
-        )
-      }
+      onSubmit={(e) => {
+        e.preventDefault();
+        updateCreature({
+          ...creature,
+          initiative: parseInt(initiative.toString()),
+        });
+      }}
     >
       <Input
         value={initiative}

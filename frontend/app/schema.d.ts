@@ -72,6 +72,19 @@ export interface components {
       /** Max Hp */
       max_hp: number;
     };
+    /** CreatureResponse */
+    CreatureResponse: {
+      /** Name */
+      name: string;
+      /** Icon */
+      icon: string;
+      /** Stat Block */
+      stat_block: string;
+      /** Max Hp */
+      max_hp: number;
+      /** Id */
+      id: number;
+    };
     /** EncounterCreature */
     EncounterCreature: {
       /** Creature Id */
@@ -238,7 +251,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["EncounterResponse"];
         };
       };
       /** @description Validation Error */
@@ -282,7 +295,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["EncounterCreature"][];
         };
       };
       /** @description Validation Error */
@@ -304,7 +317,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["EncounterCreature"][];
         };
       };
       /** @description Validation Error */
@@ -332,7 +345,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["EncounterParticipant"];
         };
       };
       /** @description Validation Error */
@@ -354,7 +367,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["EncounterResponse"];
         };
       };
       /** @description Validation Error */
@@ -425,7 +438,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["CreatureResponse"];
         };
       };
       /** @description Validation Error */
@@ -452,7 +465,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["CreatureResponse"];
         };
       };
       /** @description Validation Error */

@@ -2,7 +2,7 @@
 
 import {
   EncounterCreature,
-  updateEncounterCreature,
+  useUpdateEncounterCreature,
 } from "@/app/encounters/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,11 @@ import { useState } from "react";
 
 export function CreatureHealthForm({
   creature,
-  edit,
 }: {
   creature: EncounterCreature;
-  edit: (creature: EncounterCreature) => Promise<void>;
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
+  const { mutate: edit } = useUpdateEncounterCreature();
 
   return (
     <>
@@ -31,30 +30,32 @@ export function CreatureHealthForm({
           }
         }}
       />
-      <form
-        action={async () =>
-          await edit({
+      <Button
+        variant="default"
+        className={"bg-red-700"}
+        onClick={(e) => {
+          e.stopPropagation();
+          edit({
             ...creature,
-            hp: creature.hp - hpDiff,
-          })
-        }
+            hp: typeof hpDiff === "number" ? creature.hp - hpDiff : creature.hp,
+          });
+        }}
       >
-        <Button variant="default" className={"bg-red-700"}>
-          Damage
-        </Button>
-      </form>
-      <form
-        action={async () =>
-          await edit({
+        Damage
+      </Button>
+      <Button
+        variant="default"
+        className={"bg-green-700"}
+        onClick={(e) => {
+          e.stopPropagation();
+          edit({
             ...creature,
-            hp: creature.hp + hpDiff,
-          })
-        }
+            hp: typeof hpDiff === "number" ? creature.hp + hpDiff : creature.hp,
+          });
+        }}
       >
-        <Button variant="default" className={"bg-green-700"}>
-          Heal
-        </Button>
-      </form>
+        Heal
+      </Button>
     </>
   );
 }

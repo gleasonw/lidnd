@@ -3,15 +3,11 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/encounters/hooks";
-import { addCreatureToEncounter } from "@/app/encounters/api";
+import { useAddCreatureToEncounter } from "@/app/encounters/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-export default function CreatureAddForm({
-  add,
-}: {
-  add: typeof addCreatureToEncounter;
-}) {
+export default function CreatureAddForm() {
   const [creatureData, setCreatureData] = useState({
     name: "",
     max_hp: "",
@@ -20,6 +16,7 @@ export default function CreatureAddForm({
   });
 
   const id = useEncounterId();
+  const { mutate: addCreature } = useAddCreatureToEncounter();
 
   return (
     <div className="flex flex-col gap-5">
@@ -59,18 +56,19 @@ export default function CreatureAddForm({
           }
           value={creatureData.stat_block}
         />
-        <form
-          action={async () =>
-            await add(
-              { encounter_id: id },
-              { ...creatureData, max_hp: parseInt(creatureData.max_hp) }
-            )
-          }
+        <Button
+          className="p-5 border"
+          variant={"secondary"}
+          onClick={(e) => {
+            e.stopPropagation();
+            addCreature({
+              ...creatureData,
+              max_hp: parseInt(creatureData.max_hp),
+            });
+          }}
         >
-          <Button type={"submit"} className="p-5 border" variant={"secondary"}>
-            + Add creature
-          </Button>
-        </form>
+          + Add creature
+        </Button>
       </Card>
     </div>
   );
