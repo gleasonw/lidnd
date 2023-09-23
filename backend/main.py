@@ -1,18 +1,22 @@
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Optional, Dict, Tuple
 import aiohttp
 from dotenv import load_dotenv
 import os
 from fastapi.security import OAuth2PasswordBearer
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Depends
 from psycopg_pool import AsyncConnectionPool
 from psycopg.rows import class_row
 from pydantic import BaseModel, NaiveDatetime
 import asyncio
 import discord
-
-
-from fastapi import FastAPI, HTTPException, Depends
+from discord import ApplicationContext
+from datetime import datetime
+from jinja2 import Environment, FileSystemLoader
 
 load_dotenv()
+
+env = Environment(loader=FileSystemLoader("."))
+template = env.get_template("encounter.md")
 
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
@@ -21,10 +25,11 @@ pool = AsyncConnectionPool(os.getenv("DATABASE_URL", default=""), open=False)
 app = FastAPI()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+bot = discord.Bot()
 
 
 @app.on_event("startup")
-async def start_postgres_and_redis():
+async def open_pool():
     await pool.open()
 
 
@@ -69,6 +74,10 @@ class EncounterResponse(BaseModel):
     ended_at: Optional[NaiveDatetime] = None
 
 
+class EncounterOverview(EncounterResponse):
+    participants: List[EncounterCreature]
+
+
 class DiscordUser(BaseModel):
     id: int
     username: str
@@ -81,7 +90,48 @@ class DiscordUser(BaseModel):
     public_flags: int
 
 
+class UserId(BaseModel):
+    id: int
+
+
+token_validation_cache: Dict[str, Tuple[datetime, DiscordUser]] = {}
+
+
 encounter_queue: asyncio.Queue[EncounterResponse] = asyncio.Queue()
+
+
+async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
+    async with pool.connection() as conn:
+        encounter = await get_encounter(encounter_id, UserId(id=user_id))
+        encounter_creatures = await list_creatures(encounter_id, user_id)
+        overview = EncounterOverview(
+            **encounter.model_dump(), participants=encounter_creatures
+        )
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT channel_id, message_id FROM channels WHERE user_id = %s",
+                (user_id,),
+            )
+            ids = await cur.fetchone()
+            if not ids:
+                return
+            channel_id, message_id = ids
+            channel = bot.get_channel(channel_id)
+            if not channel:
+                return
+            assert isinstance(
+                channel, discord.TextChannel
+            ), "Channel is not a text channel"
+            rendered_md = template.render(overview=overview)
+            if message_id:
+                message = await channel.fetch_message(message_id)
+                await message.edit(content=rendered_md)
+            else:
+                new_message = await channel.send(rendered_md)
+                await cur.execute(
+                    "UPDATE channels SET message_id = %s WHERE user_id = %s",
+                    (new_message.id, user_id),
+                )
 
 
 @app.get("/")
@@ -89,14 +139,23 @@ def read_root():
     return {"Hello": "World"}
 
 
-async def get_discord_user(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_discord_user(
+    token: Annotated[str, Depends(oauth2_scheme)]
+) -> DiscordUser:
+    if token in token_validation_cache:
+        (last_validated, user) = token_validation_cache[token]
+        time_diff = datetime.now() - last_validated
+        if time_diff.days < 1:
+            return user
     async with aiohttp.ClientSession() as session:
         async with session.get(
             "https://discord.com/api/users/@me",
             headers={"Authorization": f"Bearer {token}"},
         ) as resp:
             if resp.status == 200:
-                return DiscordUser(**await resp.json())
+                user = DiscordUser(**await resp.json())
+                token_validation_cache[token] = (datetime.now(), user)
+                return user
             else:
                 raise HTTPException(status_code=401, detail="Invalid token")
 
@@ -126,7 +185,9 @@ async def get_encounter(
 
 
 @app.post("/api/encounters/{encounter_id}/next_turn")
-async def next_turn(encounter_id: int, user=Depends(get_discord_user)) -> None:
+async def next_turn(
+    encounter_id: int, background_tasks: BackgroundTasks, user=Depends(get_discord_user)
+) -> None:
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(EncounterParticipant)) as curs:
             await curs.execute(
@@ -178,6 +239,9 @@ async def next_turn(encounter_id: int, user=Depends(get_discord_user)) -> None:
                     WHERE encounter_id = %s
                     """,
                 (next_active.creature_id, current_active.creature_id, encounter_id),
+            )
+            background_tasks.add_task(
+                post_encounter_to_user_channel, user.id, encounter_id
             )
 
 
@@ -246,7 +310,8 @@ async def previous_turn(encounter_id: int, user=Depends(get_discord_user)) -> No
 
 @app.post("/api/encounters")
 async def create_encounter(
-    encounter_data: EncounterRequest, user=Depends(get_discord_user)
+    encounter_data: EncounterRequest,
+    user=Depends(get_discord_user),
 ) -> EncounterResponse:
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
@@ -260,7 +325,6 @@ async def create_encounter(
                     status_code=500, detail="Failed to create encounter"
                 )
             new_encounter = EncounterResponse(id=encounter_id[0])
-            await encounter_queue.put(new_encounter)
             return new_encounter
 
 
@@ -464,16 +528,11 @@ async def list_creatures(
                 SELECT * FROM creatures JOIN encounter_participants 
                 ON creatures.id = encounter_participants.creature_id 
                 WHERE encounter_id = %s
+                ORDER BY initiative DESC
                 """,
                 (encounter_id,),
             )
             return await cur.fetchall()
-
-
-intents = discord.Intents.default()
-intents.message_content = True
-
-client = discord.Client(intents=intents)
 
 
 STOPWORD = "STOP"
@@ -487,27 +546,28 @@ async def listen_for_messages():
         await asyncio.sleep(1)
 
 
-@client.event
+@bot.event
 async def on_ready():
-    await listen_for_messages()
-    print(f"We have logged in as {client.user}")
+    print(f"{bot.user} is ready and online!")
 
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-
-    if message.content.startswith("$hello"):
-        await message.channel.send("Hello!")
+@bot.slash_command(
+    name="track-here", description="Make this channel the encounter-tracking channel."
+)
+async def setup(ctx: ApplicationContext):
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "INSERT INTO channels (channel_id, user_id) VALUES (%s, %s)",
+                (ctx.channel_id, ctx.author.id),
+            )
+            await ctx.respond(
+                "Your encounters from LiDnD will be posted here from now on."
+            )
 
 
 token = os.getenv("BOT_TOKEN")
 assert token is not None, "BOT_TOKEN environment variable is not set"
 
 
-async def start_bot():
-    await client.start(token)
-
-
-asyncio.create_task(start_bot())
+asyncio.create_task(bot.start(token))
