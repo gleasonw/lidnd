@@ -9,7 +9,7 @@ const { GET, PUT, POST, DELETE } = createClient<paths>({ baseUrl: apiURL });
 
 export type EncounterCreature = components["schemas"]["EncounterCreature"];
 
-function clientToken() {
+export function clientToken() {
   return getCookie("token");
 }
 
@@ -309,6 +309,30 @@ export function usePreviousTurn() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(encounterCreaturesKey(id), data);
+    },
+  });
+}
+
+export function useImageUpload() {
+  return useMutation({
+    mutationFn: async (file: File) => {
+      console.log(file);
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("http://localhost:8000/api/upload_image", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+      console.log(data);
+      if (response.status !== 200) {
+        console.log(data);
+      }
+      return data;
     },
   });
 }

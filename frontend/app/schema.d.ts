@@ -55,12 +55,24 @@ export interface paths {
     /** Delete Creature */
     delete: operations["delete_creature_api_creatures__creature_id__delete"];
   };
+  "/api/upload_image": {
+    /** Upload Image */
+    post: operations["upload_image_api_upload_image_post"];
+  };
 }
 
 export type webhooks = Record<string, never>;
 
 export interface components {
   schemas: {
+    /** Body_upload_image_api_upload_image_post */
+    Body_upload_image_api_upload_image_post: {
+      /**
+       * File
+       * Format: binary
+       */
+      file: string;
+    };
     /** CreatureRequest */
     CreatureRequest: {
       /** Name */
@@ -273,7 +285,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": number;
         };
       };
       /** @description Validation Error */
@@ -484,6 +496,28 @@ export interface operations {
       };
       path: {
         creature_id: number;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /** Upload Image */
+  upload_image_api_upload_image_post: {
+    requestBody: {
+      content: {
+        "multipart/form-data": components["schemas"]["Body_upload_image_api_upload_image_post"];
       };
     };
     responses: {

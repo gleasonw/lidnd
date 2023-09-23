@@ -1,9 +1,18 @@
-from typing import Annotated, List, Optional, Dict, Tuple
+from typing import Annotated, Any, List, Optional, Dict, Tuple
 import aiohttp
 from dotenv import load_dotenv
 import os
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Depends
+from fastapi import (
+    BackgroundTasks,
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Depends,
+    Request,
+    UploadFile,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from psycopg_pool import AsyncConnectionPool
 from psycopg.rows import class_row
@@ -551,6 +560,14 @@ async def list_creatures(
                 (encounter_id,),
             )
             return await cur.fetchall()
+
+
+@app.post("/api/upload_image")
+async def upload_image(file: UploadFile, user=Depends(get_discord_user)):
+    # print image size, dimensions
+    print(file.content_type)
+    print(file.file)
+    return {"filename": file.filename}
 
 
 @bot.event
