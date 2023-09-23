@@ -1,10 +1,12 @@
+"use client";
+
 import { LoadingButton } from "@/app/components/LoadingButton";
 import Link from "next/link";
 import { useCreateEncounter, useEncounters } from "@/app/encounters/api";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 
 async function createDefaultEncounter() {
-  "use server";
   await useCreateEncounter({
     name: "test",
     description: "test",
@@ -12,7 +14,7 @@ async function createDefaultEncounter() {
 }
 
 export default async function Encounters() {
-  const encounters = await useEncounters();
+  const encounters = useQuery(["encounters"], useEncounters);
 
   return (
     <div className="flex flex-col gap-10">

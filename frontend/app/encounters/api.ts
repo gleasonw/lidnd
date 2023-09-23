@@ -1,190 +1,196 @@
-"use server";
-
 import { paths, components } from "@/app/schema";
 import createClient from "openapi-fetch";
 import apiURL from "@/app/apiURL";
-import { cookies } from "next/headers";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getCookie } from "cookies-next";
 
-const { GET, PUT, DELETE, POST } = createClient<paths>({ baseUrl: apiURL });
+const { GET, PUT, POST } = createClient<paths>({ baseUrl: apiURL });
 
 export type EncounterCreature = components["schemas"]["EncounterCreature"];
 
-function serverToken() {
-  const cookieStore = cookies();
-  return cookieStore.get("token")?.value;
+function clientToken() {
+  return getCookie("token");
 }
 
-export async function createEncounter(
+export function useCreateEncounter(
   encounter: components["schemas"]["EncounterRequest"]
 ) {
-  "use server";
-  const { data, error } = await POST(`/api/encounters`, {
-    headers: {
-      Authorization: `Bearer ${serverToken()}`,
-    },
-    body: encounter,
-  });
-  if (error) {
-    console.log(error.detail);
-    throw error;
-  }
-  redirect(`/encounters/${data.id}`);
-}
-
-export async function getUserEncounters() {
-  const { data, response } = await GET(`/api/encounters`, {
-    headers: {
-      Authorization: `Bearer ${serverToken()}`,
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await POST(`/api/encounters`, {
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+        body: encounter,
+      });
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
     },
   });
-  if (response.status !== 200) {
-    console.log(await response.text());
-  }
-  return data;
 }
 
-export async function getEncounterCreatures(
+export function useEncounters() {
+  return useQuery({
+    queryKey: ["encounters"],
+    queryFn: async () => {
+      const { data } = await GET(`/api/encounters`, {
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+      });
+      return data;
+    },
+  });
+}
+
+export function useEncounterCreatures(
   params: paths["/api/encounters/{encounter_id}/creatures"]["get"]["parameters"]["path"]
 ) {
-  const { data, error, response } = await GET(
-    `/api/encounters/{encounter_id}/creatures`,
-    {
-      params: { path: params },
-      headers: {
-        Authorization: `Bearer ${serverToken()}`,
-      },
-    }
-  );
-  if (response.status !== 200) {
-    console.log(await response.text());
-    throw error;
-  }
-
-  return data;
+  return useQuery({
+    queryKey: ["encounterCreatures", params],
+    queryFn: async () => {
+      const { data, error } = await GET(
+        `/api/encounters/{encounter_id}/creatures`,
+        {
+          params: { path: params },
+          headers: {
+            Authorization: `Bearer ${clientToken()}`,
+          },
+        }
+      );
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
+      return data;
+    },
+  });
 }
 
-export async function getEncounter(
+export function useEncounter(
   params: paths["/api/encounters/{encounter_id}"]["get"]["parameters"]["path"]
 ) {
-  const { data, error, response } = await GET(
-    `/api/encounters/{encounter_id}`,
-    {
-      params: { path: params },
-      headers: {
-        Authorization: `Bearer ${serverToken()}`,
-      },
-    }
-  );
-  if (response.status !== 200) {
-    console.log(await response.text());
-    throw error;
-  }
-
-  return data;
+  return useQuery({
+    queryKey: ["encounter", params],
+    queryFn: async () => {
+      const { data, error } = await GET(`/api/encounters/{encounter_id}`, {
+        params: { path: params },
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+      });
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
+      return data;
+    },
+  });
 }
 
-export async function updateEncounterCreature(
+export function useUpdateEncounterCreature(
   params: paths["/api/encounters/{encounter_id}/creatures/{creature_id}"]["put"]["parameters"]["path"],
   creature: components["schemas"]["EncounterParticipant"]
 ) {
-  "use server";
-  const { data, error, response } = await PUT(
-    `/api/encounters/{encounter_id}/creatures/{creature_id}`,
-    {
-      params: { path: params },
-      headers: {
-        Authorization: `Bearer ${serverToken()}`,
-      },
-      body: creature,
-    }
-  );
-  if (response.status !== 200) {
-    console.log(await response.text());
-    throw error;
-  }
-  revalidatePath(`/api/encounters/${params.encounter_id}/run`);
-
-  return data;
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await PUT(
+        `/api/encounters/{encounter_id}/creatures/{creature_id}`,
+        {
+          params: { path: params },
+          headers: {
+            Authorization: `Bearer ${clientToken()}`,
+          },
+          body: creature,
+        }
+      );
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
+    },
+  });
 }
 
-export async function addCreatureToEncounter(
+export function useAddCreatureToEncounter(
   params: paths["/api/encounters/{encounter_id}/creatures"]["post"]["parameters"]["path"],
   creatureData: components["schemas"]["CreatureRequest"]
 ) {
-  "use server";
-  const { data, error, response } = await POST(
-    `/api/encounters/{encounter_id}/creatures`,
-    {
-      params: { path: params },
-      headers: {
-        Authorization: `Bearer ${serverToken()}`,
-      },
-      body: creatureData,
-    }
-  );
-  if (response.status !== 200) {
-    console.log(await response.text());
-    throw error;
-  }
-
-  return data;
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await POST(`/api/encounters/{encounter_id}/creatures`, {
+        params: { path: params },
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+        body: creatureData,
+      });
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
+    },
+  });
 }
 
-export async function startEncounter(
+export function useStartEncounter(
   params: paths["/api/encounters/{encounter_id}/start"]["post"]["parameters"]["path"]
 ) {
-  "use server";
-  const { data, error, response } = await POST(
-    `/api/encounters/{encounter_id}/start`,
-    {
-      params: { path: params },
-      headers: {
-        Authorization: `Bearer ${serverToken()}`,
-      },
-    }
-  );
-  if (response.status !== 200) {
-    console.log(await response.text());
-    throw error;
-  }
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await POST(`/api/encounters/{encounter_id}/start`, {
+        params: { path: params },
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+      });
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
+    },
+  });
 }
 
-export async function nextTurn(
+export function useNextTurn(
   params: paths["/api/encounters/{encounter_id}/next_turn"]["post"]["parameters"]["path"]
 ) {
-  const { data, response, error } = await POST(
-    `/api/encounters/{encounter_id}/next_turn`,
-    {
-      params: { path: params },
-      headers: {
-        Authorization: `Bearer ${serverToken()}`,
-      },
-    }
-  );
-  if (response.status !== 200) {
-    console.log(await response.text());
-    throw error;
-  }
-  revalidatePath(`/api/encounters/${params.encounter_id}/run`);
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await POST(`/api/encounters/{encounter_id}/next_turn`, {
+        params: { path: params },
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+      });
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
+    },
+  });
 }
 
-export async function previousTurn(
+export async function usePreviousTurn(
   params: paths["/api/encounters/{encounter_id}/previous_turn"]["post"]["parameters"]["path"]
 ) {
-  const { data, response, error } = await POST(
-    `/api/encounters/{encounter_id}/previous_turn`,
-    {
-      params: { path: params },
-      headers: {
-        Authorization: `Bearer ${serverToken()}`,
-      },
-    }
-  );
-  if (response.status !== 200) {
-    console.log(await response.text());
-    throw error;
-  }
-  revalidatePath(`/api/encounters/${params.encounter_id}/run`);
+  return useMutation({
+    mutationFn: async () => {
+      const { response, error } = await POST(
+        `/api/encounters/{encounter_id}/previous_turn`,
+        {
+          params: { path: params },
+          headers: {
+            Authorization: `Bearer ${clientToken()}`,
+          },
+        }
+      );
+      if (response.status !== 200) {
+        console.log(await response.text());
+        throw error;
+      }
+    },
+  });
 }
