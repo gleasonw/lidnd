@@ -10,7 +10,7 @@ export default function EncountersLayout({
       {/* Include shared UI here e.g. a header or sidebar */}
 
       <Providers>
-        <div className="m-5">{children}</div>
+        <div className="md:m-5">{children}</div>
       </Providers>
     </section>
   );

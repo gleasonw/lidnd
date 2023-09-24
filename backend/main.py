@@ -1,4 +1,4 @@
-from typing import Annotated, Any, List, Optional, Dict, Tuple
+from typing import Annotated, Any, List, Literal, Optional, Dict, Tuple
 import aiohttp
 from dotenv import load_dotenv
 import os
@@ -122,7 +122,7 @@ token_validation_cache: Dict[str, Tuple[datetime, DiscordUser]] = {}
 async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
     async with pool.connection() as conn:
         encounter = await get_encounter(encounter_id, UserId(id=user_id))
-        encounter_creatures = await list_creatures(encounter_id, user_id)
+        encounter_creatures = await list_creatures(encounter_id)
         overview = EncounterOverview(
             **encounter.model_dump(), participants=encounter_creatures
         )
@@ -210,41 +210,42 @@ async def get_encounter(
             return encounter
 
 
-@app.post("/api/encounters/{encounter_id}/next_turn")
-async def next_turn(
-    encounter_id: int, background_tasks: BackgroundTasks, user=Depends(get_discord_user)
+@app.post("/api/encounters/{encounter_id}/turn")
+async def update_turn(
+    encounter_id: int,
+    background_tasks: BackgroundTasks,
+    to: Literal["next", "previous"],
+    user=Depends(get_discord_user),
 ) -> List[EncounterCreature]:
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(EncounterParticipant)) as curs:
-            participants = await list_creatures(encounter_id, UserId(id=user.id))
-            participants = [p for p in participants if p.hp > 0]
-            if not participants:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Encounter not found, or no participants",
-                )
+            participants = await list_creatures(encounter_id)
             current_active = [p for p in participants if p.is_active]
             if len(current_active) == 0:
                 raise HTTPException(
-                    status_code=404, detail="No active participant found"
+                    status_code=500, detail="No active participant found"
                 )
             current_active = current_active[0]
-            greater_initiatives = [
-                p for p in participants if p.initiative > current_active.initiative
+            active_participants = [
+                p for p in participants if p.hp > 0 or p.id == current_active.id
             ]
-            if not greater_initiatives:
-                equal_initiatives = [
-                    p
-                    for p in participants
-                    if p.initiative == current_active.initiative
-                    and p.creature_id != current_active.creature_id
+
+            if not active_participants:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Encounter not found, or no participants",
+                )
+
+            if to == "next":
+                next_active = active_participants[
+                    (active_participants.index(current_active) + 1)
+                    % len(active_participants)
                 ]
-                if not equal_initiatives:
-                    next_active = participants[0]
-                else:
-                    next_active = equal_initiatives[0]
             else:
-                next_active = greater_initiatives[0]
+                next_active = active_participants[
+                    (active_participants.index(current_active) - 1)
+                    % len(active_participants)
+                ]
             await curs.execute(
                 """
                 UPDATE encounter_participants
@@ -266,62 +267,6 @@ async def next_turn(
                 raise HTTPException(
                     status_code=500, detail="Failed to update participants"
                 )
-    return await list_creatures(encounter_id)
-
-
-@app.post("/api/encounters/{encounter_id}/previous_turn")
-async def previous_turn(
-    encounter_id: int, user=Depends(get_discord_user)
-) -> List[EncounterCreature]:
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(EncounterParticipant)) as curs:
-            participants = await list_creatures(encounter_id, UserId(id=user.id))
-            participants = [p for p in participants if p.hp > 0]
-
-            if not participants:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Encounter not found, or no participants",
-                )
-            current_active = [p for p in participants if p.is_active]
-            if len(current_active) == 0:
-                raise HTTPException(
-                    status_code=404, detail="No active participant found"
-                )
-            current_active = current_active[0]
-            lesser_initiatives = [
-                p for p in participants if p.initiative < current_active.initiative
-            ]
-
-            if not lesser_initiatives:
-                equal_initiatives = [
-                    p
-                    for p in participants
-                    if p.initiative == current_active.initiative
-                    and p.creature_id != current_active.creature_id
-                ]
-                if not equal_initiatives:
-                    previous_active = participants[0]
-                else:
-                    previous_active = equal_initiatives[0]
-            else:
-                previous_active = lesser_initiatives[0]
-            await curs.execute(
-                """
-                    UPDATE encounter_participants
-                    SET is_active = CASE 
-                        WHEN creature_id = %s THEN TRUE
-                        WHEN creature_id = %s THEN FALSE
-                        ELSE is_active
-                    END
-                    WHERE encounter_id = %s
-                    """,
-                (
-                    previous_active.creature_id,
-                    current_active.creature_id,
-                    encounter_id,
-                ),
-            )
     return await list_creatures(encounter_id)
 
 
@@ -375,7 +320,7 @@ async def update_encounter_creature(
     creature_id: int,
     encounter_data: EncounterParticipant,
     user=Depends(get_discord_user),
-) -> EncounterParticipant:
+) -> List[EncounterCreature]:
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(EncounterParticipant)) as cur:
             await cur.execute(
@@ -407,11 +352,11 @@ async def update_encounter_creature(
             updated_creature = await cur.fetchone()
             if not updated_creature:
                 raise HTTPException(status_code=500, detail="Failed to update creature")
-            return updated_creature
+    return await list_creatures(encounter_id)
 
 
 @app.delete("/api/encounters/{encounter_id}")
-async def delete_encounter(encounter_id: int, user=Depends(get_discord_user)) -> int:
+async def delete_encounter(encounter_id: int, user=Depends(get_discord_user)) -> List[EncounterResponse]:
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
@@ -420,7 +365,7 @@ async def delete_encounter(encounter_id: int, user=Depends(get_discord_user)) ->
             )
             if cur.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Encounter not found")
-            return encounter_id
+    return await list_encounters()
 
 
 @app.post("/api/encounters/{encounter_id}/start")

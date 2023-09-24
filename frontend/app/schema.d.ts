@@ -23,13 +23,9 @@ export interface paths {
     /** Delete Encounter */
     delete: operations["delete_encounter_api_encounters__encounter_id__delete"];
   };
-  "/api/encounters/{encounter_id}/next_turn": {
-    /** Next Turn */
-    post: operations["next_turn_api_encounters__encounter_id__next_turn_post"];
-  };
-  "/api/encounters/{encounter_id}/previous_turn": {
-    /** Previous Turn */
-    post: operations["previous_turn_api_encounters__encounter_id__previous_turn_post"];
+  "/api/encounters/{encounter_id}/turn": {
+    /** Update Turn */
+    post: operations["update_turn_api_encounters__encounter_id__turn_post"];
   };
   "/api/encounters/{encounter_id}/creatures/{creature_id}": {
     /** Update Encounter Creature */
@@ -299,31 +295,12 @@ export interface operations {
       };
     };
   };
-  /** Next Turn */
-  next_turn_api_encounters__encounter_id__next_turn_post: {
+  /** Update Turn */
+  update_turn_api_encounters__encounter_id__turn_post: {
     parameters: {
-      path: {
-        encounter_id: number;
+      query: {
+        to: "next" | "previous";
       };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterCreature"][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Previous Turn */
-  previous_turn_api_encounters__encounter_id__previous_turn_post: {
-    parameters: {
       path: {
         encounter_id: number;
       };

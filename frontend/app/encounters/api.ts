@@ -8,19 +8,20 @@ import { useEncounterId } from "@/app/encounters/hooks";
 const { GET, PUT, POST, DELETE } = createClient<paths>({ baseUrl: apiURL });
 
 export type EncounterCreature = components["schemas"]["EncounterCreature"];
+export type Encounter = components["schemas"]["EncounterResponse"];
 
 export function clientToken() {
   return getCookie("token");
 }
 
-export function useCreateEncounter() {
+export function useCreateEncounter(onCreate?: (encounter: Encounter) => void) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (
       encounter: components["schemas"]["EncounterRequest"]
     ) => {
-      const { error } = await POST(`/api/encounters`, {
+      const { error, data } = await POST(`/api/encounters`, {
         headers: {
           Authorization: `Bearer ${clientToken()}`,
         },
@@ -31,6 +32,12 @@ export function useCreateEncounter() {
         throw error;
       }
       queryClient.invalidateQueries({ queryKey: ["encounters"] });
+      return data;
+    },
+    onSuccess: (data) => {
+      if (onCreate) {
+        onCreate(data as unknown as Encounter);
+      }
     },
   });
 }
@@ -54,15 +61,8 @@ export function useDeleteEncounter() {
         throw error;
       }
     },
-    onSuccess: (deleted_id) => {
-      queryClient.setQueryData(encountersQueryKey, (oldData) => {
-        console.log(oldData, deleted_id);
-        if (oldData && Array.isArray(oldData)) {
-          return oldData.filter((encounter) => encounter.id !== deleted_id);
-        } else {
-          return oldData;
-        }
-      });
+    onSuccess: (data) => {
+      queryClient.setQueryData(encountersQueryKey, data);
     },
   });
 }
@@ -171,26 +171,12 @@ export function useUpdateEncounterCreature() {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(encounterCreaturesKey(id), (oldData) => {
-        if (oldData && Array.isArray(oldData)) {
-          return oldData.map((creature) => {
-            if (creature.creature_id === data.creature_id) {
-              return {
-                ...creature,
-                ...data,
-              };
-            }
-            return creature;
-          });
-        } else {
-          return oldData;
-        }
-      });
+      queryClient.setQueryData(encounterCreaturesKey(id), data);
     },
   });
 }
 
-export function useAddCreatureToEncounter() {
+export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
   const queryClient = useQueryClient();
   const id = useEncounterId();
   return useMutation({
@@ -223,6 +209,9 @@ export function useAddCreatureToEncounter() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(encounterCreaturesKey(id), data);
+      if (onCreatureAdded) {
+        onCreatureAdded();
+      }
     },
   });
 }
@@ -263,11 +252,14 @@ export function useNextTurn() {
   return useMutation({
     mutationFn: async () => {
       const { error, data } = await POST(
-        `/api/encounters/{encounter_id}/next_turn`,
+        `/api/encounters/{encounter_id}/turn`,
         {
           params: {
             path: {
               encounter_id: id,
+            },
+            query: {
+              to: "next",
             },
           },
           headers: {
@@ -293,11 +285,14 @@ export function usePreviousTurn() {
   return useMutation({
     mutationFn: async () => {
       const { response, error, data } = await POST(
-        `/api/encounters/{encounter_id}/previous_turn`,
+        `/api/encounters/{encounter_id}/turn`,
         {
           params: {
             path: {
               encounter_id: id,
+            },
+            query: {
+              to: "previous",
             },
           },
           headers: {

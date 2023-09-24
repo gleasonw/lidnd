@@ -14,12 +14,16 @@ import { StatBlock } from "@/app/encounters/[id]/run/stat-block";
 import { CreatureHealthForm } from "@/app/encounters/[id]/run/creature-health-form";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 import CreatureAddForm from "@/app/encounters/[id]/creature-add-form";
+import InitiativeInput from "@/app/encounters/[id]/roll/InitiativeInput";
+import React from "react";
+import { Flipper, Flipped } from "react-flip-toolkit";
 
 export function BattleUI() {
   const { data: creatures } = useEncounterCreatures();
   const { mutate: nextTurn } = useNextTurn();
   const { mutate: previousTurn } = usePreviousTurn();
   const { mutate: editCreature } = useUpdateEncounterCreature();
+  const [addingCreature, setAddingCreature] = React.useState(false);
 
   function getCreaturePercentDamage(creature: EncounterCreature) {
     let missingHp = creature.max_hp - creature.hp;
@@ -30,41 +34,115 @@ export function BattleUI() {
   const activeCreature = creatures?.find((creature) => creature.is_active);
 
   return (
-    <div className="flex flex-col gap-5 justify-center items-center">
-      <div className={"flex gap-10 overflow-auto justify-center w-full p-5"}>
+    <div className="flex flex-col gap-5 justify-center items-center relative">
+      {!addingCreature ? (
+        <Button
+          variant="outline"
+          className={
+            "justify-self-center self-center absolute top-0 right-0 z-10"
+          }
+          onClick={() => setAddingCreature(true)}
+        >
+          Creature +
+        </Button>
+      ) : null}
+      <Flipper
+        flipKey={
+          creatures?.map((creature) => creature.id).join("") + "creature-add"
+        }
+        className={"flex gap-10 overflow-auto justify-center w-full p-5"}
+      >
         {creatures?.map((creature) => (
-          <div
-            key={creature.id}
-            className={`flex flex-col gap-3 items-center w-40 justify-between }`}
-          >
-            {creature.initiative}
-            <Card
+          <Flipped flipId={creature.id} key={creature.id}>
+            <div
               key={creature.id}
-              className={`relative ${
-                creature.is_active &&
-                `outline-4 outline-blue-500 outline transform scale-110 transition-all`
-              }`}
+              className={`flex relative flex-col gap-6 items-center w-40 justify-between }`}
             >
-              <div
-                style={{ height: `${getCreaturePercentDamage(creature)}%` }}
-                className={`absolute bottom-0 left-0 w-full ${
-                  getCreaturePercentDamage(creature) === 100
-                    ? "bg-gray-500"
-                    : "bg-red-500"
-                } bg-opacity-50 transition-all`}
-              />
-              <CardHeader>
-                <CardTitle>{creature.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CharacterIcon id={creature.id} name={creature.name} />
-              </CardContent>
-            </Card>
-            <CreatureHealthForm creature={creature} />
-          </div>
+              <Card
+                key={creature.id}
+                className={`relative h-full ${
+                  creature.is_active &&
+                  `outline-4 outline-blue-500 outline transform scale-110 transition-all select-none`
+                }`}
+              >
+                <div
+                  style={{ height: `${getCreaturePercentDamage(creature)}%` }}
+                  className={`absolute rounded bottom-0 left-0 w-full ${
+                    getCreaturePercentDamage(creature) === 100
+                      ? "bg-gray-500"
+                      : "bg-red-500"
+                  } bg-opacity-50 transition-all`}
+                />
+                {creature.hp > 0 ? (
+                  <div
+                    className={
+                      "absolute opacity-0 transition-opacity hover:opacity-100 top-0 left-0 h-full w-full border flex justify-center items-center z-10"
+                    }
+                  >
+                    <InitiativeInput
+                      creature={creature}
+                      className={"flex flex-col m-5 p-5 rounded gap-5"}
+                    />
+                  </div>
+                ) : null}
+
+                <CardHeader>
+                  <CardTitle>{creature.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CharacterIcon id={creature.id} name={creature.name} />
+                </CardContent>
+              </Card>
+              <CreatureHealthForm creature={creature} />
+            </div>
+          </Flipped>
         ))}
+        {addingCreature ? (
+          <Flipped key={"creature-add"} flipId={"creature-add"}>
+            <CreatureAddForm
+              className={"self-start"}
+              onSuccess={() => setAddingCreature(false)}
+            >
+              <Button
+                variant={"ghost"}
+                onClick={() => setAddingCreature(false)}
+              >
+                Cancel
+              </Button>
+            </CreatureAddForm>
+          </Flipped>
+        ) : null}
+      </Flipper>
+      <div className="flex flex-col md:hidden">
+        <div className="flex justify-center gap-2">
+          <Button
+            className="w-20"
+            onClick={(e) => {
+              e.stopPropagation();
+              previousTurn();
+            }}
+          >
+            <ChevronLeftIcon />
+          </Button>
+          <Button
+            className="w-20"
+            onClick={(e) => {
+              e.stopPropagation();
+              nextTurn();
+            }}
+          >
+            <ChevronRightIcon />
+          </Button>
+        </div>
+        {activeCreature?.id && (
+          <StatBlock
+            id={activeCreature.id}
+            name={activeCreature.name}
+            key={activeCreature.id}
+          />
+        )}
       </div>
-      <div className="flex flex-col justify-between w-full p-4 md:flex-row">
+      <div className="w-full p-4 md:flex hidden">
         <Button
           className="w-20"
           onClick={(e) => {
@@ -91,7 +169,6 @@ export function BattleUI() {
           <ChevronRightIcon />
         </Button>
       </div>
-      <CreatureAddForm />
     </div>
   );
 }

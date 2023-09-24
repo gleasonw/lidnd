@@ -7,8 +7,10 @@ import React from "react";
 
 export default function InitiativeInput({
   creature,
+  className,
 }: {
   creature: EncounterCreature;
+  className?: string;
 }) {
   const [initiative, setInitiative] = React.useState<string | number>(
     creature.initiative
@@ -24,6 +26,7 @@ export default function InitiativeInput({
           initiative: parseInt(initiative.toString()),
         });
       }}
+      className={className}
     >
       <Input
         value={initiative}
@@ -33,7 +36,7 @@ export default function InitiativeInput({
         placeholder="Initiative"
         type="text"
       />
-      <Button type="submit" variant="secondary">
+      <Button type="submit" variant="outline">
         Update initiative
       </Button>
     </form>

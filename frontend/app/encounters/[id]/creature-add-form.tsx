@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/encounters/hooks";
 import { useAddCreatureToEncounter } from "@/app/encounters/api";
@@ -14,7 +14,15 @@ type CreaturePost = {
   stat_block: File | null;
 };
 
-export default function CreatureAddForm() {
+export default function CreatureAddForm({
+  className,
+  onSuccess,
+  children,
+}: {
+  className?: string;
+  onSuccess?: () => void;
+  children?: React.ReactNode;
+}) {
   const [creatureData, setCreatureData] = useState<CreaturePost>({
     name: "",
     max_hp: "",
@@ -23,11 +31,13 @@ export default function CreatureAddForm() {
   });
 
   const id = useEncounterId();
-  const { mutate: addCreature } = useAddCreatureToEncounter();
+  const { mutate: addCreature, isLoading } =
+    useAddCreatureToEncounter(onSuccess);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className={`flex flex-col gap-5 ${className}`}>
       <Card className="max-w-sm flex flex-col gap-3 p-5 m-auto w-full">
+        {isLoading ? "Loading..." : null}
         <Input
           placeholder="Name"
           type="text"
@@ -81,28 +91,31 @@ export default function CreatureAddForm() {
             setCreatureData({ ...creatureData, stat_block: file });
           }}
         />
-        <Button
-          className="p-5 border m-auto"
-          variant={"secondary"}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (
-              !isNaN(parseInt(creatureData.max_hp)) &&
-              creatureData.name &&
-              creatureData.stat_block &&
-              creatureData.icon
-            ) {
-              addCreature({
-                ...creatureData,
-                max_hp: parseInt(creatureData.max_hp),
-              });
-            } else {
-              alert("Please fill out all fields");
-            }
-          }}
-        >
-          + Add creature
-        </Button>
+        <div className={"flex gap-5"}>
+          {children}
+          <Button
+            className="p-5 border m-auto"
+            variant={"secondary"}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (
+                !isNaN(parseInt(creatureData.max_hp)) &&
+                creatureData.name &&
+                creatureData.stat_block &&
+                creatureData.icon
+              ) {
+                addCreature({
+                  ...creatureData,
+                  max_hp: parseInt(creatureData.max_hp),
+                });
+              } else {
+                alert("Please fill out all fields");
+              }
+            }}
+          >
+            + Add creature
+          </Button>
+        </div>
       </Card>
     </div>
   );

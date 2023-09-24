@@ -30,7 +30,7 @@ export default async function Home() {
 
 export async function verifyDiscordToken() {
   const cookieStore = cookies();
-  const token = cookieStore.get("token");
+  const token = cookieStore.get("token")?.value;
   const response = await fetch("https://discord.com/api/users/@me", {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -39,6 +39,7 @@ export async function verifyDiscordToken() {
   if (response.status === 200) {
     return (await response.json()) as unknown;
   } else {
+    console.log(await response.json());
     return null;
   }
 }

@@ -12,10 +12,15 @@ import { Input } from "@/components/ui/input";
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
+import { Flipper, Flipped } from "react-flip-toolkit";
+import { useRouter } from "next/navigation";
 
 export default function Encounters() {
+  const router = useRouter();
   const { data: encounters, isLoading } = useEncounters();
-  const { mutate: createDefaultEncounter } = useCreateEncounter();
+  const { mutate: createDefaultEncounter } = useCreateEncounter((encounter) =>
+    router.push(`/encounters/${encounter.id}`)
+  );
   const { mutate: deleteEncounter } = useDeleteEncounter();
   const [encounter, setEncounter] = React.useState({
     name: "",
@@ -54,35 +59,43 @@ export default function Encounters() {
           </Button>
         </form>
       </Card>
-      {encounters &&
-        encounters.map((encounter) => (
-          <Card
-            className="flex justify-between gap-5 items-center pr-5"
-            key={encounter.id}
-          >
-            <Link
-              className="w-full p-5 flex flex-col"
-              href={`/encounters/${encounter.id}`}
-            >
-              <h2 className={"text-2xl pb-5"}>{encounter.name}</h2>
-              <CharacterIconRow id={encounter.id} />
-            </Link>
-            {encounter?.started_at ? (
-              <Link href={`/encounters/${encounter.id}/run`}>
-                <Button>Continue the battle!</Button>
-              </Link>
-            ) : null}
-            <Button
-              variant={"destructive"}
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteEncounter(encounter.id);
-              }}
-            >
-              Delete
-            </Button>
-          </Card>
-        ))}
+      <Flipper flipKey={encounters?.map((encounter) => encounter.id).join("")}>
+        {encounters &&
+          encounters.map((encounter) => (
+            <Flipped flipId={encounter.id} key={encounter.id}>
+              <Card
+                className="flex justify-between gap-5 items-center pr-5"
+                key={encounter.id}
+              >
+                <Link
+                  className="w-full p-5 flex flex-col"
+                  href={`/encounters/${encounter.id}`}
+                >
+                  <h2 className={"text-2xl pb-5"}>{encounter.name}</h2>
+                  {encounter.started_at}
+                  {encounter.started_at ? (
+                    <p>{new Date(encounter.started_at).getUTCDay()}</p>
+                  ) : null}
+                  <CharacterIconRow id={encounter.id} />
+                </Link>
+                {encounter?.started_at ? (
+                  <Link href={`/encounters/${encounter.id}/run`}>
+                    <Button>Continue the battle!</Button>
+                  </Link>
+                ) : null}
+                <Button
+                  variant={"destructive"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteEncounter(encounter.id);
+                  }}
+                >
+                  Delete
+                </Button>
+              </Card>
+            </Flipped>
+          ))}
+      </Flipper>
     </div>
   );
 }
