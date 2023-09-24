@@ -5,6 +5,7 @@ import { useEncounter, useEncounterCreatures } from "@/app/encounters/api";
 import { useEncounterId } from "@/app/encounters/hooks";
 import { getAWSimageURL } from "@/app/encounters/utils";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -14,21 +15,26 @@ export default function SingleEncounter() {
   const id = useEncounterId();
 
   return (
-    <>
-      {creatures?.map((creature) => (
-        <div key={creature.id}>
-          <div className="flex gap-5 flex-wrap items-center">
-            <Image
-              src={getAWSimageURL(creature.id, "icon")}
-              alt={creature.name}
-              width={80}
-              height={80}
-            />
-            {creature.name} {creature.max_hp}
-          </div>
-        </div>
-      ))}
-      <CreatureAddForm />
+    <div className={"flex flex-col items-center gap-10"}>
+      <div className={"flex gap-20 justify-center w-full flex-wrap"}>
+        <Card className={"flex flex-col gap-5 w-full max-w-xl"}>
+          <CardHeader className={"text-center"}>Creatures</CardHeader>
+          {creatures?.map((creature) => (
+            <div key={creature.id}>
+              <div className="flex gap-5 flex-wrap items-center">
+                <Image
+                  src={getAWSimageURL(creature.id, "icon")}
+                  alt={creature.name}
+                  width={80}
+                  height={80}
+                />
+                {creature.name} {creature.max_hp}
+              </div>
+            </div>
+          ))}
+        </Card>
+        <CreatureAddForm className={"w-full max-w-xl"} />
+      </div>
       {encounter?.started_at ? (
         <Link href={`/encounters/${id}/run`}>
           <Button>Continue the battle!</Button>
@@ -38,6 +44,6 @@ export default function SingleEncounter() {
           <Button>Roll initiative!</Button>
         </Link>
       )}
-    </>
+    </div>
   );
 }

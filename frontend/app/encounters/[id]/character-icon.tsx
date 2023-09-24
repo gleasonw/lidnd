@@ -16,6 +16,7 @@ export function CharacterIcon({
       alt={name}
       width={150}
       height={150}
+      className={className}
     />
   );
 }

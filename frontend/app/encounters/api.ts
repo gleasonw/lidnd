@@ -91,8 +91,9 @@ export function useEncounters() {
   });
 }
 
-export function useEncounterCreatures(encounter_id?: number) {
-  const id = encounter_id ? encounter_id : useEncounterId();
+export function useEncounterCreatures(encounter_id: number) {
+  const localId = useEncounterId();
+  const id = encounter_id ? encounter_id : localId;
   return useQuery({
     queryKey: encounterCreaturesKey(id),
     queryFn: async () => {
@@ -109,6 +110,30 @@ export function useEncounterCreatures(encounter_id?: number) {
           },
         }
       );
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
+      return data;
+    },
+  });
+}
+
+export function useUserCreatures(name?: string, filterEncounter?: number) {
+  return useQuery({
+    queryKey: ["userCreatures", name],
+    queryFn: async () => {
+      const { data, error } = await GET(`/api/creatures`, {
+        params: {
+          query: {
+            name,
+            filter_encounter: filterEncounter,
+          },
+        },
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+      });
       if (error) {
         console.log(error.detail);
         throw error;
@@ -204,6 +229,45 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
       if (response.status !== 200) {
         console.log(data.detail);
         throw data;
+      }
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(encounterCreaturesKey(id), data);
+      if (onCreatureAdded) {
+        onCreatureAdded();
+      }
+    },
+  });
+}
+
+export function useAddExistingCreatureToEncounter(
+  onCreatureAdded?: () => void
+) {
+  const queryClient = useQueryClient();
+  const id = useEncounterId();
+  return useMutation({
+    mutationFn: async (creatureData: {
+      creature_id: number;
+      encounter_id: number;
+    }) => {
+      const { error, data } = await POST(
+        `/api/encounters/{encounter_id}/creatures/{creature_id}`,
+        {
+          params: {
+            path: {
+              encounter_id: id,
+              creature_id: creatureData.creature_id,
+            },
+          },
+          headers: {
+            Authorization: `Bearer ${clientToken()}`,
+          },
+        }
+      );
+      if (error) {
+        console.log(error.detail);
+        throw error;
       }
       return data;
     },

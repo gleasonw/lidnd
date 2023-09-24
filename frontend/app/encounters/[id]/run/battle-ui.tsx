@@ -5,7 +5,6 @@ import {
   useEncounterCreatures,
   useNextTurn,
   usePreviousTurn,
-  useUpdateEncounterCreature,
 } from "@/app/encounters/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,6 @@ export function BattleUI() {
   const { data: creatures } = useEncounterCreatures();
   const { mutate: nextTurn } = useNextTurn();
   const { mutate: previousTurn } = usePreviousTurn();
-  const { mutate: editCreature } = useUpdateEncounterCreature();
   const [addingCreature, setAddingCreature] = React.useState(false);
 
   const activeCreature = creatures?.find((creature) => creature.is_active);
@@ -54,7 +52,7 @@ export function BattleUI() {
         {addingCreature ? (
           <Flipped key={"creature-add"} flipId={"creature-add"}>
             <CreatureAddForm
-              className={"self-start"}
+              className={"w-[400px] absolute top-0 right-0 z-10"}
               onSuccess={() => setAddingCreature(false)}
             >
               <Button
@@ -133,22 +131,16 @@ function BattleCard({ creature }: { creature: EncounterCreature }) {
     missingHp = Math.min(missingHp, creature.max_hp);
     return (missingHp / creature.max_hp) * 100;
   }
-  const target = React.useRef<HTMLDivElement>(null);
-  if (creature.is_active) {
-    target.current?.scrollIntoView({ behavior: "smooth", inline: "center" });
-  }
-
   return (
     <div
       key={creature.id}
       className={`flex relative flex-col gap-6 items-center w-40 justify-between }`}
-      ref={target}
     >
       <Card
         key={creature.id}
         className={`relative h-full ${
           creature.is_active &&
-          `outline-4 outline-blue-500 outline transform scale-110 transition-all select-none`
+          `outline-4 outline transform scale-110 transition-all select-none`
         }`}
       >
         <div
