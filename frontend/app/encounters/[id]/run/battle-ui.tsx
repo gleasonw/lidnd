@@ -13,6 +13,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { StatBlock } from "@/app/encounters/[id]/run/stat-block";
 import { CreatureHealthForm } from "@/app/encounters/[id]/run/creature-health-form";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
+import CreatureAddForm from "@/app/encounters/[id]/creature-add-form";
 
 export function BattleUI() {
   const { data: creatures } = useEncounterCreatures();
@@ -34,7 +35,7 @@ export function BattleUI() {
         {creatures?.map((creature) => (
           <div
             key={creature.id}
-            className={`flex flex-col gap-3 items-center w-40 }`}
+            className={`flex flex-col gap-3 items-center w-40 justify-between }`}
           >
             {creature.initiative}
             <Card
@@ -90,6 +91,7 @@ export function BattleUI() {
           <ChevronRightIcon />
         </Button>
       </div>
+      <CreatureAddForm />
     </div>
   );
 }

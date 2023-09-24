@@ -143,8 +143,15 @@ async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
             ), "Channel is not a text channel"
             rendered_md = template.render(overview=overview)
             if message_id:
-                message = await channel.fetch_message(message_id)
-                await message.edit(content=rendered_md)
+                try:
+                    message = await channel.fetch_message(message_id)
+                    await message.edit(content=rendered_md)
+                except discord.NotFound:
+                    new_message = await channel.send(rendered_md)
+                    await cur.execute(
+                        "UPDATE channels SET message_id = %s WHERE user_id = %s",
+                        (new_message.id, user_id),
+                    )
             else:
                 new_message = await channel.send(rendered_md)
                 await cur.execute(
@@ -472,7 +479,7 @@ async def add_creature(
     icon: Annotated[UploadFile, Form()],
     stat_block: Annotated[UploadFile, Form()],
     user=Depends(get_discord_user),
-) -> CreatureResponse:
+) -> List[EncounterCreature]:
     if icon.content_type not in ["image/png"] or stat_block.content_type not in [
         "image/png"
     ]:
@@ -520,7 +527,7 @@ async def add_creature(
             bucket.put_object(
                 Key=f"stat_block-{new_creature.id}.png", Body=stat_block.file
             )
-            return new_creature
+    return await list_creatures(encounter_id)
 
 
 @app.put("/api/creatures/{creature_id}")

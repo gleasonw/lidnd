@@ -91,8 +91,8 @@ export function useEncounters() {
   });
 }
 
-export function useEncounterCreatures() {
-  const id = useEncounterId();
+export function useEncounterCreatures(encounter_id?: number) {
+  const id = encounter_id ? encounter_id : useEncounterId();
   return useQuery({
     queryKey: encounterCreaturesKey(id),
     queryFn: async () => {

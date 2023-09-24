@@ -4,12 +4,14 @@ import Link from "next/link";
 import {
   useCreateEncounter,
   useDeleteEncounter,
+  useEncounterCreatures,
   useEncounters,
 } from "@/app/encounters/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import React from "react";
 import { Card } from "@/components/ui/card";
+import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 
 export default function Encounters() {
   const { data: encounters, isLoading } = useEncounters();
@@ -58,8 +60,12 @@ export default function Encounters() {
             className="flex justify-between gap-5 items-center pr-5"
             key={encounter.id}
           >
-            <Link className="w-full p-5" href={`/encounters/${encounter.id}`}>
-              {encounter.name}
+            <Link
+              className="w-full p-5 flex flex-col"
+              href={`/encounters/${encounter.id}`}
+            >
+              <h2 className={"text-2xl pb-5"}>{encounter.name}</h2>
+              <CharacterIconRow id={encounter.id} />
             </Link>
             {encounter?.started_at ? (
               <Link href={`/encounters/${encounter.id}/run`}>
@@ -77,6 +83,22 @@ export default function Encounters() {
             </Button>
           </Card>
         ))}
+    </div>
+  );
+}
+
+function CharacterIconRow({ id }: { id: number }) {
+  const { data: creatures } = useEncounterCreatures(id);
+
+  return (
+    <div className={"flex gap-3 flex-wrap"}>
+      {creatures?.map((creature) => (
+        <CharacterIcon
+          id={creature.id}
+          name={creature.name}
+          key={creature.id}
+        />
+      ))}
     </div>
   );
 }
