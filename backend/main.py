@@ -6,11 +6,9 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi import (
     BackgroundTasks,
     FastAPI,
-    File,
     Form,
     HTTPException,
     Depends,
-    Request,
     UploadFile,
 )
 from fastapi.middleware.cors import CORSMiddleware
@@ -362,7 +360,7 @@ async def delete_encounter(
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                "DELETE FROM encounters  WHERE id=%s AND user_id=%s",
+                "DELETE FROM encounters WHERE id=%s AND user_id=%s",
                 (encounter_id, user.id),
             )
             if cur.rowcount == 0:

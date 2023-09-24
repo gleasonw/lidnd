@@ -198,6 +198,34 @@ export function useUpdateEncounterCreature() {
     onSuccess: (data) => {
       queryClient.setQueryData(encounterCreaturesKey(id), data);
     },
+    onMutate: async (data) => {
+      await queryClient.cancelQueries(encounterCreaturesKey(id));
+
+      const previousData = queryClient.getQueryData(encounterCreaturesKey(id));
+
+      queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
+        return old.map((c: EncounterCreature) => {
+          if (c.id === data.creature_id) {
+            return {
+              ...c,
+              ...data,
+            };
+          }
+          return c;
+        });
+      });
+
+      return { previousData };
+    },
+    onError: (err, newData, context) => {
+      queryClient.setQueryData(
+        encounterCreaturesKey(id),
+        context?.previousData
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(encounterCreaturesKey(id));
+    },
   });
 }
 
@@ -311,8 +339,17 @@ export function useStartEncounter() {
 }
 
 export function useNextTurn() {
+  return useTurn("next");
+}
+
+export function usePreviousTurn() {
+  return useTurn("previous");
+}
+
+export function useTurn(to: "next" | "previous") {
   const queryClient = useQueryClient();
   const id = useEncounterId();
+
   return useMutation({
     mutationFn: async () => {
       const { error, data } = await POST(
@@ -323,7 +360,7 @@ export function useNextTurn() {
               encounter_id: id,
             },
             query: {
-              to: "next",
+              to,
             },
           },
           headers: {
@@ -337,41 +374,68 @@ export function useNextTurn() {
       }
       return data;
     },
-    onSuccess: (data) => {
-      queryClient.refetchQueries(encounterCreaturesKey(id));
+    onMutate: async () => {
+      await queryClient.cancelQueries(encounterCreaturesKey(id));
+
+      const previousData = queryClient.getQueryData(encounterCreaturesKey(id));
+
+      queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
+        return optimisticTurnUpdate(to, old);
+      });
+
+      return { previousData };
+    },
+    onError: (err, newTodo, context) => {
+      queryClient.setQueryData(
+        encounterCreaturesKey(id),
+        context?.previousData
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(encounterCreaturesKey(id));
     },
   });
 }
 
-export function usePreviousTurn() {
-  const queryClient = useQueryClient();
-  const id = useEncounterId();
-  return useMutation({
-    mutationFn: async () => {
-      const { response, error, data } = await POST(
-        `/api/encounters/{encounter_id}/turn`,
-        {
-          params: {
-            path: {
-              encounter_id: id,
-            },
-            query: {
-              to: "previous",
-            },
-          },
-          headers: {
-            Authorization: `Bearer ${clientToken()}`,
-          },
-        }
-      );
-      if (response.status !== 200) {
-        console.log(await response.text());
-        throw error;
+function optimisticTurnUpdate(
+  to: "next" | "previous",
+  participants: ReadonlyArray<Readonly<EncounterCreature>>
+) {
+  if (participants && Array.isArray(participants)) {
+    const currentActive = participants.find(
+      (c: EncounterCreature) => c.is_active
+    );
+    const activeParticipants = participants.filter(
+      (c: EncounterCreature) => c.hp > 0 || c.is_active
+    );
+    if (currentActive && activeParticipants.length > 1) {
+      let nextActive: EncounterCreature;
+      if (to === "previous") {
+        nextActive =
+          activeParticipants[
+            (activeParticipants.indexOf(currentActive) - 1) %
+              activeParticipants.length
+          ];
+      } else {
+        nextActive =
+          activeParticipants[
+            (activeParticipants.indexOf(currentActive) + 1) %
+              activeParticipants.length
+          ];
       }
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(encounterCreaturesKey(id), data);
-    },
-  });
+      return participants.map((c: EncounterCreature) => {
+        if (c.id === nextActive.id) {
+          return {
+            ...c,
+            is_active: true,
+          };
+        }
+        return {
+          ...c,
+          is_active: false,
+        };
+      });
+    }
+  }
+  return participants;
 }

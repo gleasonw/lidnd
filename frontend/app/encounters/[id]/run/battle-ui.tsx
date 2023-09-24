@@ -3,8 +3,9 @@
 import {
   EncounterCreature,
   useEncounterCreatures,
-  useNextTurn,
+  useTurn,
   usePreviousTurn,
+  useNextTurn,
 } from "@/app/encounters/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,11 +20,14 @@ import { Flipper, Flipped } from "react-flip-toolkit";
 
 export function BattleUI() {
   const { data: creatures } = useEncounterCreatures();
-  const { mutate: nextTurn } = useNextTurn();
-  const { mutate: previousTurn } = usePreviousTurn();
+  const { mutate: nextTurn, isLoading: nextTurnLoading } = useNextTurn();
+  const { mutate: previousTurn, isLoading: previousTurnLoading } =
+    usePreviousTurn();
   const [addingCreature, setAddingCreature] = React.useState(false);
 
   const activeCreature = creatures?.find((creature) => creature.is_active);
+
+  const turnsLoading = nextTurnLoading || previousTurnLoading;
 
   return (
     <div className="flex flex-col gap-5 justify-center items-center relative">
@@ -39,9 +43,7 @@ export function BattleUI() {
         </Button>
       ) : null}
       <Flipper
-        flipKey={
-          creatures?.map((creature) => creature.id).join("") + "creature-add"
-        }
+        flipKey={creatures?.map((creature) => creature.id).join("")}
         className={"flex gap-10 overflow-auto justify-center w-full p-5"}
       >
         {creatures?.map((creature) => (
@@ -50,25 +52,21 @@ export function BattleUI() {
           </Flipped>
         ))}
         {addingCreature ? (
-          <Flipped key={"creature-add"} flipId={"creature-add"}>
-            <CreatureAddForm
-              className={"w-[400px] absolute top-0 right-0 z-10"}
-              onSuccess={() => setAddingCreature(false)}
-            >
-              <Button
-                variant={"ghost"}
-                onClick={() => setAddingCreature(false)}
-              >
-                Cancel
-              </Button>
-            </CreatureAddForm>
-          </Flipped>
+          <CreatureAddForm
+            className={"w-[400px] absolute top-0 right-0 z-10"}
+            onSuccess={() => setAddingCreature(false)}
+          >
+            <Button variant={"ghost"} onClick={() => setAddingCreature(false)}>
+              Cancel
+            </Button>
+          </CreatureAddForm>
         ) : null}
       </Flipper>
       <div className="flex flex-col md:hidden">
         <div className="flex justify-center gap-2">
           <Button
             className="w-20"
+            disabled={turnsLoading}
             onClick={(e) => {
               e.stopPropagation();
               previousTurn();
@@ -77,6 +75,7 @@ export function BattleUI() {
             <ChevronLeftIcon />
           </Button>
           <Button
+            disabled={turnsLoading}
             className="w-20"
             onClick={(e) => {
               e.stopPropagation();
@@ -96,6 +95,7 @@ export function BattleUI() {
       </div>
       <div className="w-full p-4 md:flex hidden">
         <Button
+          disabled={turnsLoading}
           className="w-20"
           onClick={(e) => {
             e.stopPropagation();
@@ -112,6 +112,7 @@ export function BattleUI() {
           />
         )}
         <Button
+          disabled={turnsLoading}
           className="w-20"
           onClick={(e) => {
             e.stopPropagation();

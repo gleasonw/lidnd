@@ -59,7 +59,10 @@ export default function Encounters() {
           </Button>
         </form>
       </Card>
-      <Flipper flipKey={encounters?.map((encounter) => encounter.id).join("")}>
+      <Flipper
+        flipKey={encounters?.map((encounter) => encounter.id).join("")}
+        className={"flex flex-col gap-5"}
+      >
         {encounters &&
           encounters.map((encounter) => (
             <Flipped flipId={encounter.id} key={encounter.id}>

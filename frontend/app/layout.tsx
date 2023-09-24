@@ -1,3 +1,4 @@
+import Providers from "@/app/encounters/providers";
 import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -16,7 +17,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <section>
+          {/* Include shared UI here e.g. a header or sidebar */}
+
+          <Providers>
+            <div className="md:m-5">{children}</div>
+          </Providers>
+        </section>
+      </body>
     </html>
   );
 }

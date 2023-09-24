@@ -14,7 +14,7 @@ export function CreatureHealthForm({
   creature: EncounterCreature;
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
-  const { mutate: edit } = useUpdateEncounterCreature();
+  const { mutate: edit, isLoading } = useUpdateEncounterCreature();
 
   return (
     <>
@@ -31,6 +31,7 @@ export function CreatureHealthForm({
         }}
       />
       <Button
+        disabled={isLoading}
         variant="default"
         className={"bg-red-700"}
         onClick={(e) => {
@@ -44,6 +45,7 @@ export function CreatureHealthForm({
         Damage
       </Button>
       <Button
+        disabled={isLoading}
         variant="default"
         className={"bg-green-700"}
         onClick={(e) => {
