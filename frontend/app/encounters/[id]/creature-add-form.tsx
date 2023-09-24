@@ -3,23 +3,24 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/encounters/hooks";
-import {
-  useAddCreatureToEncounter,
-  useImageUpload,
-} from "@/app/encounters/api";
+import { useAddCreatureToEncounter } from "@/app/encounters/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+type CreaturePost = {
+  name: string;
+  max_hp: string;
+  icon: File | null;
+  stat_block: File | null;
+};
+
 export default function CreatureAddForm() {
-  const [creatureData, setCreatureData] = useState({
+  const [creatureData, setCreatureData] = useState<CreaturePost>({
     name: "",
     max_hp: "",
-    icon: "",
-    stat_block: "",
+    icon: null,
+    stat_block: null,
   });
-  const [iconImage, setIconImage] = useState<File | null>(null);
-  const [statImage, setStatImage] = useState<File | null>(null);
-  const { mutate: uploadImage } = useImageUpload();
 
   const id = useEncounterId();
   const { mutate: addCreature } = useAddCreatureToEncounter();
@@ -49,7 +50,7 @@ export default function CreatureAddForm() {
         Paste icon
         <div
           contentEditable
-          className="bg-gray-100 p-2 rounded-md h-40"
+          className="bg-gray-100 p-2 rounded-md h-auto"
           onPaste={(e) => {
             const clipboardData = e.clipboardData;
             const item = clipboardData.items[0];
@@ -60,13 +61,13 @@ export default function CreatureAddForm() {
             }
 
             const file = item.getAsFile();
-            setIconImage(file);
+            setCreatureData({ ...creatureData, icon: file });
           }}
         />
         Paste stat block
         <div
           contentEditable
-          className="bg-gray-100 p-2 rounded-md h-40"
+          className="bg-gray-100 p-2 rounded-md h-auto"
           onPaste={(e) => {
             const clipboardData = e.clipboardData;
             const item = clipboardData.items[0];
@@ -77,7 +78,7 @@ export default function CreatureAddForm() {
             }
 
             const file = item.getAsFile();
-            setStatImage(file);
+            setCreatureData({ ...creatureData, stat_block: file });
           }}
         />
         <Button
@@ -85,10 +86,19 @@ export default function CreatureAddForm() {
           variant={"secondary"}
           onClick={(e) => {
             e.stopPropagation();
-            addCreature({
-              ...creatureData,
-              max_hp: parseInt(creatureData.max_hp),
-            });
+            if (
+              !isNaN(parseInt(creatureData.max_hp)) &&
+              creatureData.name &&
+              creatureData.stat_block &&
+              creatureData.icon
+            ) {
+              addCreature({
+                ...creatureData,
+                max_hp: parseInt(creatureData.max_hp),
+              });
+            } else {
+              alert("Please fill out all fields");
+            }
           }}
         >
           + Add creature

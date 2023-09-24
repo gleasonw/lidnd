@@ -55,47 +55,54 @@ export interface paths {
     /** Delete Creature */
     delete: operations["delete_creature_api_creatures__creature_id__delete"];
   };
-  "/api/upload_image": {
-    /** Upload Image */
-    post: operations["upload_image_api_upload_image_post"];
-  };
 }
 
 export type webhooks = Record<string, never>;
 
 export interface components {
   schemas: {
-    /** Body_upload_image_api_upload_image_post */
-    Body_upload_image_api_upload_image_post: {
+    /** Body_add_creature_api_encounters__encounter_id__creatures_post */
+    Body_add_creature_api_encounters__encounter_id__creatures_post: {
+      /** Name */
+      name: string;
+      /** Max Hp */
+      max_hp: number;
       /**
-       * File
+       * Icon
        * Format: binary
        */
-      file: string;
+      icon: string;
+      /**
+       * Stat Block
+       * Format: binary
+       */
+      stat_block: string;
     };
     /** CreatureRequest */
     CreatureRequest: {
       /** Name */
       name: string;
-      /** Icon */
+      /**
+       * Icon
+       * Format: binary
+       */
       icon: string;
-      /** Stat Block */
+      /**
+       * Stat Block
+       * Format: binary
+       */
       stat_block: string;
       /** Max Hp */
       max_hp: number;
     };
     /** CreatureResponse */
     CreatureResponse: {
-      /** Name */
-      name: string;
-      /** Icon */
-      icon: string;
-      /** Stat Block */
-      stat_block: string;
-      /** Max Hp */
-      max_hp: number;
       /** Id */
       id: number;
+      /** Name */
+      name: string;
+      /** Max Hp */
+      max_hp: number;
     };
     /** EncounterCreature */
     EncounterCreature: {
@@ -109,16 +116,12 @@ export interface components {
       initiative: number;
       /** Is Active */
       is_active: boolean;
-      /** Name */
-      name: string;
-      /** Icon */
-      icon: string;
-      /** Stat Block */
-      stat_block: string;
-      /** Max Hp */
-      max_hp: number;
       /** Id */
       id: number;
+      /** Name */
+      name: string;
+      /** Max Hp */
+      max_hp: number;
     };
     /** EncounterParticipant */
     EncounterParticipant: {
@@ -443,14 +446,14 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreatureRequest"];
+        "application/x-www-form-urlencoded": components["schemas"]["Body_add_creature_api_encounters__encounter_id__creatures_post"];
       };
     };
     responses: {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["CreatureResponse"];
+          "application/json": components["schemas"]["EncounterCreature"][];
         };
       };
       /** @description Validation Error */
@@ -496,28 +499,6 @@ export interface operations {
       };
       path: {
         creature_id: number;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Upload Image */
-  upload_image_api_upload_image_post: {
-    requestBody: {
-      content: {
-        "multipart/form-data": components["schemas"]["Body_upload_image_api_upload_image_post"];
       };
     };
     responses: {

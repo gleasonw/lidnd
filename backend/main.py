@@ -22,6 +22,7 @@ import discord
 from discord import ApplicationContext
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
+import boto3
 
 load_dotenv()
 
@@ -59,13 +60,15 @@ async def close_pool():
 
 class CreatureRequest(BaseModel):
     name: str
-    icon: str
-    stat_block: str
+    icon: UploadFile
+    stat_block: UploadFile
     max_hp: int
 
 
-class CreatureResponse(CreatureRequest):
+class CreatureResponse(BaseModel):
     id: int
+    name: str
+    max_hp: int
 
 
 class EncounterParticipant(BaseModel):
@@ -421,27 +424,29 @@ async def start_encounter(
         async with conn.cursor(row_factory=class_row(EncounterResponse)) as cur:
             await cur.execute(
                 """
-                WITH ActiveCreature AS (
-                    SELECT creature_id
-                    FROM encounter_participants
-                    WHERE encounter_id = %s
-                    ORDER BY initiative ASC
-                    LIMIT 1
-                )
                 UPDATE encounters
-                SET started_at = CURRENT_TIMESTAMP,
-                    active_creature_id = (SELECT creature_id FROM ActiveCreature)
+                SET started_at = CURRENT_TIMESTAMP
                 WHERE id = %s 
                 AND user_id = %s
-                AND started_at IS NULL;
+                AND started_at IS NULL
                 RETURNING *
                 """,
-                (encounter_id, encounter_id, user.id),
+                (encounter_id, user.id),
+            )
+            encounter = await cur.fetchone()
+
+            await cur.execute(
+                """
+                UPDATE encounter_participants
+                SET is_active = CASE 
+                    WHEN initiative = (SELECT MAX(initiative) FROM encounter_participants WHERE encounter_id = %s) THEN TRUE
+                    ELSE FALSE
+                END
+                WHERE encounter_id = %s
+                """,
+                (encounter_id, encounter_id),
             )
 
-            if cur.rowcount == 0:
-                raise HTTPException(status_code=404, detail="Encounter not found")
-            encounter = await cur.fetchone()
             if not encounter:
                 raise HTTPException(status_code=500, detail="Failed to start encounter")
             return encounter
@@ -461,10 +466,20 @@ async def stop_encounter(encounter_id: int, user=Depends(get_discord_user)) -> N
 
 @app.post("/api/encounters/{encounter_id}/creatures")
 async def add_creature(
-    encounter_id: int, creature: CreatureRequest, user=Depends(get_discord_user)
+    encounter_id: int,
+    name: Annotated[str, Form()],
+    max_hp: Annotated[int, Form()],
+    icon: Annotated[UploadFile, Form()],
+    stat_block: Annotated[UploadFile, Form()],
+    user=Depends(get_discord_user),
 ) -> CreatureResponse:
+    if icon.content_type not in ["image/png"] or stat_block.content_type not in [
+        "image/png"
+    ]:
+        raise HTTPException(status_code=400, detail="Icon must be a JPEG or PNG file")
+
     async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(CreatureResponse)) as cur:
+        async with conn.cursor() as cur:
             # First, ensure the encounter belongs to the user
             await cur.execute(
                 "SELECT id FROM encounters WHERE id=%s AND user_id=%s",
@@ -474,15 +489,14 @@ async def add_creature(
             if not encounter:
                 raise HTTPException(status_code=404, detail="Encounter not found")
 
+        async with conn.cursor(row_factory=class_row(CreatureResponse)) as cur:
             # Create the new creature
             await cur.execute(
-                "INSERT INTO creatures (user_id, name, icon, stat_block, max_hp) VALUES (%s, %s, %s, %s, %s) RETURNING *",
+                "INSERT INTO creatures (user_id, name, max_hp) VALUES (%s, %s, %s) RETURNING *",
                 (
                     user.id,
-                    creature.name,
-                    creature.icon,
-                    creature.stat_block,
-                    creature.max_hp,
+                    name,
+                    max_hp,
                 ),
             )
             new_creature = await cur.fetchone()
@@ -491,8 +505,20 @@ async def add_creature(
 
             # Create a link between the encounter and the creature
             await cur.execute(
-                "INSERT INTO encounter_participants (encounter_id, creature_id, hp, initiative) VALUES (%s, %s, %s, %s)",
-                (encounter_id, new_creature.id, creature.max_hp, 0),
+                "INSERT INTO encounter_participants (encounter_id, creature_id, hp, initiative, is_active) VALUES (%s, %s, %s, %s, %s)",
+                (encounter_id, new_creature.id, max_hp, 0, False),
+            )
+
+            s3 = boto3.resource(
+                "s3",
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            )
+            bucket = s3.Bucket(os.getenv("AWS_BUCKET_NAME"))
+
+            bucket.put_object(Key=f"icon-{new_creature.id}.png", Body=icon.file)
+            bucket.put_object(
+                Key=f"stat_block-{new_creature.id}.png", Body=stat_block.file
             )
             return new_creature
 
@@ -560,14 +586,6 @@ async def list_creatures(
                 (encounter_id,),
             )
             return await cur.fetchall()
-
-
-@app.post("/api/upload_image")
-async def upload_image(file: UploadFile, user=Depends(get_discord_user)):
-    # print image size, dimensions
-    print(file.content_type)
-    print(file.file)
-    return {"filename": file.filename}
 
 
 @bot.event

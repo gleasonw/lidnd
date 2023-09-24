@@ -1,10 +1,9 @@
 "use client";
 
+import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 import InitiativeInput from "@/app/encounters/[id]/roll/InitiativeInput";
 import { useEncounterCreatures, useStartEncounter } from "@/app/encounters/api";
-import { getGoogleDriveImageLink } from "@/app/encounters/utils";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 
 export default function RollingInitiative() {
   const { data: creatures } = useEncounterCreatures();
@@ -15,15 +14,9 @@ export default function RollingInitiative() {
       {creatures?.map((creature) => (
         <div key={creature.id}>
           <div className="flex gap-5 items-center">
-            <Image
-              src={getGoogleDriveImageLink(creature.icon)}
-              alt={creature.name}
-              width={80}
-              height={80}
-            />
+            <CharacterIcon id={creature.id} name={creature.name} />
             <h2>{creature.name}</h2>
             <p>{creature.max_hp}</p>
-
             <InitiativeInput creature={creature} />
           </div>
         </div>

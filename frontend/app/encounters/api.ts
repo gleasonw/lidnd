@@ -194,26 +194,30 @@ export function useAddCreatureToEncounter() {
   const queryClient = useQueryClient();
   const id = useEncounterId();
   return useMutation({
-    mutationFn: async (
-      creatureData: components["schemas"]["CreatureRequest"]
-    ) => {
-      const { error, data } = await POST(
-        `/api/encounters/{encounter_id}/creatures`,
-        {
-          params: {
-            path: {
-              encounter_id: id,
-            },
-          },
-          headers: {
-            Authorization: `Bearer ${clientToken()}`,
-          },
-          body: creatureData,
-        }
-      );
-      if (error) {
-        console.log(error.detail);
-        throw error;
+    mutationFn: async (creatureData: {
+      name: string;
+      max_hp: number;
+      icon: File;
+      stat_block: File;
+    }) => {
+      // we use native fetch here because openapi-fetch doesn't seem to support FormData
+      const formData = new FormData();
+      formData.append("name", creatureData.name);
+      formData.append("max_hp", creatureData.max_hp.toString());
+      formData.append("icon", creatureData.icon);
+      formData.append("stat_block", creatureData.stat_block);
+      formData.append("encounter_id", id.toString());
+      const response = await fetch(`${apiURL}/api/encounters/${id}/creatures`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+        body: formData,
+      });
+      const data = await response.json();
+      if (response.status !== 200) {
+        console.log(data.detail);
+        throw data;
       }
       return data;
     },
@@ -278,7 +282,7 @@ export function useNextTurn() {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(encounterCreaturesKey(id), data);
+      queryClient.refetchQueries(encounterCreaturesKey(id));
     },
   });
 }
@@ -309,30 +313,6 @@ export function usePreviousTurn() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(encounterCreaturesKey(id), data);
-    },
-  });
-}
-
-export function useImageUpload() {
-  return useMutation({
-    mutationFn: async (file: File) => {
-      console.log(file);
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch("http://localhost:8000/api/upload_image", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${clientToken()}`,
-        },
-        body: formData,
-      });
-
-      const data = await response.json();
-      console.log(data);
-      if (response.status !== 200) {
-        console.log(data);
-      }
-      return data;
     },
   });
 }

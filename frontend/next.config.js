@@ -4,7 +4,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "drive.google.com",
+        hostname: "dnd-init-tracker-icons-stats.s3.us-west-1.amazonaws.com",
         pathname: "/*",
         port: "",
       },

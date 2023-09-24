@@ -3,7 +3,7 @@
 import CreatureAddForm from "@/app/encounters/[id]/creature-add-form";
 import { useEncounter, useEncounterCreatures } from "@/app/encounters/api";
 import { useEncounterId } from "@/app/encounters/hooks";
-import { getGoogleDriveImageLink } from "@/app/encounters/utils";
+import { getAWSimageURL } from "@/app/encounters/utils";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,7 +19,7 @@ export default function SingleEncounter() {
         <div key={creature.id}>
           <div className="flex gap-5 flex-wrap items-center">
             <Image
-              src={getGoogleDriveImageLink(creature.icon)}
+              src={getAWSimageURL(creature.id, "icon")}
               alt={creature.name}
               width={80}
               height={80}

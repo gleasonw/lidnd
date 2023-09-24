@@ -1,21 +1,21 @@
-import { getGoogleDriveImageLink } from "@/app/encounters/utils";
+import { getAWSimageURL } from "@/app/encounters/utils";
 import Image from "next/image";
 
 export function CharacterIcon({
-  icon,
+  id,
   name,
   className,
 }: {
-  icon: string;
+  id: number;
   name: string;
   className?: string;
 }) {
   return (
     <Image
-      src={getGoogleDriveImageLink(icon)}
+      src={getAWSimageURL(id, "icon")}
       alt={name}
-      width={80}
-      height={80}
+      width={150}
+      height={150}
     />
   );
 }

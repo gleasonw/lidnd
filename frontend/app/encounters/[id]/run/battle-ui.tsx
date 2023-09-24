@@ -8,12 +8,11 @@ import {
   useUpdateEncounterCreature,
 } from "@/app/encounters/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Image from "next/image";
-import { getGoogleDriveImageLink } from "@/app/encounters/utils";
 import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { StatBlock } from "@/app/encounters/[id]/run/stat-block";
 import { CreatureHealthForm } from "@/app/encounters/[id]/run/creature-health-form";
+import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 
 export function BattleUI() {
   const { data: creatures } = useEncounterCreatures();
@@ -57,12 +56,7 @@ export function BattleUI() {
                 <CardTitle>{creature.name}</CardTitle>
               </CardHeader>
               <CardContent>
-                <Image
-                  src={getGoogleDriveImageLink(creature.icon)}
-                  alt={creature.name}
-                  width={100}
-                  height={100}
-                />
+                <CharacterIcon id={creature.id} name={creature.name} />
               </CardContent>
             </Card>
             <CreatureHealthForm creature={creature} />
@@ -79,9 +73,9 @@ export function BattleUI() {
         >
           <ChevronLeftIcon />
         </Button>
-        {activeCreature?.stat_block && (
+        {activeCreature?.id && (
           <StatBlock
-            url={activeCreature.stat_block}
+            id={activeCreature.id}
             name={activeCreature.name}
             key={activeCreature.id}
           />
