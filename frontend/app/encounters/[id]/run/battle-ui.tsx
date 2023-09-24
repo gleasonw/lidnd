@@ -25,12 +25,6 @@ export function BattleUI() {
   const { mutate: editCreature } = useUpdateEncounterCreature();
   const [addingCreature, setAddingCreature] = React.useState(false);
 
-  function getCreaturePercentDamage(creature: EncounterCreature) {
-    let missingHp = creature.max_hp - creature.hp;
-    missingHp = Math.min(missingHp, creature.max_hp);
-    return (missingHp / creature.max_hp) * 100;
-  }
-
   const activeCreature = creatures?.find((creature) => creature.is_active);
 
   return (
@@ -54,47 +48,7 @@ export function BattleUI() {
       >
         {creatures?.map((creature) => (
           <Flipped flipId={creature.id} key={creature.id}>
-            <div
-              key={creature.id}
-              className={`flex relative flex-col gap-6 items-center w-40 justify-between }`}
-            >
-              <Card
-                key={creature.id}
-                className={`relative h-full ${
-                  creature.is_active &&
-                  `outline-4 outline-blue-500 outline transform scale-110 transition-all select-none`
-                }`}
-              >
-                <div
-                  style={{ height: `${getCreaturePercentDamage(creature)}%` }}
-                  className={`absolute rounded bottom-0 left-0 w-full ${
-                    getCreaturePercentDamage(creature) === 100
-                      ? "bg-gray-500"
-                      : "bg-red-500"
-                  } bg-opacity-50 transition-all`}
-                />
-                {creature.hp > 0 ? (
-                  <div
-                    className={
-                      "absolute opacity-0 transition-opacity hover:opacity-100 top-0 left-0 h-full w-full border flex justify-center items-center z-10"
-                    }
-                  >
-                    <InitiativeInput
-                      creature={creature}
-                      className={"flex flex-col m-5 p-5 rounded gap-5"}
-                    />
-                  </div>
-                ) : null}
-
-                <CardHeader>
-                  <CardTitle>{creature.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CharacterIcon id={creature.id} name={creature.name} />
-                </CardContent>
-              </Card>
-              <CreatureHealthForm creature={creature} />
-            </div>
+            <BattleCard creature={creature} />
           </Flipped>
         ))}
         {addingCreature ? (
@@ -169,6 +123,63 @@ export function BattleUI() {
           <ChevronRightIcon />
         </Button>
       </div>
+    </div>
+  );
+}
+
+function BattleCard({ creature }: { creature: EncounterCreature }) {
+  function getCreaturePercentDamage(creature: EncounterCreature) {
+    let missingHp = creature.max_hp - creature.hp;
+    missingHp = Math.min(missingHp, creature.max_hp);
+    return (missingHp / creature.max_hp) * 100;
+  }
+  const target = React.useRef<HTMLDivElement>(null);
+  if (creature.is_active) {
+    target.current?.scrollIntoView({ behavior: "smooth", inline: "center" });
+  }
+
+  return (
+    <div
+      key={creature.id}
+      className={`flex relative flex-col gap-6 items-center w-40 justify-between }`}
+      ref={target}
+    >
+      <Card
+        key={creature.id}
+        className={`relative h-full ${
+          creature.is_active &&
+          `outline-4 outline-blue-500 outline transform scale-110 transition-all select-none`
+        }`}
+      >
+        <div
+          style={{ height: `${getCreaturePercentDamage(creature)}%` }}
+          className={`absolute rounded bottom-0 left-0 w-full ${
+            getCreaturePercentDamage(creature) === 100
+              ? "bg-gray-500"
+              : "bg-red-500"
+          } bg-opacity-50 transition-all`}
+        />
+        {creature.hp > 0 ? (
+          <div
+            className={
+              "absolute opacity-0 transition-opacity hover:opacity-100 top-0 left-0 h-full w-full border flex justify-center items-center z-10"
+            }
+          >
+            <InitiativeInput
+              creature={creature}
+              className={"flex flex-col m-5 p-5 rounded gap-5"}
+            />
+          </div>
+        ) : null}
+
+        <CardHeader>
+          <CardTitle>{creature.name}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CharacterIcon id={creature.id} name={creature.name} />
+        </CardContent>
+      </Card>
+      <CreatureHealthForm creature={creature} />
     </div>
   );
 }
