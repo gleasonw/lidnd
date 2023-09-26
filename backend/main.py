@@ -70,6 +70,7 @@ class CreatureResponse(BaseModel):
 
 
 class EncounterParticipant(BaseModel):
+    id: int
     creature_id: int
     encounter_id: int
     hp: int
@@ -77,8 +78,9 @@ class EncounterParticipant(BaseModel):
     is_active: bool
 
 
-class EncounterCreature(CreatureResponse, EncounterParticipant):
-    pass
+class EncounterCreature(EncounterParticipant):
+    name: str
+    max_hp: int
 
 
 class EncounterRequest(BaseModel):
@@ -119,8 +121,8 @@ token_validation_cache: Dict[str, Tuple[datetime, DiscordUser]] = {}
 
 async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
     async with pool.connection() as conn:
-        encounter = await get_encounter(encounter_id, UserId(id=user_id))
-        encounter_creatures = await list_encounter_creatures(encounter_id)
+        encounter = await get_user_encounter_by_id(encounter_id, UserId(id=user_id))
+        encounter_creatures = await get_encounter_creatures(encounter_id)
         overview = EncounterOverview(
             **encounter.model_dump(), participants=encounter_creatures
         )
@@ -185,7 +187,9 @@ async def get_discord_user(
 
 
 @app.get("/api/encounters")
-async def list_encounters(user=Depends(get_discord_user)) -> List[EncounterResponse]:
+async def get_user_encounters(
+    user=Depends(get_discord_user),
+) -> List[EncounterResponse]:
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(EncounterResponse)) as cur:
             await cur.execute("SELECT * FROM encounters WHERE user_id = %s", (user.id,))
@@ -193,7 +197,7 @@ async def list_encounters(user=Depends(get_discord_user)) -> List[EncounterRespo
 
 
 @app.get("/api/encounters/{encounter_id}")
-async def get_encounter(
+async def get_user_encounter_by_id(
     encounter_id: int, user=Depends(get_discord_user)
 ) -> EncounterResponse:
     async with pool.connection() as conn:
@@ -217,7 +221,7 @@ async def update_turn(
 ) -> List[EncounterCreature]:
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(EncounterParticipant)) as curs:
-            participants = await list_encounter_creatures(encounter_id)
+            participants = await get_encounter_creatures(encounter_id)
             current_active = [p for p in participants if p.is_active]
             if len(current_active) == 0:
                 raise HTTPException(
@@ -225,7 +229,9 @@ async def update_turn(
                 )
             current_active = current_active[0]
             active_participants = [
-                p for p in participants if p.hp > 0 or p.id == current_active.id
+                p
+                for p in participants
+                if p.hp > 0 or p.creature_id == current_active.creature_id
             ]
 
             if not active_participants:
@@ -265,7 +271,7 @@ async def update_turn(
                 raise HTTPException(
                     status_code=500, detail="Failed to update participants"
                 )
-    return await list_encounter_creatures(encounter_id)
+    return await get_encounter_creatures(encounter_id)
 
 
 @app.post("/api/encounters")
@@ -350,7 +356,7 @@ async def update_encounter_creature(
             updated_creature = await cur.fetchone()
             if not updated_creature:
                 raise HTTPException(status_code=500, detail="Failed to update creature")
-    return await list_encounter_creatures(encounter_id)
+    return await get_encounter_creatures(encounter_id)
 
 
 @app.delete("/api/encounters/{encounter_id}")
@@ -365,7 +371,7 @@ async def delete_encounter(
             )
             if cur.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Encounter not found")
-    return await list_encounters(encounter_id)
+    return await get_user_encounters(UserId(id=user.id))
 
 
 @app.post("/api/encounters/{encounter_id}/start")
@@ -446,7 +452,7 @@ async def add_existing_creature_to_encounter(
                 "INSERT INTO encounter_participants (encounter_id, creature_id, hp, initiative, is_active) VALUES (%s, %s, %s, %s, %s)",
                 (encounter_id, creature_id, max_hp, 0, False),
             )
-    return await list_encounter_creatures(encounter_id)
+    return await get_encounter_creatures(encounter_id)
 
 
 @app.post("/api/encounters/{encounter_id}/creatures")
@@ -505,7 +511,7 @@ async def add_creature_to_encounter(
             bucket.put_object(
                 Key=f"stat_block-{new_creature.id}.png", Body=stat_block.file
             )
-    return await list_encounter_creatures(encounter_id)
+    return await get_encounter_creatures(encounter_id)
 
 
 @app.put("/api/creatures/{creature_id}")
@@ -582,7 +588,7 @@ async def get_user_creatures(
 
 
 @app.get("/api/encounters/{encounter_id}/creatures")
-async def list_encounter_creatures(
+async def get_encounter_creatures(
     encounter_id: int, user=Depends(get_discord_user)
 ) -> List[EncounterCreature]:
     async with pool.connection() as conn:

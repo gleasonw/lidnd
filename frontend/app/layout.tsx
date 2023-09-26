@@ -18,13 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <section>
-          {/* Include shared UI here e.g. a header or sidebar */}
+        {/* Include shared UI here e.g. a header or sidebar */}
 
-          <Providers>
-            <div className="md:m-5">{children}</div>
-          </Providers>
-        </section>
+        <Providers>
+          <div className="md:m-5">{children}</div>
+        </Providers>
       </body>
     </html>
   );

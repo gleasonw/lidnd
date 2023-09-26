@@ -10,14 +10,14 @@ export interface paths {
     get: operations["read_root__get"];
   };
   "/api/encounters": {
-    /** List Encounters */
-    get: operations["list_encounters_api_encounters_get"];
+    /** Get User Encounters */
+    get: operations["get_user_encounters_api_encounters_get"];
     /** Create Encounter */
     post: operations["create_encounter_api_encounters_post"];
   };
   "/api/encounters/{encounter_id}": {
-    /** Get Encounter */
-    get: operations["get_encounter_api_encounters__encounter_id__get"];
+    /** Get User Encounter By Id */
+    get: operations["get_user_encounter_by_id_api_encounters__encounter_id__get"];
     /** Update Encounter */
     put: operations["update_encounter_api_encounters__encounter_id__put"];
     /** Delete Encounter */
@@ -42,8 +42,8 @@ export interface paths {
     post: operations["stop_encounter_api_encounters__encounter_id__stop_post"];
   };
   "/api/encounters/{encounter_id}/creatures": {
-    /** List Encounter Creatures */
-    get: operations["list_encounter_creatures_api_encounters__encounter_id__creatures_get"];
+    /** Get Encounter Creatures */
+    get: operations["get_encounter_creatures_api_encounters__encounter_id__creatures_get"];
     /** Add Creature To Encounter */
     post: operations["add_creature_to_encounter_api_encounters__encounter_id__creatures_post"];
   };
@@ -108,6 +108,8 @@ export interface components {
     };
     /** EncounterCreature */
     EncounterCreature: {
+      /** Id */
+      id: number;
       /** Creature Id */
       creature_id: number;
       /** Encounter Id */
@@ -118,8 +120,6 @@ export interface components {
       initiative: number;
       /** Is Active */
       is_active: boolean;
-      /** Id */
-      id: number;
       /** Name */
       name: string;
       /** Max Hp */
@@ -127,6 +127,8 @@ export interface components {
     };
     /** EncounterParticipant */
     EncounterParticipant: {
+      /** Id */
+      id: number;
       /** Creature Id */
       creature_id: number;
       /** Encounter Id */
@@ -197,8 +199,8 @@ export interface operations {
       };
     };
   };
-  /** List Encounters */
-  list_encounters_api_encounters_get: {
+  /** Get User Encounters */
+  get_user_encounters_api_encounters_get: {
     responses: {
       /** @description Successful Response */
       200: {
@@ -230,8 +232,8 @@ export interface operations {
       };
     };
   };
-  /** Get Encounter */
-  get_encounter_api_encounters__encounter_id__get: {
+  /** Get User Encounter By Id */
+  get_user_encounter_by_id_api_encounters__encounter_id__get: {
     parameters: {
       path: {
         encounter_id: number;
@@ -421,8 +423,8 @@ export interface operations {
       };
     };
   };
-  /** List Encounter Creatures */
-  list_encounter_creatures_api_encounters__encounter_id__creatures_get: {
+  /** Get Encounter Creatures */
+  get_encounter_creatures_api_encounters__encounter_id__creatures_get: {
     parameters: {
       path: {
         encounter_id: number;
@@ -524,7 +526,7 @@ export interface operations {
   };
   /** Get User Creatures */
   get_user_creatures_api_creatures_get: {
-    parameters?: {
+    parameters: {
       query?: {
         name?: string | null;
         filter_encounter?: number | null;

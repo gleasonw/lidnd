@@ -110,7 +110,7 @@ function CharacterIconRow({ id }: { id: number }) {
     <div className={"flex gap-3 flex-wrap"}>
       {creatures?.map((creature) => (
         <CharacterIcon
-          id={creature.id}
+          id={creature.creature_id}
           name={creature.name}
           key={creature.id}
         />

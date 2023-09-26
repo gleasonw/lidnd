@@ -9,6 +9,9 @@ const { GET, PUT, POST, DELETE } = createClient<paths>({ baseUrl: apiURL });
 
 export type EncounterCreature = components["schemas"]["EncounterCreature"];
 export type Encounter = components["schemas"]["EncounterResponse"];
+export type EncounterParticipant =
+  components["schemas"]["EncounterParticipant"];
+export type Creature = components["schemas"]["CreatureResponse"];
 
 export function clientToken() {
   return getCookie("token");
@@ -46,7 +49,7 @@ export function useDeleteEncounter() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await DELETE(`/api/encounters/{encounter_id}`, {
+      const { error, data } = await DELETE(`/api/encounters/{encounter_id}`, {
         params: {
           path: {
             encounter_id: id,
@@ -60,6 +63,7 @@ export function useDeleteEncounter() {
         console.log(error.detail);
         throw error;
       }
+      return data;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(encountersQueryKey, data);
@@ -91,7 +95,7 @@ export function useEncounters() {
   });
 }
 
-export function useEncounterCreatures(encounter_id: number) {
+export function useEncounterCreatures(encounter_id?: number) {
   const localId = useEncounterId();
   const id = encounter_id ? encounter_id : localId;
   return useQuery({
@@ -205,7 +209,7 @@ export function useUpdateEncounterCreature() {
 
       queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
         return old.map((c: EncounterCreature) => {
-          if (c.id === data.creature_id) {
+          if (c.creature_id === data.creature_id) {
             return {
               ...c,
               ...data,
@@ -239,6 +243,7 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
       icon: File;
       stat_block: File;
     }) => {
+      console.log("mutate me");
       // we use native fetch here because openapi-fetch doesn't seem to support FormData
       const formData = new FormData();
       formData.append("name", creatureData.name);
@@ -265,6 +270,39 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
       if (onCreatureAdded) {
         onCreatureAdded();
       }
+    },
+    onMutate: async (data) => {
+      console.log("mutating!");
+      await queryClient.cancelQueries(encounterCreaturesKey(id));
+
+      const previousData = queryClient.getQueryData(encounterCreaturesKey(id));
+
+      queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
+        const newCreature: EncounterCreature = {
+          id: Math.max(...old.map((c: EncounterCreature) => c.id)) + 1,
+          creature_id:
+            Math.max(...old.map((c: EncounterCreature) => c.creature_id)) + 1,
+          encounter_id: id,
+          hp: data.max_hp,
+          max_hp: data.max_hp,
+          name: data.name,
+          is_active: false,
+          initiative: 0,
+        };
+        console.log(newCreature);
+        return [...old, newCreature];
+      });
+
+      return { previousData };
+    },
+    onError: (err, newData, context) => {
+      queryClient.setQueryData(
+        encounterCreaturesKey(id),
+        context?.previousData
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(encounterCreaturesKey(id));
     },
   });
 }
@@ -304,6 +342,37 @@ export function useAddExistingCreatureToEncounter(
       if (onCreatureAdded) {
         onCreatureAdded();
       }
+    },
+    onMutate: async (data) => {
+      console.log("mutating!");
+      await queryClient.cancelQueries(encounterCreaturesKey(id));
+
+      const previousData = queryClient.getQueryData(encounterCreaturesKey(id));
+
+      queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
+        const newCreature: EncounterCreature = {
+          id: Math.max(...old.map((c: EncounterCreature) => c.id)) + 1,
+          creature_id: data.creature_id,
+          encounter_id: id,
+          hp: 0,
+          max_hp: 0,
+          name: "",
+          is_active: false,
+          initiative: 0,
+        };
+        return [...old, newCreature];
+      });
+
+      return { previousData };
+    },
+    onError: (err, newData, context) => {
+      queryClient.setQueryData(
+        encounterCreaturesKey(id),
+        context?.previousData
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(encounterCreaturesKey(id));
     },
   });
 }
@@ -424,7 +493,7 @@ function optimisticTurnUpdate(
           ];
       }
       return participants.map((c: EncounterCreature) => {
-        if (c.id === nextActive.id) {
+        if (c.creature_id === nextActive.creature_id) {
           return {
             ...c,
             is_active: true,

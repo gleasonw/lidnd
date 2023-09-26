@@ -16,19 +16,23 @@ export default function SingleEncounter() {
 
   return (
     <div className={"flex flex-col items-center gap-10"}>
-      <div className={"flex gap-20 justify-center w-full flex-wrap"}>
-        <Card className={"flex flex-col gap-5 w-full max-w-xl"}>
+      <div className={"flex gap-20 justify-center w-full flex-wrap max-h-full"}>
+        <Card
+          className={
+            "flex flex-col gap-5 w-full h-full overflow-y-auto max-w-xl "
+          }
+        >
           <CardHeader className={"text-center"}>Creatures</CardHeader>
-          {creatures?.map((creature) => (
-            <div key={creature.id}>
+          {creatures?.map((encounterParticipant) => (
+            <div key={encounterParticipant.id}>
               <div className="flex gap-5 flex-wrap items-center">
                 <Image
-                  src={getAWSimageURL(creature.id, "icon")}
-                  alt={creature.name}
+                  src={getAWSimageURL(encounterParticipant.creature_id, "icon")}
+                  alt={encounterParticipant.name}
                   width={80}
                   height={80}
                 />
-                {creature.name} {creature.max_hp}
+                {encounterParticipant.name} {encounterParticipant.max_hp}
               </div>
             </div>
           ))}
