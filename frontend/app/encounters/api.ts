@@ -279,7 +279,8 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
 
       queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
         const newCreature: EncounterCreature = {
-          id: Math.max(...old.map((c: EncounterCreature) => c.id)) + 1,
+          creature_id:
+            Math.max(...old.map((c: EncounterCreature) => c.creature_id)) + 1,
           creature_id:
             Math.max(...old.map((c: EncounterCreature) => c.creature_id)) + 1,
           encounter_id: id,
@@ -351,7 +352,8 @@ export function useAddExistingCreatureToEncounter(
 
       queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
         const newCreature: EncounterCreature = {
-          id: Math.max(...old.map((c: EncounterCreature) => c.id)) + 1,
+          creature_id:
+            Math.max(...old.map((c: EncounterCreature) => c.creature_id)) + 1,
           creature_id: data.creature_id,
           encounter_id: id,
           hp: 0,

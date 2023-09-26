@@ -6,18 +6,21 @@ import { useEncounterCreatures, useStartEncounter } from "@/app/encounters/api";
 import { Button } from "@/components/ui/button";
 
 export default function RollingInitiative() {
-  const { data: creatures } = useEncounterCreatures();
+  const { data: encounterParticipants } = useEncounterCreatures();
   const { mutate: startEncounter } = useStartEncounter();
 
   return (
     <div>
-      {creatures?.map((creature) => (
-        <div key={creature.id}>
+      {encounterParticipants?.map((participant) => (
+        <div key={participant.creature_id}>
           <div className="flex gap-5 items-center">
-            <CharacterIcon id={creature.id} name={creature.name} />
-            <h2>{creature.name}</h2>
-            <p>{creature.max_hp}</p>
-            <InitiativeInput creature={creature} />
+            <CharacterIcon
+              id={participant.creature_id}
+              name={participant.name}
+            />
+            <h2>{participant.name}</h2>
+            <p>{participant.max_hp}</p>
+            <InitiativeInput creature={participant} />
           </div>
         </div>
       ))}

@@ -24,7 +24,7 @@ export default function SingleEncounter() {
         >
           <CardHeader className={"text-center"}>Creatures</CardHeader>
           {creatures?.map((encounterParticipant) => (
-            <div key={encounterParticipant.id}>
+            <div key={encounterParticipant.creature_id}>
               <div className="flex gap-5 flex-wrap items-center">
                 <Image
                   src={getAWSimageURL(encounterParticipant.creature_id, "icon")}

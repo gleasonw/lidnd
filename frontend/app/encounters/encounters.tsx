@@ -112,7 +112,7 @@ function CharacterIconRow({ id }: { id: number }) {
         <CharacterIcon
           id={creature.creature_id}
           name={creature.name}
-          key={creature.id}
+          key={creature.creature_id}
         />
       ))}
     </div>

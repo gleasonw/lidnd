@@ -13,7 +13,7 @@ export default function HpInput({ creature }: { creature: EncounterCreature }) {
     <form
       action={async () =>
         await updateEncounterCreature(
-          { creature_id: creature.id, encounter_id: id },
+          { creature_id: creature.creature_id, encounter_id: id },
           creature
         )
       }

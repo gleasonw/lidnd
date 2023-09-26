@@ -3,13 +3,13 @@
 import {
   EncounterCreature,
   useEncounterCreatures,
-  useTurn,
   usePreviousTurn,
   useNextTurn,
+  useEncounter,
 } from "@/app/encounters/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, Timer } from "lucide-react";
 import { StatBlock } from "@/app/encounters/[id]/run/stat-block";
 import { CreatureHealthForm } from "@/app/encounters/[id]/run/creature-health-form";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
@@ -17,20 +17,26 @@ import CreatureAddForm from "@/app/encounters/[id]/creature-add-form";
 import InitiativeInput from "@/app/encounters/[id]/roll/InitiativeInput";
 import React from "react";
 import { Flipper, Flipped } from "react-flip-toolkit";
+import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
 
 export function BattleUI() {
   const { data: creatures } = useEncounterCreatures();
+  const { data: encounter } = useEncounter();
   const { mutate: nextTurn, isLoading: nextTurnLoading } = useNextTurn();
   const { mutate: previousTurn, isLoading: previousTurnLoading } =
     usePreviousTurn();
   const [addingCreature, setAddingCreature] = React.useState(false);
 
-  const activeCreature = creatures?.find((creature) => creature.is_active);
+  const activeParticipant = creatures?.find((creature) => creature.is_active);
 
   const turnsLoading = nextTurnLoading || previousTurnLoading;
 
   return (
     <div className="flex flex-col gap-5 justify-center items-center relative">
+      <div className={"flex absolute top-0 left-0 gap-3 items-center"}>
+        <Timer />
+        <EncounterTime time={encounter?.started_at} />
+      </div>
       {!addingCreature ? (
         <Button
           variant="outline"
@@ -85,11 +91,11 @@ export function BattleUI() {
             <ChevronRightIcon />
           </Button>
         </div>
-        {activeCreature?.id && (
+        {activeParticipant?.id && (
           <StatBlock
-            id={activeCreature.id}
-            name={activeCreature.name}
-            key={activeCreature.id}
+            id={activeParticipant.id}
+            name={activeParticipant.name}
+            key={activeParticipant.id}
           />
         )}
       </div>
@@ -104,11 +110,11 @@ export function BattleUI() {
         >
           <ChevronLeftIcon />
         </Button>
-        {activeCreature?.id && (
+        {activeParticipant?.id && (
           <StatBlock
-            id={activeCreature.id}
-            name={activeCreature.name}
-            key={activeCreature.id}
+            id={activeParticipant.creature_id}
+            name={activeParticipant.name}
+            key={activeParticipant.id}
           />
         )}
         <Button
@@ -169,7 +175,7 @@ function BattleCard({ creature }: { creature: EncounterCreature }) {
           <CardTitle>{creature.name}</CardTitle>
         </CardHeader>
         <CardContent>
-          <CharacterIcon id={creature.id} name={creature.name} />
+          <CharacterIcon id={creature.creature_id} name={creature.name} />
         </CardContent>
       </Card>
       <CreatureHealthForm creature={creature} />

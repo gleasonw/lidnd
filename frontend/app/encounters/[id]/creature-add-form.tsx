@@ -36,9 +36,7 @@ export default function CreatureAddForm({
   const tabs = ["custom", "existing"] as const;
   return (
     <Tabs defaultValue="custom" className={className}>
-      <Card
-        className={`max-w-sm p-5 w-full h-full overflow-y-auto ${className}`}
-      >
+      <Card className={`max-w-sm p-5 w-full h-fit ${className}`}>
         <TabsList>
           <TabsTrigger value="custom">New creature</TabsTrigger>
           <TabsTrigger value="existing">My archive</TabsTrigger>
