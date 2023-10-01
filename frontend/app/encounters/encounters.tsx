@@ -75,9 +75,8 @@ export default function Encounters() {
                   href={`/encounters/${encounter.id}`}
                 >
                   <h2 className={"text-2xl pb-5"}>{encounter.name}</h2>
-                  {encounter.started_at}
                   {encounter.started_at ? (
-                    <p>{new Date(encounter.started_at).getUTCDay()}</p>
+                    <p>{new Date(encounter.started_at).toLocaleDateString()}</p>
                   ) : null}
                   <CharacterIconRow id={encounter.id} />
                 </Link>
