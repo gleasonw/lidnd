@@ -16,7 +16,7 @@ import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 import { Spinner } from "@/components/ui/spinner";
 import { UseMutateFunction } from "@tanstack/react-query";
 
-type CreaturePost = {
+export type CreaturePost = {
   name: string;
   max_hp: number;
   icon: File;

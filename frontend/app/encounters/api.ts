@@ -1,9 +1,15 @@
 import { paths, components } from "@/app/schema";
 import createClient from "openapi-fetch";
 import apiURL from "@/app/apiURL";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  QueryKey,
+} from "@tanstack/react-query";
 import { getCookie } from "cookies-next";
 import { useEncounterId } from "@/app/encounters/hooks";
+import { CreaturePost } from "@/app/encounters/[id]/creature-add-form";
 
 const { GET, PUT, POST, DELETE } = createClient<paths>({ baseUrl: apiURL });
 
@@ -173,6 +179,33 @@ export function useEncounter() {
   });
 }
 
+// Composable function to encapsulate optimistic updates
+export function useOptimisticUpdate<T>(
+  queryKey: QueryKey,
+  localUpdateFn: (oldData: T | undefined, newData: any) => T
+) {
+  const queryClient = useQueryClient();
+
+  return {
+    onMutate: async (newData: any) => {
+      await queryClient.cancelQueries(queryKey);
+      const previousData = queryClient.getQueryData<T>(queryKey);
+
+      queryClient.setQueryData(queryKey, (oldData: T | undefined) =>
+        localUpdateFn(oldData, newData)
+      );
+
+      return { previousData };
+    },
+    onError: (err: any, newData: any, context: any) => {
+      queryClient.setQueryData(queryKey, context?.previousData);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(queryKey);
+    },
+  };
+}
+
 export function useUpdateEncounterCreature() {
   const queryClient = useQueryClient();
   const id = useEncounterId();
@@ -201,43 +234,23 @@ export function useUpdateEncounterCreature() {
       }
       return data;
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(encounterCreaturesKey(id), data);
-    },
-    onMutate: async (data) => {
-      await queryClient.cancelQueries(encounterCreaturesKey(id));
-
-      const previousData = queryClient.getQueryData(encounterCreaturesKey(id));
-
-      queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
-        return old.map((c: EncounterCreature) => {
-          if (c.creature_id === data.creature_id) {
-            return {
-              ...c,
-              ...data,
-            };
+    ...useOptimisticUpdate<EncounterCreature[]>(
+      encounterCreaturesKey(id),
+      (oldData = [], newData) => {
+        return oldData.map((c) => {
+          if (c.creature_id === newData.creature_id) {
+            return { ...c, ...newData };
           }
           return c;
         });
-      });
-
-      return { previousData };
-    },
-    onError: (err, newData, context) => {
-      queryClient.setQueryData(
-        encounterCreaturesKey(id),
-        context?.previousData
-      );
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries(encounterCreaturesKey(id));
-    },
+      }
+    ),
   });
 }
 
 export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
-  const queryClient = useQueryClient();
   const id = useEncounterId();
+
   return useMutation({
     mutationFn: async (creatureData: {
       name: string;
@@ -245,7 +258,6 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
       icon: File;
       stat_block: File;
     }) => {
-      console.log("mutate me");
       // we use native fetch here because openapi-fetch doesn't seem to support FormData
       const formData = new FormData();
       formData.append("name", creatureData.name);
@@ -272,38 +284,24 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
         onCreatureAdded();
       }
     },
-    onMutate: async (data) => {
-      await queryClient.cancelQueries(encounterCreaturesKey(id));
-
-      const previousData = queryClient.getQueryData(encounterCreaturesKey(id));
-
-      queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
+    ...useOptimisticUpdate<EncounterCreature[]>(
+      encounterCreaturesKey(id),
+      (oldData = [], newData) => {
         const newCreature: EncounterCreature = {
-          id: Math.max(...old.map((c: EncounterCreature) => c.id)) + 1,
+          id: Math.max(...oldData.map((c: EncounterCreature) => c.id)) + 1,
           creature_id:
-            Math.max(...old.map((c: EncounterCreature) => c.creature_id)) + 1,
+            Math.max(...oldData.map((c: EncounterCreature) => c.creature_id)) +
+            1,
           encounter_id: id,
-          hp: data.max_hp,
-          max_hp: data.max_hp,
-          name: data.name,
+          hp: newData.max_hp,
+          max_hp: newData.max_hp,
+          name: newData.name,
           is_active: false,
           initiative: 0,
         };
-        console.log(newCreature);
-        return [...old, newCreature];
-      });
-
-      return { previousData };
-    },
-    onError: (err, newData, context) => {
-      queryClient.setQueryData(
-        encounterCreaturesKey(id),
-        context?.previousData
-      );
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries(encounterCreaturesKey(id));
-    },
+        return [...oldData, newCreature];
+      }
+    ),
   });
 }
 
@@ -312,6 +310,7 @@ export function useAddExistingCreatureToEncounter(
 ) {
   const queryClient = useQueryClient();
   const id = useEncounterId();
+
   return useMutation({
     mutationFn: async (creatureData: {
       creature_id: number;
@@ -342,16 +341,12 @@ export function useAddExistingCreatureToEncounter(
         onCreatureAdded();
       }
     },
-    onMutate: async (data) => {
-      console.log("mutating!");
-      await queryClient.cancelQueries(encounterCreaturesKey(id));
-
-      const previousData = queryClient.getQueryData(encounterCreaturesKey(id));
-
-      queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
+    ...useOptimisticUpdate<EncounterCreature[]>(
+      encounterCreaturesKey(id),
+      (oldData = [], newData) => {
         const newCreature: EncounterCreature = {
-          id: Math.max(...old.map((c: EncounterCreature) => c.id)) + 1,
-          creature_id: data.creature_id,
+          id: Math.max(...oldData.map((c: EncounterCreature) => c.id)) + 1,
+          creature_id: newData.creature_id,
           encounter_id: id,
           hp: 0,
           max_hp: 0,
@@ -359,26 +354,16 @@ export function useAddExistingCreatureToEncounter(
           is_active: false,
           initiative: 0,
         };
-        return [...old, newCreature];
-      });
-
-      return { previousData };
-    },
-    onError: (err, newData, context) => {
-      queryClient.setQueryData(
-        encounterCreaturesKey(id),
-        context?.previousData
-      );
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries(encounterCreaturesKey(id));
-    },
+        return [...oldData, newCreature];
+      }
+    ),
   });
 }
 
 export function useRemoveCreatureFromEncounter() {
   const id = useEncounterId();
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (creature_id: number) => {
       const { error, data } = await DELETE(
@@ -401,28 +386,18 @@ export function useRemoveCreatureFromEncounter() {
       }
       return data;
     },
-    onMutate: async (deleted_id) => {
-      await queryClient.cancelQueries(encounterCreaturesKey(id));
-      const previousData = queryClient.getQueryData(encounterCreaturesKey(id));
-      queryClient.setQueryData(encounterCreaturesKey(id), (old: unknown) => {
-        return old?.filter((c: EncounterCreature) => c.id !== deleted_id);
-      });
-      return { previousData };
-    },
-    onError: (err, newData, context) => {
-      queryClient.setQueryData(
-        encounterCreaturesKey(id),
-        context?.previousData
-      );
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries(encounterCreaturesKey(id));
-    },
+    ...useOptimisticUpdate<EncounterCreature[]>(
+      encounterCreaturesKey(id),
+      (oldData = [], newData) => {
+        return oldData.filter((c) => c.id !== newData.id);
+      }
+    ),
   });
 }
 
 export function useCreateCreature() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (creatureData: {
       name: string;
@@ -450,33 +425,21 @@ export function useCreateCreature() {
       }
       return data;
     },
-    onMutate: async (data) => {
-      await queryClient.cancelQueries(allUserCreaturesKey);
-
-      const previousData = queryClient.getQueryData(allUserCreaturesKey);
-
-      queryClient.setQueryData(allUserCreaturesKey, (old: any) => {
+    ...useOptimisticUpdate<Creature[]>(
+      allUserCreaturesKey,
+      (oldData = [], newData) => {
         const newCreature: Creature = {
-          id: Math.max(...old.map((c: Creature) => c.id)) + 1,
-          name: data.name,
-          max_hp: data.max_hp,
+          id: Math.max(...oldData.map((c: Creature) => c.id)) + 1,
+          name: newData.name,
+          max_hp: newData.max_hp,
         };
-        return [...old, newCreature];
-      });
-
-      return { previousData };
-    },
-    onError: (err, newData, context) => {
-      queryClient.setQueryData(allUserCreaturesKey, context?.previousData);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries(allUserCreaturesKey);
-    },
+        return [...oldData, newCreature];
+      }
+    ),
   });
 }
 
 export function useDeleteCreature() {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (creature_id: number) => {
       const { error, data } = await DELETE(`/api/creatures/{creature_id}`, {
@@ -495,20 +458,12 @@ export function useDeleteCreature() {
       }
       return data;
     },
-    onMutate: async (deleted_id) => {
-      await queryClient.cancelQueries(allUserCreaturesKey);
-      const previousData = queryClient.getQueryData(allUserCreaturesKey);
-      queryClient.setQueryData(["userCreatures"], (old: unknown) => {
-        return old?.filter((c: Creature) => c.id !== deleted_id);
-      });
-      return { previousData };
-    },
-    onError: (err, newData, context) => {
-      queryClient.setQueryData(allUserCreaturesKey, context?.previousData);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries(allUserCreaturesKey);
-    },
+    ...useOptimisticUpdate<Creature[]>(
+      allUserCreaturesKey,
+      (oldData = [], newData) => {
+        return oldData.filter((c) => c.id !== newData.id);
+      }
+    ),
   });
 }
 
@@ -578,32 +533,18 @@ export function useTurn(to: "next" | "previous") {
       }
       return data;
     },
-    onMutate: async () => {
-      await queryClient.cancelQueries(encounterCreaturesKey(id));
-
-      const previousData = queryClient.getQueryData(encounterCreaturesKey(id));
-
-      queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
-        return optimisticTurnUpdate(to, old);
-      });
-
-      return { previousData };
-    },
-    onError: (err, newTodo, context) => {
-      queryClient.setQueryData(
-        encounterCreaturesKey(id),
-        context?.previousData
-      );
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries(encounterCreaturesKey(id));
-    },
+    ...useOptimisticUpdate<EncounterCreature[]>(
+      encounterCreaturesKey(id),
+      (oldData = [], newData) => {
+        return optimisticTurnUpdate(to, oldData);
+      }
+    ),
   });
 }
 
 function optimisticTurnUpdate(
   to: "next" | "previous",
-  participants: ReadonlyArray<Readonly<EncounterCreature>>
+  participants: EncounterCreature[]
 ) {
   if (participants && Array.isArray(participants)) {
     const currentActive = participants.find(
