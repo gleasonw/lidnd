@@ -2,6 +2,8 @@
 
 *.pyc
 
+venv
+
 # dependencies
 /node_modules
 /.pnp

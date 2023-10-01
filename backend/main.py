@@ -183,6 +183,7 @@ async def get_discord_user(
                 token_validation_cache[token] = (datetime.now(), user)
                 return user
             else:
+                print(await resp.text())
                 raise HTTPException(status_code=401, detail="Invalid token")
 
 
@@ -426,29 +427,16 @@ async def add_existing_creature_to_encounter(
 ) -> List[EncounterCreature]:
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
-            # First, ensure the encounter belongs to the user
-            await cur.execute(
-                "SELECT id FROM encounters WHERE id=%s AND user_id=%s",
-                (encounter_id, user.id),
-            )
-            encounter = await cur.fetchone()
-            if not encounter:
-                raise HTTPException(status_code=404, detail="Encounter not found")
-
-            # Then, ensure the creature belongs to the user
-            await cur.execute(
-                "SELECT id, max_hp FROM creatures WHERE id=%s AND user_id=%s",
-                (creature_id, user.id),
-            )
-            creature = await cur.fetchone()
-            if not creature:
-                raise HTTPException(status_code=404, detail="Creature not found")
-            _, max_hp = creature
-
-            # Create a link between the encounter and the creature
+            async with asyncio.TaskGroup() as tg:
+                user_encounter = tg.create_task(
+                    get_user_encounter_by_id(encounter_id, user)
+                )
+                user_creature = tg.create_task(get_user_creature(creature_id, user))
+            user_encounter = user_encounter.result()
+            user_creature = user_creature.result()
             await cur.execute(
                 "INSERT INTO encounter_participants (encounter_id, creature_id, hp, initiative, is_active) VALUES (%s, %s, %s, %s, %s)",
-                (encounter_id, creature_id, max_hp, 0, False),
+                (encounter_id, creature_id, user_creature.max_hp, 0, False),
             )
     return await get_encounter_creatures(encounter_id)
 
@@ -468,15 +456,8 @@ async def add_creature_to_encounter(
         raise HTTPException(status_code=400, detail="Icon must be a JPEG or PNG file")
 
     async with pool.connection() as conn:
-        async with conn.cursor() as cur:
-            # First, ensure the encounter belongs to the user
-            await cur.execute(
-                "SELECT id FROM encounters WHERE id=%s AND user_id=%s",
-                (encounter_id, user.id),
-            )
-            encounter = await cur.fetchone()
-            if not encounter:
-                raise HTTPException(status_code=404, detail="Encounter not found")
+        # ensure the encounter belongs to the user, will throw
+        await get_user_encounter_by_id(encounter_id, user)
 
         new_creature = await create_creature(
             name=name, max_hp=max_hp, icon=icon, stat_block=stat_block, user=user
@@ -489,6 +470,46 @@ async def add_creature_to_encounter(
                 (encounter_id, new_creature.id, max_hp, 0, False),
             )
     return await get_encounter_creatures(encounter_id)
+
+
+@app.delete("/api/encounters/{encounter_id}/creatures/{creature_id}")
+async def remove_creature_from_encounter(
+    encounter_id: int, creature_id: int, user=Depends(get_discord_user)
+) -> List[EncounterCreature]:
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            async with asyncio.TaskGroup() as tg:
+                user_encounter = tg.create_task(
+                    get_user_encounter_by_id(encounter_id, user)
+                )
+                user_creature = tg.create_task(get_user_creature(creature_id, user))
+            if user_encounter.exception() or user_creature.exception():
+                raise HTTPException(
+                    status_code=404, detail="Encounter or creature not found"
+                )
+
+            # Delete the link between the encounter and the creature
+            await cur.execute(
+                "DELETE FROM encounter_participants WHERE encounter_id=%s AND creature_id=%s",
+                (encounter_id, creature_id),
+            )
+    return await get_encounter_creatures(encounter_id)
+
+
+@app.get("/api/creatures/{creature_id}")
+async def get_user_creature(
+    creature_id: int, user=Depends(get_discord_user)
+) -> CreatureResponse:
+    async with pool.connection() as conn:
+        async with conn.cursor(row_factory=class_row(CreatureResponse)) as cur:
+            await cur.execute(
+                "SELECT * FROM creatures WHERE id = %s AND user_id = %s",
+                (creature_id, user.id),
+            )
+            creature = await cur.fetchone()
+            if not creature:
+                raise HTTPException(status_code=404, detail="Creature not found")
+            return creature
 
 
 @app.put("/api/creatures/{creature_id}")

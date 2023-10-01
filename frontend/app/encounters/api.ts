@@ -123,6 +123,8 @@ export function useEncounterCreatures(encounter_id?: number) {
   });
 }
 
+const allUserCreaturesKey = ["userCreatures", ""];
+
 export function useUserCreatures(name?: string, filterEncounter?: number) {
   return useQuery({
     queryKey: ["userCreatures", name],
@@ -271,15 +273,13 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
       }
     },
     onMutate: async (data) => {
-      console.log("mutating!");
       await queryClient.cancelQueries(encounterCreaturesKey(id));
 
       const previousData = queryClient.getQueryData(encounterCreaturesKey(id));
 
       queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
         const newCreature: EncounterCreature = {
-          creature_id:
-            Math.max(...old.map((c: EncounterCreature) => c.creature_id)) + 1,
+          id: Math.max(...old.map((c: EncounterCreature) => c.id)) + 1,
           creature_id:
             Math.max(...old.map((c: EncounterCreature) => c.creature_id)) + 1,
           encounter_id: id,
@@ -376,6 +376,105 @@ export function useAddExistingCreatureToEncounter(
   });
 }
 
+export function useRemoveCreatureFromEncounter() {
+  const id = useEncounterId();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (creature_id: number) => {
+      const { error, data } = await DELETE(
+        `/api/encounters/{encounter_id}/creatures/{creature_id}`,
+        {
+          params: {
+            path: {
+              encounter_id: id,
+              creature_id,
+            },
+          },
+          headers: {
+            Authorization: `Bearer ${clientToken()}`,
+          },
+        }
+      );
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
+      return data;
+    },
+    onMutate: async (deleted_id) => {
+      await queryClient.cancelQueries(encounterCreaturesKey(id));
+      const previousData = queryClient.getQueryData(encounterCreaturesKey(id));
+      queryClient.setQueryData(encounterCreaturesKey(id), (old: unknown) => {
+        return old?.filter((c: EncounterCreature) => c.id !== deleted_id);
+      });
+      return { previousData };
+    },
+    onError: (err, newData, context) => {
+      queryClient.setQueryData(
+        encounterCreaturesKey(id),
+        context?.previousData
+      );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(encounterCreaturesKey(id));
+    },
+  });
+}
+
+export function useCreateCreature() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (creatureData: {
+      name: string;
+      max_hp: number;
+      icon: File;
+      stat_block: File;
+    }) => {
+      // we use native fetch here because openapi-fetch doesn't seem to support FormData
+      const formData = new FormData();
+      formData.append("name", creatureData.name);
+      formData.append("max_hp", creatureData.max_hp.toString());
+      formData.append("icon", creatureData.icon);
+      formData.append("stat_block", creatureData.stat_block);
+      const response = await fetch(`${apiURL}/api/creatures`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+        body: formData,
+      });
+      const data = await response.json();
+      if (response.status !== 200) {
+        console.log(data.detail);
+        throw data;
+      }
+      return data;
+    },
+    onMutate: async (data) => {
+      await queryClient.cancelQueries(allUserCreaturesKey);
+
+      const previousData = queryClient.getQueryData(allUserCreaturesKey);
+
+      queryClient.setQueryData(allUserCreaturesKey, (old: any) => {
+        const newCreature: Creature = {
+          id: Math.max(...old.map((c: Creature) => c.id)) + 1,
+          name: data.name,
+          max_hp: data.max_hp,
+        };
+        return [...old, newCreature];
+      });
+
+      return { previousData };
+    },
+    onError: (err, newData, context) => {
+      queryClient.setQueryData(allUserCreaturesKey, context?.previousData);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(allUserCreaturesKey);
+    },
+  });
+}
+
 export function useDeleteCreature() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -397,18 +496,18 @@ export function useDeleteCreature() {
       return data;
     },
     onMutate: async (deleted_id) => {
-      await queryClient.cancelQueries(["userCreatures"]);
-      const previousData = queryClient.getQueryData(["userCreatures"]);
+      await queryClient.cancelQueries(allUserCreaturesKey);
+      const previousData = queryClient.getQueryData(allUserCreaturesKey);
       queryClient.setQueryData(["userCreatures"], (old: unknown) => {
         return old?.filter((c: Creature) => c.id !== deleted_id);
       });
       return { previousData };
     },
     onError: (err, newData, context) => {
-      queryClient.setQueryData(["userCreatures"], context?.previousData);
+      queryClient.setQueryData(allUserCreaturesKey, context?.previousData);
     },
     onSettled: () => {
-      queryClient.invalidateQueries(["userCreatures"]);
+      queryClient.invalidateQueries(allUserCreaturesKey);
     },
   });
 }

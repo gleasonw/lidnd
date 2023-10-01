@@ -4,10 +4,8 @@ import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/encounters/hooks";
 import {
-  EncounterCreature,
   useAddCreatureToEncounter,
   useAddExistingCreatureToEncounter,
-  useEncounterCreatures,
   useUserCreatures,
 } from "@/app/encounters/api";
 import { Button } from "@/components/ui/button";
@@ -16,15 +14,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 import { Spinner } from "@/components/ui/spinner";
+import { UseMutateFunction } from "@tanstack/react-query";
 
 type CreaturePost = {
   name: string;
-  max_hp: string;
-  icon: File | null;
-  stat_block: File | null;
+  max_hp: number;
+  icon: File;
+  stat_block: File;
 };
 
-export default function CreatureAddForm({
+export default function EncounterCreatureAddForm({
   className,
   onSuccess,
   children,
@@ -34,6 +33,8 @@ export default function CreatureAddForm({
   children?: React.ReactNode;
 }) {
   const tabs = ["custom", "existing"] as const;
+  const { mutate: addCreature, isLoading } =
+    useAddCreatureToEncounter(onSuccess);
   return (
     <Tabs defaultValue="custom" className={className}>
       <Card className={`max-w-sm p-5 w-full h-fit ${className}`}>
@@ -44,7 +45,12 @@ export default function CreatureAddForm({
         {tabs.map((tab) => (
           <TabsContent value={tab} key={tab} className="flex flex-col gap-5">
             {tab === "custom" ? (
-              <CustomCreature onSuccess={onSuccess}>{children}</CustomCreature>
+              <CustomCreature
+                onSuccess={onSuccess}
+                mutation={{ onAddCreature: addCreature, isLoading }}
+              >
+                {children}
+              </CustomCreature>
             ) : (
               <ExistingCreature onSuccess={onSuccess}>
                 {children}
@@ -57,26 +63,29 @@ export default function CreatureAddForm({
   );
 }
 
-function CustomCreature({
+export function CustomCreature({
   children,
   onSuccess,
+  mutation,
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onSuccess?: () => void;
+  mutation: {
+    onAddCreature: UseMutateFunction<any, unknown, CreaturePost, unknown>;
+    isLoading: boolean;
+  };
 }) {
-  const [creatureData, setCreatureData] = useState<CreaturePost>({
+  const [creatureData, setCreatureData] = useState({
     name: "",
     max_hp: "",
-    icon: null,
-    stat_block: null,
+    icon: new File([], ""),
+    stat_block: new File([], ""),
   });
   const id = useEncounterId();
-  const { mutate: addCreature, isLoading } =
-    useAddCreatureToEncounter(onSuccess);
 
   return (
     <>
-      {isLoading ? "Loading..." : null}
+      {mutation.isLoading ? "Loading..." : null}
       <Input
         placeholder="Name"
         type="text"
@@ -110,7 +119,9 @@ function CustomCreature({
           }
 
           const file = item.getAsFile();
-          setCreatureData({ ...creatureData, icon: file });
+          file !== null
+            ? setCreatureData({ ...creatureData, icon: file })
+            : null;
         }}
       />
       Paste stat block
@@ -127,7 +138,9 @@ function CustomCreature({
           }
 
           const file = item.getAsFile();
-          setCreatureData({ ...creatureData, stat_block: file });
+          file !== null
+            ? setCreatureData({ ...creatureData, stat_block: file })
+            : null;
         }}
       />
       <div className={"flex gap-5"}>
@@ -143,9 +156,11 @@ function CustomCreature({
               creatureData.stat_block &&
               creatureData.icon
             ) {
-              addCreature({
-                ...creatureData,
+              mutation.onAddCreature({
+                name: creatureData.name,
+                icon: creatureData.icon,
                 max_hp: parseInt(creatureData.max_hp),
+                stat_block: creatureData.stat_block,
               });
             } else {
               alert("Please fill out all fields");

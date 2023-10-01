@@ -6,28 +6,31 @@ import {
   usePreviousTurn,
   useNextTurn,
   useEncounter,
+  useRemoveCreatureFromEncounter,
 } from "@/app/encounters/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeftIcon, ChevronRightIcon, Timer } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, Timer, X } from "lucide-react";
 import { StatBlock } from "@/app/encounters/[id]/run/stat-block";
 import { CreatureHealthForm } from "@/app/encounters/[id]/run/creature-health-form";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
-import CreatureAddForm from "@/app/encounters/[id]/creature-add-form";
+import EncounterCreatureAddForm from "@/app/encounters/[id]/creature-add-form";
 import InitiativeInput from "@/app/encounters/[id]/roll/InitiativeInput";
 import React from "react";
 import { Flipper, Flipped } from "react-flip-toolkit";
 import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
 
 export function BattleUI() {
-  const { data: creatures } = useEncounterCreatures();
+  const { data: encounterParticipants } = useEncounterCreatures();
   const { data: encounter } = useEncounter();
   const { mutate: nextTurn, isLoading: nextTurnLoading } = useNextTurn();
   const { mutate: previousTurn, isLoading: previousTurnLoading } =
     usePreviousTurn();
   const [addingCreature, setAddingCreature] = React.useState(false);
 
-  const activeParticipant = creatures?.find((creature) => creature.is_active);
+  const activeParticipant = encounterParticipants?.find(
+    (creature) => creature.is_active
+  );
 
   const turnsLoading = nextTurnLoading || previousTurnLoading;
 
@@ -35,7 +38,7 @@ export function BattleUI() {
     <div className="flex flex-col gap-5 justify-center items-center relative">
       <div className={"flex absolute top-0 left-0 gap-3 items-center"}>
         <Timer />
-        <EncounterTime time={encounter?.started_at} />
+        <EncounterTime time={encounter?.started_at ?? undefined} />
       </div>
       {!addingCreature ? (
         <Button
@@ -49,23 +52,25 @@ export function BattleUI() {
         </Button>
       ) : null}
       <Flipper
-        flipKey={creatures?.map((creature) => creature.id).join("")}
+        flipKey={encounterParticipants?.map((creature) => creature.id).join("")}
         className={"flex gap-10 overflow-auto justify-center w-full p-5"}
       >
-        {creatures?.map((creature) => (
-          <Flipped flipId={creature.id} key={creature.id}>
-            <BattleCard creature={creature} />
-          </Flipped>
-        ))}
+        {encounterParticipants
+          ?.sort((a, b) => a.initiative - b.initiative)
+          .map((participant) => (
+            <Flipped flipId={participant.id} key={participant.id}>
+              <BattleCard creature={participant} />
+            </Flipped>
+          ))}
         {addingCreature ? (
-          <CreatureAddForm
+          <EncounterCreatureAddForm
             className={"w-[400px] absolute top-0 right-0 z-10"}
             onSuccess={() => setAddingCreature(false)}
           >
             <Button variant={"ghost"} onClick={() => setAddingCreature(false)}>
               Cancel
             </Button>
-          </CreatureAddForm>
+          </EncounterCreatureAddForm>
         ) : null}
       </Flipper>
       <div className="flex flex-col md:hidden">
@@ -138,6 +143,10 @@ function BattleCard({ creature }: { creature: EncounterCreature }) {
     missingHp = Math.min(missingHp, creature.max_hp);
     return (missingHp / creature.max_hp) * 100;
   }
+
+  const { mutate: removeCreatureFromEncounter } =
+    useRemoveCreatureFromEncounter();
+
   return (
     <div
       key={creature.id}
@@ -158,18 +167,25 @@ function BattleCard({ creature }: { creature: EncounterCreature }) {
               : "bg-red-500"
           } bg-opacity-50 transition-all`}
         />
-        {creature.hp > 0 ? (
-          <div
-            className={
-              "absolute opacity-0 transition-opacity hover:opacity-100 top-0 left-0 h-full w-full border flex justify-center items-center z-10"
-            }
+        <div
+          className={
+            "absolute opacity-0 transition-opacity hover:opacity-100 top-0 left-0 h-full w-full border flex justify-center items-center z-10"
+          }
+        >
+          <Button
+            variant="destructive"
+            className={"absolute top-0 right-0 w-12"}
+            onClick={() => removeCreatureFromEncounter(creature.creature_id)}
           >
+            <X />
+          </Button>
+          {creature.hp > 0 ? (
             <InitiativeInput
               creature={creature}
               className={"flex flex-col m-5 p-5 rounded gap-5"}
             />
-          </div>
-        ) : null}
+          ) : null}
+        </div>
 
         <CardHeader>
           <CardTitle>{creature.name}</CardTitle>

@@ -32,6 +32,8 @@ export interface paths {
     put: operations["update_encounter_creature_api_encounters__encounter_id__creatures__creature_id__put"];
     /** Add Existing Creature To Encounter */
     post: operations["add_existing_creature_to_encounter_api_encounters__encounter_id__creatures__creature_id__post"];
+    /** Remove Creature From Encounter */
+    delete: operations["remove_creature_from_encounter_api_encounters__encounter_id__creatures__creature_id__delete"];
   };
   "/api/encounters/{encounter_id}/start": {
     /** Start Encounter */
@@ -48,6 +50,8 @@ export interface paths {
     post: operations["add_creature_to_encounter_api_encounters__encounter_id__creatures_post"];
   };
   "/api/creatures/{creature_id}": {
+    /** Get User Creature */
+    get: operations["get_user_creature_api_creatures__creature_id__get"];
     /** Update Creature */
     put: operations["update_creature_api_creatures__creature_id__put"];
     /** Delete Creature */
@@ -398,6 +402,29 @@ export interface operations {
       };
     };
   };
+  /** Remove Creature From Encounter */
+  remove_creature_from_encounter_api_encounters__encounter_id__creatures__creature_id__delete: {
+    parameters: {
+      path: {
+        encounter_id: number;
+        creature_id: number;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EncounterCreature"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   /** Start Encounter */
   start_encounter_api_encounters__encounter_id__start_post: {
     parameters: {
@@ -481,6 +508,28 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["EncounterCreature"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /** Get User Creature */
+  get_user_creature_api_creatures__creature_id__get: {
+    parameters: {
+      path: {
+        creature_id: number;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CreatureResponse"];
         };
       };
       /** @description Validation Error */

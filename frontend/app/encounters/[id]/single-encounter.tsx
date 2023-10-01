@@ -1,6 +1,6 @@
 "use client";
 
-import CreatureAddForm from "@/app/encounters/[id]/creature-add-form";
+import EncounterCreatureAddForm from "@/app/encounters/[id]/creature-add-form";
 import { useEncounter, useEncounterCreatures } from "@/app/encounters/api";
 import { useEncounterId } from "@/app/encounters/hooks";
 import { getAWSimageURL } from "@/app/encounters/utils";
@@ -37,7 +37,7 @@ export default function SingleEncounter() {
             </div>
           ))}
         </Card>
-        <CreatureAddForm className={"w-full max-w-xl"} />
+        <EncounterCreatureAddForm className={"w-full max-w-xl"} />
       </div>
       {encounter?.started_at ? (
         <Link href={`/encounters/${id}/run`}>

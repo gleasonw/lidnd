@@ -14,9 +14,11 @@ import { Card } from "@/components/ui/card";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 import { Flipper, Flipped } from "react-flip-toolkit";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/app/hooks";
 
 export default function Encounters() {
   const router = useRouter();
+  const { data: user } = useUser();
   const { data: encounters, isLoading } = useEncounters();
   const { mutate: createDefaultEncounter } = useCreateEncounter((encounter) =>
     router.push(`/encounters/${encounter.id}`)
@@ -29,13 +31,19 @@ export default function Encounters() {
 
   return (
     <div className="flex flex-col gap-10">
-      <Card className="max-w-5xl p-5 m-auto w-full">
+      <section>
+        <p className={"text-center"}>
+          Welcome, <span className={"font-bold"}>{user?.username}</span>, to
+          LiDnD!
+        </p>
+      </section>
+      <Card className="max-w-5xl p-5 m-auto w-full h-full max-h-60">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             createDefaultEncounter(encounter);
           }}
-          className="flex flex-col gap-3"
+          className="flex flex-col gap-10"
         >
           <Input
             placeholder="Name"
@@ -54,9 +62,7 @@ export default function Encounters() {
             value={encounter.description}
           />
 
-          <Button type={"submit"} variant={"secondary"} className={"max-w-sm"}>
-            Create encounter
-          </Button>
+          <Button type={"submit"}>Create encounter</Button>
         </form>
       </Card>
       <Flipper
