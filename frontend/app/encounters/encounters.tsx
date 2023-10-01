@@ -72,7 +72,11 @@ export default function Encounters() {
               >
                 <Link
                   className="w-full p-5 flex flex-col"
-                  href={`/encounters/${encounter.id}`}
+                  href={
+                    encounter.started_at
+                      ? `/encounters/${encounter.id}/run`
+                      : `/encounters/${encounter.id}`
+                  }
                 >
                   <h2 className={"text-2xl pb-5"}>{encounter.name}</h2>
                   {encounter.started_at ? (
@@ -80,11 +84,6 @@ export default function Encounters() {
                   ) : null}
                   <CharacterIconRow id={encounter.id} />
                 </Link>
-                {encounter?.started_at ? (
-                  <Link href={`/encounters/${encounter.id}/run`}>
-                    <Button>Continue the battle!</Button>
-                  </Link>
-                ) : null}
                 <Button
                   variant={"destructive"}
                   onClick={(e) => {

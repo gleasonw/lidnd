@@ -56,6 +56,8 @@ export interface paths {
   "/api/creatures": {
     /** Get User Creatures */
     get: operations["get_user_creatures_api_creatures_get"];
+    /** Create Creature */
+    post: operations["create_creature_api_creatures_post"];
   };
 }
 
@@ -65,6 +67,23 @@ export interface components {
   schemas: {
     /** Body_add_creature_to_encounter_api_encounters__encounter_id__creatures_post */
     Body_add_creature_to_encounter_api_encounters__encounter_id__creatures_post: {
+      /** Name */
+      name: string;
+      /** Max Hp */
+      max_hp: number;
+      /**
+       * Icon
+       * Format: binary
+       */
+      icon: string;
+      /**
+       * Stat Block
+       * Format: binary
+       */
+      stat_block: string;
+    };
+    /** Body_create_creature_api_creatures_post */
+    Body_create_creature_api_creatures_post: {
       /** Name */
       name: string;
       /** Max Hp */
@@ -152,13 +171,13 @@ export interface components {
       /** Id */
       id: number;
       /** Name */
-      name: string | null;
+      name?: string | null;
       /** Description */
-      description: string | null;
+      description?: string | null;
       /** Started At */
-      started_at: string | null;
+      started_at?: string | null;
       /** Ended At */
-      ended_at: string | null;
+      ended_at?: string | null;
     };
     /** HTTPValidationError */
     HTTPValidationError: {
@@ -502,9 +521,6 @@ export interface operations {
   /** Delete Creature */
   delete_creature_api_creatures__creature_id__delete: {
     parameters: {
-      query: {
-        encounter_id: number;
-      };
       path: {
         creature_id: number;
       };
@@ -513,7 +529,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["CreatureResponse"][];
         };
       };
       /** @description Validation Error */
@@ -537,6 +553,28 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["CreatureResponse"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /** Create Creature */
+  create_creature_api_creatures_post: {
+    requestBody: {
+      content: {
+        "application/x-www-form-urlencoded": components["schemas"]["Body_create_creature_api_creatures_post"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CreatureResponse"];
         };
       };
       /** @description Validation Error */

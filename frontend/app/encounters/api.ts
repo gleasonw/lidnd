@@ -266,7 +266,6 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(encounterCreaturesKey(id), data);
       if (onCreatureAdded) {
         onCreatureAdded();
       }
@@ -339,7 +338,6 @@ export function useAddExistingCreatureToEncounter(
       return data;
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(encounterCreaturesKey(id), data);
       if (onCreatureAdded) {
         onCreatureAdded();
       }
@@ -352,8 +350,7 @@ export function useAddExistingCreatureToEncounter(
 
       queryClient.setQueryData(encounterCreaturesKey(id), (old: any) => {
         const newCreature: EncounterCreature = {
-          creature_id:
-            Math.max(...old.map((c: EncounterCreature) => c.creature_id)) + 1,
+          id: Math.max(...old.map((c: EncounterCreature) => c.id)) + 1,
           creature_id: data.creature_id,
           encounter_id: id,
           hp: 0,
@@ -375,6 +372,43 @@ export function useAddExistingCreatureToEncounter(
     },
     onSettled: () => {
       queryClient.invalidateQueries(encounterCreaturesKey(id));
+    },
+  });
+}
+
+export function useDeleteCreature() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (creature_id: number) => {
+      const { error, data } = await DELETE(`/api/creatures/{creature_id}`, {
+        params: {
+          path: {
+            creature_id,
+          },
+        },
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+      });
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
+      return data;
+    },
+    onMutate: async (deleted_id) => {
+      await queryClient.cancelQueries(["userCreatures"]);
+      const previousData = queryClient.getQueryData(["userCreatures"]);
+      queryClient.setQueryData(["userCreatures"], (old: unknown) => {
+        return old?.filter((c: Creature) => c.id !== deleted_id);
+      });
+      return { previousData };
+    },
+    onError: (err, newData, context) => {
+      queryClient.setQueryData(["userCreatures"], context?.previousData);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(["userCreatures"]);
     },
   });
 }

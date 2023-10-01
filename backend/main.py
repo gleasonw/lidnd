@@ -224,9 +224,7 @@ async def update_turn(
             participants = await get_encounter_creatures(encounter_id)
             current_active = [p for p in participants if p.is_active]
             if len(current_active) == 0:
-                raise HTTPException(
-                    status_code=500, detail="No active participant found"
-                )
+                current_active = [p for p in participants if p.hp > 0]
             current_active = current_active[0]
             active_participants = [
                 p
@@ -480,36 +478,15 @@ async def add_creature_to_encounter(
             if not encounter:
                 raise HTTPException(status_code=404, detail="Encounter not found")
 
-        async with conn.cursor(row_factory=class_row(CreatureResponse)) as cur:
-            # Create the new creature
-            await cur.execute(
-                "INSERT INTO creatures (user_id, name, max_hp) VALUES (%s, %s, %s) RETURNING *",
-                (
-                    user.id,
-                    name,
-                    max_hp,
-                ),
-            )
-            new_creature = await cur.fetchone()
-            if not new_creature:
-                raise HTTPException(status_code=500, detail="Failed to create creature")
+        new_creature = await create_creature(
+            name=name, max_hp=max_hp, icon=icon, stat_block=stat_block, user=user
+        )
 
+        async with conn.cursor() as cur:
             # Create a link between the encounter and the creature
             await cur.execute(
                 "INSERT INTO encounter_participants (encounter_id, creature_id, hp, initiative, is_active) VALUES (%s, %s, %s, %s, %s)",
                 (encounter_id, new_creature.id, max_hp, 0, False),
-            )
-
-            s3 = boto3.resource(
-                "s3",
-                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            )
-            bucket = s3.Bucket(os.getenv("AWS_BUCKET_NAME"))
-
-            bucket.put_object(Key=f"icon-{new_creature.id}.png", Body=icon.file)
-            bucket.put_object(
-                Key=f"stat_block-{new_creature.id}.png", Body=stat_block.file
             )
     return await get_encounter_creatures(encounter_id)
 
@@ -539,26 +516,71 @@ async def update_creature(
             return updated_creature
 
 
+@app.post("/api/creatures")
+async def create_creature(
+    name: Annotated[str, Form()],
+    max_hp: Annotated[int, Form()],
+    icon: Annotated[UploadFile, Form()],
+    stat_block: Annotated[UploadFile, Form()],
+    user=Depends(get_discord_user),
+) -> CreatureResponse:
+    if icon.content_type not in ["image/png"] or stat_block.content_type not in [
+        "image/png"
+    ]:
+        raise HTTPException(status_code=400, detail="Icon must be a JPEG or PNG file")
+
+    async with pool.connection() as conn:
+        async with conn.cursor(row_factory=class_row(CreatureResponse)) as cur:
+            await cur.execute(
+                """
+                WITH creature_count AS (
+                SELECT COUNT(*) FROM creatures WHERE user_id = %s
+                ), insert_creature AS (
+                INSERT INTO creatures (user_id, name, max_hp)
+                SELECT %s, %s, %s
+                WHERE (SELECT COUNT(*) FROM creature_count) < 30
+                RETURNING *
+                )
+                SELECT * FROM insert_creature;
+                """,
+                (
+                    user.id,
+                    user.id,
+                    name,
+                    max_hp,
+                ),
+            )
+            new_creature = await cur.fetchone()
+            if not new_creature:
+                raise HTTPException(status_code=500, detail="Failed to create creature")
+
+            s3 = boto3.resource(
+                "s3",
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            )
+            bucket = s3.Bucket(os.getenv("AWS_BUCKET_NAME"))
+
+            bucket.put_object(Key=f"icon-{new_creature.id}.png", Body=icon.file)
+            bucket.put_object(
+                Key=f"stat_block-{new_creature.id}.png", Body=stat_block.file
+            )
+            return new_creature
+
+
 @app.delete("/api/creatures/{creature_id}")
 async def delete_creature(
-    encounter_id: int, creature_id: int, user=Depends(get_discord_user)
-) -> None:
+    creature_id: int, user=Depends(get_discord_user)
+) -> List[CreatureResponse]:
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                "SELECT id FROM encounters WHERE id=%s AND user_id=%s",
-                (encounter_id, user.id),
-            )
-            encounter = await cur.fetchone()
-            if not encounter:
-                raise HTTPException(status_code=404, detail="Encounter not found")
-
-            await cur.execute(
-                "DELETE FROM creatures WHERE id=%s AND encounter_id=%s",
-                (creature_id, encounter_id),
+                "DELETE FROM creatures WHERE id=%s AND user_id=%s",
+                (creature_id, user.id),
             )
             if cur.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Creature not found")
+    return await get_user_creatures(user=user)
 
 
 @app.get("/api/creatures")
