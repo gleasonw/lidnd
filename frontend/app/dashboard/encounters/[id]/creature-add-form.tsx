@@ -2,17 +2,17 @@
 
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { useEncounterId } from "@/app/dashboard/hooks";
+import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import {
   useAddCreatureToEncounter,
   useAddExistingCreatureToEncounter,
   useUserCreatures,
-} from "@/app/dashboard/api";
+} from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Flipped, Flipper } from "react-flip-toolkit";
-import { CharacterIcon } from "@/app/dashboard/[id]/character-icon";
+import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import { Spinner } from "@/components/ui/spinner";
 import { UseMutateFunction } from "@tanstack/react-query";
 

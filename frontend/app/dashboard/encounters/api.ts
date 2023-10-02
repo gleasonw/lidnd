@@ -8,8 +8,7 @@ import {
   QueryKey,
 } from "@tanstack/react-query";
 import { getCookie } from "cookies-next";
-import { useEncounterId } from "@/app/dashboard/hooks";
-import { CreaturePost } from "@/app/dashboard/[id]/creature-add-form";
+import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 
 const { GET, PUT, POST, DELETE } = createClient<paths>({ baseUrl: apiURL });
 

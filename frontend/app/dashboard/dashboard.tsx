@@ -6,17 +6,17 @@ import {
   useDeleteEncounter,
   useEncounterCreatures,
   useEncounters,
-} from "@/app/dashboard/api";
+} from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { CharacterIcon } from "@/app/dashboard/[id]/character-icon";
+import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import { Flipper, Flipped } from "react-flip-toolkit";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/app/hooks";
 
-export default function Encounters() {
+export default function Dashboard() {
   const router = useRouter();
   const { data: user } = useUser();
   const { data: encounters, isLoading } = useEncounters();
@@ -84,8 +84,8 @@ export default function Encounters() {
                   className="w-full p-5 flex flex-col"
                   href={
                     encounter.started_at
-                      ? `/encounters/${encounter.id}/run`
-                      : `/encounters/${encounter.id}`
+                      ? `/dashboard/encounters/${encounter.id}/run`
+                      : `/dashboard/encounters/${encounter.id}`
                   }
                 >
                   <h2 className={"text-2xl pb-5"}>{encounter.name}</h2>

@@ -8,7 +8,7 @@ import { logOut } from "@/app/dashboard/actions";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(() => new QueryClient());
-  const routes = ["creatures"] as const;
+  const routes = ["creatures", "discord"] as const;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -27,7 +27,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             {route.charAt(0).toUpperCase() + route.slice(1)}
           </Link>
         ))}
-        <form action={logOut}>
+        <form action={logOut} className={"ml-auto pr-5"}>
           <button type="submit">
             <LogOut />
           </button>

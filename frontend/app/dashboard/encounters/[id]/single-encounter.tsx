@@ -1,9 +1,12 @@
 "use client";
 
-import EncounterCreatureAddForm from "@/app/dashboard/[id]/creature-add-form";
-import { useEncounter, useEncounterCreatures } from "@/app/dashboard/api";
-import { useEncounterId } from "@/app/dashboard/hooks";
-import { getAWSimageURL } from "@/app/dashboard/utils";
+import EncounterCreatureAddForm from "@/app/dashboard/encounters/[id]/creature-add-form";
+import {
+  useEncounter,
+  useEncounterCreatures,
+} from "@/app/dashboard/encounters/api";
+import { useEncounterId } from "@/app/dashboard/encounters/hooks";
+import { getAWSimageURL } from "@/app/dashboard/encounters/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import Image from "next/image";

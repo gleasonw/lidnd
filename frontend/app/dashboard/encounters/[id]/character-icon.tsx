@@ -1,4 +1,4 @@
-import { getAWSimageURL } from "@/app/dashboard/utils";
+import { getAWSimageURL } from "@/app/dashboard/encounters/utils";
 import Image from "next/image";
 
 export function CharacterIcon({

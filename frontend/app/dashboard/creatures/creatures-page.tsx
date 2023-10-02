@@ -1,12 +1,12 @@
 "use client";
 
-import { CharacterIcon } from "@/app/dashboard/[id]/character-icon";
-import { CustomCreature } from "@/app/dashboard/[id]/creature-add-form";
+import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
+import { CustomCreature } from "@/app/dashboard/encounters/[id]/creature-add-form";
 import {
   useCreateCreature,
   useDeleteCreature,
   useUserCreatures,
-} from "@/app/dashboard/api";
+} from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,15 +30,9 @@ export default function CreaturesPage() {
           onChange={(e) => setName(e.target.value)}
           value={name}
         />
-        <button
-          popovertarget="creature-add-form"
-          onClick={() => setAddingCreature(true)}
-        >
-          Add Creature
-        </button>
+        <Button onClick={() => setAddingCreature(true)}>Add Creature</Button>
         {addingCreature ? (
           <Card
-            popover
             id="creature-add-form"
             className={`max-w-sm p-5 w-full h-fit flex flex-col gap-5`}
           >
@@ -70,19 +64,13 @@ export default function CreaturesPage() {
             key={creature.id}
             className={"p-8 flex flex-col gap-3 relative"}
           >
-            <div
-              className={
-                "opacity-0 absolute top-0 left-0 w-full h-full hover:opacity-100 transition-opacity"
-              }
+            <Button
+              variant={"destructive"}
+              className="absolute top-2 right-2 w-14"
+              onClick={() => deleteCreature(creature.id)}
             >
-              <Button
-                variant={"destructive"}
-                className="absolute top-2 right-2 w-14"
-                onClick={() => deleteCreature(creature.id)}
-              >
-                Delete
-              </Button>
-            </div>
+              Delete
+            </Button>
 
             <h2>{creature.name}</h2>
             <CharacterIcon id={creature.id} name={creature.name} />
