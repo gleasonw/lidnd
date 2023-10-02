@@ -1,7 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { useEncounterId } from "@/app/encounters/hooks";
+import { useEncounterId } from "@/app/dashboard/hooks";
 import { EncounterCreature, updateEncounterCreature } from "../../api";
 import React from "react";
 

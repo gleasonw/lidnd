@@ -1,6 +1,6 @@
 "use client";
 
-import { useEncounter } from "@/app/encounters/api";
+import { useEncounter } from "@/app/dashboard/api";
 
 export default function EncounterLayout({
   children,

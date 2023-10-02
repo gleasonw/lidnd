@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     const tokenData = await tokenResponse.json();
     console.log(tokenData);
     let response = NextResponse.redirect(
-      new URL("/encounters", request.url.split("?")[0])
+      new URL("/dashboard", request.url.split("?")[0])
     );
     response.cookies.set("token", tokenData.access_token, {
       path: "/",

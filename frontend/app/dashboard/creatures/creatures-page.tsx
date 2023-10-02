@@ -1,12 +1,12 @@
 "use client";
 
-import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
-import { CustomCreature } from "@/app/encounters/[id]/creature-add-form";
+import { CharacterIcon } from "@/app/dashboard/[id]/character-icon";
+import { CustomCreature } from "@/app/dashboard/[id]/creature-add-form";
 import {
   useCreateCreature,
   useDeleteCreature,
   useUserCreatures,
-} from "@/app/encounters/api";
+} from "@/app/dashboard/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,10 +30,17 @@ export default function CreaturesPage() {
           onChange={(e) => setName(e.target.value)}
           value={name}
         />
-        <Button onClick={() => setAddingCreature(true)}>Add Creature</Button>
+        <button
+          popovertarget="creature-add-form"
+          onClick={() => setAddingCreature(true)}
+        >
+          Add Creature
+        </button>
         {addingCreature ? (
           <Card
-            className={`max-w-sm p-5 w-full h-fit flex flex-col gap-5 absolute z-10`}
+            popover
+            id="creature-add-form"
+            className={`max-w-sm p-5 w-full h-fit flex flex-col gap-5`}
           >
             <CustomCreature
               onSuccess={() => setAddingCreature(false)}

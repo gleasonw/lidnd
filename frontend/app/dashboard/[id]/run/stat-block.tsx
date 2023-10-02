@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { getAWSimageURL } from "@/app/encounters/utils";
+import { getAWSimageURL } from "@/app/dashboard/utils";
 
 export function StatBlock({ id, name }: { id: number; name: string }) {
   // some strange infinite render behavior can occur if the width and height is not

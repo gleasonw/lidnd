@@ -1,4 +1,4 @@
-import Encounters from "@/app/encounters/encounters";
+import Encounters from "@/app/dashboard/encounters";
 
 export default async function Page() {
   return <Encounters />;

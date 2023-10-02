@@ -6,12 +6,12 @@ import {
   useDeleteEncounter,
   useEncounterCreatures,
   useEncounters,
-} from "@/app/encounters/api";
+} from "@/app/dashboard/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
+import { CharacterIcon } from "@/app/dashboard/[id]/character-icon";
 import { Flipper, Flipped } from "react-flip-toolkit";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/app/hooks";
@@ -32,7 +32,11 @@ export default function Encounters() {
   return (
     <div className="flex flex-col gap-10">
       <section>
-        <p className={"text-center"}>
+        <p
+          className={`text-center ${
+            !user ? "opacity-0" : "opacity-100"
+          } transition-opacity`}
+        >
           Welcome, <span className={"font-bold"}>{user?.username}</span>, to
           LiDnD!
         </p>

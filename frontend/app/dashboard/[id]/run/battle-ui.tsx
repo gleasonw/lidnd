@@ -7,18 +7,18 @@ import {
   useNextTurn,
   useEncounter,
   useRemoveCreatureFromEncounter,
-} from "@/app/encounters/api";
+} from "@/app/dashboard/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon, Timer, X } from "lucide-react";
-import { StatBlock } from "@/app/encounters/[id]/run/stat-block";
-import { CreatureHealthForm } from "@/app/encounters/[id]/run/creature-health-form";
-import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
-import EncounterCreatureAddForm from "@/app/encounters/[id]/creature-add-form";
-import InitiativeInput from "@/app/encounters/[id]/roll/InitiativeInput";
+import { StatBlock } from "@/app/dashboard/[id]/run/stat-block";
+import { CreatureHealthForm } from "@/app/dashboard/[id]/run/creature-health-form";
+import { CharacterIcon } from "@/app/dashboard/[id]/character-icon";
+import EncounterCreatureAddForm from "@/app/dashboard/[id]/creature-add-form";
+import InitiativeInput from "@/app/dashboard/[id]/roll/InitiativeInput";
 import React from "react";
 import { Flipper, Flipped } from "react-flip-toolkit";
-import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
+import { EncounterTime } from "@/app/dashboard/[id]/run/encounter-time";
 
 export function BattleUI() {
   const { data: encounterParticipants } = useEncounterCreatures();
