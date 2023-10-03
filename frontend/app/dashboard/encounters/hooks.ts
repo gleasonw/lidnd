@@ -2,6 +2,6 @@ import { usePathname } from "next/navigation";
 
 export function useEncounterId() {
   const pathname = usePathname();
-  const id = pathname.split("/")[2];
-  return parseInt(id);
+  const id = pathname.split("/")[3];
+  return id ? parseInt(id) : null;
 }

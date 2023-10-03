@@ -15,25 +15,26 @@ import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import { Flipper, Flipped } from "react-flip-toolkit";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/app/hooks";
+import { ExternalLink, Plus } from "lucide-react";
+import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-time";
 
 export default function Dashboard() {
   const router = useRouter();
   const { data: user } = useUser();
   const { data: encounters, isLoading } = useEncounters();
   const { mutate: createDefaultEncounter } = useCreateEncounter((encounter) =>
-    router.push(`/encounters/${encounter.id}`)
+    router.push(`dashboard/encounters/${encounter.id}`)
   );
-  const { mutate: deleteEncounter } = useDeleteEncounter();
   const [encounter, setEncounter] = React.useState({
     name: "",
     description: "",
   });
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-20 mx-auto max-w-screen-xl">
       <section>
         <p
-          className={`text-center ${
+          className={`text-center text-xl ${
             !user ? "opacity-0" : "opacity-100"
           } transition-opacity`}
         >
@@ -41,72 +42,48 @@ export default function Dashboard() {
           LiDnD!
         </p>
       </section>
-      <Card className="max-w-5xl p-5 m-auto w-full h-full max-h-60">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            createDefaultEncounter(encounter);
-          }}
-          className="flex flex-col gap-10"
-        >
-          <Input
-            placeholder="Name"
-            type="text"
-            onChange={(e) =>
-              setEncounter({ ...encounter, name: e.target.value })
-            }
-            value={encounter.name}
-          />
-          <Input
-            placeholder="Description"
-            type="text"
-            onChange={(e) =>
-              setEncounter({ ...encounter, description: e.target.value })
-            }
-            value={encounter.description}
-          />
-
-          <Button type={"submit"}>Create encounter</Button>
-        </form>
-      </Card>
-      <Flipper
-        flipKey={encounters?.map((encounter) => encounter.id).join("")}
-        className={"flex flex-col gap-5"}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          createDefaultEncounter(encounter);
+        }}
       >
+        <Button type={"submit"} className={"flex gap-5"}>
+          <Plus />
+          Create encounter
+        </Button>
+      </form>
+      <div className={"grid grid-cols-3 gap-5"}>
         {encounters &&
           encounters.map((encounter) => (
-            <Flipped flipId={encounter.id} key={encounter.id}>
-              <Card
-                className="flex justify-between gap-5 items-center pr-5"
-                key={encounter.id}
-              >
-                <Link
-                  className="w-full p-5 flex flex-col"
-                  href={
-                    encounter.started_at
-                      ? `/dashboard/encounters/${encounter.id}/run`
-                      : `/dashboard/encounters/${encounter.id}`
+            <Link
+              className="group relative"
+              href={
+                encounter.started_at
+                  ? `/dashboard/encounters/${encounter.id}/run`
+                  : `/dashboard/encounters/${encounter.id}`
+              }
+              key={encounter.id}
+            >
+              <Card className="flex flex-col gap-5 p-5 hover:shadow-md transition-all w-full h-full ">
+                <span
+                  className={
+                    "absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 text-white bg-black p-2 rounded-full transition-opacity"
                   }
                 >
-                  <h2 className={"text-2xl pb-5"}>{encounter.name}</h2>
-                  {encounter.started_at ? (
-                    <p>{new Date(encounter.started_at).toLocaleDateString()}</p>
-                  ) : null}
-                  <CharacterIconRow id={encounter.id} />
-                </Link>
-                <Button
-                  variant={"destructive"}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteEncounter(encounter.id);
-                  }}
-                >
-                  Delete
-                </Button>
+                  <ExternalLink />
+                </span>
+                <EncounterTime time={encounter?.started_at ?? undefined} />
+
+                <h2 className={"text-2xl pb-5"}>{encounter.name}</h2>
+                {encounter.started_at ? (
+                  <p>{new Date(encounter.started_at).toLocaleDateString()}</p>
+                ) : null}
+                <CharacterIconRow id={encounter.id} />
               </Card>
-            </Flipped>
+            </Link>
           ))}
-      </Flipper>
+      </div>
     </div>
   );
 }

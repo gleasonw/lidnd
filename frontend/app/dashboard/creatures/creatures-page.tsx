@@ -64,14 +64,6 @@ export default function CreaturesPage() {
             key={creature.id}
             className={"p-8 flex flex-col gap-3 relative"}
           >
-            <Button
-              variant={"destructive"}
-              className="absolute top-2 right-2 w-14"
-              onClick={() => deleteCreature(creature.id)}
-            >
-              Delete
-            </Button>
-
             <h2>{creature.name}</h2>
             <CharacterIcon id={creature.id} name={creature.name} />
           </Card>

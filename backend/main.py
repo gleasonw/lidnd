@@ -168,6 +168,7 @@ def read_root():
 async def get_discord_user(
     token: Annotated[str, Depends(oauth2_scheme)]
 ) -> DiscordUser:
+    print(token)
     if token in token_validation_cache:
         (last_validated, user) = token_validation_cache[token]
         time_diff = datetime.now() - last_validated
@@ -646,6 +647,37 @@ async def get_encounter_creatures(
                 (encounter_id,),
             )
             return await cur.fetchall()
+
+
+class DiscordTextChannel(BaseModel):
+    id: int
+    name: str
+    members: List[str]
+    guild: str
+
+
+@app.get("/api/discord-channel")
+async def get_discord_channel(user=Depends(get_discord_user)) -> DiscordTextChannel:
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT channel_id FROM channels WHERE user_id = %s",
+                (user.id,),
+            )
+            channel_id = await cur.fetchone()
+            if not channel_id:
+                raise HTTPException(status_code=404, detail="Discord channel not found")
+            channel_id = channel_id[0]
+            channel = bot.get_channel(channel_id)
+            assert isinstance(
+                channel, discord.TextChannel
+            ), "Channel is not a text channel"
+            return DiscordTextChannel(
+                id=channel.id,
+                name=channel.name,
+                members=[member.name for member in channel.members],
+                guild=channel.guild.name,
+            )
 
 
 @bot.event

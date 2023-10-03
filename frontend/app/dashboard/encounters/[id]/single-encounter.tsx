@@ -43,11 +43,11 @@ export default function SingleEncounter() {
         <EncounterCreatureAddForm className={"w-full max-w-xl"} />
       </div>
       {encounter?.started_at ? (
-        <Link href={`/encounters/${id}/run`}>
+        <Link href={`${id}/run`}>
           <Button>Continue the battle!</Button>
         </Link>
       ) : (
-        <Link href={`/encounters/${id}/roll`}>
+        <Link href={`${id}/roll`}>
           <Button>Roll initiative!</Button>
         </Link>
       )}

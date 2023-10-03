@@ -1,3 +1,4 @@
+import { Timer } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function EncounterTime({ time }: { time?: string }) {
@@ -11,13 +12,7 @@ export function EncounterTime({ time }: { time?: string }) {
     };
   }, []);
 
-  if (!time)
-    return (
-      <div className="flex flex-col gap-1">
-        <div className="text-gray-500 text-sm">Started</div>
-        <div className="text-gray-500 text-sm">Not started</div>
-      </div>
-    );
+  if (!time) return null;
 
   // time is in UTC, so we need to convert it to local time
   const startedAtUTC = new Date(time);
@@ -30,54 +25,29 @@ export function EncounterTime({ time }: { time?: string }) {
   const hours = minutes / 60;
   const days = hours / 24;
 
+  let timeString = "";
   if (days >= 1) {
-    return (
-      <div className="flex flex-col gap-1">
-        <div className="text-gray-500 text-sm">Started</div>
-        <div className="text-gray-500 text-sm">
-          {startedAtLocal.toLocaleDateString()}
-        </div>
-      </div>
-    );
-  }
-
-  if (hours >= 1) {
-    return (
-      <div className="flex flex-col gap-1">
-        <div className="text-gray-500 text-sm">Started</div>
-        <div className="text-gray-500 text-sm">
-          {Math.floor(hours)} hour{Math.floor(hours) > 1 ? "s" : ""} ago
-        </div>
-      </div>
-    );
-  }
-
-  if (minutes >= 1) {
-    return (
-      <div className="flex flex-col gap-1">
-        <div className="text-gray-500 text-sm">Started</div>
-        <div className="text-gray-500 text-sm">
-          {Math.floor(minutes)} minute{Math.floor(minutes) > 1 ? "s" : ""} ago
-        </div>
-      </div>
-    );
-  }
-
-  if (seconds >= 1) {
-    return (
-      <div className="flex flex-col gap-1">
-        <div className="text-gray-500 text-sm">Started</div>
-        <div className="text-gray-500 text-sm">
-          {Math.floor(seconds)} second{Math.floor(seconds) > 1 ? "s" : ""} ago
-        </div>
-      </div>
-    );
+    timeString = startedAtLocal.toLocaleDateString();
+  } else if (hours >= 1) {
+    timeString = `${Math.floor(hours)} hour${
+      Math.floor(hours) > 1 ? "s" : ""
+    } ago`;
+  } else if (minutes >= 1) {
+    timeString = `${Math.floor(minutes)} minute${
+      Math.floor(minutes) > 1 ? "s" : ""
+    } ago`;
+  } else if (seconds >= 1) {
+    timeString = `${Math.floor(seconds)} second${
+      Math.floor(seconds) > 1 ? "s" : ""
+    } ago`;
+  } else {
+    timeString = "Just now";
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="text-gray-500 text-sm">Started</div>
-      <div className="text-gray-500 text-sm">Just now</div>
+    <div className={"flex gap-5 items-center text-gray-500"}>
+      <Timer />
+      <div className=" text-sm">{timeString}</div>
     </div>
   );
 }

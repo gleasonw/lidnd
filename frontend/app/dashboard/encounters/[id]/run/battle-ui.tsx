@@ -7,18 +7,18 @@ import {
   useNextTurn,
   useEncounter,
   useRemoveCreatureFromEncounter,
-} from "@/app/dashboard/api";
+} from "@/app/dashboard/encounters/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon, Timer, X } from "lucide-react";
-import { StatBlock } from "@/app/dashboard/[id]/run/stat-block";
-import { CreatureHealthForm } from "@/app/dashboard/[id]/run/creature-health-form";
-import { CharacterIcon } from "@/app/dashboard/[id]/character-icon";
-import EncounterCreatureAddForm from "@/app/dashboard/[id]/creature-add-form";
-import InitiativeInput from "@/app/dashboard/[id]/roll/InitiativeInput";
+import { StatBlock } from "@/app/dashboard/encounters/[id]/run/stat-block";
+import { CreatureHealthForm } from "@/app/dashboard/encounters/[id]/run/creature-health-form";
+import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
+import EncounterCreatureAddForm from "@/app/dashboard/encounters/[id]/creature-add-form";
+import InitiativeInput from "@/app/dashboard/encounters/[id]/roll/InitiativeInput";
 import React from "react";
 import { Flipper, Flipped } from "react-flip-toolkit";
-import { EncounterTime } from "@/app/dashboard/[id]/run/encounter-time";
+import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-time";
 
 export function BattleUI() {
   const { data: encounterParticipants } = useEncounterCreatures();
@@ -37,7 +37,6 @@ export function BattleUI() {
   return (
     <div className="flex flex-col gap-5 justify-center items-center relative">
       <div className={"flex absolute top-0 left-0 gap-3 items-center"}>
-        <Timer />
         <EncounterTime time={encounter?.started_at ?? undefined} />
       </div>
       {!addingCreature ? (
@@ -155,8 +154,9 @@ function BattleCard({ creature }: { creature: EncounterCreature }) {
       <Card
         key={creature.id}
         className={`relative h-full ${
-          creature.is_active &&
-          `outline-4 outline transform scale-110 transition-all select-none`
+          creature.is_active
+            ? `outline-4 outline transform scale-110 transition-all select-none`
+            : ""
         }`}
       >
         <div

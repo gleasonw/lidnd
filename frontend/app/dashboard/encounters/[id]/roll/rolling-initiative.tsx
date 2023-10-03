@@ -1,8 +1,11 @@
 "use client";
 
-import { CharacterIcon } from "@/app/dashboard/[id]/character-icon";
-import InitiativeInput from "@/app/dashboard/[id]/roll/InitiativeInput";
-import { useEncounterCreatures, useStartEncounter } from "@/app/dashboard/api";
+import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
+import InitiativeInput from "@/app/dashboard/encounters/[id]/roll/InitiativeInput";
+import {
+  useEncounterCreatures,
+  useStartEncounter,
+} from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
 
 export default function RollingInitiative() {
