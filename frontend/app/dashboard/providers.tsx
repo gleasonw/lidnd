@@ -8,7 +8,19 @@ import { logOut } from "@/app/dashboard/actions";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(() => new QueryClient());
-  const routes = ["creatures", "discord"] as const;
+  const routes = ["dashboard", "creatures", "discord"] as const;
+
+  const routeLabels = {
+    dashboard: "Encounters",
+    creatures: "Creatures",
+    discord: "Discord",
+  } as const;
+
+  const routePaths = {
+    dashboard: "/dashboard",
+    creatures: "/dashboard/creatures",
+    discord: "/dashboard/discord",
+  } as const;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -19,12 +31,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         {routes.map((route) => (
           <Link
             key={route}
-            href={`/dashboard/${route}`}
-            className={
-              "p-2 text-center rounded transition-all hover:bg-gray-200"
-            }
+            href={routePaths[route]}
+            className={`p-2 text-center rounded transition-all hover:bg-gray-200 `}
           >
-            {route.charAt(0).toUpperCase() + route.slice(1)}
+            {routeLabels[route]}
           </Link>
         ))}
         <form action={logOut} className={"ml-auto pr-5"}>

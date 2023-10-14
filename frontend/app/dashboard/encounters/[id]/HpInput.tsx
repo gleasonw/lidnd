@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/dashboard/hooks";
-import { EncounterCreature, updateEncounterCreature } from "../../api";
+import { EncounterCreature, updateEncounterCreature } from "../api";
 import React from "react";
 
 export default function HpInput({ creature }: { creature: EncounterCreature }) {

@@ -15,6 +15,11 @@ import { Flipped, Flipper } from "react-flip-toolkit";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import { Spinner } from "@/components/ui/spinner";
 import { UseMutateFunction } from "@tanstack/react-query";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  DamageType,
+  ResistanceSelector,
+} from "@/app/dashboard/encounters/[id]/resistance-selector";
 
 export type CreaturePost = {
   name: string;
@@ -27,10 +32,12 @@ export default function EncounterCreatureAddForm({
   className,
   onSuccess,
   children,
+  formFields
 }: {
   className?: string;
   onSuccess?: () => void;
   children?: React.ReactNode;
+  formFields?: React.ReactNode;
 }) {
   const tabs = ["custom", "existing"] as const;
   const { mutate: addCreature, isLoading } =
@@ -48,6 +55,7 @@ export default function EncounterCreatureAddForm({
               <CustomCreature
                 onSuccess={onSuccess}
                 mutation={{ onAddCreature: addCreature, isLoading }}
+                formFields={formFields}
               >
                 {children}
               </CustomCreature>
@@ -67,6 +75,7 @@ export function CustomCreature({
   children,
   onSuccess,
   mutation,
+  formFields,
 }: {
   children?: React.ReactNode;
   onSuccess?: () => void;
@@ -74,6 +83,7 @@ export function CustomCreature({
     onAddCreature: UseMutateFunction<any, unknown, CreaturePost, unknown>;
     isLoading: boolean;
   };
+  formFields?: React.ReactNode;
 }) {
   const [creatureData, setCreatureData] = useState({
     name: "",
@@ -81,7 +91,6 @@ export function CustomCreature({
     icon: new File([], ""),
     stat_block: new File([], ""),
   });
-  const id = useEncounterId();
 
   return (
     <>
@@ -143,6 +152,7 @@ export function CustomCreature({
             : null;
         }}
       />
+      {formFields}
       <div className={"flex gap-5"}>
         {children}
         <Button

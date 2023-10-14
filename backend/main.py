@@ -134,6 +134,7 @@ async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
             ids = await cur.fetchone()
             if not ids:
                 return
+            discord_settings = await get_discord_settings(UserId(id=user_id))
             channel_id, message_id = ids
             channel = bot.get_channel(channel_id)
             if not channel:
@@ -141,7 +142,10 @@ async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
             assert isinstance(
                 channel, discord.TextChannel
             ), "Channel is not a text channel"
-            rendered_md = template.render(overview=overview)
+            rendered_md = template.render(
+                overview=overview,
+                settings=discord_settings,
+            )
             if message_id:
                 try:
                     message = await channel.fetch_message(message_id)
@@ -168,7 +172,6 @@ def read_root():
 async def get_discord_user(
     token: Annotated[str, Depends(oauth2_scheme)]
 ) -> DiscordUser:
-    print(token)
     if token in token_validation_cache:
         (last_validated, user) = token_validation_cache[token]
         time_diff = datetime.now() - last_validated
@@ -323,6 +326,7 @@ async def update_encounter_creature(
     encounter_id: int,
     creature_id: int,
     encounter_data: EncounterParticipant,
+    background_tasks: BackgroundTasks,
     user=Depends(get_discord_user),
 ) -> List[EncounterCreature]:
     async with pool.connection() as conn:
@@ -356,6 +360,9 @@ async def update_encounter_creature(
             updated_creature = await cur.fetchone()
             if not updated_creature:
                 raise HTTPException(status_code=500, detail="Failed to update creature")
+            background_tasks.add_task(
+                post_encounter_to_user_channel, user.id, encounter_id
+            )
     return await get_encounter_creatures(encounter_id)
 
 
@@ -680,13 +687,54 @@ async def get_discord_channel(user=Depends(get_discord_user)) -> DiscordTextChan
             )
 
 
+class DiscordEncounterSettings(BaseModel):
+    show_health: bool
+    show_icons: bool
+
+
+@app.get("/api/discord-settings")
+async def get_discord_settings(
+    user=Depends(get_discord_user),
+) -> DiscordEncounterSettings:
+    async with pool.connection() as conn:
+        async with conn.cursor(row_factory=class_row(DiscordEncounterSettings)) as cur:
+            await cur.execute(
+                "SELECT show_health, show_icons FROM discord_settings WHERE user_id = %s",
+                (user.id,),
+            )
+            settings = await cur.fetchone()
+            if not settings:
+                raise HTTPException(
+                    status_code=404, detail="Discord settings not found"
+                )
+
+            return settings
+
+
+@app.put("/api/discord-settings")
+async def update_discord_settings(
+    settings: DiscordEncounterSettings, user=Depends(get_discord_user)
+) -> None:
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+            INSERT INTO discord_settings (user_id, show_health, show_icons) 
+            VALUES (%s, %s, %s) 
+            ON CONFLICT (user_id) 
+            DO UPDATE SET show_health = EXCLUDED.show_health, show_icons = EXCLUDED.show_icons
+            """,
+                (user.id, settings.show_health, settings.show_icons),
+            )
+
+
 @bot.event
 async def on_ready():
     print(f"{bot.user} is ready and online!")
 
 
 @bot.slash_command(
-    name="track-here", description="Make this channel the encounter-tracking channel."
+    name="track", description="Make this channel the encounter-tracking channel."
 )
 async def setup(ctx: ApplicationContext):
     async with pool.connection() as conn:
@@ -698,6 +746,18 @@ async def setup(ctx: ApplicationContext):
             await ctx.respond(
                 "Your encounters from LiDnD will be posted here from now on."
             )
+
+
+@bot.slash_command(
+    name="untrack", description="Stop posting encounters to this channel."
+)
+async def untrack(ctx: ApplicationContext):
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "DELETE FROM channels WHERE channel_id = %s", (ctx.channel_id,)
+            )
+            await ctx.respond("This channel will no longer receive encounters.")
 
 
 token = os.getenv("BOT_TOKEN")

@@ -505,7 +505,6 @@ export function usePreviousTurn() {
 }
 
 export function useTurn(to: "next" | "previous") {
-  const queryClient = useQueryClient();
   const id = useEncounterId();
 
   return useMutation({

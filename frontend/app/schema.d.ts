@@ -63,6 +63,16 @@ export interface paths {
     /** Create Creature */
     post: operations["create_creature_api_creatures_post"];
   };
+  "/api/discord-channel": {
+    /** Get Discord Channel */
+    get: operations["get_discord_channel_api_discord_channel_get"];
+  };
+  "/api/discord-settings": {
+    /** Get Discord Settings */
+    get: operations["get_discord_settings_api_discord_settings_get"];
+    /** Update Discord Settings */
+    put: operations["update_discord_settings_api_discord_settings_put"];
+  };
 }
 
 export type webhooks = Record<string, never>;
@@ -128,6 +138,24 @@ export interface components {
       name: string;
       /** Max Hp */
       max_hp: number;
+    };
+    /** DiscordEncounterSettings */
+    DiscordEncounterSettings: {
+      /** Show Health */
+      show_health: boolean;
+      /** Show Icons */
+      show_icons: boolean;
+    };
+    /** DiscordTextChannel */
+    DiscordTextChannel: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /** Members */
+      members: string[];
+      /** Guild */
+      guild: string;
     };
     /** EncounterCreature */
     EncounterCreature: {
@@ -624,6 +652,50 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["CreatureResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /** Get Discord Channel */
+  get_discord_channel_api_discord_channel_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["DiscordTextChannel"];
+        };
+      };
+    };
+  };
+  /** Get Discord Settings */
+  get_discord_settings_api_discord_settings_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["DiscordEncounterSettings"];
+        };
+      };
+    };
+  };
+  /** Update Discord Settings */
+  update_discord_settings_api_discord_settings_put: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DiscordEncounterSettings"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
         };
       };
       /** @description Validation Error */

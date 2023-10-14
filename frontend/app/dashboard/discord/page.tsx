@@ -1,8 +1,9 @@
 import apiURL from "@/app/apiURL";
-import { Switch } from "@/components/ui/switch";
+import { getDiscordSettings } from "@/app/dashboard/actions";
+import { DiscordSettingsForm } from "@/app/dashboard/discord/settings-form";
 import { cookies } from "next/headers";
 
-export default async function DiscordPaeg() {
+export default async function DiscordPage() {
   const cookieStore = cookies();
   const token = cookieStore.get("token");
   console.log(token);
@@ -13,6 +14,8 @@ export default async function DiscordPaeg() {
       Authorization: `Bearer ${token?.value}`,
     },
   });
+
+  const currentSettings = await getDiscordSettings();
 
   if (channelResponse.status !== 200) {
     return (
@@ -34,17 +37,7 @@ export default async function DiscordPaeg() {
         <span className={"font-bold"}>{channel.name}</span>, part of the{" "}
         <span className={"font-bold"}>{channel.guild}</span> conglomerate.
       </h1>
-
-      <div className={"flex flex-col gap-5 max-w-sm"}>
-        <div className={"flex gap-5 justify-between"}>
-          <label htmlFor="health">Show monster health</label>
-          <Switch id="health" />
-        </div>
-        <div className={"flex gap-5 justify-between"}>
-          <label htmlFor="icon">Show active icon</label>
-          <Switch id="icon" />
-        </div>
-      </div>
+      <DiscordSettingsForm initialSettings={currentSettings} />
     </section>
   );
 }

@@ -9,7 +9,7 @@ import {
 } from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import React from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import { Flipper, Flipped } from "react-flip-toolkit";

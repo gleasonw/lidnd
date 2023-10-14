@@ -9,6 +9,7 @@ export function StatBlock({ id, name }: { id: number; name: string }) {
   // extremely large. I don't much understand Next Image, but this seems to work.
   const [width, setWidth] = React.useState(1000);
   const [height, setHeight] = React.useState(1000);
+  console.log(id);
   return (
     <div className="relative w-full flex justify-center">
       <Image

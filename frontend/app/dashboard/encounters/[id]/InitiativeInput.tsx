@@ -1,7 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { EncounterCreature, useUpdateEncounterCreature } from "../../api";
+import { EncounterCreature, useUpdateEncounterCreature } from "../api";
 import { Button } from "@/components/ui/button";
 import React from "react";
 

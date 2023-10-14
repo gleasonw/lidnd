@@ -1,8 +1,7 @@
 # {{ overview.name }}
 
 {% for participant in overview.participants %}
-{{ participant.name }} `{{ participant.hp }} HP` {% if participant.is_active %} ![Active](https://dnd-init-tracker-icons-stats.s3.us-west-1.amazonaws.com/icon-{{ participant.creature_id }}.png) {% endif %}
+{% if participant.is_active %}**{{ participant.name }}**{% else %}{{ participant.name }}{% endif %}{% if settings.show_health %} `{{ participant.hp }} HP`{% endif %}{% if participant.is_active %} ![Active](https://dnd-init-tracker-icons-stats.s3.us-west-1.amazonaws.com/icon-{{ participant.creature_id }}.png){% endif %}
 {% endfor %}
 
-/////////////////////////////////
-Currently active
+==========================================
