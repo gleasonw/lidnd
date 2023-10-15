@@ -77,14 +77,16 @@ export function BattleUI() {
             ))}
           {addingCreature ? (
             <AnimationListItem key={"add-form"}>
-              <EncounterCreatureAddForm className={"w-[400px] max-h-[600px]"}>
-                <Button
-                  variant={"ghost"}
-                  onClick={() => setAddingCreature(false)}
-                >
-                  Cancel
-                </Button>
-              </EncounterCreatureAddForm>
+              <Card className={`max-w-sm p-5 w-full h-full`}>
+                <EncounterCreatureAddForm>
+                  <Button
+                    variant={"ghost"}
+                    onClick={() => setAddingCreature(false)}
+                  >
+                    Cancel
+                  </Button>
+                </EncounterCreatureAddForm>
+              </Card>
             </AnimationListItem>
           ) : null}
         </div>

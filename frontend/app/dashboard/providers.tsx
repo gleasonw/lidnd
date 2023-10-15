@@ -5,6 +5,7 @@ import React from "react";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { logOut } from "@/app/dashboard/actions";
+import { usePathname } from "next/navigation";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(() => new QueryClient());
@@ -15,6 +16,18 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     creatures: "Creatures",
     discord: "Discord",
   } as const;
+
+  const path = usePathname();
+
+  function getBackground(route: string) {
+    if (route === "dashboard" && path === "/dashboard") {
+      return "bg-gray-200";
+    } else if (route === "creatures" && path === "/dashboard/creatures") {
+      return "bg-gray-200";
+    } else if (route === "discord" && path === "/dashboard/discord") {
+      return "bg-gray-200";
+    }
+  }
 
   const routePaths = {
     dashboard: "/dashboard",
@@ -32,7 +45,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           <Link
             key={route}
             href={routePaths[route]}
-            className={`p-2 text-center rounded transition-all hover:bg-gray-200 `}
+            className={`p-2 text-center rounded transition-all hover:bg-gray-200 ${getBackground(
+              route
+            )}`}
           >
             {routeLabels[route]}
           </Link>

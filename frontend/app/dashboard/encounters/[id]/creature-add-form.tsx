@@ -15,58 +15,56 @@ import { Flipped, Flipper } from "react-flip-toolkit";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import { Spinner } from "@/components/ui/spinner";
 import { UseMutateFunction } from "@tanstack/react-query";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  DamageType,
-  ResistanceSelector,
-} from "@/app/dashboard/encounters/[id]/resistance-selector";
+import { FilePlus, ImagePlus, UserPlus } from "lucide-react";
+import * as z from "zod";
 
-export type CreaturePost = {
-  name: string;
-  max_hp: number;
-  icon: File;
-  stat_block: File;
-};
+export const creatureFormSchema = z.object({
+  name: z.string(),
+  max_hp: z.number(),
+  icon: z.instanceof(File),
+  stat_block: z.instanceof(File),
+});
+
+export type CreaturePost = z.infer<typeof creatureFormSchema>;
 
 export default function EncounterCreatureAddForm({
   className,
   onSuccess,
   children,
-  formFields
+  customCreatureForm,
 }: {
   className?: string;
   onSuccess?: () => void;
   children?: React.ReactNode;
-  formFields?: React.ReactNode;
+  customCreatureForm?: React.ReactNode;
 }) {
   const tabs = ["custom", "existing"] as const;
   const { mutate: addCreature, isLoading } =
     useAddCreatureToEncounter(onSuccess);
   return (
     <Tabs defaultValue="custom" className={className}>
-      <Card className={`max-w-sm p-5 w-full h-fit ${className}`}>
-        <TabsList>
-          <TabsTrigger value="custom">New creature</TabsTrigger>
-          <TabsTrigger value="existing">My archive</TabsTrigger>
-        </TabsList>
-        {tabs.map((tab) => (
-          <TabsContent value={tab} key={tab} className="flex flex-col gap-5">
-            {tab === "custom" ? (
+      <TabsList>
+        <TabsTrigger value="custom">New creature</TabsTrigger>
+        <TabsTrigger value="existing">My archive</TabsTrigger>
+      </TabsList>
+      {tabs.map((tab) => (
+        <TabsContent value={tab} key={tab} className="flex flex-col gap-5">
+          {tab === "custom" ? (
+            customCreatureForm ?? (
               <CustomCreature
                 onSuccess={onSuccess}
                 mutation={{ onAddCreature: addCreature, isLoading }}
-                formFields={formFields}
               >
                 {children}
               </CustomCreature>
-            ) : (
-              <ExistingCreature onSuccess={onSuccess}>
-                {children}
-              </ExistingCreature>
-            )}
-          </TabsContent>
-        ))}
-      </Card>
+            )
+          ) : (
+            <ExistingCreature onSuccess={onSuccess}>
+              {children}
+            </ExistingCreature>
+          )}
+        </TabsContent>
+      ))}
     </Tabs>
   );
 }
@@ -75,7 +73,6 @@ export function CustomCreature({
   children,
   onSuccess,
   mutation,
-  formFields,
 }: {
   children?: React.ReactNode;
   onSuccess?: () => void;
@@ -114,45 +111,20 @@ export function CustomCreature({
         }
         value={creatureData.max_hp}
       />
-      Paste icon
-      <div
-        contentEditable
-        className="bg-gray-100 p-2 rounded-md h-auto"
-        onPaste={(e) => {
-          const clipboardData = e.clipboardData;
-          const item = clipboardData.items[0];
+      <ImageUpload
+        onUpload={(file) => setCreatureData({ ...creatureData, icon: file })}
+      >
+        Paste icon
+        <UserPlus size="50" />
+      </ImageUpload>
 
-          if (!item?.type.startsWith("image")) {
-            e.preventDefault();
-            return;
-          }
+      <ImageUpload
+        onUpload={(file) => setCreatureData({ ...creatureData, icon: file })}
+      >
+        Paste stat block
+        <FilePlus size="50" />
+      </ImageUpload>
 
-          const file = item.getAsFile();
-          file !== null
-            ? setCreatureData({ ...creatureData, icon: file })
-            : null;
-        }}
-      />
-      Paste stat block
-      <div
-        contentEditable
-        className="bg-gray-100 p-2 rounded-md h-auto"
-        onPaste={(e) => {
-          const clipboardData = e.clipboardData;
-          const item = clipboardData.items[0];
-
-          if (!item?.type.startsWith("image")) {
-            e.preventDefault();
-            return;
-          }
-
-          const file = item.getAsFile();
-          file !== null
-            ? setCreatureData({ ...creatureData, stat_block: file })
-            : null;
-        }}
-      />
-      {formFields}
       <div className={"flex gap-5"}>
         {children}
         <Button
@@ -181,6 +153,39 @@ export function CustomCreature({
         </Button>
       </div>
     </>
+  );
+}
+
+export function ImageUpload({
+  onUpload,
+  children,
+}: {
+  onUpload: (file?: File) => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <span className="relative h-auto p-5">
+      <span className="mx-auto my-auto h-full flex flex-col gap-3 text-xl justify-center items-center z-10">
+        {children}
+      </span>
+
+      <div
+        contentEditable
+        className="bg-gray-100 p-2 rounded-md absolute h-full w-full top-0 left-0"
+        onPaste={(e) => {
+          const clipboardData = e.clipboardData;
+          const item = clipboardData.items[0];
+
+          if (!item?.type.startsWith("image")) {
+            e.preventDefault();
+            return;
+          }
+
+          const file = item.getAsFile();
+          file !== null ? onUpload(file) : onUpload(undefined);
+        }}
+      />
+    </span>
   );
 }
 
