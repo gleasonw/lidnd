@@ -9,14 +9,14 @@ import {
   useUserCreatures,
 } from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Flipped, Flipper } from "react-flip-toolkit";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import { Spinner } from "@/components/ui/spinner";
 import { UseMutateFunction } from "@tanstack/react-query";
 import { FilePlus, ImagePlus, UserPlus } from "lucide-react";
 import * as z from "zod";
+import { AnimatePresence } from "framer-motion";
+import { AnimationListItem } from "@/app/dashboard/encounters/[id]/run/battle-ui";
 
 export const creatureFormSchema = z.object({
   name: z.string(),
@@ -39,7 +39,7 @@ export default function EncounterCreatureAddForm({
   customCreatureForm?: React.ReactNode;
 }) {
   const tabs = ["custom", "existing"] as const;
-  const { mutate: addCreature, isLoading } =
+  const { mutate: addCreature, isPending } =
     useAddCreatureToEncounter(onSuccess);
   return (
     <Tabs defaultValue="custom" className={className}>
@@ -53,7 +53,7 @@ export default function EncounterCreatureAddForm({
             customCreatureForm ?? (
               <CustomCreature
                 onSuccess={onSuccess}
-                mutation={{ onAddCreature: addCreature, isLoading }}
+                mutation={{ onAddCreature: addCreature, isPending }}
               >
                 {children}
               </CustomCreature>
@@ -78,7 +78,7 @@ export function CustomCreature({
   onSuccess?: () => void;
   mutation: {
     onAddCreature: UseMutateFunction<any, unknown, CreaturePost, unknown>;
-    isLoading: boolean;
+    isPending: boolean;
   };
   formFields?: React.ReactNode;
 }) {
@@ -91,7 +91,7 @@ export function CustomCreature({
 
   return (
     <>
-      {mutation.isLoading ? "Loading..." : null}
+      {mutation.isPending ? "Loading..." : null}
       <Input
         placeholder="Name"
         type="text"
@@ -113,17 +113,13 @@ export function CustomCreature({
       />
       <ImageUpload
         onUpload={(file) => setCreatureData({ ...creatureData, icon: file })}
-      >
-        Paste icon
-        <UserPlus size="50" />
-      </ImageUpload>
+      />
 
       <ImageUpload
-        onUpload={(file) => setCreatureData({ ...creatureData, icon: file })}
-      >
-        Paste stat block
-        <FilePlus size="50" />
-      </ImageUpload>
+        onUpload={(file) =>
+          setCreatureData({ ...creatureData, stat_block: file })
+        }
+      />
 
       <div className={"flex gap-5"}>
         {children}
@@ -163,18 +159,22 @@ export function ImageUpload({
   onUpload: (file?: File) => void;
   children?: React.ReactNode;
 }) {
+  const [hasContent, setHasContent] = React.useState(false);
   return (
-    <span className="relative h-auto p-5">
-      <span className="mx-auto my-auto h-full flex flex-col gap-3 text-xl justify-center items-center z-10">
-        {children}
-      </span>
-
+    <span className="h-auto relative p-5 flex flex-col gap-5 items-center group">
+      {!hasContent && (
+        <span>
+          Paste
+        </span>
+      )}
       <div
+        placeholder="Paste image"
         contentEditable
-        className="bg-gray-100 p-2 rounded-md absolute h-full w-full top-0 left-0"
+        className="flex w-full relative rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         onPaste={(e) => {
           const clipboardData = e.clipboardData;
           const item = clipboardData.items[0];
+          console.log(item);
 
           if (!item?.type.startsWith("image")) {
             e.preventDefault();
@@ -183,8 +183,15 @@ export function ImageUpload({
 
           const file = item.getAsFile();
           file !== null ? onUpload(file) : onUpload(undefined);
+          setHasContent(true);
+        }}
+        onKeyDown={(e) => {
+          setHasContent(e.currentTarget.textContent?.trim() !== "");
         }}
       />
+
+      <span>or</span>
+      <Input type={"file"} disabled={hasContent} />
     </span>
   );
 }
@@ -205,7 +212,7 @@ function ExistingCreature({
     name,
     id
   );
-  const { mutate: addCreature, isLoading } =
+  const { mutate: addCreature, isPending } =
     useAddExistingCreatureToEncounter(onSuccess);
 
   return (
@@ -216,10 +223,10 @@ function ExistingCreature({
         onChange={(e) => setName(e.target.value)}
         value={name}
       />
-      <Flipper flipKey={creatures?.map((creature) => creature.id).join("")}>
+      <AnimatePresence>
         {isLoadingCreatures ? <Spinner /> : null}
         {creatures?.map((creature) => (
-          <Flipped flipId={creature.id} key={creature.id}>
+          <AnimationListItem key={creature.id}>
             <button
               className={
                 "flex gap-5 justify-between w-full transition-all hover:bg-gray-100"
@@ -239,9 +246,9 @@ function ExistingCreature({
               />
               {creature.name}
             </button>
-          </Flipped>
+          </AnimationListItem>
         ))}
-      </Flipper>
+      </AnimatePresence>
       <div className={"flex gap-5"}>{children}</div>
     </>
   );

@@ -32,8 +32,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import * as z from "zod";
-import Input from "@/app/components/Input";
 
 export const creatureForm = z.object({
   name: z.string().min(1, { message: "Name is required." }),
@@ -155,10 +155,7 @@ export default function SingleEncounter() {
                       onUpload={(file) =>
                         field.onChange({ target: { value: file } })
                       }
-                    >
-                      Paste icon
-                      <UserPlus size="50" />
-                    </ImageUpload>
+                    />
                   </CreatureFormItems>
                 )}
               />
@@ -171,10 +168,7 @@ export default function SingleEncounter() {
                       onUpload={(file) =>
                         field.onChange({ target: { value: file } })
                       }
-                    >
-                      Paste stat block
-                      <FilePlus size="50" />
-                    </ImageUpload>
+                    />
                   </CreatureFormItems>
                 )}
               />

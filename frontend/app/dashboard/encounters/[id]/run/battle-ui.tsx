@@ -3,10 +3,9 @@
 import {
   EncounterCreature,
   useEncounterCreatures,
-  usePreviousTurn,
-  useNextTurn,
   useEncounter,
   useRemoveCreatureFromEncounter,
+  useTurn,
 } from "@/app/dashboard/encounters/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,14 +28,20 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { optimisticTurnUpdate } from "@/app/dashboard/encounters/utils";
 
 export function BattleUI() {
   const { data: encounterParticipants } = useEncounterCreatures();
   const { data: encounter } = useEncounter();
+  const { mutate: changeActiveTo, isPending, variables } = useTurn();
 
   const [addingCreature, setAddingCreature] = React.useState(false);
 
-  const activeParticipant = encounterParticipants?.find(
+  const displayedParticipants = isPending
+    ? optimisticTurnUpdate(variables, encounterParticipants)
+    : encounterParticipants;
+
+  const activeParticipant = displayedParticipants?.find(
     (creature) => creature.is_active
   );
 
@@ -65,16 +70,21 @@ export function BattleUI() {
         </Button>
       ) : null}
       <AnimatePresence>
-        <div className={"flex gap-10 overflow-auto justify-center w-full p-5"}>
-          {encounterParticipants
-            ?.sort((a, b) => b.initiative - a.initiative)
-            .map((participant) => (
-              <AnimationListItem key={participant.id}>
-                <BattleCard creature={participant}>
-                  <CreatureHealthForm creature={participant} />
-                </BattleCard>
-              </AnimationListItem>
-            ))}
+        <div className="flex gap-5">
+          <div
+            className={"flex gap-10 overflow-auto justify-center w-full p-5"}
+          >
+            {displayedParticipants
+              ?.sort((a, b) => a.initiative - b.initiative)
+              .map((participant) => (
+                <AnimationListItem key={participant.id}>
+                  <BattleCard creature={participant}>
+                    <CreatureHealthForm creature={participant} />
+                  </BattleCard>
+                </AnimationListItem>
+              ))}
+          </div>
+
           {addingCreature ? (
             <AnimationListItem key={"add-form"}>
               <Card className={`max-w-sm p-5 w-full h-full`}>
@@ -92,7 +102,11 @@ export function BattleUI() {
         </div>
       </AnimatePresence>
 
-      <TurnButtons>
+      <TurnButtons
+        onLeftClick={() => changeActiveTo("previous")}
+        onRightClick={() => changeActiveTo("next")}
+        isPending={isPending}
+      >
         <div className={"hidden md:flex"}>{statBlock}</div>
       </TurnButtons>
       <div className="md:hidden">{statBlock}</div>
@@ -100,32 +114,36 @@ export function BattleUI() {
   );
 }
 
-function TurnButtons({ children }: { children?: React.ReactNode }) {
-  const { mutate: nextTurn, isLoading: nextTurnLoading } = useNextTurn();
-  const { mutate: previousTurn, isLoading: previousTurnLoading } =
-    usePreviousTurn();
-
-  const turnsLoading = nextTurnLoading || previousTurnLoading;
-
+function TurnButtons({
+  children,
+  onLeftClick,
+  onRightClick,
+  isPending,
+}: {
+  children?: React.ReactNode;
+  onLeftClick: () => void;
+  onRightClick: () => void;
+  isPending?: boolean;
+}) {
   return (
     <div className="flex justify-between w-full p-4">
       <Button
         className="w-20"
-        disabled={turnsLoading}
+        disabled={isPending}
         onClick={(e) => {
           e.stopPropagation();
-          previousTurn();
+          onLeftClick();
         }}
       >
         <ChevronLeftIcon />
       </Button>
       {children}
       <Button
-        disabled={turnsLoading}
+        disabled={isPending}
         className="w-20"
         onClick={(e) => {
           e.stopPropagation();
-          nextTurn();
+          onRightClick();
         }}
       >
         <ChevronRightIcon />
@@ -153,11 +171,11 @@ export function BattleCard({
   return (
     <div
       key={creature.id}
-      className={`flex relative flex-col gap-6 items-center w-40 justify-between h-full }`}
+      className={`flex relative flex-col gap-6 items-center w-40 justify-between }`}
     >
       <Card
         key={creature.id}
-        className={`relative h-full flex flex-col ${
+        className={`relative h-60 flex flex-col ${
           creature.is_active
             ? `outline-4 outline transform scale-110 transition-all select-none`
             : ""
@@ -215,7 +233,6 @@ export const AnimationListItem = ({
     initial: { scale: 0, opacity: 0 },
     animate: { scale: 1, opacity: 1 },
     exit: { scale: 0, opacity: 0 },
-    transition: { type: "spring", stiffness: 900, damping: 40 },
   } as const;
   return (
     <motion.div {...animations} layout>

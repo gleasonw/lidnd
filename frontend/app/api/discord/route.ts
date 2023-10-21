@@ -21,7 +21,6 @@ export async function GET(request: Request) {
     });
 
     const tokenData = await tokenResponse.json();
-    console.log(tokenData);
     let response = NextResponse.redirect(
       new URL("/dashboard", request.url.split("?")[0])
     );

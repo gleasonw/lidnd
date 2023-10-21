@@ -179,6 +179,17 @@ export function useEncounter() {
 }
 
 // Composable function to encapsulate optimistic updates
+export function useInvalidateQueryKey(queryKey: QueryKey) {
+  const queryClient = useQueryClient();
+
+  return {
+    onSettled: async () => {
+      return await queryClient.invalidateQueries({ queryKey });
+    },
+  };
+}
+
+// Composable function to encapsulate optimistic updates
 export function useOptimisticUpdate<T>(
   queryKey: QueryKey,
   localUpdateFn: (oldData: T | undefined, newData: any) => T
@@ -187,7 +198,7 @@ export function useOptimisticUpdate<T>(
 
   return {
     onMutate: async (newData: any) => {
-      await queryClient.cancelQueries(queryKey);
+      await queryClient.cancelQueries({ queryKey });
       const previousData = queryClient.getQueryData<T>(queryKey);
 
       queryClient.setQueryData(queryKey, (oldData: T | undefined) =>
@@ -199,9 +210,7 @@ export function useOptimisticUpdate<T>(
     onError: (err: any, newData: any, context: any) => {
       queryClient.setQueryData(queryKey, context?.previousData);
     },
-    onSettled: () => {
-      queryClient.invalidateQueries(queryKey);
-    },
+    ...useInvalidateQueryKey(queryKey),
   };
 }
 
@@ -387,16 +396,15 @@ export function useRemoveCreatureFromEncounter() {
     },
     ...useOptimisticUpdate<EncounterCreature[]>(
       encounterCreaturesKey(id),
-      (oldData = [], newData) => {
-        return oldData.filter((c) => c.id !== newData.id);
+      (oldData = [], id) => {
+        console.log(oldData, id)
+        return oldData.filter((c) => c.creature_id !== id);
       }
     ),
   });
 }
 
 export function useCreateCreature() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (creatureData: {
       name: string;
@@ -424,17 +432,7 @@ export function useCreateCreature() {
       }
       return data;
     },
-    ...useOptimisticUpdate<Creature[]>(
-      allUserCreaturesKey,
-      (oldData = [], newData) => {
-        const newCreature: Creature = {
-          id: Math.max(...oldData.map((c: Creature) => c.id)) + 1,
-          name: newData.name,
-          max_hp: newData.max_hp,
-        };
-        return [...oldData, newCreature];
-      }
-    ),
+    ...useInvalidateQueryKey(allUserCreaturesKey),
   });
 }
 
@@ -457,12 +455,7 @@ export function useDeleteCreature() {
       }
       return data;
     },
-    ...useOptimisticUpdate<Creature[]>(
-      allUserCreaturesKey,
-      (oldData = [], newData) => {
-        return oldData.filter((c) => c.id !== newData.id);
-      }
-    ),
+    ...useInvalidateQueryKey(allUserCreaturesKey),
   });
 }
 
@@ -496,19 +489,11 @@ export function useStartEncounter() {
   });
 }
 
-export function useNextTurn() {
-  return useTurn("next");
-}
-
-export function usePreviousTurn() {
-  return useTurn("previous");
-}
-
-export function useTurn(to: "next" | "previous") {
+export function useTurn() {
   const id = useEncounterId();
 
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (to: "next" | "previous") => {
       const { error, data } = await POST(
         `/api/encounters/{encounter_id}/turn`,
         {
@@ -531,54 +516,6 @@ export function useTurn(to: "next" | "previous") {
       }
       return data;
     },
-    ...useOptimisticUpdate<EncounterCreature[]>(
-      encounterCreaturesKey(id),
-      (oldData = [], newData) => {
-        return optimisticTurnUpdate(to, oldData);
-      }
-    ),
+    ...useInvalidateQueryKey(encounterCreaturesKey(id)),
   });
-}
-
-function optimisticTurnUpdate(
-  to: "next" | "previous",
-  participants: EncounterCreature[]
-) {
-  if (participants && Array.isArray(participants)) {
-    const currentActive = participants.find(
-      (c: EncounterCreature) => c.is_active
-    );
-    const activeParticipants = participants.filter(
-      (c: EncounterCreature) => c.hp > 0 || c.is_active
-    );
-    if (currentActive && activeParticipants.length > 1) {
-      let nextActive: EncounterCreature;
-      if (to === "previous") {
-        nextActive =
-          activeParticipants[
-            (activeParticipants.indexOf(currentActive) - 1) %
-              activeParticipants.length
-          ];
-      } else {
-        nextActive =
-          activeParticipants[
-            (activeParticipants.indexOf(currentActive) + 1) %
-              activeParticipants.length
-          ];
-      }
-      return participants.map((c: EncounterCreature) => {
-        if (c.creature_id === nextActive.creature_id) {
-          return {
-            ...c,
-            is_active: true,
-          };
-        }
-        return {
-          ...c,
-          is_active: false,
-        };
-      });
-    }
-  }
-  return participants;
 }

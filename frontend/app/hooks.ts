@@ -19,7 +19,6 @@ export function useUser() {
           discriminator: string;
         };
       } else {
-        console.log(await response.json());
         return null;
       }
     },

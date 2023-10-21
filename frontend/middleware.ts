@@ -24,7 +24,6 @@ export async function verifyDiscordToken() {
   if (response.status === 200) {
     return (await response.json()) as unknown;
   } else {
-    console.log(await response.json());
     return null;
   }
 }

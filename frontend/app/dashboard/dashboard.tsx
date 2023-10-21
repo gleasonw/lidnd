@@ -2,26 +2,37 @@
 
 import Link from "next/link";
 import {
+  Encounter,
   useCreateEncounter,
   useDeleteEncounter,
   useEncounterCreatures,
   useEncounters,
 } from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
-import { Flipper, Flipped } from "react-flip-toolkit";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/app/hooks";
-import { ExternalLink, Plus } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ExternalLink, MoreHorizontal, Plus } from "lucide-react";
 import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-time";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 
 export default function Dashboard() {
   const router = useRouter();
   const { data: user } = useUser();
   const { data: encounters, isLoading } = useEncounters();
+  const {
+    mutate: deleteEncounter,
+    variables: deletedEncounterId,
+    isPending: isDeleteEncounterPending,
+  } = useDeleteEncounter();
   const { mutate: createDefaultEncounter } = useCreateEncounter((encounter) =>
     router.push(`dashboard/encounters/${encounter.id}`)
   );
@@ -29,6 +40,31 @@ export default function Dashboard() {
     name: "",
     description: "",
   });
+
+  const displayedEncounters = isDeleteEncounterPending
+    ? encounters?.filter((encounter) => encounter.id !== deletedEncounterId)
+    : encounters;
+
+  const startedEncounters = displayedEncounters?.filter(
+    (encounter) => encounter.started_at !== null
+  );
+
+  const pendingEncounters = displayedEncounters?.filter(
+    (encounter) => encounter.started_at === null
+  );
+
+  const encounterCategories = [
+    { name: "Started", encounters: startedEncounters },
+    { name: "Pending", encounters: pendingEncounters },
+  ];
+
+  const skeletons = [
+    <Skeleton key={1} className={"w-full h-full rounded-md"} />,
+    <Skeleton key={2} className={"w-full h-full rounded-md"} />,
+    <Skeleton key={3} className={"w-full h-full rounded-md"} />,
+  ];
+
+  console.log(isLoading);
 
   return (
     <div className="flex flex-col gap-20 mx-auto max-w-screen-xl">
@@ -53,38 +89,79 @@ export default function Dashboard() {
           Create encounter
         </Button>
       </form>
-      <div className={"grid grid-cols-3 gap-5"}>
-        {encounters &&
-          encounters.map((encounter) => (
-            <Link
-              className="group relative"
-              href={
-                encounter.started_at
-                  ? `/dashboard/encounters/${encounter.id}/run`
-                  : `/dashboard/encounters/${encounter.id}`
-              }
-              key={encounter.id}
-            >
-              <Card className="flex flex-col gap-5 p-5 hover:shadow-md transition-all w-full h-full ">
-                <span
-                  className={
-                    "absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 text-white bg-black p-2 rounded-full transition-opacity"
-                  }
-                >
-                  <ExternalLink />
-                </span>
-                <EncounterTime time={encounter?.started_at ?? undefined} />
-
-                <h2 className={"text-2xl pb-5"}>{encounter.name}</h2>
-                {encounter.started_at ? (
-                  <p>{new Date(encounter.started_at).toLocaleDateString()}</p>
-                ) : null}
-                <CharacterIconRow id={encounter.id} />
-              </Card>
-            </Link>
-          ))}
-      </div>
+      {encounterCategories.map(({ name, encounters }) => (
+        <section key={name} className={"flex flex-col gap-3"}>
+          <h1 className={"text-2xl"}>{name}</h1>
+          <div className="grid grid-cols-3 gap-5">
+            {isLoading
+              ? skeletons
+              : encounters?.length === 0
+              ? "No encounters"
+              : null}
+            {encounters?.map((encounter) => (
+              <EncounterCard
+                encounter={encounter}
+                deleteEncounter={deleteEncounter}
+                key={encounter.id}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
+  );
+}
+
+function EncounterCard({
+  encounter,
+  deleteEncounter,
+}: {
+  encounter: Encounter;
+  deleteEncounter: (id: number) => void;
+}) {
+  return (
+    <Card
+      className="flex flex-col transition-all w-full h-full "
+      key={encounter.id}
+    >
+      <Link
+        href={
+          encounter.started_at
+            ? `/dashboard/encounters/${encounter.id}/run`
+            : `/dashboard/encounters/${encounter.id}`
+        }
+        className="flex hover:bg-gray-200 p-5 justify-center border-b relative group bg-gray-100"
+      >
+        <span
+          className={
+            "absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 text-white bg-black p-2 rounded-full transition-opacity"
+          }
+        >
+          <ExternalLink />
+        </span>
+
+        <h2 className={"text-2xl pb-5"}>{encounter.name}</h2>
+      </Link>
+      <div className="p-3 flex flex-col relative gap-5">
+        <Popover>
+          <PopoverTrigger className="absolute top-0 right-0">
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="flex flex-col gap-10">
+            <Button
+              variant="destructive"
+              onClick={() => deleteEncounter(encounter.id)}
+            >
+              Delete encounter
+            </Button>
+          </PopoverContent>
+        </Popover>
+        <CharacterIconRow id={encounter.id} />
+        <EncounterTime time={encounter?.started_at ?? undefined} />
+      </div>
+    </Card>
   );
 }
 
@@ -98,6 +175,7 @@ function CharacterIconRow({ id }: { id: number }) {
           id={creature.creature_id}
           name={creature.name}
           key={creature.creature_id}
+          className={"rounded-full w-14 object-cover"}
         />
       ))}
     </div>
