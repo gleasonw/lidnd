@@ -13,7 +13,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import { Spinner } from "@/components/ui/spinner";
 import { UseMutateFunction } from "@tanstack/react-query";
-import { FilePlus, ImagePlus, UserPlus } from "lucide-react";
 import * as z from "zod";
 import { AnimatePresence } from "framer-motion";
 import { AnimationListItem } from "@/app/dashboard/encounters/[id]/run/battle-ui";
@@ -117,7 +116,7 @@ export function CustomCreature({
 
       <ImageUpload
         onUpload={(file) =>
-          setCreatureData({ ...creatureData, stat_block: file })
+          file ? setCreatureData({ ...creatureData, stat_block: file }) : null
         }
       />
 
@@ -125,7 +124,7 @@ export function CustomCreature({
         {children}
         <Button
           className="p-5 border m-auto"
-          variant={"secondary"}
+          variant={"outline"}
           onClick={(e) => {
             e.stopPropagation();
             if (

@@ -35,8 +35,6 @@ export function BattleUI() {
   const { data: encounter } = useEncounter();
   const { mutate: changeActiveTo, isPending, variables } = useTurn();
 
-  const [addingCreature, setAddingCreature] = React.useState(false);
-
   const displayedParticipants = isPending
     ? optimisticTurnUpdate(variables, encounterParticipants)
     : encounterParticipants;
@@ -58,17 +56,6 @@ export function BattleUI() {
       <div className={"flex absolute top-0 left-0 gap-3 items-center"}>
         <EncounterTime time={encounter?.started_at ?? undefined} />
       </div>
-      {!addingCreature ? (
-        <Button
-          variant="outline"
-          className={
-            "justify-self-center self-center absolute top-0 right-0 z-10"
-          }
-          onClick={() => setAddingCreature(true)}
-        >
-          Creature +
-        </Button>
-      ) : null}
       <AnimatePresence>
         <div className="flex gap-5">
           <div
@@ -84,21 +71,16 @@ export function BattleUI() {
                 </AnimationListItem>
               ))}
           </div>
-
-          {addingCreature ? (
-            <AnimationListItem key={"add-form"}>
-              <Card className={`max-w-sm p-5 w-full h-full`}>
-                <EncounterCreatureAddForm>
-                  <Button
-                    variant={"ghost"}
-                    onClick={() => setAddingCreature(false)}
-                  >
-                    Cancel
-                  </Button>
-                </EncounterCreatureAddForm>
-              </Card>
-            </AnimationListItem>
-          ) : null}
+          <div className="absolute top-0 right-5">
+            <Popover>
+              <PopoverTrigger>
+                <Button variant="outline">Creature +</Button>
+              </PopoverTrigger>
+              <PopoverContent className="flex flex-col gap-10">
+                <EncounterCreatureAddForm />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </AnimatePresence>
 
@@ -175,7 +157,7 @@ export function BattleCard({
     >
       <Card
         key={creature.id}
-        className={`relative h-60 flex flex-col ${
+        className={`relative h-60 w-40 gap-0 justify-between items-center flex flex-col ${
           creature.is_active
             ? `outline-4 outline transform scale-110 transition-all select-none`
             : ""
@@ -208,11 +190,15 @@ export function BattleCard({
           </PopoverContent>
         </Popover>
 
-        <CardHeader>
+        <CardHeader className="text-ellipsis max-w-full p-3">
           <CardTitle>{creature.name}</CardTitle>
         </CardHeader>
         <CardContent>
-          <CharacterIcon id={creature.creature_id} name={creature.name} />
+          <CharacterIcon
+            className="w-20"
+            id={creature.creature_id}
+            name={creature.name}
+          />
         </CardContent>
       </Card>
       {children}

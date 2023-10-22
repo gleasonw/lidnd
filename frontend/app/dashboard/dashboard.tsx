@@ -23,6 +23,7 @@ import { ExternalLink, MoreHorizontal, Plus } from "lucide-react";
 import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-time";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function Dashboard() {
     variables: deletedEncounterId,
     isPending: isDeleteEncounterPending,
   } = useDeleteEncounter();
-  const { mutate: createDefaultEncounter } = useCreateEncounter((encounter) =>
+  const { mutate: createDefaultEncounter, isPending } = useCreateEncounter((encounter) =>
     router.push(`dashboard/encounters/${encounter.id}`)
   );
   const [encounter, setEncounter] = React.useState({
@@ -67,7 +68,7 @@ export default function Dashboard() {
   console.log(isLoading);
 
   return (
-    <div className="flex flex-col gap-20 mx-auto max-w-screen-xl">
+    <div className="flex flex-col gap-14 mx-auto max-w-screen-xl">
       <section>
         <p
           className={`text-center text-xl ${
@@ -85,7 +86,9 @@ export default function Dashboard() {
         }}
       >
         <Button type={"submit"} className={"flex gap-5"}>
-          <Plus />
+          {
+            isPending ? <Spinner/> : <Plus/>
+          }
           Create encounter
         </Button>
       </form>
@@ -121,7 +124,7 @@ function EncounterCard({
 }) {
   return (
     <Card
-      className="flex flex-col transition-all w-full h-full "
+      className="flex flex-col transition-all w-full h-full"
       key={encounter.id}
     >
       <Link
@@ -130,7 +133,7 @@ function EncounterCard({
             ? `/dashboard/encounters/${encounter.id}/run`
             : `/dashboard/encounters/${encounter.id}`
         }
-        className="flex hover:bg-gray-200 p-5 justify-center border-b relative group bg-gray-100"
+        className="flex hover:bg-gray-200 p-5 justify-center border-b relative group bg-gray-100 rounded-t-lg"
       >
         <span
           className={
