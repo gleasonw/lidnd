@@ -20,8 +20,8 @@ import { AnimationListItem } from "@/app/dashboard/encounters/[id]/run/battle-ui
 export const creatureFormSchema = z.object({
   name: z.string(),
   max_hp: z.number(),
-  icon: z.any(),
-  stat_block: z.any(),
+  icon: z.any().optional(),
+  stat_block: z.any().optional(),
 });
 
 export type CreaturePost = z.infer<typeof creatureFormSchema>;
