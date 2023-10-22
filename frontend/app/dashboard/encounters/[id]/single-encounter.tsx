@@ -22,7 +22,7 @@ import Link from "next/link";
 import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import React from "react";
+import React, { useCallback } from "react";
 import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
 
 export default function SingleEncounter() {
@@ -31,20 +31,26 @@ export default function SingleEncounter() {
   const { mutate: startEncounter } = useStartEncounter();
   const { mutate: updateEncounter } = useUpdateEncounter();
   const id = useEncounterId();
+  const [encounterName, setEncounterName] = React.useState(encounter?.name ?? "");
 
   return (
     <div className={"flex flex-col items-center gap-10 relative"}>
       <div className="justify-self-center self-center flex gap-5 items-center absolute top-0 right-0">
         <Input
-          value={encounter?.name ?? ""}
-          onChange={(e) =>
+          value={encounterName}
+          onChange={(e) => setEncounterName(e.target.value)}
+        />
+        <Button
+          onClick={() =>
             updateEncounter({
               ...encounter,
-              name: e.target.value,
+              name: encounterName,
               description: encounter?.description ?? "",
             })
           }
-        />
+        >
+          Update name
+        </Button>
         {encounter?.started_at ? (
           <Link href={`${id}/run`}>
             <Button>
@@ -63,7 +69,11 @@ export default function SingleEncounter() {
       </div>
 
       <AnimatePresence>
-        <div className={"flex gap-10 overflow-auto justify-center w-full p-5"}>
+        <div
+          className={
+            "flex gap-10 overflow-auto justify-center w-full p-5 pt-10"
+          }
+        >
           {encounterParticipants
             ?.slice()
             .sort(sortEncounterCreatures)
@@ -74,7 +84,7 @@ export default function SingleEncounter() {
             ))}
         </div>
       </AnimatePresence>
-      <Card className="p-5 w-1/2">
+      <Card className="p-5 md:w-1/2 w-full">
         <FullCreatureAddForm />
       </Card>
     </div>
