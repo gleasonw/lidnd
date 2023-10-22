@@ -60,7 +60,7 @@ export function BattleUI() {
       <AnimatePresence>
         <div className="flex gap-5">
           <div
-            className={"flex gap-10 overflow-auto justify-center w-full p-5"}
+            className={"flex gap-10 overflow-auto justify-center sm:p-5 w-96 sm:w-full"}
           >
             {displayedParticipants
               ?.sort((a, b) => a.initiative - b.initiative || a.creature_id - b.creature_id)

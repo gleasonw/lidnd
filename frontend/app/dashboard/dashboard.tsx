@@ -93,7 +93,7 @@ export default function Dashboard() {
       {encounterCategories.map(({ name, encounters }) => (
         <section key={name} className={"flex flex-col gap-3"}>
           <h1 className={"text-2xl"}>{name}</h1>
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {isLoading
               ? skeletons
               : encounters?.length === 0
