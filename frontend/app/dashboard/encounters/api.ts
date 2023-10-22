@@ -293,8 +293,8 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
     mutationFn: async (creatureData: {
       name: string;
       max_hp: number;
-      icon: File;
-      stat_block: File;
+      icon: any;
+      stat_block: any;
     }) => {
       // we use native fetch here because openapi-fetch doesn't seem to support FormData
       const formData = new FormData();
@@ -438,8 +438,8 @@ export function useCreateCreature() {
     mutationFn: async (creatureData: {
       name: string;
       max_hp: number;
-      icon: File;
-      stat_block: File;
+      icon: any;
+      stat_block: any;
     }) => {
       // we use native fetch here because openapi-fetch doesn't seem to support FormData
       const formData = new FormData();

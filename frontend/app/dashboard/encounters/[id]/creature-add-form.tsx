@@ -20,8 +20,8 @@ import { AnimationListItem } from "@/app/dashboard/encounters/[id]/run/battle-ui
 export const creatureFormSchema = z.object({
   name: z.string(),
   max_hp: z.number(),
-  icon: z.instanceof(File),
-  stat_block: z.instanceof(File),
+  icon: z.any(),
+  stat_block: z.any(),
 });
 
 export type CreaturePost = z.infer<typeof creatureFormSchema>;
@@ -157,7 +157,7 @@ export function ImageUpload({
   onUpload,
   children,
 }: {
-  onUpload: (file?: File) => void;
+  onUpload: (file?: any) => void;
   children?: React.ReactNode;
 }) {
   const [hasContent, setHasContent] = React.useState(false);
