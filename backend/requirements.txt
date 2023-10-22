@@ -1,5 +1,4 @@
-aiohttp==3.8.6
-aiohttp==3.8.4
+aiohttp
 boto3==1.28.57
 py-cord==2.3.2
 fastapi==0.104.0
