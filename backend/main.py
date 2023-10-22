@@ -757,3 +757,8 @@ async def untrack(ctx: ApplicationContext):
 token = os.getenv("BOT_TOKEN")
 assert token is not None, "BOT_TOKEN environment variable is not set"
 asyncio.create_task(bot.start(token))
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app)

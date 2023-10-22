@@ -8,3 +8,4 @@ psycopg_pool==3.1.7
 pydantic==2.4.2
 python-dotenv==1.0.0
 python-multipart
+uvicorn
