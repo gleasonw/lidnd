@@ -50,6 +50,36 @@ export function useCreateEncounter(onCreate?: (encounter: Encounter) => void) {
   });
 }
 
+export function useUpdateEncounter() {
+  const queryClient = useQueryClient();
+  const id = useEncounterId();
+  return useMutation({
+    mutationFn: async (
+      encounter: components["schemas"]["EncounterRequest"]
+    ) => {
+      const { error, data } = await PUT(`/api/encounters/{encounter_id}`, {
+        params: {
+          path: {
+            encounter_id: id,
+          },
+        },
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+        body: encounter,
+      });
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(encounterKey(id), data);
+    },
+  });
+}
+
 export function useDeleteEncounter() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -296,10 +326,8 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
       encounterCreaturesKey(id),
       (oldData = [], newData) => {
         const newCreature: EncounterCreature = {
-          id: Math.max(...oldData.map((c: EncounterCreature) => c.id)) + 1,
-          creature_id:
-            Math.max(...oldData.map((c: EncounterCreature) => c.creature_id)) +
-            1,
+          id: 1,
+          creature_id: 1,
           encounter_id: id,
           hp: newData.max_hp,
           max_hp: newData.max_hp,
@@ -321,6 +349,7 @@ export function useAddExistingCreatureToEncounter(
 
   return useMutation({
     mutationFn: async (creatureData: {
+      name: string;
       creature_id: number;
       encounter_id: number;
     }) => {
@@ -353,12 +382,12 @@ export function useAddExistingCreatureToEncounter(
       encounterCreaturesKey(id),
       (oldData = [], newData) => {
         const newCreature: EncounterCreature = {
-          id: Math.max(...oldData.map((c: EncounterCreature) => c.id)) + 1,
+          id: 1,
           creature_id: newData.creature_id,
           encounter_id: id,
           hp: 0,
           max_hp: 0,
-          name: "",
+          name: newData.name,
           is_active: false,
           initiative: 0,
         };
@@ -397,7 +426,7 @@ export function useRemoveCreatureFromEncounter() {
     ...useOptimisticUpdate<EncounterCreature[]>(
       encounterCreaturesKey(id),
       (oldData = [], id) => {
-        console.log(oldData, id)
+        console.log(oldData, id);
         return oldData.filter((c) => c.creature_id !== id);
       }
     ),
@@ -455,7 +484,12 @@ export function useDeleteCreature() {
       }
       return data;
     },
-    ...useInvalidateQueryKey(allUserCreaturesKey),
+    ...useOptimisticUpdate<Creature[]>(
+      allUserCreaturesKey,
+      (oldData = [], deletedId) => {
+        return oldData.filter((c) => c.id !== deletedId);
+      }
+    ),
   });
 }
 

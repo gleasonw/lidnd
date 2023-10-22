@@ -34,8 +34,8 @@ export default function Dashboard() {
     variables: deletedEncounterId,
     isPending: isDeleteEncounterPending,
   } = useDeleteEncounter();
-  const { mutate: createDefaultEncounter, isPending } = useCreateEncounter((encounter) =>
-    router.push(`dashboard/encounters/${encounter.id}`)
+  const { mutate: createDefaultEncounter, isPending } = useCreateEncounter(
+    (encounter) => router.push(`dashboard/encounters/${encounter.id}`)
   );
   const [encounter, setEncounter] = React.useState({
     name: "",
@@ -86,9 +86,7 @@ export default function Dashboard() {
         }}
       >
         <Button type={"submit"} className={"flex gap-5"}>
-          {
-            isPending ? <Spinner/> : <Plus/>
-          }
+          {isPending ? <Spinner /> : <Plus />}
           Create encounter
         </Button>
       </form>
@@ -143,7 +141,9 @@ function EncounterCard({
           <ExternalLink />
         </span>
 
-        <h2 className={"text-2xl pb-5"}>{encounter.name}</h2>
+        <h2 className={"text-2xl pb-5"}>
+          {encounter.name ? encounter.name : "Unnamed"}
+        </h2>
       </Link>
       <div className="p-3 flex flex-col relative gap-5">
         <Popover>

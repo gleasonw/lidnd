@@ -111,7 +111,9 @@ export function CustomCreature({
         value={creatureData.max_hp}
       />
       <ImageUpload
-        onUpload={(file) => setCreatureData({ ...creatureData, icon: file })}
+        onUpload={(file) =>
+          file ? setCreatureData({ ...creatureData, icon: file }) : null
+        }
       />
 
       <ImageUpload
@@ -160,37 +162,41 @@ export function ImageUpload({
 }) {
   const [hasContent, setHasContent] = React.useState(false);
   return (
-    <span className="h-auto relative p-5 flex flex-col gap-5 items-center group">
-      {!hasContent && (
-        <span>
-          Paste
-        </span>
-      )}
-      <div
-        placeholder="Paste image"
-        contentEditable
-        className="flex w-full relative rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        onPaste={(e) => {
-          const clipboardData = e.clipboardData;
-          const item = clipboardData.items[0];
-          console.log(item);
+    <span className="h-auto relative p-5 flex gap-5 items-center justify-center group">
+      <span className="flex flex-col gap-2">
+        <span>Paste</span>
+        <div
+          contentEditable
+          className="flex w-56 relative rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          onPaste={(e) => {
+            const clipboardData = e.clipboardData;
+            const item = clipboardData.items[0];
 
-          if (!item?.type.startsWith("image")) {
-            e.preventDefault();
-            return;
-          }
+            if (!item?.type.startsWith("image")) {
+              e.preventDefault();
+              return;
+            }
 
-          const file = item.getAsFile();
-          file !== null ? onUpload(file) : onUpload(undefined);
-          setHasContent(true);
-        }}
-        onKeyDown={(e) => {
-          setHasContent(e.currentTarget.textContent?.trim() !== "");
-        }}
-      />
+            const file = item.getAsFile();
+            file !== null ? onUpload(file) : onUpload(undefined);
+            setHasContent(true);
+          }}
+          onKeyDown={(e) => {
+            setHasContent(e.currentTarget.textContent?.trim() !== "");
+          }}
+        />
+      </span>
 
       <span>or</span>
-      <Input type={"file"} disabled={hasContent} />
+      <Input
+        type={"file"}
+        disabled={hasContent}
+        onChange={(e) => {
+          if (e.target.files) {
+            onUpload(e.target.files[0]);
+          }
+        }}
+      />
     </span>
   );
 }
@@ -235,6 +241,7 @@ function ExistingCreature({
                 addCreature({
                   creature_id: creature.id,
                   encounter_id: id,
+                  name: creature.name,
                 });
               }}
             >

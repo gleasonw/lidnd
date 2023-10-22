@@ -1,78 +1,45 @@
 "use client";
 
 import EncounterCreatureAddForm, {
-  CreaturePost,
   ImageUpload,
-  creatureFormSchema,
 } from "@/app/dashboard/encounters/[id]/creature-add-form";
-import { DamageType } from "@/app/dashboard/encounters/[id]/resistance-selector";
 import {
   AnimationListItem,
   BattleCard,
 } from "@/app/dashboard/encounters/[id]/run/battle-ui";
 import {
+  useAddCreatureToEncounter,
   useEncounter,
   useEncounterCreatures,
   useStartEncounter,
+  useUpdateEncounter,
 } from "@/app/dashboard/encounters/api";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence } from "framer-motion";
-import { FilePlus, Play, UserPlus } from "lucide-react";
+import { Play } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import * as z from "zod";
-
-export const creatureForm = z.object({
-  name: z.string().min(1, { message: "Name is required." }),
-  max_hp: z.coerce.number().gte(1, { message: "Max HP must be at least 1." }),
-  challenge_rating: z.number(),
-  icon: z.instanceof(File),
-  stat_block: z.instanceof(File),
-  strategy_notes: z.string(),
-  resistances: z.array(z.string()),
-  immunities: z.array(z.string()),
-  vulnerabilities: z.array(z.string()),
-  is_player: z.boolean(),
-});
+import React from "react";
 
 export default function SingleEncounter() {
   const { data: encounterParticipants } = useEncounterCreatures();
   const { data: encounter } = useEncounter();
   const { mutate: startEncounter } = useStartEncounter();
+  const { mutate: updateEncounter } = useUpdateEncounter();
   const id = useEncounterId();
-  const [damageTypes, setDamageTypes] = useState<DamageType[]>([]);
-
-  const form = useForm<z.infer<typeof creatureForm>>({
-    resolver: zodResolver(creatureForm),
-    defaultValues: {
-      name: "",
-      max_hp: 0,
-      challenge_rating: 0,
-      icon: undefined,
-      stat_block: undefined,
-    },
-  });
-
-  function onSubmit(data: CreaturePost) {
-    console.log(data);
-  }
 
   return (
     <div className={"flex flex-col items-center gap-10 relative"}>
-      <div className="justify-self-center self-center absolute top-0 right-0">
+      <div className="justify-self-center self-center flex gap-5 items-center absolute top-0 right-0">
+        <Input
+          value={encounter?.name ?? ""}
+          onChange={(e) =>
+            updateEncounter({ ...encounter, name: e.target.value })
+          }
+        />
         {encounter?.started_at ? (
           <Link href={`${id}/run`}>
             <Button>
@@ -93,7 +60,10 @@ export default function SingleEncounter() {
       <AnimatePresence>
         <div className={"flex gap-10 overflow-auto justify-center w-full p-5"}>
           {encounterParticipants
-            ?.sort((a, b) => a.initiative - b.initiative)
+            ?.sort(
+              (a, b) =>
+                a.initiative - b.initiative || a.creature_id - b.creature_id
+            )
             .map((participant) => (
               <AnimationListItem key={participant.id}>
                 <BattleCard creature={participant} />
@@ -101,99 +71,10 @@ export default function SingleEncounter() {
             ))}
         </div>
       </AnimatePresence>
-      <EncounterCreatureAddForm
-        className="w-1/2"
-        customCreatureForm={
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-8"
-            >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <CreatureFormItems name="Name">
-                    <Input type="text" placeholder="Kobold..." {...field} />
-                  </CreatureFormItems>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="max_hp"
-                render={({ field }) => (
-                  <CreatureFormItems name="Max HP">
-                    <Input
-                      type="text"
-                      placeholder="10..."
-                      {...field}
-                      value={field.value.toString()}
-                    />
-                  </CreatureFormItems>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="challenge_rating"
-                render={({ field }) => (
-                  <CreatureFormItems name="Challenge Rating">
-                    <Input
-                      type="text"
-                      placeholder="1..."
-                      {...field}
-                      value={field.value.toString()}
-                    />
-                  </CreatureFormItems>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="icon"
-                render={({ field }) => (
-                  <CreatureFormItems name="Icon">
-                    <ImageUpload
-                      onUpload={(file) =>
-                        field.onChange({ target: { value: file } })
-                      }
-                    />
-                  </CreatureFormItems>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="stat_block"
-                render={({ field }) => (
-                  <CreatureFormItems name="Stat Block">
-                    <ImageUpload
-                      onUpload={(file) =>
-                        field.onChange({ target: { value: file } })
-                      }
-                    />
-                  </CreatureFormItems>
-                )}
-              />
-              <Button type="submit">Submit</Button>
-            </form>
-          </Form>
-        }
-      />
+      <Card className="p-5 w-1/2">
+        <FullCreatureAddForm />
+      </Card>
     </div>
-  );
-}
-
-function CreatureFormItems({
-  name,
-  children,
-}: {
-  name: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <FormItem className="flex flex-col gap-2">
-      <FormLabel>{name}</FormLabel>
-      <FormControl>{children}</FormControl>
-      <FormMessage />
-    </FormItem>
   );
 }
 

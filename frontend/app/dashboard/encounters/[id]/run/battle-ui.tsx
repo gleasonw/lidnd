@@ -29,6 +29,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { optimisticTurnUpdate } from "@/app/dashboard/encounters/utils";
+import { Spinner } from "@/components/ui/spinner";
 
 export function BattleUI() {
   const { data: encounterParticipants } = useEncounterCreatures();
@@ -62,7 +63,7 @@ export function BattleUI() {
             className={"flex gap-10 overflow-auto justify-center w-full p-5"}
           >
             {displayedParticipants
-              ?.sort((a, b) => a.initiative - b.initiative)
+              ?.sort((a, b) => a.initiative - b.initiative || a.creature_id - b.creature_id)
               .map((participant) => (
                 <AnimationListItem key={participant.id}>
                   <BattleCard creature={participant}>
@@ -76,7 +77,7 @@ export function BattleUI() {
               <PopoverTrigger>
                 <Button variant="outline">Creature +</Button>
               </PopoverTrigger>
-              <PopoverContent className="flex flex-col gap-10">
+              <PopoverContent className="flex flex-col gap-10 w-[600px]">
                 <EncounterCreatureAddForm />
               </PopoverContent>
             </Popover>
@@ -194,11 +195,15 @@ export function BattleCard({
           <CardTitle>{creature.name}</CardTitle>
         </CardHeader>
         <CardContent>
-          <CharacterIcon
-            className="w-20"
-            id={creature.creature_id}
-            name={creature.name}
-          />
+          {creature.creature_id === 1 ? (
+            <Spinner />
+          ) : (
+            <CharacterIcon
+              className="w-20"
+              id={creature.creature_id}
+              name={creature.name}
+            />
+          )}
         </CardContent>
       </Card>
       {children}

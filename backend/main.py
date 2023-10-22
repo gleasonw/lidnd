@@ -142,6 +142,7 @@ async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
             assert isinstance(
                 channel, discord.TextChannel
             ), "Channel is not a text channel"
+            print(overview)
             rendered_md = template.render(
                 overview=overview,
                 settings=discord_settings,
@@ -168,6 +169,10 @@ async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
 def read_root():
     return {"Hello": "World"}
 
+whitelist = [
+    'merkelizer'
+]
+
 
 async def get_discord_user(
     token: Annotated[str, Depends(oauth2_scheme)]
@@ -184,6 +189,8 @@ async def get_discord_user(
         ) as resp:
             if resp.status == 200:
                 user = DiscordUser(**await resp.json())
+                if user.username not in whitelist:
+                    raise HTTPException(status_code=403, detail="User not whitelisted")
                 token_validation_cache[token] = (datetime.now(), user)
                 return user
             else:
@@ -399,18 +406,6 @@ async def start_encounter(
                 (encounter_id, user.id),
             )
             encounter = await cur.fetchone()
-
-            await cur.execute(
-                """
-                UPDATE encounter_participants
-                SET is_active = CASE 
-                    WHEN initiative = (SELECT MAX(initiative) FROM encounter_participants WHERE encounter_id = %s) THEN TRUE
-                    ELSE FALSE
-                END
-                WHERE encounter_id = %s
-                """,
-                (encounter_id, encounter_id),
-            )
 
             if not encounter:
                 raise HTTPException(status_code=500, detail="Failed to start encounter")
@@ -649,7 +644,7 @@ async def get_encounter_creatures(
             SELECT * FROM creatures 
             JOIN encounter_participants ON creatures.id = encounter_participants.creature_id 
             WHERE encounter_id = %s 
-            ORDER BY initiative ASC
+            ORDER BY initiative ASC, creature_id ASC
             """,
                 (encounter_id,),
             )
