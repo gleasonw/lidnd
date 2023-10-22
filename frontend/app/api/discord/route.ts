@@ -1,5 +1,9 @@
-import apiURL from "@/app/apiURL";
 import { NextResponse } from "next/server";
+
+const rerouteUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : "https://dnd-init-tracker.vercel.app";
 
 export async function GET(request: Request) {
   const code = request.url.split("?code=")[1];
@@ -15,7 +19,7 @@ export async function GET(request: Request) {
         client_secret: process.env.CLIENT_SECRET,
         grant_type: "authorization_code",
         code,
-        redirect_uri: `${apiURL}/api/discord`,
+        redirect_uri: `${rerouteUrl}/api/discord`,
         scope: "identify",
       } as Record<string, string>),
     });
