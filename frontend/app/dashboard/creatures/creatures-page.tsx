@@ -2,9 +2,7 @@
 
 import { BasePopover } from "@/app/dashboard/base-popover";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
-import { CustomCreature } from "@/app/dashboard/encounters/[id]/creature-add-form";
 import {
-  useCreateCreature,
   useDeleteCreature,
   useUserCreatures,
 } from "@/app/dashboard/encounters/api";

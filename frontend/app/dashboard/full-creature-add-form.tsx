@@ -2,9 +2,7 @@ import EncounterCreatureAddForm, {
   ImageUpload,
 } from "@/app/dashboard/encounters/[id]/creature-add-form";
 import { useAddCreatureToEncounter } from "@/app/dashboard/encounters/api";
-import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   FormControl,
   FormField,
@@ -22,8 +20,8 @@ export const creatureForm = z.object({
   name: z.string().min(1, { message: "Name is required." }),
   max_hp: z.coerce.number().gte(1, { message: "Max HP must be at least 1." }),
   challenge_rating: z.coerce.number(),
-  icon: z.instanceof(File),
-  stat_block: z.instanceof(File),
+  icon: z.any(),
+  stat_block: z.any(),
   strategy_notes: z.string().optional(),
   resistances: z.array(z.string()).optional(),
   immunities: z.array(z.string()).optional(),
