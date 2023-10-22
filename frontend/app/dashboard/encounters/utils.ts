@@ -7,6 +7,13 @@ export function getAWSimageURL(
   return `https://dnd-init-tracker-icons-stats.s3.us-west-1.amazonaws.com/${type}-${creature_id}.png`;
 }
 
+export function sortEncounterCreatures(
+  a: EncounterCreature,
+  b: EncounterCreature
+){
+  return b.initiative - a.initiative || b.creature_id - a.creature_id;
+}
+
 export function optimisticTurnUpdate(
   to: "next" | "previous",
   participants?: EncounterCreature[]

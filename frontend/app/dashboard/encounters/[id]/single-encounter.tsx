@@ -23,6 +23,7 @@ import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import React from "react";
+import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
 
 export default function SingleEncounter() {
   const { data: encounterParticipants } = useEncounterCreatures();
@@ -52,7 +53,7 @@ export default function SingleEncounter() {
             </Button>
           </Link>
         ) : (
-          <Link href={`${id}/run`} onClick={() => startEncounter()}>
+          <Link href={`${id}/run`} onClick={startEncounter}>
             <Button>
               <Play />
               Commence the battle!
@@ -64,10 +65,8 @@ export default function SingleEncounter() {
       <AnimatePresence>
         <div className={"flex gap-10 overflow-auto justify-center w-full p-5"}>
           {encounterParticipants
-            ?.sort(
-              (a, b) =>
-                a.initiative - b.initiative || a.creature_id - b.creature_id
-            )
+            ?.slice()
+            .sort(sortEncounterCreatures)
             .map((participant) => (
               <AnimationListItem key={participant.id}>
                 <BattleCard creature={participant} />

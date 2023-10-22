@@ -28,7 +28,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { optimisticTurnUpdate } from "@/app/dashboard/encounters/utils";
+import {
+  optimisticTurnUpdate,
+  sortEncounterCreatures,
+} from "@/app/dashboard/encounters/utils";
 import { Spinner } from "@/components/ui/spinner";
 
 export function BattleUI() {
@@ -58,36 +61,33 @@ export function BattleUI() {
         <EncounterTime time={encounter?.started_at ?? undefined} />
       </div>
       <AnimatePresence>
-        <div className="flex gap-5">
-          <div
-            className={"flex gap-10 overflow-auto justify-center sm:p-5 w-96 sm:w-full"}
-          >
-            {displayedParticipants
-              ?.sort((a, b) => a.initiative - b.initiative || a.creature_id - b.creature_id)
-              .map((participant) => (
-                <AnimationListItem key={participant.id}>
-                  <BattleCard creature={participant}>
-                    <CreatureHealthForm creature={participant} />
-                  </BattleCard>
-                </AnimationListItem>
-              ))}
-          </div>
-          <div className="absolute top-0 right-5">
-            <Popover>
-              <PopoverTrigger>
-                <Button variant="outline">Creature +</Button>
-              </PopoverTrigger>
-              <PopoverContent className="flex flex-col gap-10 w-[600px]">
-                <EncounterCreatureAddForm />
-              </PopoverContent>
-            </Popover>
-          </div>
+        <div className={"flex gap-10 overflow-auto p-5 max-w-full pt-10"}>
+          {displayedParticipants
+            ?.slice()
+            .sort(sortEncounterCreatures)
+            .map((participant) => (
+              <AnimationListItem key={participant.id}>
+                <BattleCard creature={participant}>
+                  <CreatureHealthForm creature={participant} />
+                </BattleCard>
+              </AnimationListItem>
+            ))}
         </div>
       </AnimatePresence>
+      <div className="absolute top-0 right-5">
+        <Popover>
+          <PopoverTrigger>
+            <Button variant="outline">Creature +</Button>
+          </PopoverTrigger>
+          <PopoverContent className="flex flex-col gap-10 w-[600px]">
+            <EncounterCreatureAddForm />
+          </PopoverContent>
+        </Popover>
+      </div>
 
       <TurnButtons
-        onLeftClick={() => changeActiveTo("previous")}
-        onRightClick={() => changeActiveTo("next")}
+        onLeftClick={() => changeActiveTo("next")}
+        onRightClick={() => changeActiveTo("previous")}
         isPending={isPending}
       >
         <div className={"hidden md:flex"}>{statBlock}</div>

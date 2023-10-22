@@ -395,7 +395,7 @@ async def delete_encounter(
 @app.post("/api/encounters/{encounter_id}/start")
 async def start_encounter(
     encounter_id: int, user=Depends(get_discord_user)
-) -> EncounterResponse:
+) -> List[EncounterCreature]:
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(EncounterResponse)) as cur:
             await cur.execute(
@@ -410,10 +410,22 @@ async def start_encounter(
                 (encounter_id, user.id),
             )
             encounter = await cur.fetchone()
-
             if not encounter:
                 raise HTTPException(status_code=500, detail="Failed to start encounter")
-            return encounter
+            await cur.execute(
+                """
+                UPDATE encounter_participants
+                SET is_active = CASE 
+                    WHEN creature_id = (SELECT creature_id FROM encounter_participants WHERE encounter_id = %s ORDER BY initiative DESC, creature_id DESC LIMIT 1) THEN TRUE
+                    ELSE FALSE
+                END
+                WHERE encounter_id = %s
+                """,
+                (encounter_id, encounter_id),
+            )
+    return await get_encounter_creatures(encounter_id)
+
+            
 
 
 @app.post("/api/encounters/{encounter_id}/stop")

@@ -37,7 +37,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <nav className="border-bottom border flex items-center gap-3 flex-col sm:flex sm:gap-10">
+      <nav className="border-bottom border flex items-center gap-3 flex-col sm:flex-row sm:gap-10">
         <Link href="/dashboard" className={"text-2xl p-5"}>
           LiDnD
         </Link>

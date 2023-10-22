@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-query";
 import { getCookie } from "cookies-next";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
+import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
 
 const { GET, PUT, POST, DELETE } = createClient<paths>({ baseUrl: apiURL });
 
@@ -494,7 +495,6 @@ export function useDeleteCreature() {
 }
 
 export function useStartEncounter() {
-  const queryClient = useQueryClient();
   const id = useEncounterId();
   return useMutation({
     mutationFn: async () => {
@@ -517,9 +517,20 @@ export function useStartEncounter() {
       }
       return data;
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(encounterKey(id), data);
-    },
+    ...useOptimisticUpdate<EncounterCreature[]>(
+      encounterCreaturesKey(id),
+      (oldData = []) => {
+        return oldData
+          .slice()
+          .sort(sortEncounterCreatures)
+          .map((c, index) => {
+            if (index === 0) {
+              return { ...c, is_active: true };
+            }
+            return { ...c, is_active: false };
+          });
+      }
+    ),
   });
 }
 
