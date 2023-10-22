@@ -86,8 +86,8 @@ export function BattleUI() {
       </div>
 
       <TurnButtons
-        onLeftClick={() => changeActiveTo("next")}
-        onRightClick={() => changeActiveTo("previous")}
+        onLeftClick={() => changeActiveTo("previous")}
+        onRightClick={() => changeActiveTo("next")}
         isPending={isPending}
       >
         <div className={"hidden md:flex"}>{statBlock}</div>

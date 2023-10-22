@@ -10,7 +10,7 @@ export function getAWSimageURL(
 export function sortEncounterCreatures(
   a: EncounterCreature,
   b: EncounterCreature
-){
+) {
   return b.initiative - a.initiative || b.creature_id - a.creature_id;
 }
 
@@ -19,10 +19,13 @@ export function optimisticTurnUpdate(
   participants?: EncounterCreature[]
 ): EncounterCreature[] | undefined {
   if (participants && Array.isArray(participants)) {
+    const sortedParticipants = participants
+      .slice()
+      .sort(sortEncounterCreatures);
     const currentActive = participants.find(
       (c: EncounterCreature) => c.is_active
     );
-    const activeParticipants = participants.filter(
+    const activeParticipants = sortedParticipants.filter(
       (c: EncounterCreature) => c.hp > 0 || c.is_active
     );
     if (currentActive && activeParticipants.length > 1) {
@@ -30,7 +33,9 @@ export function optimisticTurnUpdate(
       if (to === "previous") {
         nextActive =
           activeParticipants[
-            (activeParticipants.indexOf(currentActive) - 1) %
+            (activeParticipants.indexOf(currentActive) -
+              1 +
+              activeParticipants.length) %
               activeParticipants.length
           ];
       } else {
@@ -41,7 +46,7 @@ export function optimisticTurnUpdate(
           ];
       }
       return participants.map((c: EncounterCreature) => {
-        if (c.creature_id === nextActive.creature_id) {
+        if (c.creature_id === nextActive?.creature_id) {
           return {
             ...c,
             is_active: true,

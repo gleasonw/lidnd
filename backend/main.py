@@ -256,12 +256,12 @@ async def update_turn(
 
             if to == "next":
                 next_active = active_participants[
-                    (active_participants.index(current_active) + 1)
+                    (active_participants.index(current_active) - 1)
                     % len(active_participants)
                 ]
             else:
                 next_active = active_participants[
-                    (active_participants.index(current_active) - 1)
+                    (active_participants.index(current_active) + 1)
                     % len(active_participants)
                 ]
             await curs.execute(
