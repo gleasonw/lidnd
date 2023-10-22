@@ -2,6 +2,7 @@ from typing import Annotated, Any, List, Literal, Optional, Dict, Tuple
 import aiohttp
 from dotenv import load_dotenv
 import os
+from fastapi.concurrency import asynccontextmanager
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import (
     BackgroundTasks,
@@ -31,7 +32,21 @@ CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
 pool = AsyncConnectionPool(os.getenv("DATABASE_URL", default=""), open=False)
-app = FastAPI()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await pool.open()
+    token = os.getenv("BOT_TOKEN")
+    assert token is not None, "BOT_TOKEN environment variable is not set"
+    asyncio.create_task(bot.start(token))
+
+    yield
+
+    await pool.close()
+
+
+app = FastAPI(lifespan=lifespan)
 origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
@@ -44,16 +59,6 @@ app.add_middleware(
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 bot = discord.Bot()
-
-
-@app.on_event("startup")
-async def open_pool():
-    await pool.open()
-
-
-@app.on_event("shutdown")
-async def close_pool():
-    await pool.close()
 
 
 class CreatureRequest(BaseModel):
@@ -753,10 +758,6 @@ async def untrack(ctx: ApplicationContext):
             )
             await ctx.respond("This channel will no longer receive encounters.")
 
-
-token = os.getenv("BOT_TOKEN")
-assert token is not None, "BOT_TOKEN environment variable is not set"
-asyncio.create_task(bot.start(token))
 
 if __name__ == "__main__":
     import uvicorn
