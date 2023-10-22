@@ -2,7 +2,7 @@ from typing import Annotated, Any, List, Literal, Optional, Dict, Tuple
 import aiohttp
 from dotenv import load_dotenv
 import os
-from fastapi.concurrency import asynccontextmanager
+from contextlib import asynccontextmanager
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import (
     BackgroundTasks,

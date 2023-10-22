@@ -37,7 +37,11 @@ export default function SingleEncounter() {
         <Input
           value={encounter?.name ?? ""}
           onChange={(e) =>
-            updateEncounter({ ...encounter, name: e.target.value })
+            updateEncounter({
+              ...encounter,
+              name: e.target.value,
+              description: encounter?.description ?? "",
+            })
           }
         />
         {encounter?.started_at ? (
