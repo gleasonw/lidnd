@@ -169,9 +169,8 @@ async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
 def read_root():
     return {"Hello": "World"}
 
-whitelist = [
-    'merkelizer'
-]
+
+whitelist = {"merkelizer"}
 
 
 async def get_discord_user(
