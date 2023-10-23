@@ -425,8 +425,6 @@ async def start_encounter(
             )
     return await get_encounter_creatures(encounter_id)
 
-            
-
 
 @app.post("/api/encounters/{encounter_id}/stop")
 async def stop_encounter(encounter_id: int, user=Depends(get_discord_user)) -> None:
@@ -451,17 +449,25 @@ async def add_existing_creature_to_encounter(
                     get_user_encounter_by_id(encounter_id, user)
                 )
                 user_creature = tg.create_task(get_user_creature(creature_id, user))
+            if user_encounter.exception():
+                raise HTTPException(status_code=404, detail="Encounter not found")
+            if user_creature.exception():
+                raise HTTPException(status_code=404, detail="Creature not found")
+
             user_encounter = user_encounter.result()
             user_creature = user_creature.result()
-            await cur.execute(
-                "INSERT INTO encounter_participants (encounter_id, creature_id, hp, initiative, is_active) VALUES (%s, %s, %s, %s, %s)",
-                (encounter_id, creature_id, user_creature.max_hp, 0, False),
+            await add_creature_to_encounter(
+                encounter_id=encounter_id,
+                creature_id=creature_id,
+                hp=user_creature.max_hp,
+                initiative=0,
+                is_active=False,
             )
     return await get_encounter_creatures(encounter_id)
 
 
 @app.post("/api/encounters/{encounter_id}/creatures")
-async def add_creature_to_encounter(
+async def create_creature_and_add_to_encounter(
     encounter_id: int,
     name: Annotated[str, Form()],
     max_hp: Annotated[int, Form()],
@@ -474,21 +480,56 @@ async def add_creature_to_encounter(
     ]:
         raise HTTPException(status_code=400, detail="Icon must be a JPEG or PNG file")
 
-    async with pool.connection() as conn:
-        # ensure the encounter belongs to the user, will throw
-        await get_user_encounter_by_id(encounter_id, user)
-
-        new_creature = await create_creature(
-            name=name, max_hp=max_hp, icon=icon, stat_block=stat_block, user=user
-        )
-
-        async with conn.cursor() as cur:
-            # Create a link between the encounter and the creature
-            await cur.execute(
-                "INSERT INTO encounter_participants (encounter_id, creature_id, hp, initiative, is_active) VALUES (%s, %s, %s, %s, %s)",
-                (encounter_id, new_creature.id, max_hp, 0, False),
+    async with asyncio.TaskGroup() as tg:
+        user_encounter = tg.create_task(get_user_encounter_by_id(encounter_id, user))
+        user_creature = tg.create_task(
+            create_creature(
+                name=name, max_hp=max_hp, icon=icon, stat_block=stat_block, user=user
             )
+        )
+    if user_encounter.exception():
+        raise HTTPException(status_code=404, detail="Encounter not found")
+    if user_creature.exception():
+        raise HTTPException(status_code=500, detail="Failed to create creature")
+    user_encounter = user_encounter.result()
+    new_creature = user_creature.result()
+
+    await add_creature_to_encounter(
+        encounter_id=encounter_id,
+        creature_id=new_creature.id,
+        hp=max_hp,
+        initiative=0,
+        is_active=False,
+    )
     return await get_encounter_creatures(encounter_id)
+
+
+async def add_creature_to_encounter(
+    encounter_id: int,
+    creature_id: int,
+    hp: int,
+    initiative: int,
+    is_active: bool,
+):
+    async with pool.connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                INSERT INTO encounter_participants (encounter_id, creature_id, hp, initiative, is_active)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (encounter_id, creature_id) DO UPDATE SET
+                    hp = EXCLUDED.hp,
+                    initiative = EXCLUDED.initiative,
+                    is_active = EXCLUDED.is_active;
+                """,
+                (
+                    encounter_id,
+                    creature_id,
+                    hp,
+                    initiative,
+                    is_active,
+                ),
+            )
 
 
 @app.delete("/api/encounters/{encounter_id}/creatures/{creature_id}")

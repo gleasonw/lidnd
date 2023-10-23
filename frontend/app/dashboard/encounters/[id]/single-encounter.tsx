@@ -24,14 +24,18 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import React, { useCallback } from "react";
 import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function SingleEncounter() {
   const { data: encounterParticipants } = useEncounterCreatures();
   const { data: encounter } = useEncounter();
   const { mutate: startEncounter } = useStartEncounter();
-  const { mutate: updateEncounter } = useUpdateEncounter();
+  const { mutate: updateEncounter, isPending: isUpdatePending } =
+    useUpdateEncounter();
   const id = useEncounterId();
-  const [encounterName, setEncounterName] = React.useState(encounter?.name ?? "");
+  const [encounterName, setEncounterName] = React.useState(
+    encounter?.name ?? ""
+  );
 
   return (
     <div className={"flex flex-col items-center gap-10 relative"}>
@@ -41,6 +45,7 @@ export default function SingleEncounter() {
           onChange={(e) => setEncounterName(e.target.value)}
         />
         <Button
+          className={'flex items-center justify-center'}
           onClick={() =>
             updateEncounter({
               ...encounter,
@@ -49,7 +54,7 @@ export default function SingleEncounter() {
             })
           }
         >
-          Update name
+          {isUpdatePending ? <Spinner /> : "Save"}
         </Button>
         {encounter?.started_at ? (
           <Link href={`${id}/run`}>
@@ -71,7 +76,7 @@ export default function SingleEncounter() {
       <AnimatePresence>
         <div
           className={
-            "flex gap-10 overflow-auto justify-center w-full p-5 pt-10"
+            "flex gap-10 overflow-auto justify-center w-full p-5 pt-14"
           }
         >
           {encounterParticipants

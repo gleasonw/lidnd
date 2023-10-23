@@ -30,34 +30,38 @@ export function CreatureHealthForm({
           }
         }}
       />
-      <Button
-        disabled={isPending}
-        variant="default"
-        className={"bg-red-700"}
-        onClick={(e) => {
-          e.stopPropagation();
-          edit({
-            ...creature,
-            hp: typeof hpDiff === "number" ? creature.hp - hpDiff : creature.hp,
-          });
-        }}
-      >
-        Damage
-      </Button>
-      <Button
-        disabled={isPending}
-        variant="default"
-        className={"bg-green-700"}
-        onClick={(e) => {
-          e.stopPropagation();
-          edit({
-            ...creature,
-            hp: typeof hpDiff === "number" ? creature.hp + hpDiff : creature.hp,
-          });
-        }}
-      >
-        Heal
-      </Button>
+      <div className="flex gap-4">
+        <Button
+          disabled={isPending}
+          variant="default"
+          className={"bg-rose-800"}
+          onClick={(e) => {
+            e.stopPropagation();
+            edit({
+              ...creature,
+              hp:
+                typeof hpDiff === "number" ? creature.hp - hpDiff : creature.hp,
+            });
+          }}
+        >
+          Damage
+        </Button>
+        <Button
+          disabled={isPending}
+          variant="default"
+          className={"bg-lime-800"}
+          onClick={(e) => {
+            e.stopPropagation();
+            edit({
+              ...creature,
+              hp:
+                typeof hpDiff === "number" ? creature.hp + hpDiff : creature.hp,
+            });
+          }}
+        >
+          Heal
+        </Button>
+      </div>
     </>
   );
 }

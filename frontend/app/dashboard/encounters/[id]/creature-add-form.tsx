@@ -162,12 +162,12 @@ export function ImageUpload({
 }) {
   const [hasContent, setHasContent] = React.useState(false);
   return (
-    <span className="h-auto relative p-5 flex gap-5 items-center justify-center group">
-      <span className="flex flex-col gap-2">
+    <span className="h-auto relative p-5 flex flex-col gap-5 items-center justify-center group">
+      <span className="flex flex-col gap-2 w-full">
         <span>Paste</span>
         <div
           contentEditable
-          className="flex w-56 relative rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full relative rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           onPaste={(e) => {
             const clipboardData = e.clipboardData;
             const item = clipboardData.items[0];
@@ -217,7 +217,7 @@ function ExistingCreature({
     name,
     id
   );
-  const { mutate: addCreature, isPending } =
+  const { mutate: addCreature, isPending,  } =
     useAddExistingCreatureToEncounter(onSuccess);
 
   return (

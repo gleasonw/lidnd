@@ -375,6 +375,7 @@ export function useAddExistingCreatureToEncounter(
       return data;
     },
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["userCreatures"] });
       if (onCreatureAdded) {
         onCreatureAdded();
       }
@@ -392,7 +393,8 @@ export function useAddExistingCreatureToEncounter(
           is_active: false,
           initiative: 0,
         };
-        return [...oldData, newCreature];
+        const encounterCreatures = [...oldData, newCreature];
+        return encounterCreatures;
       }
     ),
   });
