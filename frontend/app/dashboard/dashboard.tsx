@@ -65,7 +65,6 @@ export default function Dashboard() {
     <Skeleton key={3} className={"w-full h-full rounded-md"} />,
   ];
 
-  console.log(isLoading);
 
   return (
     <div className="flex flex-col gap-14 mx-auto max-w-screen-xl">
