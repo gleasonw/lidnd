@@ -67,7 +67,6 @@ export function BattleUI() {
       </div>
       {displayedParticipants && (
         <ParticipantsUI
-          key={activeParticipant?.id}
           participants={displayedParticipants}
           onChangeTurn={(direction) => changeActiveTo(direction)}
           isTurnPending={isPending}
@@ -100,10 +99,34 @@ function ParticipantsUI({
 
   const { mutate: removeCreatureFromEncounter } =
     useRemoveCreatureFromEncounter();
+
+  function handleChangeTurn(direction: "next" | "previous") {
+    const newParticipants = optimisticTurnUpdate(direction, participants);
+    setDmSelectedCreature(
+      newParticipants?.find((creature) => creature.is_active)?.id ?? 0
+    );
+    onChangeTurn(direction);
+  }
+
+  const scrollContainer = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (scrollContainer.current) {
+      const activeElement =
+        scrollContainer.current.querySelector("[data-active=true]");
+      if (activeElement) {
+        scrollContainer.current.scrollTo({
+          left: activeElement.getBoundingClientRect().left + scrollContainer.current.scrollLeft - scrollContainer.current.getBoundingClientRect().left,
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [activeParticipant?.id]);
+
   return (
     <>
       <AnimatePresence>
-        <div className={"flex gap-10 overflow-auto p-5 max-w-full pt-14"}>
+        <div className={"flex gap-10 overflow-auto p-5 max-w-full pt-14"} ref={scrollContainer}>
           {participants
             ?.slice()
             .sort(sortEncounterCreatures)
@@ -120,13 +143,13 @@ function ParticipantsUI({
         </div>
       </AnimatePresence>
       <TurnButtons
-        onLeftClick={() => onChangeTurn("previous")}
-        onRightClick={() => onChangeTurn("next")}
+        onLeftClick={() => handleChangeTurn("previous")}
+        onRightClick={() => handleChangeTurn("next")}
         isPending={isTurnPending}
       >
         {selectedParticipant && (
           <div className="flex flex-col gap-2">
-            <span className={'text-center text-xl'}>
+            <span className={"text-center text-xl"}>
               {selectedParticipant.name}{" "}
             </span>
             <CreatureHealthForm creature={selectedParticipant} />
@@ -225,7 +248,7 @@ export function BattleCard({
       <Card
         onClick={onClick}
         key={creature.id}
-        data-selected={isSelected}
+        data-active={creature.is_active}
         className={`relative select-none ${className} h-56 justify-evenly w-40 gap-0 items-center flex flex-col transition-all ${
           creature.is_active ? "transform scale-110" : ""
         } ${isSelected ? `outline-4 outline` : ""}`}
