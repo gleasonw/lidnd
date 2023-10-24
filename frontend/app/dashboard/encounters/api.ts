@@ -289,6 +289,7 @@ export function useUpdateEncounterCreature() {
 
 export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
   const id = useEncounterId();
+  const optimisticId = Math.random();
 
   return useMutation({
     mutationFn: async (creatureData: {
@@ -327,7 +328,7 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
       encounterCreaturesKey(id),
       (oldData = [], newData) => {
         const newCreature: EncounterCreature = {
-          id: 1,
+          id: optimisticId,
           creature_id: 1,
           encounter_id: id,
           hp: newData.max_hp,
@@ -347,6 +348,9 @@ export function useAddExistingCreatureToEncounter(
 ) {
   const queryClient = useQueryClient();
   const id = useEncounterId();
+  const optimisticId = Math.random();
+
+  const queryKey = encounterCreaturesKey(id);
 
   return useMutation({
     mutationFn: async (creatureData: {
@@ -380,23 +384,34 @@ export function useAddExistingCreatureToEncounter(
         onCreatureAdded();
       }
     },
-    ...useOptimisticUpdate<EncounterCreature[]>(
-      encounterCreaturesKey(id),
-      (oldData = [], newData) => {
-        const newCreature: EncounterCreature = {
-          id: 1,
-          creature_id: newData.creature_id,
-          encounter_id: id,
-          hp: 0,
-          max_hp: 0,
-          name: newData.name,
-          is_active: false,
-          initiative: 0,
-        };
-        const encounterCreatures = [...oldData, newCreature];
-        return encounterCreatures;
-      }
-    ),
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousData =
+        queryClient.getQueryData<EncounterCreature[]>(queryKey);
+
+      queryClient.setQueryData(
+        queryKey,
+        (oldData: EncounterCreature[] | undefined) => {
+          const newCreature: EncounterCreature = {
+            id: optimisticId,
+            creature_id: newData.creature_id,
+            encounter_id: id,
+            hp: 0,
+            max_hp: 0,
+            name: newData.name,
+            is_active: false,
+            initiative: 0,
+          };
+          return [...(oldData || []), newCreature];
+        }
+      );
+
+      return { previousData };
+    },
+    onError: (err: any, newData: any, context: any) => {
+      queryClient.setQueryData(queryKey, context?.previousData);
+    },
+    ...useInvalidateQueryKey(queryKey),
   });
 }
 

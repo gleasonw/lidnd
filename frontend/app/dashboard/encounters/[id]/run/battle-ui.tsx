@@ -43,10 +43,49 @@ export function BattleUI() {
   const displayedParticipants = isPending
     ? optimisticTurnUpdate(variables, encounterParticipants)
     : encounterParticipants;
-
   const activeParticipant = displayedParticipants?.find(
     (creature) => creature.is_active
   );
+  const [dmSelectedCreature, setDmSelectedCreature] = React.useState<number>(
+    activeParticipant?.id ?? 0
+  );
+
+  const selectedParticipant =
+    displayedParticipants?.find(
+      (participant) => participant.id === dmSelectedCreature
+    ) ?? activeParticipant;
+
+  const { mutate: removeCreatureFromEncounter } =
+    useRemoveCreatureFromEncounter();
+
+  function handleChangeTurn(direction: "next" | "previous") {
+    const newParticipants = optimisticTurnUpdate(
+      direction,
+      encounterParticipants
+    );
+    setDmSelectedCreature(
+      newParticipants?.find((creature) => creature.is_active)?.id ?? 0
+    );
+    changeActiveTo(direction);
+  }
+
+  const scrollContainer = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (scrollContainer.current) {
+      const activeElement =
+        scrollContainer.current.querySelector("[data-active=true]");
+      if (activeElement) {
+        scrollContainer.current.scrollTo({
+          left:
+            activeElement.getBoundingClientRect().left +
+            scrollContainer.current.scrollLeft -
+            scrollContainer.current.getBoundingClientRect().left,
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [activeParticipant?.id]);
 
   return (
     <div className="flex flex-col gap-5 justify-center items-center relative">
@@ -58,86 +97,32 @@ export function BattleUI() {
         <EncounterTime time={encounter?.started_at ?? undefined} />
         <Popover>
           <PopoverTrigger>
-            <Button variant="outline">Creature +</Button>
+            <div className="p-2 border-2 rounded border-input bg-background hover:bg-accent hover:text-accent-foreground">
+              Creature +
+            </div>
           </PopoverTrigger>
           <PopoverContent className="flex flex-col gap-10 w-[600px]">
             <EncounterCreatureAddForm />
           </PopoverContent>
         </Popover>
       </div>
-      {displayedParticipants && (
-        <ParticipantsUI
-          participants={displayedParticipants}
-          onChangeTurn={(direction) => changeActiveTo(direction)}
-          isTurnPending={isPending}
-        />
-      )}
-    </div>
-  );
-}
-
-function ParticipantsUI({
-  participants,
-  onChangeTurn,
-  isTurnPending,
-}: {
-  participants: EncounterCreature[];
-  onChangeTurn: (direction: "next" | "previous") => void;
-  isTurnPending?: boolean;
-}) {
-  const activeParticipant = participants?.find(
-    (creature) => creature.is_active
-  );
-  const [dmSelectedCreature, setDmSelectedCreature] = React.useState<number>(
-    activeParticipant?.id ?? 0
-  );
-
-  const selectedParticipant =
-    participants?.find(
-      (participant) => participant.id === dmSelectedCreature
-    ) ?? activeParticipant;
-
-  const { mutate: removeCreatureFromEncounter } =
-    useRemoveCreatureFromEncounter();
-
-  function handleChangeTurn(direction: "next" | "previous") {
-    const newParticipants = optimisticTurnUpdate(direction, participants);
-    setDmSelectedCreature(
-      newParticipants?.find((creature) => creature.is_active)?.id ?? 0
-    );
-    onChangeTurn(direction);
-  }
-
-  const scrollContainer = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (scrollContainer.current) {
-      const activeElement =
-        scrollContainer.current.querySelector("[data-active=true]");
-      if (activeElement) {
-        scrollContainer.current.scrollTo({
-          left: activeElement.getBoundingClientRect().left + scrollContainer.current.scrollLeft - scrollContainer.current.getBoundingClientRect().left,
-          behavior: "smooth",
-        });
-      }
-    }
-  }, [activeParticipant?.id]);
-
-  return (
-    <>
       <AnimatePresence>
-        <div className={"flex gap-10 overflow-auto p-5 max-w-full pt-20"} ref={scrollContainer}>
-          {participants
+        <div
+          className={"flex gap-10 overflow-auto p-5 max-w-full pt-20"}
+          ref={scrollContainer}
+        >
+          {displayedParticipants
             ?.slice()
             .sort(sortEncounterCreatures)
             .map((participant) => (
               <AnimationListItem key={participant.id}>
-                <BattleCard
-                  onClick={() => setDmSelectedCreature(participant.id)}
-                  creature={participant}
-                  className="cursor-pointer hover:bg-gray-100 transition-all"
-                  isSelected={participant.id === dmSelectedCreature}
-                />
+                <button onClick={() => setDmSelectedCreature(participant.id)}>
+                  <BattleCard
+                    creature={participant}
+                    className="cursor-pointer hover:bg-gray-100 transition-all"
+                    isSelected={participant.id === dmSelectedCreature}
+                  />
+                </button>
               </AnimationListItem>
             ))}
         </div>
@@ -145,7 +130,7 @@ function ParticipantsUI({
       <TurnButtons
         onLeftClick={() => handleChangeTurn("previous")}
         onRightClick={() => handleChangeTurn("next")}
-        isPending={isTurnPending}
+        isPending={isPending}
       >
         {selectedParticipant && (
           <div className="flex flex-col gap-2">
@@ -179,7 +164,7 @@ function ParticipantsUI({
           </Button>
         </>
       )}
-    </>
+    </div>
   );
 }
 
@@ -224,13 +209,11 @@ function TurnButtons({
 export function BattleCard({
   creature,
   children,
-  onClick,
   className,
   isSelected,
 }: {
   creature: EncounterCreature;
   children?: React.ReactNode;
-  onClick?: () => void;
   className?: string;
   isSelected?: boolean;
 }) {
@@ -246,7 +229,6 @@ export function BattleCard({
       className={`flex relative flex-col gap-6 items-center w-40 justify-between`}
     >
       <Card
-        onClick={onClick}
         key={creature.id}
         data-active={creature.is_active}
         className={`relative select-none ${className} h-56 justify-evenly w-40 gap-0 items-center flex flex-col transition-all ${

@@ -217,8 +217,15 @@ function ExistingCreature({
     name,
     id
   );
-  const { mutate: addCreature, isPending,  } =
-    useAddExistingCreatureToEncounter(onSuccess);
+  const {
+    mutate: addCreature,
+    isPending: isAddingExistingCreature,
+    variables,
+  } = useAddExistingCreatureToEncounter(onSuccess);
+
+  const displayedCreatures = isAddingExistingCreature
+    ? creatures?.filter((creature) => creature.id !== variables.creature_id)
+    : creatures;
 
   return (
     <>
@@ -230,7 +237,7 @@ function ExistingCreature({
       />
       <AnimatePresence>
         {isLoadingCreatures ? <Spinner /> : null}
-        {creatures?.map((creature) => (
+        {displayedCreatures?.map((creature) => (
           <AnimationListItem key={creature.id}>
             <button
               className={
