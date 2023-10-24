@@ -126,7 +126,7 @@ function ParticipantsUI({
   return (
     <>
       <AnimatePresence>
-        <div className={"flex gap-10 overflow-auto p-5 max-w-full pt-14"} ref={scrollContainer}>
+        <div className={"flex gap-10 overflow-auto p-5 max-w-full pt-20"} ref={scrollContainer}>
           {participants
             ?.slice()
             .sort(sortEncounterCreatures)
