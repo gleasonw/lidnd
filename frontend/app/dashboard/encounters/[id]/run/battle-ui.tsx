@@ -13,6 +13,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MoreHorizontal,
+  Swords,
   X,
 } from "lucide-react";
 import { StatBlock } from "@/app/dashboard/encounters/[id]/run/stat-block";
@@ -35,8 +36,8 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 
 export function BattleUI() {
-  const { data: encounterParticipants } = useEncounterCreatures();
   const { data: encounter } = useEncounter();
+  const { data: encounterParticipants } = useEncounterCreatures();
   const { mutate: changeActiveTo, isPending, variables } = useTurn();
 
   const displayedParticipants = isPending
@@ -47,34 +48,14 @@ export function BattleUI() {
     (creature) => creature.is_active
   );
 
-  const statBlock = activeParticipant?.id ? (
-    <StatBlock
-      id={activeParticipant.creature_id}
-      name={activeParticipant.name}
-      key={activeParticipant.id}
-    />
-  ) : null;
-
   return (
     <div className="flex flex-col gap-5 justify-center items-center relative">
-      <div className={"flex absolute top-0 left-0 gap-3 items-center"}>
+      <div
+        className={
+          "flex absolute top-0 left-0 gap-3 items-center w-full justify-between"
+        }
+      >
         <EncounterTime time={encounter?.started_at ?? undefined} />
-      </div>
-      <AnimatePresence>
-        <div className={"flex gap-10 overflow-auto p-5 max-w-full pt-10"}>
-          {displayedParticipants
-            ?.slice()
-            .sort(sortEncounterCreatures)
-            .map((participant) => (
-              <AnimationListItem key={participant.id}>
-                <BattleCard creature={participant}>
-                  <CreatureHealthForm creature={participant} />
-                </BattleCard>
-              </AnimationListItem>
-            ))}
-        </div>
-      </AnimatePresence>
-      <div className="absolute top-0 right-5">
         <Popover>
           <PopoverTrigger>
             <Button variant="outline">Creature +</Button>
@@ -84,16 +65,98 @@ export function BattleUI() {
           </PopoverContent>
         </Popover>
       </div>
-
-      <TurnButtons
-        onLeftClick={() => changeActiveTo("previous")}
-        onRightClick={() => changeActiveTo("next")}
-        isPending={isPending}
-      >
-        <div className={"hidden md:flex"}>{statBlock}</div>
-      </TurnButtons>
-      <div className="md:hidden">{statBlock}</div>
+      {displayedParticipants && (
+        <ParticipantsUI
+          key={activeParticipant?.id}
+          participants={displayedParticipants}
+          onChangeTurn={(direction) => changeActiveTo(direction)}
+          isTurnPending={isPending}
+        />
+      )}
     </div>
+  );
+}
+
+function ParticipantsUI({
+  participants,
+  onChangeTurn,
+  isTurnPending,
+}: {
+  participants: EncounterCreature[];
+  onChangeTurn: (direction: "next" | "previous") => void;
+  isTurnPending?: boolean;
+}) {
+  const activeParticipant = participants?.find(
+    (creature) => creature.is_active
+  );
+  const [dmSelectedCreature, setDmSelectedCreature] = React.useState<number>(
+    activeParticipant?.id ?? 0
+  );
+
+  const selectedParticipant =
+    participants?.find(
+      (participant) => participant.id === dmSelectedCreature
+    ) ?? activeParticipant;
+
+  const { mutate: removeCreatureFromEncounter } =
+    useRemoveCreatureFromEncounter();
+  return (
+    <>
+      <AnimatePresence>
+        <div className={"flex gap-10 overflow-auto p-5 max-w-full pt-14"}>
+          {participants
+            ?.slice()
+            .sort(sortEncounterCreatures)
+            .map((participant) => (
+              <AnimationListItem key={participant.id}>
+                <BattleCard
+                  onClick={() => setDmSelectedCreature(participant.id)}
+                  creature={participant}
+                  className="cursor-pointer hover:bg-gray-100 transition-all"
+                  isSelected={participant.id === dmSelectedCreature}
+                />
+              </AnimationListItem>
+            ))}
+        </div>
+      </AnimatePresence>
+      <TurnButtons
+        onLeftClick={() => onChangeTurn("previous")}
+        onRightClick={() => onChangeTurn("next")}
+        isPending={isTurnPending}
+      >
+        {selectedParticipant && (
+          <div className="flex flex-col gap-2">
+            <span className={'text-center text-xl'}>
+              {selectedParticipant.name}{" "}
+            </span>
+            <CreatureHealthForm creature={selectedParticipant} />
+            {selectedParticipant.hp > 0 ? (
+              <InitiativeInput
+                creature={selectedParticipant}
+                className="flex gap-5"
+              />
+            ) : null}
+          </div>
+        )}
+      </TurnButtons>
+      {selectedParticipant && (
+        <>
+          <StatBlock
+            id={selectedParticipant.creature_id}
+            name={selectedParticipant.name}
+            key={selectedParticipant.creature_id}
+          />
+          <Button
+            variant="destructive"
+            onClick={() =>
+              removeCreatureFromEncounter(selectedParticipant.creature_id)
+            }
+          >
+            Remove from encounter
+          </Button>
+        </>
+      )}
+    </>
   );
 }
 
@@ -109,7 +172,7 @@ function TurnButtons({
   isPending?: boolean;
 }) {
   return (
-    <div className="flex justify-between w-full p-4">
+    <div className="flex w-full justify-between">
       <Button
         className="w-20"
         disabled={isPending}
@@ -138,9 +201,15 @@ function TurnButtons({
 export function BattleCard({
   creature,
   children,
+  onClick,
+  className,
+  isSelected,
 }: {
   creature: EncounterCreature;
   children?: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  isSelected?: boolean;
 }) {
   function getCreaturePercentDamage(creature: EncounterCreature) {
     let missingHp = creature.max_hp - creature.hp;
@@ -148,22 +217,22 @@ export function BattleCard({
     return (missingHp / creature.max_hp) * 100;
   }
 
-  const { mutate: removeCreatureFromEncounter } =
-    useRemoveCreatureFromEncounter();
-
   return (
     <div
       key={creature.id}
-      className={`flex relative flex-col gap-6 items-center w-40 justify-between }`}
+      className={`flex relative flex-col gap-6 items-center w-40 justify-between`}
     >
       <Card
+        onClick={onClick}
         key={creature.id}
-        className={`relative h-60 w-40 gap-0 justify-between items-center flex flex-col ${
-          creature.is_active
-            ? `outline-4 outline transform scale-110 transition-all select-none`
-            : ""
-        }`}
+        data-selected={isSelected}
+        className={`relative select-none ${className} h-56 justify-evenly w-40 gap-0 items-center flex flex-col transition-all ${
+          creature.is_active ? "transform scale-110" : ""
+        } ${isSelected ? `outline-4 outline` : ""}`}
       >
+        {creature.is_active ? (
+          <Swords className="absolute -top-9 z-10" />
+        ) : null}
         <div
           style={{ height: `${getCreaturePercentDamage(creature)}%` }}
           className={`absolute rounded bottom-0 left-0 w-full ${
@@ -172,25 +241,6 @@ export function BattleCard({
               : "bg-red-500"
           } bg-opacity-50 transition-all`}
         />
-        <Popover>
-          <PopoverTrigger className="ml-auto">
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="flex flex-col gap-10">
-            {creature.hp > 0 ? (
-              <InitiativeInput creature={creature} className="flex gap-5" />
-            ) : null}
-            <Button
-              variant="destructive"
-              onClick={() => removeCreatureFromEncounter(creature.creature_id)}
-            >
-              Remove from encounter
-            </Button>
-          </PopoverContent>
-        </Popover>
-
         <CardHeader className="text-ellipsis max-w-full p-3">
           <CardTitle>{creature.name}</CardTitle>
         </CardHeader>
@@ -221,9 +271,6 @@ export const AnimationListItem = ({
     style: {
       position: isPresent ? "static" : "absolute",
     },
-    initial: { scale: 0, opacity: 0 },
-    animate: { scale: 1, opacity: 1 },
-    exit: { scale: 0, opacity: 0 },
   } as const;
   return (
     <motion.div {...animations} layout>

@@ -17,7 +17,7 @@ export function CreatureHealthForm({
   const { mutate: edit, isPending } = useUpdateEncounterCreature();
 
   return (
-    <>
+    <div className="flex gap-4">
       <Input
         placeholder="Modify HP"
         type="text"
@@ -30,38 +30,34 @@ export function CreatureHealthForm({
           }
         }}
       />
-      <div className="flex gap-4">
-        <Button
-          disabled={isPending}
-          variant="default"
-          className={"bg-rose-800"}
-          onClick={(e) => {
-            e.stopPropagation();
-            edit({
-              ...creature,
-              hp:
-                typeof hpDiff === "number" ? creature.hp - hpDiff : creature.hp,
-            });
-          }}
-        >
-          Damage
-        </Button>
-        <Button
-          disabled={isPending}
-          variant="default"
-          className={"bg-lime-800"}
-          onClick={(e) => {
-            e.stopPropagation();
-            edit({
-              ...creature,
-              hp:
-                typeof hpDiff === "number" ? creature.hp + hpDiff : creature.hp,
-            });
-          }}
-        >
-          Heal
-        </Button>
-      </div>
-    </>
+      <Button
+        disabled={isPending}
+        variant="default"
+        className={"bg-rose-800"}
+        onClick={(e) => {
+          e.stopPropagation();
+          edit({
+            ...creature,
+            hp: typeof hpDiff === "number" ? creature.hp - hpDiff : creature.hp,
+          });
+        }}
+      >
+        Damage
+      </Button>
+      <Button
+        disabled={isPending}
+        variant="default"
+        className={"bg-lime-800"}
+        onClick={(e) => {
+          e.stopPropagation();
+          edit({
+            ...creature,
+            hp: typeof hpDiff === "number" ? creature.hp + hpDiff : creature.hp,
+          });
+        }}
+      >
+        Heal
+      </Button>
+    </div>
   );
 }

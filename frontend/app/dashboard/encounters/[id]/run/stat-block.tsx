@@ -21,7 +21,7 @@ export function StatBlock({ id, name }: { id: number; name: string }) {
         width={width}
         height={height}
         className={`transition-opacity ${
-          width === 1000 && height === 1000 ? "opacity-0" : "opacity-100"
+          width === 1000 && height === 1000 ? "opacity-0" : "opcaity-100"
         }`}
       />
     </div>
