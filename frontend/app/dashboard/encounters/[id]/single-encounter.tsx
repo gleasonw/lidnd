@@ -125,10 +125,10 @@ const { mutate: removeCreatureFromEncounter } =
               ))}
         </div>
       </AnimatePresence>
-      <div className={"flex flex-col gap-3"}>
-        <div className={"flex flex-wrap gap-10"}>
-          <Collapsible defaultOpen={true}>
-            <Card className="w-[600px] p-3">
+      <div className={"flex flex-col w-full gap-3"}>
+        <div className={"flex flex-wrap w-full justify-center gap-5"}>
+          <Collapsible defaultOpen={true} asChild>
+            <Card className="max-w-[600px] w-full p-3">
               <CollapsibleTrigger
                 className={"w-full p-2 hover:bg-gray-100 transition-all"}
               >
@@ -142,8 +142,8 @@ const { mutate: removeCreatureFromEncounter } =
             </Card>
           </Collapsible>
 
-          <Collapsible defaultOpen={true}>
-            <Card className={"w-[600px] p-3"}>
+          <Collapsible defaultOpen={true} asChild>
+            <Card className={"max-w-[600px] w-full p-3"}>
               <CollapsibleTrigger
                 className={"w-full p-2 hover:bg-gray-100 transition-all"}
               >

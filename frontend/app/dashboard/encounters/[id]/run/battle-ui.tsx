@@ -124,13 +124,13 @@ export function BattleUI() {
         </div>
       </AnimatePresence>
       {addingCreature ? (
-        <div className={'flex flex-col gap-3'}>
+        <div className={'flex flex-col w-full items-center gap-3'}>
           <Button variant={'ghost'} onClick={() => setAddingCreature(false)}>
             <X /> Close
           </Button>
-          <div className={"flex flex-wrap gap-3"}>
-            <Card className="w-[600px] p-3">
-              <CardContent className={"flex flex-col gap-3"}>
+          <div className={"flex flex-wrap gap-3 w-full justify-center"}>
+            <Card className={'w-full max-w-[600px]'}>
+              <CardContent className={"flex flex-col gap-3 pt-5"}>
                 <CardTitle>New creature</CardTitle>
                 <CustomCreature
                   mutation={{
@@ -140,8 +140,8 @@ export function BattleUI() {
                 />
               </CardContent>
             </Card>
-            <Card className={"w-[600px] p-3"}>
-              <CardContent className={'flex flex-col gap-3'}>
+            <Card className={'w-full max-w-[600px]'}>
+              <CardContent className={'flex flex-col gap-3 pt-5'}>
                 <CardTitle>Existing creature</CardTitle>
                 <ExistingCreature />
               </CardContent>
