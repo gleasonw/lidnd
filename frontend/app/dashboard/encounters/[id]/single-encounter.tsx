@@ -1,6 +1,8 @@
 "use client";
 
 import EncounterCreatureAddForm, {
+  CustomCreature,
+  ExistingCreature,
   ImageUpload,
 } from "@/app/dashboard/encounters/[id]/creature-add-form";
 import {
@@ -11,23 +13,30 @@ import {
   useAddCreatureToEncounter,
   useEncounter,
   useEncounterCreatures,
+  useRemoveCreatureFromEncounter,
   useStartEncounter,
   useUpdateEncounter,
 } from "@/app/dashboard/encounters/api";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence } from "framer-motion";
-import { Play } from "lucide-react";
+import { Play, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import React, { useCallback } from "react";
+import React from "react";
 import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
 import { Spinner } from "@/components/ui/spinner";
+import { LoadingButton } from "@/components/ui/loading-button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 export default function SingleEncounter() {
-  const { data: encounterParticipants } = useEncounterCreatures();
+  const { data: encounterParticipants, isLoading } = useEncounterCreatures();
   const { data: encounter } = useEncounter();
   const { mutate: startEncounter } = useStartEncounter();
   const { mutate: updateEncounter, isPending: isUpdatePending } =
@@ -36,26 +45,33 @@ export default function SingleEncounter() {
   const [encounterName, setEncounterName] = React.useState(
     encounter?.name ?? ""
   );
+const { mutate: removeCreatureFromEncounter } =
+    useRemoveCreatureFromEncounter();
 
   return (
     <div className={"flex flex-col items-center gap-10 relative"}>
-      <div className="justify-self-center self-center flex gap-5 items-center absolute top-0 right-0">
-        <Input
-          value={encounterName}
-          onChange={(e) => setEncounterName(e.target.value)}
-        />
-        <Button
-          className={'flex items-center justify-center'}
-          onClick={() =>
-            updateEncounter({
-              ...encounter,
-              name: encounterName,
-              description: encounter?.description ?? "",
-            })
-          }
-        >
-          {isUpdatePending ? <Spinner /> : "Save"}
-        </Button>
+      <div className="flex gap-5 items-center justify-between w-full">
+        <div className="flex gap-5">
+          <Input
+            value={encounterName}
+            placeholder="Encounter name"
+            onChange={(e) => setEncounterName(e.target.value)}
+          />
+          <LoadingButton
+            isLoading={isUpdatePending}
+            className={"flex items-center justify-center w-32"}
+            onClick={() =>
+              updateEncounter({
+                ...encounter,
+                name: encounterName,
+                description: encounter?.description ?? "",
+              })
+            }
+          >
+            Save
+          </LoadingButton>
+        </div>
+
         {encounter?.started_at ? (
           <Link href={`${id}/run`}>
             <Button>
@@ -74,27 +90,78 @@ export default function SingleEncounter() {
       </div>
 
       <AnimatePresence>
-        <div
-          className={
-            "flex gap-10 overflow-auto justify-center w-full p-5 pt-14"
-          }
-        >
+        <div className={"flex gap-10 overflow-auto p-5 max-w-full"}>
           {encounterParticipants
             ?.slice()
             .sort(sortEncounterCreatures)
             .map((participant) => (
               <AnimationListItem key={participant.id}>
-                <BattleCard creature={participant} />
+                <BattleCard creature={participant}>
+                  <Button
+                    className={"absolute top-0 right-0"}
+                    variant="ghost"
+                    onClick={() => removeCreatureFromEncounter(participant.id)}
+                  >
+                    <X />
+                  </Button>
+                </BattleCard>
               </AnimationListItem>
             ))}
+          {encounterParticipants?.length === 0 && (
+            <div className="h-56 justify-evenly w-40 gap-0 items-center flex flex-col">
+              <h1 className={"text-2xl text-center"}>
+                No creatures in this encounter
+              </h1>
+            </div>
+          )}
+          {isLoading &&
+            Array(5)
+              .fill(null)
+              .map((_, i) => (
+                <Card
+                  key={i}
+                  className="h-56 justify-evenly w-40 gap-0 items-center flex flex-col animate-pulse"
+                />
+              ))}
         </div>
       </AnimatePresence>
-      <Card className="p-5 md:w-1/2 w-full">
-        <FullCreatureAddForm />
-      </Card>
+      <div className={"flex flex-col gap-3"}>
+        <div className={"flex flex-wrap gap-10"}>
+          <Collapsible defaultOpen={true}>
+            <Card className="w-[600px] p-3">
+              <CollapsibleTrigger
+                className={"w-full p-2 hover:bg-gray-100 transition-all"}
+              >
+                <CardTitle>Add new creature</CardTitle>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className={"flex flex-col gap-3"}>
+                  <FullCreatureAddForm />
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
+          <Collapsible defaultOpen={true}>
+            <Card className={"w-[600px] p-3"}>
+              <CollapsibleTrigger
+                className={"w-full p-2 hover:bg-gray-100 transition-all"}
+              >
+                <CardTitle>Add existing creature</CardTitle>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className={"flex flex-col gap-3"}>
+                  <ExistingCreature />
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        </div>
+      </div>
     </div>
   );
 }
+
 
 const encounterCRPerCharacter = [
   { level: 1, easy: 0.125, standard: 0.125, hard: 0.25, cap: 1 },

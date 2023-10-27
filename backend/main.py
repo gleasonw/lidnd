@@ -532,26 +532,16 @@ async def add_creature_to_encounter(
             )
 
 
-@app.delete("/api/encounters/{encounter_id}/creatures/{creature_id}")
+@app.post("/api/encounters/{encounter_id}/remove/{participant_id}")
 async def remove_creature_from_encounter(
-    encounter_id: int, creature_id: int, user=Depends(get_discord_user)
+    encounter_id: int, participant_id: int, user=Depends(get_discord_user)
 ) -> List[EncounterCreature]:
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
-            async with asyncio.TaskGroup() as tg:
-                user_encounter = tg.create_task(
-                    get_user_encounter_by_id(encounter_id, user)
-                )
-                user_creature = tg.create_task(get_user_creature(creature_id, user))
-            if user_encounter.exception() or user_creature.exception():
-                raise HTTPException(
-                    status_code=404, detail="Encounter or creature not found"
-                )
-
-            # Delete the link between the encounter and the creature
+            user_encounter = await get_user_encounter_by_id(encounter_id, user)
             await cur.execute(
-                "DELETE FROM encounter_participants WHERE encounter_id=%s AND creature_id=%s",
-                (encounter_id, creature_id),
+                "DELETE FROM encounter_participants WHERE encounter_id=%s AND id=%s",
+                (user_encounter.id, participant_id),
             )
     return await get_encounter_creatures(encounter_id)
 

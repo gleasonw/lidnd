@@ -32,8 +32,6 @@ export interface paths {
     put: operations["update_encounter_creature_api_encounters__encounter_id__creatures__creature_id__put"];
     /** Add Existing Creature To Encounter */
     post: operations["add_existing_creature_to_encounter_api_encounters__encounter_id__creatures__creature_id__post"];
-    /** Remove Creature From Encounter */
-    delete: operations["remove_creature_from_encounter_api_encounters__encounter_id__creatures__creature_id__delete"];
   };
   "/api/encounters/{encounter_id}/start": {
     /** Start Encounter */
@@ -46,8 +44,12 @@ export interface paths {
   "/api/encounters/{encounter_id}/creatures": {
     /** Get Encounter Creatures */
     get: operations["get_encounter_creatures_api_encounters__encounter_id__creatures_get"];
-    /** Add Creature To Encounter */
-    post: operations["add_creature_to_encounter_api_encounters__encounter_id__creatures_post"];
+    /** Create Creature And Add To Encounter */
+    post: operations["create_creature_and_add_to_encounter_api_encounters__encounter_id__creatures_post"];
+  };
+  "/api/encounters/{encounter_id}/remove/{participant_id}": {
+    /** Remove Creature From Encounter */
+    post: operations["remove_creature_from_encounter_api_encounters__encounter_id__remove__participant_id__post"];
   };
   "/api/creatures/{creature_id}": {
     /** Get User Creature */
@@ -79,8 +81,8 @@ export type webhooks = Record<string, never>;
 
 export interface components {
   schemas: {
-    /** Body_add_creature_to_encounter_api_encounters__encounter_id__creatures_post */
-    Body_add_creature_to_encounter_api_encounters__encounter_id__creatures_post: {
+    /** Body_create_creature_and_add_to_encounter_api_encounters__encounter_id__creatures_post */
+    Body_create_creature_and_add_to_encounter_api_encounters__encounter_id__creatures_post: {
       /** Name */
       name: string;
       /** Max Hp */
@@ -430,29 +432,6 @@ export interface operations {
       };
     };
   };
-  /** Remove Creature From Encounter */
-  remove_creature_from_encounter_api_encounters__encounter_id__creatures__creature_id__delete: {
-    parameters: {
-      path: {
-        encounter_id: number;
-        creature_id: number;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterCreature"][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
   /** Start Encounter */
   start_encounter_api_encounters__encounter_id__start_post: {
     parameters: {
@@ -464,7 +443,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["EncounterResponse"];
+          "application/json": components["schemas"]["EncounterCreature"][];
         };
       };
       /** @description Validation Error */
@@ -519,8 +498,8 @@ export interface operations {
       };
     };
   };
-  /** Add Creature To Encounter */
-  add_creature_to_encounter_api_encounters__encounter_id__creatures_post: {
+  /** Create Creature And Add To Encounter */
+  create_creature_and_add_to_encounter_api_encounters__encounter_id__creatures_post: {
     parameters: {
       path: {
         encounter_id: number;
@@ -528,7 +507,30 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/x-www-form-urlencoded": components["schemas"]["Body_add_creature_to_encounter_api_encounters__encounter_id__creatures_post"];
+        "application/x-www-form-urlencoded": components["schemas"]["Body_create_creature_and_add_to_encounter_api_encounters__encounter_id__creatures_post"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EncounterCreature"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /** Remove Creature From Encounter */
+  remove_creature_from_encounter_api_encounters__encounter_id__remove__participant_id__post: {
+    parameters: {
+      path: {
+        encounter_id: number;
+        participant_id: number;
       };
     };
     responses: {

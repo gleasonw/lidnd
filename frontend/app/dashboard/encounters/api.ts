@@ -6,6 +6,7 @@ import {
   useMutation,
   useQueryClient,
   QueryKey,
+  Query,
 } from "@tanstack/react-query";
 import { getCookie } from "cookies-next";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
@@ -163,7 +164,13 @@ const allUserCreaturesKey = ["userCreatures", ""];
 
 export function useUserCreatures(name?: string, filterEncounter?: number) {
   return useQuery({
-    queryKey: ["userCreatures", name],
+    queryKey: [
+      "userCreatures",
+      {
+        name,
+        filterEncounter,
+      },
+    ],
     queryFn: async () => {
       const { data, error } = await GET(`/api/creatures`, {
         params: {
@@ -210,17 +217,6 @@ export function useEncounter() {
 }
 
 // Composable function to encapsulate optimistic updates
-export function useInvalidateQueryKey(queryKey: QueryKey) {
-  const queryClient = useQueryClient();
-
-  return {
-    onSettled: async () => {
-      return await queryClient.invalidateQueries({ queryKey });
-    },
-  };
-}
-
-// Composable function to encapsulate optimistic updates
 export function useOptimisticUpdate<T>(
   queryKey: QueryKey,
   localUpdateFn: (oldData: T | undefined, newData: any) => T
@@ -241,7 +237,9 @@ export function useOptimisticUpdate<T>(
     onError: (err: any, newData: any, context: any) => {
       queryClient.setQueryData(queryKey, context?.previousData);
     },
-    ...useInvalidateQueryKey(queryKey),
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+    },
   };
 }
 
@@ -346,13 +344,11 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
 export function useAddExistingCreatureToEncounter(
   onCreatureAdded?: () => void
 ) {
-  const queryClient = useQueryClient();
   const id = useEncounterId();
-  const optimisticId = Math.random();
-
-  const queryKey = encounterCreaturesKey(id);
+  const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ["addExistingCreatureToEncounter"],
     mutationFn: async (creatureData: {
       name: string;
       creature_id: number;
@@ -378,40 +374,19 @@ export function useAddExistingCreatureToEncounter(
       }
       return data;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["userCreatures"] });
-      if (onCreatureAdded) {
-        onCreatureAdded();
-      }
-    },
-    onMutate: async (newData) => {
-      await queryClient.cancelQueries({ queryKey });
-      const previousData =
-        queryClient.getQueryData<EncounterCreature[]>(queryKey);
-
-      queryClient.setQueryData(
-        queryKey,
-        (oldData: EncounterCreature[] | undefined) => {
-          const newCreature: EncounterCreature = {
-            id: optimisticId,
-            creature_id: newData.creature_id,
-            encounter_id: id,
-            hp: 0,
-            max_hp: 0,
-            name: newData.name,
-            is_active: false,
-            initiative: 0,
-          };
-          return [...(oldData || []), newCreature];
-        }
+    onSettled: async () => {
+      await Promise.allSettled(
+        [
+          encounterCreaturesKey(id),
+          [
+            "userCreatures",
+            {
+              filterEncounter: id,
+            },
+          ],
+        ].map((queryKey) => queryClient.invalidateQueries(queryKey as any))
       );
-
-      return { previousData };
     },
-    onError: (err: any, newData: any, context: any) => {
-      queryClient.setQueryData(queryKey, context?.previousData);
-    },
-    ...useInvalidateQueryKey(queryKey),
   });
 }
 
@@ -419,15 +394,17 @@ export function useRemoveCreatureFromEncounter() {
   const id = useEncounterId();
   const queryClient = useQueryClient();
 
+  const queryKey = encounterCreaturesKey(id);
+
   return useMutation({
-    mutationFn: async (creature_id: number) => {
-      const { error, data } = await DELETE(
-        `/api/encounters/{encounter_id}/creatures/{creature_id}`,
+    mutationFn: async (participant_id: number) => {
+      const { error, data } = await POST(
+        `/api/encounters/{encounter_id}/remove/{participant_id}`,
         {
           params: {
             path: {
               encounter_id: id,
-              creature_id,
+              participant_id,
             },
           },
           headers: {
@@ -441,17 +418,33 @@ export function useRemoveCreatureFromEncounter() {
       }
       return data;
     },
-    ...useOptimisticUpdate<EncounterCreature[]>(
-      encounterCreaturesKey(id),
-      (oldData = [], id) => {
-        console.log(oldData, id);
-        return oldData.filter((c) => c.creature_id !== id);
-      }
-    ),
+    onMutate: async (deletedId: number) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousData =
+        queryClient.getQueryData<EncounterCreature[]>(queryKey);
+
+      queryClient.setQueryData<EncounterCreature[]>(queryKey, (oldData) => {
+        return oldData?.filter((c) => c.id !== deletedId);
+      });
+
+      return { previousData };
+    },
+    onError: (err: any, newData: any, context: any) => {
+      queryClient.setQueryData(queryKey, context?.previousData);
+    },
+    onSettled: async () => {
+      await Promise.allSettled(
+        [
+          encounterCreaturesKey(id),
+          [queryKey, ["userCreatures", { filterEncounter: id }]],
+        ].map((queryKey) => queryClient.invalidateQueries(queryKey as any))
+      );
+    },
   });
 }
 
 export function useCreateCreature() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (creatureData: {
       name: string;
@@ -479,7 +472,9 @@ export function useCreateCreature() {
       }
       return data;
     },
-    ...useInvalidateQueryKey(allUserCreaturesKey),
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: allUserCreaturesKey });
+    },
   });
 }
 
@@ -553,6 +548,7 @@ export function useStartEncounter() {
 
 export function useTurn() {
   const id = useEncounterId();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (to: "next" | "previous") => {
@@ -578,6 +574,10 @@ export function useTurn() {
       }
       return data;
     },
-    ...useInvalidateQueryKey(encounterCreaturesKey(id)),
+    onSettled: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: encounterCreaturesKey(id),
+      });
+    },
   });
 }

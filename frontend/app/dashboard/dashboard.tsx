@@ -22,8 +22,8 @@ import {
 import { ExternalLink, MoreHorizontal, Plus } from "lucide-react";
 import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-time";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -60,9 +60,9 @@ export default function Dashboard() {
   ];
 
   const skeletons = [
-    <Skeleton key={1} className={"w-full h-full rounded-md"} />,
-    <Skeleton key={2} className={"w-full h-full rounded-md"} />,
-    <Skeleton key={3} className={"w-full h-full rounded-md"} />,
+    <Skeleton key={1} className={"w-full h-full flex rounded-md"} />,
+    <Skeleton key={2} className={"w-full h-full flex rounded-md"} />,
+    <Skeleton key={3} className={"w-full h-full flex rounded-md"} />,
   ];
 
 
@@ -84,10 +84,10 @@ export default function Dashboard() {
           createDefaultEncounter(encounter);
         }}
       >
-        <Button type={"submit"} className={"flex gap-5"}>
-          {isPending ? <Spinner /> : <Plus />}
+        <LoadingButton isLoading={isPending} type={"submit"} className={"flex gap-5 w-52"}>
+          <Plus />
           Create encounter
-        </Button>
+        </LoadingButton>
       </form>
       {encounterCategories.map(({ name, encounters }) => (
         <section key={name} className={"flex flex-col gap-3"}>

@@ -7,7 +7,7 @@ import {
   DiscordEncounterSettings,
   updateDiscordSettings,
 } from "@/app/dashboard/actions";
-import { experimental_useFormStatus } from "react-dom";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 export function DiscordSettingsForm({
   initialSettings,
@@ -16,7 +16,6 @@ export function DiscordSettingsForm({
 }) {
   const [health, setHealth] = useState(initialSettings?.show_health ?? false);
   const [icon, setIcon] = useState(initialSettings?.show_icons ?? false);
-  const { pending } = experimental_useFormStatus();
 
   const updateSettingsWithArgs = updateDiscordSettings.bind(null, {
     show_health: health,
@@ -42,9 +41,9 @@ export function DiscordSettingsForm({
         />
       </div>
       <form action={updateSettingsWithArgs}>
-        <Button type={"submit"}>
-          {pending ? "Saving..." : "Save settings"}
-        </Button>
+        <LoadingButton type={"submit"} className="w-32">
+          Save settings
+        </LoadingButton>
       </form>
     </div>
   );

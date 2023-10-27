@@ -14,8 +14,7 @@ import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import { Spinner } from "@/components/ui/spinner";
 import { UseMutateFunction } from "@tanstack/react-query";
 import * as z from "zod";
-import { AnimatePresence } from "framer-motion";
-import { AnimationListItem } from "@/app/dashboard/encounters/[id]/run/battle-ui";
+import { Card, CardContent } from "@/components/ui/card";
 
 export const creatureFormSchema = z.object({
   name: z.string(),
@@ -201,12 +200,12 @@ export function ImageUpload({
   );
 }
 
-function ExistingCreature({
+export function ExistingCreature({
   children,
   onSuccess,
   className,
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onSuccess?: () => void;
   className?: string;
 }) {
@@ -230,38 +229,39 @@ function ExistingCreature({
   return (
     <>
       <Input
-        placeholder="Creature name"
+        placeholder="Search for a creature name"
         type="text"
         onChange={(e) => setName(e.target.value)}
         value={name}
       />
-      <AnimatePresence>
-        {isLoadingCreatures ? <Spinner /> : null}
+      {isLoadingCreatures ? <Spinner /> : null}
+      <div className={"grid grid-cols-3 gap-5"}>
         {displayedCreatures?.map((creature) => (
-          <AnimationListItem key={creature.id}>
-            <button
-              className={
-                "flex gap-5 justify-between w-full transition-all hover:bg-gray-100"
-              }
-              onClick={(e) => {
-                e.stopPropagation();
-                addCreature({
-                  creature_id: creature.id,
-                  encounter_id: id,
-                  name: creature.name,
-                });
-              }}
-            >
-              <CharacterIcon
-                id={creature.id}
-                name={creature.name}
-                className={"w-20 h-20"}
-              />
-              {creature.name}
-            </button>
-          </AnimationListItem>
+          <button
+            key={creature.id}
+            onClick={(e) => {
+              e.stopPropagation();
+              addCreature({
+                creature_id: creature.id,
+                encounter_id: id,
+                name: creature.name,
+              });
+            }}
+          >
+            <Card className={"flex flex-col hover:bg-gray-100 transition-all"}>
+              <CardContent className={"flex flex-col justify-center gap-2 items-center p-2"}>
+                <CharacterIcon
+                  id={creature.id}
+                  name={creature.name}
+                  className={"w-20 h-20"}
+                />
+                {creature.name}
+              </CardContent>
+            </Card>
+          </button>
         ))}
-      </AnimatePresence>
+      </div>
+
       <div className={"flex gap-5"}>{children}</div>
     </>
   );
