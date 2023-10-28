@@ -1,4 +1,4 @@
-import EncounterCreatureAddForm, {
+import {
   ImageUpload,
 } from "@/app/dashboard/encounters/[id]/creature-add-form";
 import { useAddCreatureToEncounter } from "@/app/dashboard/encounters/api";
