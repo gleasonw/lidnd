@@ -6,8 +6,9 @@ import createClient from "openapi-fetch";
 import { paths, components } from "@/app/schema";
 
 import apiURL from "@/app/apiURL";
+import { revalidatePath } from "next/cache";
 
-const { GET, PUT, POST, DELETE } = createClient<paths>({ baseUrl: apiURL });
+const { GET, PUT } = createClient<paths>({ baseUrl: apiURL });
 
 function token() {
   const cookieStore = cookies();
@@ -34,6 +35,7 @@ export async function updateDiscordSettings(args: DiscordEncounterSettings) {
   if (error) {
     console.log(error.detail);
   }
+  revalidatePath("/dashboard/discord");  
 }
 
 export async function getDiscordSettings() {

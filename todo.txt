@@ -1,0 +1,2 @@
+- install useDebounce hook
+- extract fetching functions to test next 14 server components

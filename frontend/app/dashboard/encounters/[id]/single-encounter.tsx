@@ -1,16 +1,11 @@
 "use client";
 
-import EncounterCreatureAddForm, {
-  CustomCreature,
-  ExistingCreature,
-  ImageUpload,
-} from "@/app/dashboard/encounters/[id]/creature-add-form";
+import { ExistingCreature } from "@/app/dashboard/encounters/[id]/creature-add-form";
 import {
   AnimationListItem,
   BattleCard,
 } from "@/app/dashboard/encounters/[id]/run/battle-ui";
 import {
-  useAddCreatureToEncounter,
   useEncounter,
   useEncounterCreatures,
   useRemoveCreatureFromEncounter,
@@ -20,20 +15,15 @@ import {
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence } from "framer-motion";
-import { Play, Plus, X } from "lucide-react";
+import { Check, Play, X } from "lucide-react";
 import Link from "next/link";
 import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import React from "react";
 import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
-import { Spinner } from "@/components/ui/spinner";
-import { LoadingButton } from "@/components/ui/loading-button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { useDebouncedCallback } from "use-debounce";
+import clsx from "clsx";
 
 export default function SingleEncounter() {
   const { data: encounterParticipants, isLoading } = useEncounterCreatures();
@@ -45,32 +35,44 @@ export default function SingleEncounter() {
   const [encounterName, setEncounterName] = React.useState(
     encounter?.name ?? ""
   );
-const { mutate: removeCreatureFromEncounter } =
+
+  const debouncedNameUpdate = useDebouncedCallback((name: string) => {
+    updateEncounter({
+      ...encounter,
+      name,
+      description: encounter?.description ?? "",
+    });
+  }, 500);
+
+  const { mutate: removeCreatureFromEncounter } =
     useRemoveCreatureFromEncounter();
 
   return (
     <div className={"flex flex-col items-center gap-10 relative"}>
       <div className="flex gap-5 items-center justify-between w-full">
-        <div className="flex gap-5">
-          <Input
-            value={encounterName}
-            placeholder="Encounter name"
-            onChange={(e) => setEncounterName(e.target.value)}
-          />
-          <LoadingButton
-            isLoading={isUpdatePending}
-            className={"flex items-center justify-center w-32"}
-            onClick={() =>
-              updateEncounter({
-                ...encounter,
-                name: encounterName,
-                description: encounter?.description ?? "",
-              })
-            }
-          >
-            Save
-          </LoadingButton>
-        </div>
+        {encounter?.name !== undefined ? (
+          <div className="flex gap-5 items-center">
+            <Input
+              value={encounterName}
+              placeholder={encounter.name ?? "Encounter name"}
+              className={"text-xl max-w-lg"}
+              onChange={(e) => {
+                setEncounterName(e.target.value);
+                debouncedNameUpdate(e.target.value);
+              }}
+            />
+            <span
+              className={clsx("transition-opacity", {
+                "opacity-0": encounterName !== encounter?.name,
+                "opacity-80": encounterName === encounter?.name,
+              })}
+            >
+              Saved
+            </span>
+          </div>
+        ) : (
+          <div />
+        )}
 
         {encounter?.started_at ? (
           <Link href={`${id}/run`}>
@@ -127,41 +129,24 @@ const { mutate: removeCreatureFromEncounter } =
       </AnimatePresence>
       <div className={"flex flex-col w-full gap-3"}>
         <div className={"flex flex-wrap w-full justify-center gap-5"}>
-          <Collapsible defaultOpen={true} asChild>
-            <Card className="max-w-[600px] w-full p-3">
-              <CollapsibleTrigger
-                className={"w-full p-2 hover:bg-gray-100 transition-all"}
-              >
-                <CardTitle>Add new creature</CardTitle>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className={"flex flex-col gap-3"}>
-                  <FullCreatureAddForm />
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
+          <Card className="max-w-[700px] w-full p-3">
+            <CardContent className={"flex flex-col gap-3"}>
+              <CardTitle className="py-3">Add new creature</CardTitle>
+              <FullCreatureAddForm />
+            </CardContent>
+          </Card>
 
-          <Collapsible defaultOpen={true} asChild>
-            <Card className={"max-w-[600px] w-full p-3"}>
-              <CollapsibleTrigger
-                className={"w-full p-2 hover:bg-gray-100 transition-all"}
-              >
-                <CardTitle>Add existing creature</CardTitle>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className={"flex flex-col gap-3"}>
-                  <ExistingCreature />
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
+          <Card className={"max-w-[700px] w-full p-3"}>
+            <CardContent className={"flex flex-col gap-3"}>
+              <CardTitle className="py-3">Add existing creature</CardTitle>
+              <ExistingCreature />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   );
 }
-
 
 const encounterCRPerCharacter = [
   { level: 1, easy: 0.125, standard: 0.125, hard: 0.25, cap: 1 },

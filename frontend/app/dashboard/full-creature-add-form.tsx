@@ -103,22 +103,34 @@ export function FullCreatureAddForm({
           control={form.control}
           name="icon"
           render={({ field }) => (
-            <CreatureFormItems name="Icon">
-              <ImageUpload
-                onUpload={(file) => field.onChange({ target: { value: file } })}
-              />
-            </CreatureFormItems>
+            <FormItem className="flex flex-col gap-2">
+              <FormLabel>Select or paste icon</FormLabel>
+              <FormControl>
+                <ImageUpload
+                  onUpload={(file) =>
+                    field.onChange({ target: { value: file } })
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
         />
         <FormField
           control={form.control}
           name="stat_block"
           render={({ field }) => (
-            <CreatureFormItems name="Stat Block">
-              <ImageUpload
-                onUpload={(file) => field.onChange({ target: { value: file } })}
-              />
-            </CreatureFormItems>
+            <FormItem className="flex flex-col gap-2">
+              <FormLabel>Select or paste stat block</FormLabel>
+              <FormControl>
+                <ImageUpload
+                  onUpload={(file) =>
+                    field.onChange({ target: { value: file } })
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
         />
         <div className="flex gap-5">

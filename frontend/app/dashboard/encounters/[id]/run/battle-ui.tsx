@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  MoreHorizontal,
   Plus,
   Swords,
   X,
@@ -21,7 +20,7 @@ import {
 import { StatBlock } from "@/app/dashboard/encounters/[id]/run/stat-block";
 import { CreatureHealthForm } from "@/app/dashboard/encounters/[id]/run/creature-health-form";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
-import EncounterCreatureAddForm, {
+import {
   CustomCreature,
   ExistingCreature,
 } from "@/app/dashboard/encounters/[id]/creature-add-form";
@@ -34,6 +33,7 @@ import {
   sortEncounterCreatures,
 } from "@/app/dashboard/encounters/utils";
 import { Spinner } from "@/components/ui/spinner";
+import clsx from "clsx";
 
 export function BattleUI() {
   const { data: encounter } = useEncounter();
@@ -104,7 +104,7 @@ export function BattleUI() {
       </div>
       <AnimatePresence>
         <div
-          className={"flex gap-10 max-w-full items-center overflow-auto h-96"}
+          className={"flex gap-10 px-10 max-w-full items-center overflow-auto h-96"}
           ref={scrollContainer}
         >
           {displayedParticipants
@@ -124,12 +124,12 @@ export function BattleUI() {
         </div>
       </AnimatePresence>
       {addingCreature ? (
-        <div className={'flex flex-col w-full items-center gap-3'}>
-          <Button variant={'ghost'} onClick={() => setAddingCreature(false)}>
+        <div className={"flex flex-col w-full items-center gap-3"}>
+          <Button variant={"ghost"} onClick={() => setAddingCreature(false)}>
             <X /> Close
           </Button>
           <div className={"flex flex-wrap gap-3 w-full justify-center"}>
-            <Card className={'w-full max-w-[600px]'}>
+            <Card className={"w-full max-w-[600px]"}>
               <CardContent className={"flex flex-col gap-3 pt-5"}>
                 <CardTitle>New creature</CardTitle>
                 <CustomCreature
@@ -140,8 +140,8 @@ export function BattleUI() {
                 />
               </CardContent>
             </Card>
-            <Card className={'w-full max-w-[600px]'}>
-              <CardContent className={'flex flex-col gap-3 pt-5'}>
+            <Card className={"w-full max-w-[600px]"}>
+              <CardContent className={"flex flex-col gap-3 pt-5"}>
                 <CardTitle>Existing creature</CardTitle>
                 <ExistingCreature />
               </CardContent>
@@ -253,9 +253,14 @@ export function BattleCard({
       <Card
         key={creature.id}
         data-active={creature.is_active}
-        className={`relative select-none ${className} h-56 justify-evenly w-40 gap-0 items-center flex flex-col transition-all ${
-          creature.is_active ? "transform scale-110" : ""
-        } ${isSelected ? `outline-4 outline` : ""}`}
+        className={clsx(
+          "relative select-none h-56 justify-evenly w-40 gap-0 items-center flex flex-col transition-all",
+          className,
+          {
+            "transform scale-110": creature.is_active,
+            "outline-4 outline": isSelected,
+          }
+        )}
       >
         {creature.is_active ? (
           <Swords className="absolute -top-9 z-10" />
@@ -273,7 +278,7 @@ export function BattleCard({
         </CardHeader>
         <CardContent>
           {creature.creature_id === 1 ? (
-            <Spinner />
+            <span>Loading</span>
           ) : (
             <CharacterIcon
               className="w-20"

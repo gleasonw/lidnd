@@ -22,7 +22,6 @@ import {
 import { ExternalLink, MoreHorizontal, Plus } from "lucide-react";
 import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-time";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
 import { LoadingButton } from "@/components/ui/loading-button";
 
 export default function Dashboard() {

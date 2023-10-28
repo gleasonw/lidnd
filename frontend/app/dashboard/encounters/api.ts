@@ -238,6 +238,7 @@ export function useOptimisticUpdate<T>(
       queryClient.setQueryData(queryKey, context?.previousData);
     },
     onSettled: async () => {
+      console.log(queryKey)
       await queryClient.invalidateQueries({ queryKey });
     },
   };
@@ -317,7 +318,7 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
       }
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (onCreatureAdded) {
         onCreatureAdded();
       }

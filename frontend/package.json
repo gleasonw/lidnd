@@ -47,6 +47,7 @@
     "tailwindcss": "3.3.3",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "5.2.2",
+    "use-debounce": "^9.0.4",
     "zod": "3.21.4"
   },
   "devDependencies": {

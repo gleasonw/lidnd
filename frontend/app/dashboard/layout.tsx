@@ -21,7 +21,7 @@ export default function RootLayout({
         {/* Include shared UI here e.g. a header or sidebar */}
 
         <Providers>
-          <div className="md:px-5 pt-2">{children}</div>
+          <div className="md:px-5 pt-2 pb-10">{children}</div>
         </Providers>
       </body>
     </html>

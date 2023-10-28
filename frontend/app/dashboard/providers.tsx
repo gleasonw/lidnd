@@ -6,34 +6,23 @@ import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { logOut } from "@/app/dashboard/actions";
 import { usePathname } from "next/navigation";
+import clsx from "clsx";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(() => new QueryClient());
-  const routes = ["dashboard", "creatures", "discord"] as const;
+  const routes = [
+    "/dashboard",
+    "/dashboard/creatures",
+    "/dashboard/discord",
+  ] as const;
 
   const routeLabels = {
-    dashboard: "Encounters",
-    creatures: "Creatures",
-    discord: "Discord",
+    "/dashboard": "Encounters",
+    "/dashboard/creatures": "Creatures",
+    "/dashboard/discord": "Discord",
   } as const;
 
   const path = usePathname();
-
-  function getBackground(route: string) {
-    if (route === "dashboard" && path === "/dashboard") {
-      return "bg-gray-200";
-    } else if (route === "creatures" && path === "/dashboard/creatures") {
-      return "bg-gray-200";
-    } else if (route === "discord" && path === "/dashboard/discord") {
-      return "bg-gray-200";
-    }
-  }
-
-  const routePaths = {
-    dashboard: "/dashboard",
-    creatures: "/dashboard/creatures",
-    discord: "/dashboard/discord",
-  } as const;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -44,10 +33,13 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         {routes.map((route) => (
           <Link
             key={route}
-            href={routePaths[route]}
-            className={`p-2 text-center rounded transition-all hover:bg-gray-200 ${getBackground(
-              route
-            )}`}
+            href={route}
+            className={clsx(
+              "flex h-[48px] grow items-center justify-center gap-2 rounded-md p-3 text-sm font-medium hover:bg-gray-200 md:flex-none md:justify-start md:p-2 md:px-3",
+              {
+                "bg-gray-200 font-bold": path === route,
+              }
+            )}
           >
             {routeLabels[route]}
           </Link>
