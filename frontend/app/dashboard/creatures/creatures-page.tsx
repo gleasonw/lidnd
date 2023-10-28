@@ -38,13 +38,8 @@ export default function CreaturesPage() {
           onChange={(e) => setName(e.target.value)}
           value={name}
         />
-        <BasePopover
-          trigger={<Button>Add Custom Creature</Button>}
-          className="w-[600px]"
-        >
-          <FullCreatureAddForm />
-        </BasePopover>
       </div>
+      <FullCreatureAddForm />
 
       <span className={!name ? "opacity-100" : "opacity-0"}>
         {displayCreatures?.length} / 30
