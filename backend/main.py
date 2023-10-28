@@ -72,6 +72,7 @@ class CreatureResponse(BaseModel):
     id: int
     name: str
     max_hp: int
+    challenge_rating: int
 
 
 class EncounterParticipant(BaseModel):
@@ -86,6 +87,7 @@ class EncounterParticipant(BaseModel):
 class EncounterCreature(EncounterParticipant):
     name: str
     max_hp: int
+    challenge_rating: int
 
 
 class EncounterRequest(BaseModel):
@@ -473,6 +475,7 @@ async def create_creature_and_add_to_encounter(
     max_hp: Annotated[int, Form()],
     icon: Annotated[UploadFile, Form()],
     stat_block: Annotated[UploadFile, Form()],
+    challenge_rating: Annotated[int, Form()] = 0,
     user=Depends(get_discord_user),
 ) -> List[EncounterCreature]:
     if icon.content_type not in ["image/png"] or stat_block.content_type not in [
@@ -484,7 +487,12 @@ async def create_creature_and_add_to_encounter(
         user_encounter = tg.create_task(get_user_encounter_by_id(encounter_id, user))
         user_creature = tg.create_task(
             create_creature(
-                name=name, max_hp=max_hp, icon=icon, stat_block=stat_block, user=user
+                name=name,
+                max_hp=max_hp,
+                icon=icon,
+                stat_block=stat_block,
+                user=user,
+                challenge_rating=challenge_rating,
             )
         )
     if user_encounter.exception():
@@ -536,6 +544,7 @@ async def add_creature_to_encounter(
 async def remove_creature_from_encounter(
     encounter_id: int, participant_id: int, user=Depends(get_discord_user)
 ) -> List[EncounterCreature]:
+    print(encounter_id, participant_id)
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             user_encounter = await get_user_encounter_by_id(encounter_id, user)
@@ -593,6 +602,7 @@ async def create_creature(
     max_hp: Annotated[int, Form()],
     icon: Annotated[UploadFile, Form()],
     stat_block: Annotated[UploadFile, Form()],
+    challenge_rating: Annotated[int, Form()] = 0,
     user=Depends(get_discord_user),
 ) -> CreatureResponse:
     if icon.content_type not in ["image/png"] or stat_block.content_type not in [
@@ -607,8 +617,8 @@ async def create_creature(
                 WITH creature_count AS (
                 SELECT COUNT(*) FROM creatures WHERE user_id = %s
                 ), insert_creature AS (
-                INSERT INTO creatures (user_id, name, max_hp)
-                SELECT %s, %s, %s
+                INSERT INTO creatures (user_id, name, max_hp, challenge_rating)
+                SELECT %s, %s, %s, %s
                 WHERE (SELECT COUNT(*) FROM creature_count) < 30
                 RETURNING *
                 )
@@ -619,6 +629,7 @@ async def create_creature(
                     user.id,
                     name,
                     max_hp,
+                    challenge_rating,
                 ),
             )
             new_creature = await cur.fetchone()
@@ -729,19 +740,21 @@ async def get_discord_channel(user=Depends(get_discord_user)) -> DiscordTextChan
             )
 
 
-class DiscordEncounterSettings(BaseModel):
+class Settings(BaseModel):
     show_health: bool
     show_icons: bool
+    average_turn_duration: int
+    player_level: int
 
 
 @app.get("/api/discord-settings")
 async def get_discord_settings(
     user=Depends(get_discord_user),
-) -> DiscordEncounterSettings:
+) -> Settings:
     async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(DiscordEncounterSettings)) as cur:
+        async with conn.cursor(row_factory=class_row(Settings)) as cur:
             await cur.execute(
-                "SELECT show_health, show_icons FROM discord_settings WHERE user_id = %s",
+                "SELECT show_health, show_icons, average_turn_duration, player_level FROM discord_settings WHERE user_id = %s",
                 (user.id,),
             )
             settings = await cur.fetchone()
@@ -749,24 +762,25 @@ async def get_discord_settings(
                 raise HTTPException(
                     status_code=404, detail="Discord settings not found"
                 )
+            print(settings)
 
             return settings
 
 
-@app.put("/api/discord-settings")
-async def update_discord_settings(
-    settings: DiscordEncounterSettings, user=Depends(get_discord_user)
+@app.put("/api/settings")
+async def update_settings(
+    settings: Settings, user=Depends(get_discord_user)
 ) -> None:
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
                 """
-            INSERT INTO discord_settings (user_id, show_health, show_icons) 
-            VALUES (%s, %s, %s) 
+            INSERT INTO discord_settings (user_id, show_health, show_icons, average_turn_duration, player_level) 
+            VALUES (%s, %s, %s, %s, %s) 
             ON CONFLICT (user_id) 
-            DO UPDATE SET show_health = EXCLUDED.show_health, show_icons = EXCLUDED.show_icons
+            DO UPDATE SET show_health = EXCLUDED.show_health, show_icons = EXCLUDED.show_icons, average_turn_duration = EXCLUDED.average_turn_duration, player_level = EXCLUDED.player_level
             """,
-                (user.id, settings.show_health, settings.show_icons),
+                (user.id, settings.show_health, settings.show_icons, settings.average_turn_duration, settings.player_level),
             )
 
 

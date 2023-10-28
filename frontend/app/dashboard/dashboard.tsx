@@ -58,13 +58,6 @@ export default function Dashboard() {
     { name: "Pending", encounters: pendingEncounters },
   ];
 
-  const skeletons = [
-    <Skeleton key={1} className={"w-full h-full flex rounded-md"} />,
-    <Skeleton key={2} className={"w-full h-full flex rounded-md"} />,
-    <Skeleton key={3} className={"w-full h-full flex rounded-md"} />,
-  ];
-
-
   return (
     <div className="flex flex-col gap-14 mx-auto max-w-screen-xl">
       <section>
@@ -83,7 +76,11 @@ export default function Dashboard() {
           createDefaultEncounter(encounter);
         }}
       >
-        <LoadingButton isLoading={isPending} type={"submit"} className={"flex gap-5 w-52"}>
+        <LoadingButton
+          isLoading={isPending}
+          type={"submit"}
+          className={"flex gap-5 w-52"}
+        >
           <Plus />
           Create encounter
         </LoadingButton>
@@ -93,7 +90,9 @@ export default function Dashboard() {
           <h1 className={"text-2xl"}>{name}</h1>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {isLoading
-              ? skeletons
+              ? Array(3)
+                  .fill(null)
+                  .map((_, i) => <EncounterSkeleton key={i} />)
               : encounters?.length === 0
               ? "No encounters"
               : null}
@@ -111,6 +110,12 @@ export default function Dashboard() {
   );
 }
 
+function EncounterSkeleton() {
+  return (
+    <Card className="flex flex-col transition-all w-full h-44 animate-pulse bg-gray-200" />
+  );
+}
+
 function EncounterCard({
   encounter,
   deleteEncounter,
@@ -120,7 +125,7 @@ function EncounterCard({
 }) {
   return (
     <Card
-      className="flex flex-col transition-all w-full h-full"
+      className="flex flex-col transition-all w-full"
       key={encounter.id}
     >
       <Link
@@ -176,7 +181,9 @@ function CharacterIconRow({ id }: { id: number }) {
           id={creature.creature_id}
           name={creature.name}
           key={creature.creature_id}
-          className={"rounded-full w-14 object-cover"}
+          className={"rounded-full object-cover w-10 h-10"}
+          width={100}
+          height={100}
         />
       ))}
     </div>

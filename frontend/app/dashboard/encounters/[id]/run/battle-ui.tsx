@@ -46,9 +46,9 @@ export function BattleUI() {
   const activeParticipant = displayedParticipants?.find(
     (creature) => creature.is_active
   );
-  const [dmSelectedCreature, setDmSelectedCreature] = React.useState<number>(
-    activeParticipant?.id ?? 0
-  );
+  const [dmSelectedCreature, setDmSelectedCreature] = React.useState<
+    number | null
+  >(activeParticipant?.id ?? null);
 
   const selectedParticipant =
     displayedParticipants?.find(
@@ -75,6 +75,8 @@ export function BattleUI() {
 
   const { mutate: addCreature, isPending: isPendingCreatureAdd } =
     useAddCreatureToEncounter(() => setAddingCreature(false));
+
+  const selectedId = dmSelectedCreature ?? activeParticipant?.id;
 
   React.useEffect(() => {
     if (scrollContainer.current) {
@@ -104,7 +106,9 @@ export function BattleUI() {
       </div>
       <AnimatePresence>
         <div
-          className={"flex gap-10 px-10 max-w-full items-center overflow-auto h-96"}
+          className={
+            "flex gap-10 px-10 max-w-full items-center overflow-auto h-80"
+          }
           ref={scrollContainer}
         >
           {displayedParticipants
@@ -116,7 +120,7 @@ export function BattleUI() {
                   <BattleCard
                     creature={participant}
                     className="cursor-pointer hover:bg-gray-100 transition-all"
-                    isSelected={participant.id === dmSelectedCreature}
+                    isSelected={participant.id === selectedId}
                   />
                 </button>
               </AnimationListItem>
@@ -149,11 +153,18 @@ export function BattleUI() {
           </div>
         </div>
       ) : null}
-      <TurnButtons
-        onLeftClick={() => handleChangeTurn("previous")}
-        onRightClick={() => handleChangeTurn("next")}
-        isPending={isPending}
-      >
+      <div />
+      <div className="flex w-full justify-between items-center gap-2">
+        <Button
+          size="lg"
+          disabled={isPending}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleChangeTurn("previous");
+          }}
+        >
+          <ChevronLeftIcon />
+        </Button>
         {selectedParticipant && (
           <div className="flex flex-col gap-5">
             <span className={"text-center text-xl"}>
@@ -168,7 +179,17 @@ export function BattleUI() {
             ) : null}
           </div>
         )}
-      </TurnButtons>
+        <Button
+          disabled={isPending}
+          size="lg"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleChangeTurn("next");
+          }}
+        >
+          <ChevronRightIcon />
+        </Button>
+      </div>
       {selectedParticipant && (
         <>
           <StatBlock
@@ -179,7 +200,7 @@ export function BattleUI() {
           <Button
             variant="destructive"
             onClick={() =>
-              removeCreatureFromEncounter(selectedParticipant.creature_id)
+              removeCreatureFromEncounter(selectedParticipant.id)
             }
           >
             Remove from encounter
@@ -239,22 +260,27 @@ export function BattleCard({
   className?: string;
   isSelected?: boolean;
 }) {
-  function getCreaturePercentDamage(creature: EncounterCreature) {
-    let missingHp = creature.max_hp - creature.hp;
-    missingHp = Math.min(missingHp, creature.max_hp);
-    return (missingHp / creature.max_hp) * 100;
-  }
+  let missingHp = creature.max_hp - creature.hp;
+  missingHp = Math.min(missingHp, creature.max_hp);
+  const creaturePercentDamage = (missingHp / creature.max_hp) * 100;
+  console.log(isSelected);
 
   return (
     <div
       key={creature.id}
       className={`flex relative flex-col gap-6 items-center w-40 justify-between`}
     >
+      <Swords
+        className={clsx({
+          "opacity-0": !creature.is_active,
+          "opacity-100": creature.is_active,
+        })}
+      />
       <Card
         key={creature.id}
         data-active={creature.is_active}
         className={clsx(
-          "relative select-none h-56 justify-evenly w-40 gap-0 items-center flex flex-col transition-all",
+          "relative select-none h-56 justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col transition-all",
           className,
           {
             "transform scale-110": creature.is_active,
@@ -262,31 +288,29 @@ export function BattleCard({
           }
         )}
       >
-        {creature.is_active ? (
-          <Swords className="absolute -top-9 z-10" />
-        ) : null}
         <div
-          style={{ height: `${getCreaturePercentDamage(creature)}%` }}
-          className={`absolute rounded bottom-0 left-0 w-full ${
-            getCreaturePercentDamage(creature) === 100
-              ? "bg-gray-500"
-              : "bg-red-500"
-          } bg-opacity-50 transition-all`}
+          style={{ height: `${creaturePercentDamage}%` }}
+          className={clsx(
+            "absolute rounded bottom-0 left-0 w-full bg-opacity-50 transition-all",
+            {
+              "bg-gray-500": creaturePercentDamage === 100,
+              "bg-red-500": creaturePercentDamage !== 100,
+            }
+          )}
         />
         <CardHeader className="text-ellipsis max-w-full p-3">
           <CardTitle>{creature.name}</CardTitle>
         </CardHeader>
-        <CardContent>
-          {creature.creature_id === 1 ? (
-            <span>Loading</span>
-          ) : (
-            <CharacterIcon
-              className="w-20"
-              id={creature.creature_id}
-              name={creature.name}
-            />
-          )}
-        </CardContent>
+        {creature.creature_id === 1 ? (
+          <span>Loading</span>
+        ) : (
+          <CharacterIcon
+            id={creature.creature_id}
+            name={creature.name}
+            width={200}
+            height={200}
+          />
+        )}
       </Card>
       {children}
     </div>

@@ -1,6 +1,4 @@
-import {
-  ImageUpload,
-} from "@/app/dashboard/encounters/[id]/creature-add-form";
+import { ImageUpload } from "@/app/dashboard/encounters/[id]/creature-add-form";
 import { useAddCreatureToEncounter } from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +11,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import React from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -47,6 +46,7 @@ export function FullCreatureAddForm({
       stat_block: undefined,
     },
   });
+  const [keyToResetFile, setKeyToResetFile] = React.useState(0);
 
   return (
     <Form {...form}>
@@ -57,8 +57,10 @@ export function FullCreatureAddForm({
             max_hp: data.max_hp,
             name: data.name,
             stat_block: data.stat_block,
+            challenge_rating: data.challenge_rating,
           });
           form.reset();
+          setKeyToResetFile(keyToResetFile + 1);
         })}
         className="space-y-8"
       >
@@ -110,6 +112,7 @@ export function FullCreatureAddForm({
                   onUpload={(file) =>
                     field.onChange({ target: { value: file } })
                   }
+                  key={keyToResetFile}
                 />
               </FormControl>
               <FormMessage />
@@ -127,6 +130,7 @@ export function FullCreatureAddForm({
                   onUpload={(file) =>
                     field.onChange({ target: { value: file } })
                   }
+                  key={keyToResetFile}
                 />
               </FormControl>
               <FormMessage />

@@ -238,7 +238,6 @@ export function useOptimisticUpdate<T>(
       queryClient.setQueryData(queryKey, context?.previousData);
     },
     onSettled: async () => {
-      console.log(queryKey)
       await queryClient.invalidateQueries({ queryKey });
     },
   };
@@ -296,7 +295,9 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
       max_hp: number;
       icon?: any;
       stat_block?: any;
+      challenge_rating: number;
     }) => {
+      console.log(creatureData.challenge_rating);
       // we use native fetch here because openapi-fetch doesn't seem to support FormData
       const formData = new FormData();
       formData.append("name", creatureData.name);
@@ -304,6 +305,10 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
       formData.append("icon", creatureData.icon);
       formData.append("stat_block", creatureData.stat_block);
       formData.append("encounter_id", id.toString());
+      formData.append(
+        "challenge_rating",
+        creatureData.challenge_rating.toString()
+      );
       const response = await fetch(`${apiURL}/api/encounters/${id}/creatures`, {
         method: "POST",
         headers: {
@@ -334,6 +339,7 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
           max_hp: newData.max_hp,
           name: newData.name,
           is_active: false,
+          challenge_rating: 0,
           initiative: 0,
         };
         return [...oldData, newCreature];
@@ -425,6 +431,7 @@ export function useRemoveCreatureFromEncounter() {
         queryClient.getQueryData<EncounterCreature[]>(queryKey);
 
       queryClient.setQueryData<EncounterCreature[]>(queryKey, (oldData) => {
+        console.log(oldData);
         return oldData?.filter((c) => c.id !== deletedId);
       });
 
@@ -444,6 +451,24 @@ export function useRemoveCreatureFromEncounter() {
   });
 }
 
+export function useSettings() {
+  return useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const { data, error } = await GET(`/api/discord-settings`, {
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+      });
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
+    gcTime: 0,
+  });
+}
+
 export function useCreateCreature() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -452,6 +477,7 @@ export function useCreateCreature() {
       max_hp: number;
       icon: any;
       stat_block: any;
+      challenge_rating: number;
     }) => {
       // we use native fetch here because openapi-fetch doesn't seem to support FormData
       const formData = new FormData();
@@ -459,6 +485,11 @@ export function useCreateCreature() {
       formData.append("max_hp", creatureData.max_hp.toString());
       formData.append("icon", creatureData.icon);
       formData.append("stat_block", creatureData.stat_block);
+      formData.append(
+        "challenge_rating",
+        creatureData.challenge_rating.toString()
+      );
+      console.log(creatureData.challenge_rating);
       const response = await fetch(`${apiURL}/api/creatures`, {
         method: "POST",
         headers: {
@@ -480,6 +511,8 @@ export function useCreateCreature() {
 }
 
 export function useDeleteCreature() {
+  const queryClient = useQueryClient();
+  const queryKey = ["userCreatures"];
   return useMutation({
     mutationFn: async (creature_id: number) => {
       const { error, data } = await DELETE(`/api/creatures/{creature_id}`, {
@@ -496,14 +529,12 @@ export function useDeleteCreature() {
         console.log(error.detail);
         throw error;
       }
+      console.log(data);
       return data;
     },
-    ...useOptimisticUpdate<Creature[]>(
-      allUserCreaturesKey,
-      (oldData = [], deletedId) => {
-        return oldData.filter((c) => c.id !== deletedId);
-      }
-    ),
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+    },
   });
 }
 

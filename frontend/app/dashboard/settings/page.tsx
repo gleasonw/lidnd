@@ -1,6 +1,6 @@
 import apiURL from "@/app/apiURL";
 import { getDiscordSettings } from "@/app/dashboard/actions";
-import { DiscordSettingsForm } from "@/app/dashboard/discord/settings-form";
+import { DiscordSettingsForm } from "@/app/dashboard/settings/settings-form";
 import { Button } from "@/components/ui/button";
 import { cookies } from "next/headers";
 import Link from "next/link";

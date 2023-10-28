@@ -19,6 +19,7 @@ export const creatureFormSchema = z.object({
   max_hp: z.number(),
   icon: z.any().optional(),
   stat_block: z.any().optional(),
+  challenge_rating: z.number(),
 });
 
 export type CreaturePost = z.infer<typeof creatureFormSchema>;
@@ -95,6 +96,7 @@ export function CustomCreature({
                 icon: creatureData.icon,
                 max_hp: parseInt(creatureData.max_hp),
                 stat_block: creatureData.stat_block,
+                challenge_rating: 0,
               });
             } else {
               alert("Please fill out all fields");
@@ -116,6 +118,7 @@ export function ImageUpload({ onUpload }: { onUpload: (file?: any) => void }) {
         <Input
           type={"file"}
           disabled={hasContent}
+          accept="image/png, image/jpeg, image/jpg"
           onChange={(e) => {
             if (e.target.files) {
               onUpload(e.target.files[0]);

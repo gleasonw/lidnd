@@ -22,11 +22,10 @@ export async function logOut() {
   redirect("/login");
 }
 
-export type DiscordEncounterSettings =
-  components["schemas"]["DiscordEncounterSettings"];
+export type Settings = components["schemas"]["Settings"];
 
-export async function updateDiscordSettings(args: DiscordEncounterSettings) {
-  const { error } = await PUT(`/api/discord-settings`, {
+export async function updateDiscordSettings(args: Settings) {
+  const { error } = await PUT(`/api/settings`, {
     body: args,
     headers: {
       Authorization: `Bearer ${token()}`,
@@ -35,7 +34,7 @@ export async function updateDiscordSettings(args: DiscordEncounterSettings) {
   if (error) {
     console.log(error.detail);
   }
-  revalidatePath("/dashboard/discord");  
+  revalidatePath("/dashboard/discord");
 }
 
 export async function getDiscordSettings() {

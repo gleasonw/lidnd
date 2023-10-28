@@ -72,8 +72,10 @@ export interface paths {
   "/api/discord-settings": {
     /** Get Discord Settings */
     get: operations["get_discord_settings_api_discord_settings_get"];
-    /** Update Discord Settings */
-    put: operations["update_discord_settings_api_discord_settings_put"];
+  };
+  "/api/settings": {
+    /** Update Settings */
+    put: operations["update_settings_api_settings_put"];
   };
 }
 
@@ -97,6 +99,11 @@ export interface components {
        * Format: binary
        */
       stat_block: string;
+      /**
+       * Challenge Rating
+       * @default 0
+       */
+      challenge_rating?: number;
     };
     /** Body_create_creature_api_creatures_post */
     Body_create_creature_api_creatures_post: {
@@ -114,6 +121,11 @@ export interface components {
        * Format: binary
        */
       stat_block: string;
+      /**
+       * Challenge Rating
+       * @default 0
+       */
+      challenge_rating?: number;
     };
     /** CreatureRequest */
     CreatureRequest: {
@@ -140,13 +152,8 @@ export interface components {
       name: string;
       /** Max Hp */
       max_hp: number;
-    };
-    /** DiscordEncounterSettings */
-    DiscordEncounterSettings: {
-      /** Show Health */
-      show_health: boolean;
-      /** Show Icons */
-      show_icons: boolean;
+      /** Challenge Rating */
+      challenge_rating: number;
     };
     /** DiscordTextChannel */
     DiscordTextChannel: {
@@ -177,6 +184,8 @@ export interface components {
       name: string;
       /** Max Hp */
       max_hp: number;
+      /** Challenge Rating */
+      challenge_rating: number;
     };
     /** EncounterParticipant */
     EncounterParticipant: {
@@ -217,6 +226,17 @@ export interface components {
     HTTPValidationError: {
       /** Detail */
       detail?: components["schemas"]["ValidationError"][];
+    };
+    /** Settings */
+    Settings: {
+      /** Show Health */
+      show_health: boolean;
+      /** Show Icons */
+      show_icons: boolean;
+      /** Average Turn Duration */
+      average_turn_duration: number;
+      /** Player Level */
+      player_level: number;
     };
     /** ValidationError */
     ValidationError: {
@@ -681,16 +701,16 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["DiscordEncounterSettings"];
+          "application/json": components["schemas"]["Settings"];
         };
       };
     };
   };
-  /** Update Discord Settings */
-  update_discord_settings_api_discord_settings_put: {
+  /** Update Settings */
+  update_settings_api_settings_put: {
     requestBody: {
       content: {
-        "application/json": components["schemas"]["DiscordEncounterSettings"];
+        "application/json": components["schemas"]["Settings"];
       };
     };
     responses: {

@@ -5,17 +5,21 @@ export function CharacterIcon({
   id,
   name,
   className,
+  width,
+  height,
 }: {
   id: number;
   name: string;
   className?: string;
+  width?: number;
+  height?: number;
 }) {
   return (
     <Image
       src={getAWSimageURL(id, "icon")}
       alt={name}
-      width={100}
-      height={100}
+      width={width ?? 100}
+      height={height ?? 100}
       className={className}
       objectFit="cover"
     />

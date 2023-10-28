@@ -15,7 +15,7 @@ export function BasePopover({
 }) {
   return (
     <Popover>
-      <PopoverTrigger>{trigger}</PopoverTrigger>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent className={className}>{children}</PopoverContent>
     </Popover>
   );

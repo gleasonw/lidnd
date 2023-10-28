@@ -9,13 +9,14 @@ import {
   useEncounter,
   useEncounterCreatures,
   useRemoveCreatureFromEncounter,
+  useSettings,
   useStartEncounter,
   useUpdateEncounter,
 } from "@/app/dashboard/encounters/api";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence } from "framer-motion";
-import { Check, Play, X } from "lucide-react";
+import { Check, Clock, Play, Skull, X } from "lucide-react";
 import Link from "next/link";
 import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -35,6 +36,7 @@ export default function SingleEncounter() {
   const [encounterName, setEncounterName] = React.useState(
     encounter?.name ?? ""
   );
+  const { data: settings } = useSettings();
 
   const debouncedNameUpdate = useDebouncedCallback((name: string) => {
     updateEncounter({
@@ -100,7 +102,6 @@ export default function SingleEncounter() {
               <AnimationListItem key={participant.id}>
                 <BattleCard creature={participant}>
                   <Button
-                    className={"absolute top-0 right-0"}
                     variant="ghost"
                     onClick={() => removeCreatureFromEncounter(participant.id)}
                   >
@@ -122,11 +123,15 @@ export default function SingleEncounter() {
               .map((_, i) => (
                 <Card
                   key={i}
-                  className="h-56 justify-evenly w-40 gap-0 items-center flex flex-col animate-pulse"
+                  className="h-56 justify-evenly w-40 gap-0 items-center flex flex-col animate-pulse bg-gray-200"
                 />
               ))}
         </div>
       </AnimatePresence>
+      {settings && (
+        <EncounterStats turnTimeEstimate={settings.average_turn_duration} savedPlayerLevel={settings.player_level}/>
+      )}
+
       <div className={"flex flex-col w-full gap-3"}>
         <div className={"flex flex-wrap w-full justify-center gap-5"}>
           <Card className="max-w-[700px] w-full p-3">
@@ -143,6 +148,109 @@ export default function SingleEncounter() {
             </CardContent>
           </Card>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function EncounterStats({
+  turnTimeEstimate,
+  savedPlayerLevel,
+}: {
+  turnTimeEstimate: number;
+  savedPlayerLevel: number;
+}) {
+  const [numPlayers, setNumPlayers] = React.useState(4);
+  const [estimatedTurnSeconds, setEstimatedTurnSeconds] =
+    React.useState(turnTimeEstimate);
+  const [estimatedRounds, setEstimatedRounds] = React.useState(3);
+  const [playerLevel, setPlayerLevel] = React.useState(savedPlayerLevel);
+
+  const { data: creatures } = useEncounterCreatures();
+
+  const numParticipants = creatures?.length ?? 0;
+
+  const estimatedEncounterDuration =
+    (numParticipants * estimatedRounds * estimatedTurnSeconds) / 60;
+
+  const totalCr =
+    creatures?.reduce((acc, creature) => {
+      return acc + creature.challenge_rating;
+    }, 0) ?? 0;
+
+  const crBudget = encounterCRPerCharacter.find(
+    (cr) => cr.level === playerLevel
+  );
+
+  const easyTier = (crBudget?.easy ?? 0) * numPlayers;
+  const standardTier = (crBudget?.standard ?? 0) * numPlayers;
+  const hardTier = (crBudget?.hard ?? 0) * numPlayers;
+
+  let difficulty = "";
+  if (totalCr <= easyTier) {
+    difficulty = "Easy";
+  } else if (totalCr <= standardTier) {
+    difficulty = "Standard";
+  } else if (totalCr <= hardTier) {
+    difficulty = "Hard";
+  } else {
+    difficulty = "Deadly";
+  }
+
+  return (
+    <div className={"flex flex-wrap gap-20 shadow-md p-3"}>
+      <div className={"flex flex-col items-center gap-3 justify-between"}>
+        <span className="flex gap-5 items-center text-2xl">
+          <Clock />
+          Est. {estimatedEncounterDuration.toFixed(2)} minutes
+        </span>
+
+        <div className="flex flex-col gap-3">
+          <label>
+            Estimated turn seconds
+            <Input
+              type={"number"}
+              value={estimatedTurnSeconds}
+              onChange={(e) =>
+                setEstimatedTurnSeconds(parseInt(e.target.value))
+              }
+            />
+          </label>
+          <label>
+            Estimated rounds
+            <Input
+              type={"number"}
+              value={estimatedRounds}
+              onChange={(e) => setEstimatedRounds(parseInt(e.target.value))}
+            />
+          </label>
+        </div>
+      </div>
+      <div className={"flex flex-col items-center gap-3"}>
+        <span className="flex text-2xl items-center gap-5">
+          <Skull />
+          {difficulty}
+        </span>
+        <span>Total Cr: {totalCr}</span>
+        <span>
+          Budget: {easyTier} / {standardTier} / {hardTier}
+        </span>
+        <label>
+          Number of players in encounter
+          <Input
+            type={"number"}
+            value={numPlayers}
+            onChange={(e) => setNumPlayers(parseInt(e.target.value))}
+          />
+        </label>
+        <label>
+          Player level
+          <Input
+            type={"number"}
+            value={playerLevel}
+            onChange={(e) => setPlayerLevel(parseInt(e.target.value))}
+          />
+        </label>
       </div>
     </div>
   );

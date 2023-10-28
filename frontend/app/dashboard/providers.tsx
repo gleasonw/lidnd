@@ -7,19 +7,20 @@ import { LogOut } from "lucide-react";
 import { logOut } from "@/app/dashboard/actions";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(() => new QueryClient());
   const routes = [
     "/dashboard",
     "/dashboard/creatures",
-    "/dashboard/discord",
+    "/dashboard/settings",
   ] as const;
 
   const routeLabels = {
     "/dashboard": "Encounters",
     "/dashboard/creatures": "Creatures",
-    "/dashboard/discord": "Discord",
+    "/dashboard/settings": "Settings",
   } as const;
 
   const path = usePathname();
@@ -51,6 +52,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         </form>
       </nav>
       {children}
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }
