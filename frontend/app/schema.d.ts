@@ -69,11 +69,9 @@ export interface paths {
     /** Get Discord Channel */
     get: operations["get_discord_channel_api_discord_channel_get"];
   };
-  "/api/discord-settings": {
-    /** Get Discord Settings */
-    get: operations["get_discord_settings_api_discord_settings_get"];
-  };
   "/api/settings": {
+    /** Get Settings */
+    get: operations["get_settings_api_settings_get"];
     /** Update Settings */
     put: operations["update_settings_api_settings_put"];
   };
@@ -127,25 +125,8 @@ export interface components {
        */
       challenge_rating?: number;
     };
-    /** CreatureRequest */
-    CreatureRequest: {
-      /** Name */
-      name: string;
-      /**
-       * Icon
-       * Format: binary
-       */
-      icon: string;
-      /**
-       * Stat Block
-       * Format: binary
-       */
-      stat_block: string;
-      /** Max Hp */
-      max_hp: number;
-    };
-    /** CreatureResponse */
-    CreatureResponse: {
+    /** Creature */
+    Creature: {
       /** Id */
       id: number;
       /** Name */
@@ -170,6 +151,12 @@ export interface components {
     EncounterCreature: {
       /** Id */
       id: number;
+      /** Name */
+      name: string;
+      /** Max Hp */
+      max_hp: number;
+      /** Challenge Rating */
+      challenge_rating: number;
       /** Creature Id */
       creature_id: number;
       /** Encounter Id */
@@ -180,12 +167,6 @@ export interface components {
       initiative: number;
       /** Is Active */
       is_active: boolean;
-      /** Name */
-      name: string;
-      /** Max Hp */
-      max_hp: number;
-      /** Challenge Rating */
-      challenge_rating: number;
     };
     /** EncounterParticipant */
     EncounterParticipant: {
@@ -579,7 +560,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["CreatureResponse"];
+          "application/json": components["schemas"]["Creature"];
         };
       };
       /** @description Validation Error */
@@ -599,14 +580,14 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreatureRequest"];
+        "application/json": components["schemas"]["Creature"];
       };
     };
     responses: {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["CreatureResponse"];
+          "application/json": components["schemas"]["Creature"];
         };
       };
       /** @description Validation Error */
@@ -628,7 +609,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["CreatureResponse"][];
+          "application/json": components["schemas"]["Creature"][];
         };
       };
       /** @description Validation Error */
@@ -651,7 +632,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["CreatureResponse"][];
+          "application/json": components["schemas"]["Creature"][];
         };
       };
       /** @description Validation Error */
@@ -673,7 +654,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["CreatureResponse"];
+          "application/json": components["schemas"]["Creature"];
         };
       };
       /** @description Validation Error */
@@ -695,8 +676,8 @@ export interface operations {
       };
     };
   };
-  /** Get Discord Settings */
-  get_discord_settings_api_discord_settings_get: {
+  /** Get Settings */
+  get_settings_api_settings_get: {
     responses: {
       /** @description Successful Response */
       200: {

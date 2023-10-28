@@ -1,6 +1,6 @@
 import apiURL from "@/app/apiURL";
 import { getDiscordSettings } from "@/app/dashboard/actions";
-import { DiscordSettingsForm } from "@/app/dashboard/settings/settings-form";
+import { SettingsForm } from "@/app/dashboard/settings/settings-form";
 import { Button } from "@/components/ui/button";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -10,14 +10,28 @@ export default async function DiscordPage() {
   const token = cookieStore.get("token");
   console.log(token);
 
+  const currentSettings = await getDiscordSettings();
+
+  return (
+    <section
+      className={" mx-auto max-w-screen-xl flex flex-col items-center gap-20"}
+    >
+      <DiscordChannelInformation />
+      <SettingsForm initialSettings={currentSettings} />
+    </section>
+  );
+}
+
+async function DiscordChannelInformation() {
+  const cookieStore = cookies();
+  const token = cookieStore.get("token");
+
   const channelResponse = await fetch(`${apiURL}/api/discord-channel`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token?.value}`,
     },
   });
-
-  const currentSettings = await getDiscordSettings();
 
   if (channelResponse.status !== 200) {
     return (
@@ -49,15 +63,10 @@ export default async function DiscordPage() {
   const channel = await channelResponse.json();
 
   return (
-    <section
-      className={" mx-auto max-w-screen-xl flex flex-col items-center gap-20"}
-    >
-      <h1 className={"text-lg"}>
-        The LiDnD bot is tracking encounters in{" "}
-        <span className={"font-bold"}>{channel.name}</span>, part of the{" "}
-        <span className={"font-bold"}>{channel.guild}</span> conglomerate.
-      </h1>
-      <DiscordSettingsForm initialSettings={currentSettings} />
-    </section>
+    <h1 className={"text-lg"}>
+      The LiDnD bot is tracking encounters in{" "}
+      <span className={"font-bold"}>{channel.name}</span>, part of the{" "}
+      <span className={"font-bold"}>{channel.guild}</span> conglomerate.
+    </h1>
   );
 }

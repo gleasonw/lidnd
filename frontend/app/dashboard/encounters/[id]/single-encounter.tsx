@@ -25,6 +25,7 @@ import React from "react";
 import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
+import InitiativeInput from "@/app/dashboard/encounters/[id]/InitiativeInput";
 
 export default function SingleEncounter() {
   const { data: encounterParticipants, isLoading } = useEncounterCreatures();
@@ -101,6 +102,7 @@ export default function SingleEncounter() {
             .map((participant) => (
               <AnimationListItem key={participant.id}>
                 <BattleCard creature={participant}>
+                  <InitiativeInput creature={participant} />
                   <Button
                     variant="ghost"
                     onClick={() => removeCreatureFromEncounter(participant.id)}
@@ -134,14 +136,14 @@ export default function SingleEncounter() {
 
       <div className={"flex flex-col w-full gap-3"}>
         <div className={"flex flex-wrap w-full justify-center gap-5"}>
-          <Card className="max-w-[700px] w-full p-3">
+          <Card className="max-w-[600px] w-full p-3">
             <CardContent className={"flex flex-col gap-3"}>
               <CardTitle className="py-3">Add new creature</CardTitle>
               <FullCreatureAddForm />
             </CardContent>
           </Card>
 
-          <Card className={"max-w-[700px] w-full p-3"}>
+          <Card className={"max-w-[600px] w-full p-3"}>
             <CardContent className={"flex flex-col gap-3"}>
               <CardTitle className="py-3">Add existing creature</CardTitle>
               <ExistingCreature />
@@ -198,11 +200,11 @@ function EncounterStats({
   }
 
   return (
-    <div className={"flex flex-wrap gap-20 shadow-md p-3"}>
+    <div className={"flex flex-wrap gap-20 "}>
       <div className={"flex flex-col items-center gap-3 justify-between"}>
         <span className="flex gap-5 items-center text-2xl">
           <Clock />
-          Est. {estimatedEncounterDuration.toFixed(2)} minutes
+          {estimatedEncounterDuration.toFixed(2)} minutes
         </span>
 
         <div className="flex flex-col gap-3">

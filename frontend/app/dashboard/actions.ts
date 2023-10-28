@@ -38,7 +38,7 @@ export async function updateDiscordSettings(args: Settings) {
 }
 
 export async function getDiscordSettings() {
-  const { data } = await GET(`/api/discord-settings`, {
+  const { data } = await GET(`/api/settings`, {
     headers: {
       Authorization: `Bearer ${token()}`,
     },

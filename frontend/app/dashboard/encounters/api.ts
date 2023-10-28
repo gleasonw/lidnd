@@ -10,7 +10,11 @@ import {
 } from "@tanstack/react-query";
 import { getCookie } from "cookies-next";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
-import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
+import {
+  getCreaturePostForm,
+  sortEncounterCreatures,
+} from "@/app/dashboard/encounters/utils";
+import { CreaturePost } from "@/app/dashboard/encounters/[id]/creature-add-form";
 
 const { GET, PUT, POST, DELETE } = createClient<paths>({ baseUrl: apiURL });
 
@@ -18,10 +22,43 @@ export type EncounterCreature = components["schemas"]["EncounterCreature"];
 export type Encounter = components["schemas"]["EncounterResponse"];
 export type EncounterParticipant =
   components["schemas"]["EncounterParticipant"];
-export type Creature = components["schemas"]["CreatureResponse"];
+export type Creature = components["schemas"]["Creature"];
 
 export function clientToken() {
   return getCookie("token");
+}
+
+export function useUpdateCreature() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      creature,
+    }: {
+      id: number;
+      creature: components["schemas"]["Creature"];
+    }) => {
+      const { error, data } = await PUT(`/api/creatures/{creature_id}`, {
+        params: {
+          path: {
+            creature_id: id,
+          },
+        },
+        headers: {
+          Authorization: `Bearer ${clientToken()}`,
+        },
+        body: creature,
+      });
+      if (error) {
+        console.log(error.detail);
+        throw error;
+      }
+      return data;
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['userCreatures'] });
+    },
+  });
 }
 
 export function useCreateEncounter(onCreate?: (encounter: Encounter) => void) {
@@ -160,7 +197,7 @@ export function useEncounterCreatures(encounter_id?: number) {
   });
 }
 
-const allUserCreaturesKey = ["userCreatures", ""];
+const allUserCreaturesKey = ["userCreatures", { name: "" }];
 
 export function useUserCreatures(name?: string, filterEncounter?: number) {
   return useQuery({
@@ -290,25 +327,10 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
   const optimisticId = Math.random();
 
   return useMutation({
-    mutationFn: async (creatureData: {
-      name: string;
-      max_hp: number;
-      icon?: any;
-      stat_block?: any;
-      challenge_rating: number;
-    }) => {
-      console.log(creatureData.challenge_rating);
+    mutationFn: async (creatureData: CreaturePost) => {
       // we use native fetch here because openapi-fetch doesn't seem to support FormData
-      const formData = new FormData();
-      formData.append("name", creatureData.name);
-      formData.append("max_hp", creatureData.max_hp.toString());
-      formData.append("icon", creatureData.icon);
-      formData.append("stat_block", creatureData.stat_block);
-      formData.append("encounter_id", id.toString());
-      formData.append(
-        "challenge_rating",
-        creatureData.challenge_rating.toString()
-      );
+      const formData = getCreaturePostForm(creatureData);
+
       const response = await fetch(`${apiURL}/api/encounters/${id}/creatures`, {
         method: "POST",
         headers: {
@@ -348,9 +370,7 @@ export function useAddCreatureToEncounter(onCreatureAdded?: () => void) {
   });
 }
 
-export function useAddExistingCreatureToEncounter(
-  onCreatureAdded?: () => void
-) {
+export function useAddExistingCreatureToEncounter() {
   const id = useEncounterId();
   const queryClient = useQueryClient();
 
@@ -453,9 +473,9 @@ export function useRemoveCreatureFromEncounter() {
 
 export function useSettings() {
   return useQuery({
-    queryKey: ['settings'],
+    queryKey: ["settings"],
     queryFn: async () => {
-      const { data, error } = await GET(`/api/discord-settings`, {
+      const { data, error } = await GET(`/api/settings`, {
         headers: {
           Authorization: `Bearer ${clientToken()}`,
         },
@@ -472,24 +492,9 @@ export function useSettings() {
 export function useCreateCreature() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (creatureData: {
-      name: string;
-      max_hp: number;
-      icon: any;
-      stat_block: any;
-      challenge_rating: number;
-    }) => {
+    mutationFn: async (creatureData: CreaturePost) => {
       // we use native fetch here because openapi-fetch doesn't seem to support FormData
-      const formData = new FormData();
-      formData.append("name", creatureData.name);
-      formData.append("max_hp", creatureData.max_hp.toString());
-      formData.append("icon", creatureData.icon);
-      formData.append("stat_block", creatureData.stat_block);
-      formData.append(
-        "challenge_rating",
-        creatureData.challenge_rating.toString()
-      );
-      console.log(creatureData.challenge_rating);
+      const formData = getCreaturePostForm(creatureData);
       const response = await fetch(`${apiURL}/api/creatures`, {
         method: "POST",
         headers: {
@@ -540,6 +545,8 @@ export function useDeleteCreature() {
 
 export function useStartEncounter() {
   const id = useEncounterId();
+  const queryClient = useQueryClient();
+  const queryKey = encounterCreaturesKey(id);
   return useMutation({
     mutationFn: async () => {
       const { error, data } = await POST(
@@ -561,20 +568,35 @@ export function useStartEncounter() {
       }
       return data;
     },
-    ...useOptimisticUpdate<EncounterCreature[]>(
-      encounterCreaturesKey(id),
-      (oldData = []) => {
-        return oldData
-          .slice()
-          .sort(sortEncounterCreatures)
-          .map((c, index) => {
-            if (index === 0) {
-              return { ...c, is_active: true };
-            }
-            return { ...c, is_active: false };
-          });
-      }
-    ),
+    onMutate: async (newData: any) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previousData =
+        queryClient.getQueryData<EncounterCreature[]>(queryKey);
+
+      queryClient.setQueryData<EncounterCreature[]>(
+        queryKey,
+        (oldData = []) => {
+          return oldData
+            .slice()
+            .sort(sortEncounterCreatures)
+            .map((c, index) => {
+              if (index === 0) {
+                return { ...c, is_active: true };
+              }
+              return { ...c, is_active: false };
+            });
+        }
+      );
+
+      return { previousData };
+    },
+    onError: (err: any, newData: any, context: any) => {
+      queryClient.setQueryData(queryKey, context?.previousData);
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: encounterKey(id) });
+      await queryClient.invalidateQueries({ queryKey });
+    },
   });
 }
 

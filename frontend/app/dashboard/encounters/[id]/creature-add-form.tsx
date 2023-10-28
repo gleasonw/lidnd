@@ -13,6 +13,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { UseMutateFunction } from "@tanstack/react-query";
 import * as z from "zod";
 import { Card, CardContent } from "@/components/ui/card";
+import clsx from "clsx";
 
 export const creatureFormSchema = z.object({
   name: z.string(),
@@ -118,6 +119,7 @@ export function ImageUpload({ onUpload }: { onUpload: (file?: any) => void }) {
         <Input
           type={"file"}
           disabled={hasContent}
+          className="max-w-sm"
           accept="image/png, image/jpeg, image/jpg"
           onChange={(e) => {
             if (e.target.files) {
@@ -152,11 +154,9 @@ export function ImageUpload({ onUpload }: { onUpload: (file?: any) => void }) {
 
 export function ExistingCreature({
   children,
-  onSuccess,
   className,
 }: {
   children?: React.ReactNode;
-  onSuccess?: () => void;
   className?: string;
 }) {
   const [name, setName] = useState("");
@@ -170,7 +170,7 @@ export function ExistingCreature({
     mutate: addCreature,
     isPending: isAddingExistingCreature,
     variables,
-  } = useAddExistingCreatureToEncounter(onSuccess);
+  } = useAddExistingCreatureToEncounter();
 
   const displayedCreatures = isAddingExistingCreature
     ? creatures?.filter((creature) => creature.id !== variables.creature_id)
@@ -189,6 +189,7 @@ export function ExistingCreature({
         {displayedCreatures?.map((creature) => (
           <button
             key={creature.id}
+            disabled={isAddingExistingCreature}
             onClick={(e) => {
               e.stopPropagation();
               addCreature({
@@ -198,7 +199,14 @@ export function ExistingCreature({
               });
             }}
           >
-            <Card className={"flex flex-col hover:bg-gray-100 transition-all"}>
+            <Card
+              className={clsx(
+                "flex flex-col hover:bg-gray-100 transition-all",
+                {
+                  "opacity-80": isAddingExistingCreature,
+                }
+              )}
+            >
               <CardContent
                 className={
                   "flex flex-col justify-center gap-2 items-center p-2"

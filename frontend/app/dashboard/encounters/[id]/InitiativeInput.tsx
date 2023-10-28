@@ -2,8 +2,8 @@
 
 import { Input } from "@/components/ui/input";
 import { EncounterCreature, useUpdateEncounterCreature } from "../api";
-import { Button } from "@/components/ui/button";
 import React from "react";
+import { useDebouncedCallback } from "use-debounce";
 
 export default function InitiativeInput({
   creature,
@@ -16,29 +16,25 @@ export default function InitiativeInput({
     creature.initiative
   );
   const { mutate: updateCreature } = useUpdateEncounterCreature();
+  const debouncedUpdate = useDebouncedCallback((initiative: number) => {
+    updateCreature({
+      ...creature,
+      initiative: parseInt(initiative.toString()),
+    });
+  }, 500);
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        updateCreature({
-          ...creature,
-          initiative: parseInt(initiative.toString()),
-        });
-      }}
-      className={className}
-    >
+    <label>
+      Initiative
       <Input
         type="number"
         value={initiative}
-        onChange={(e) =>
-          setInitiative(!isNaN(parseInt(e.target.value)) ? e.target.value : "")
-        }
+        onChange={(e) => {
+          setInitiative(!isNaN(parseInt(e.target.value)) ? e.target.value : "");
+          debouncedUpdate(parseInt(e.target.value));
+        }}
         placeholder="Initiative"
       />
-      <Button type="submit" variant="outline">
-        Update initiative
-      </Button>
-    </form>
+    </label>
   );
 }

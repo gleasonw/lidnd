@@ -1,3 +1,4 @@
+import { CreaturePost } from "@/app/dashboard/encounters/[id]/creature-add-form";
 import { EncounterCreature } from "@/app/dashboard/encounters/api";
 
 export function getAWSimageURL(
@@ -60,4 +61,14 @@ export function optimisticTurnUpdate(
     }
   }
   return participants;
+}
+
+export function getCreaturePostForm(creature: CreaturePost): FormData {
+  const formData = new FormData();
+  formData.append("name", creature.name);
+  formData.append("max_hp", creature.max_hp.toString());
+  formData.append("icon", creature.icon);
+  formData.append("stat_block", creature.stat_block);
+  formData.append("challenge_rating", creature.challenge_rating.toString());
+  return formData;
 }

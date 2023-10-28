@@ -3,14 +3,19 @@
 import { BasePopover } from "@/app/dashboard/base-popover";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import {
+  Creature,
+  useCreateCreature,
   useDeleteCreature,
+  useUpdateCreature,
+  useUpdateEncounterCreature,
   useUserCreatures,
 } from "@/app/dashboard/encounters/api";
 import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { MoreHorizontal } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { MoreHorizontal, Plus } from "lucide-react";
 import { useState } from "react";
 
 export default function CreaturesPage() {
@@ -22,6 +27,11 @@ export default function CreaturesPage() {
     variables: deletedId,
     isPending,
   } = useDeleteCreature();
+  const { mutate: updateCreature } = useUpdateCreature();
+
+  const [isAddingCreatures, setIsAddingCreatures] = useState(false);
+
+  const { mutate: createCreature } = useCreateCreature();
 
   const displayCreatures = isPending
     ? creatures?.filter((creature) => creature.id !== deletedId)
@@ -38,8 +48,16 @@ export default function CreaturesPage() {
           onChange={(e) => setName(e.target.value)}
           value={name}
         />
+        <Button
+          onClick={() => setIsAddingCreatures(!isAddingCreatures)}
+          className="flex gap-3"
+        >
+          {isAddingCreatures ? "Cancel" : <Plus />}
+        </Button>
       </div>
-      <FullCreatureAddForm />
+      {isAddingCreatures && (
+        <FullCreatureAddForm createCreatureMutation={createCreature} />
+      )}
 
       <span className={!name ? "opacity-100" : "opacity-0"}>
         {displayCreatures?.length} / 30
@@ -66,13 +84,14 @@ export default function CreaturesPage() {
                   <MoreHorizontal />
                 </Button>
               }
-              className={"w-fit"}
+              className={"w-fit flex flex-col gap-3"}
             >
+              <CreatureUpdateForm creature={creature} />
               <Button
                 variant="destructive"
                 onClick={() => deleteCreature(creature.id)}
               >
-                Delete {creature.id}
+                Delete
               </Button>
             </BasePopover>
             <h2>{creature.name}</h2>
@@ -81,5 +100,61 @@ export default function CreaturesPage() {
         ))}
       </div>
     </div>
+  );
+}
+
+function CreatureUpdateForm({ creature }: { creature: Creature }) {
+  const [challengeRating, setChallengeRating] = useState(
+    creature.challenge_rating
+  );
+  const [maxHp, setMaxHp] = useState(creature.max_hp);
+  const [name, setName] = useState(creature.name);
+
+  const { mutate: updateCreature, isPending } = useUpdateCreature();
+
+  return (
+    <form className="flex flex-col gap-2">
+      <label>
+        Challenge Rating
+        <Input
+          type="number"
+          value={challengeRating}
+          onChange={(e) => setChallengeRating(parseInt(e.target.value))}
+        />
+      </label>
+      <label>
+        Max HP
+        <Input
+          type="number"
+          value={maxHp}
+          onChange={(e) => setMaxHp(parseInt(e.target.value))}
+        />
+      </label>
+      <label>
+        Name
+        <Input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </label>
+      <LoadingButton
+        onClick={(e) => {
+          e.preventDefault();
+          updateCreature({
+            id: creature.id,
+            creature: {
+              id: creature.id,
+              challenge_rating: challengeRating,
+              max_hp: maxHp,
+              name,
+            },
+          });
+        }}
+        isLoading={isPending}
+      >
+        Update
+      </LoadingButton>
+    </form>
   );
 }

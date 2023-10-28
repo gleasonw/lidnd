@@ -209,44 +209,6 @@ export function BattleUI() {
   );
 }
 
-function TurnButtons({
-  children,
-  onLeftClick,
-  onRightClick,
-  isPending,
-}: {
-  children?: React.ReactNode;
-  onLeftClick: () => void;
-  onRightClick: () => void;
-  isPending?: boolean;
-}) {
-  return (
-    <div className="flex w-full justify-between">
-      <Button
-        className="w-20"
-        disabled={isPending}
-        onClick={(e) => {
-          e.stopPropagation();
-          onLeftClick();
-        }}
-      >
-        <ChevronLeftIcon />
-      </Button>
-      {children}
-      <Button
-        disabled={isPending}
-        className="w-20"
-        onClick={(e) => {
-          e.stopPropagation();
-          onRightClick();
-        }}
-      >
-        <ChevronRightIcon />
-      </Button>
-    </div>
-  );
-}
-
 export function BattleCard({
   creature,
   children,

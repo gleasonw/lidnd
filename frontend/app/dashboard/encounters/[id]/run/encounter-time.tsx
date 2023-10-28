@@ -12,7 +12,7 @@ export function EncounterTime({ time }: { time?: string }) {
     };
   }, []);
 
-  if (!time) return null;
+  if (!time) return <div></div>;
 
   // time is in UTC, so we need to convert it to local time
   const startedAtUTC = new Date(time);

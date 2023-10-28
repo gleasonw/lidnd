@@ -7,7 +7,7 @@ import { Settings, updateDiscordSettings } from "@/app/dashboard/actions";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 
-export function DiscordSettingsForm({
+export function SettingsForm({
   initialSettings,
 }: {
   initialSettings?: Settings;

@@ -1,4 +1,7 @@
-import { ImageUpload } from "@/app/dashboard/encounters/[id]/creature-add-form";
+import {
+  CreaturePost,
+  ImageUpload,
+} from "@/app/dashboard/encounters/[id]/creature-add-form";
 import { useAddCreatureToEncounter } from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,9 +34,11 @@ export const creatureForm = z.object({
 export function FullCreatureAddForm({
   className,
   children,
+  createCreatureMutation,
 }: {
   className?: string;
   children?: React.ReactNode;
+  createCreatureMutation?: (data: CreaturePost) => void;
 }) {
   const { mutate: addCreatureToEncounter } = useAddCreatureToEncounter();
   const form = useForm<z.infer<typeof creatureForm>>({
@@ -48,11 +53,13 @@ export function FullCreatureAddForm({
   });
   const [keyToResetFile, setKeyToResetFile] = React.useState(0);
 
+  const addCreatureMutation = createCreatureMutation ?? addCreatureToEncounter;
+
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((data, e) => {
-          addCreatureToEncounter({
+          addCreatureMutation({
             icon: data.icon,
             max_hp: data.max_hp,
             name: data.name,
