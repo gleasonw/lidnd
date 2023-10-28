@@ -702,7 +702,7 @@ async def get_encounter_creatures(
             SELECT * FROM creatures 
             JOIN encounter_participants ON creatures.id = encounter_participants.creature_id 
             WHERE encounter_id = %s 
-            ORDER BY initiative ASC, creature_id ASC
+            ORDER BY initiative DESC, creature_id DESC
             """,
                 (encounter_id,),
             )
