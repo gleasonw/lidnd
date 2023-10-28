@@ -29,12 +29,12 @@ export default function InitiativeInput({
       className={className}
     >
       <Input
+        type="number"
         value={initiative}
         onChange={(e) =>
           setInitiative(!isNaN(parseInt(e.target.value)) ? e.target.value : "")
         }
         placeholder="Initiative"
-        type="text"
       />
       <Button type="submit" variant="outline">
         Update initiative

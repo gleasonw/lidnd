@@ -32,7 +32,6 @@ import {
   optimisticTurnUpdate,
   sortEncounterCreatures,
 } from "@/app/dashboard/encounters/utils";
-import { Spinner } from "@/components/ui/spinner";
 import clsx from "clsx";
 
 export function BattleUI() {
@@ -175,6 +174,7 @@ export function BattleUI() {
               <InitiativeInput
                 creature={selectedParticipant}
                 className="flex gap-5"
+                key={selectedParticipant.id}
               />
             ) : null}
           </div>
@@ -199,9 +199,7 @@ export function BattleUI() {
           />
           <Button
             variant="destructive"
-            onClick={() =>
-              removeCreatureFromEncounter(selectedParticipant.id)
-            }
+            onClick={() => removeCreatureFromEncounter(selectedParticipant.id)}
           >
             Remove from encounter
           </Button>
