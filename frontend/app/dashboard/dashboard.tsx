@@ -37,7 +37,7 @@ export default function Dashboard() {
     (encounter) => router.push(`dashboard/encounters/${encounter.id}`)
   );
   const [encounter, setEncounter] = React.useState({
-    name: "",
+    name: "Unnamed encounter",
     description: "",
   });
 
