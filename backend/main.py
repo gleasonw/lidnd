@@ -185,12 +185,15 @@ async def get_discord_user(
             headers={"Authorization": f"Bearer {token}"},
         ) as resp:
             if resp.status == 200:
+                # print rate limit headers
+                print(resp.headers)
                 user = DiscordUser(**await resp.json())
                 if user.username not in whitelist:
                     raise HTTPException(status_code=403, detail="User not whitelisted")
                 token_validation_cache[token] = (datetime.now(), user)
                 return user
             else:
+                print(resp.headers)
                 print(await resp.text())
                 raise HTTPException(status_code=401, detail="Invalid token")
 
