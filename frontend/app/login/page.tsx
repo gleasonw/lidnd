@@ -1,6 +1,11 @@
 import { DiscordIcon } from "@/app/login/discord";
 import "@/app/globals.css";
 
+export const rerouteUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : "https://dnd-init-tracker.vercel.app";
+
 export default function Login() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -11,7 +16,7 @@ export default function Login() {
           className={
             "shadow p-5 rounded-md text-center text-white flex overflow-hidden border-2 hover:bg-gray-200 transition-all"
           }
-          href={`https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID}&scope=identify&response_type=code`}
+          href={`https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID}&scope=identify&response_type=code&redirect_uri=${rerouteUrl}/api/discord`}
         >
           <DiscordIcon className="max-w-40" />
         </a>

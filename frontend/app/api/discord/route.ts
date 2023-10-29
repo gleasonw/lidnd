@@ -1,9 +1,7 @@
+import { rerouteUrl } from "@/app/login/page";
 import { NextResponse } from "next/server";
 
-const rerouteUrl =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3000"
-    : "https://dnd-init-tracker.vercel.app";
+
 
 export async function GET(request: Request) {
   const code = request.url.split("?code=")[1];
@@ -25,6 +23,7 @@ export async function GET(request: Request) {
     });
 
     const tokenData = await tokenResponse.json();
+    console.log(tokenData);
     let response = NextResponse.redirect(
       new URL("/dashboard", request.url.split("?")[0])
     );

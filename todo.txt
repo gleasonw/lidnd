@@ -1,0 +1,3 @@
+- mark creatures as player
+- fix weird active flash on start
+- clean up image upload

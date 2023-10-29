@@ -1,7 +1,7 @@
 import { Button, ButtonProps } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import React from "react";
-import { experimental_useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 
 export interface LoadingButtonProps extends ButtonProps {
   children?: React.ReactNode;
@@ -9,7 +9,7 @@ export interface LoadingButtonProps extends ButtonProps {
 }
 
 export function LoadingButton(props: LoadingButtonProps) {
-  const { pending } = experimental_useFormStatus();
+  const { pending } = useFormStatus();
 
   const isPending = props.isLoading || pending;
 

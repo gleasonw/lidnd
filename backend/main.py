@@ -101,9 +101,6 @@ class EncounterOverview(EncounterResponse):
 class DiscordUser(BaseModel):
     id: int
     username: str
-    discriminator: str
-    avatar: str
-    mfa_enabled: bool
     locale: str
     flags: int
     premium_type: int
@@ -168,9 +165,6 @@ def read_root():
     return {"Hello": "World"}
 
 
-whitelist = {"merkelizer"}
-
-
 async def get_discord_user(
     token: Annotated[str, Depends(oauth2_scheme)]
 ) -> DiscordUser:
@@ -185,11 +179,7 @@ async def get_discord_user(
             headers={"Authorization": f"Bearer {token}"},
         ) as resp:
             if resp.status == 200:
-                # print rate limit headers
-                print(resp.headers)
                 user = DiscordUser(**await resp.json())
-                if user.username not in whitelist:
-                    raise HTTPException(status_code=403, detail="User not whitelisted")
                 token_validation_cache[token] = (datetime.now(), user)
                 return user
             else:
