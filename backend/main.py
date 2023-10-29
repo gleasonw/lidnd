@@ -1,4 +1,4 @@
-from typing import Annotated, Any, List, Literal, Optional, Dict, Tuple
+from typing import Annotated, Any, List, Literal, Optional, Dict, Tuple, Set
 import aiohttp
 from dotenv import load_dotenv
 import os
@@ -167,9 +167,22 @@ def read_root():
     return {"Hello": "World"}
 
 
+async def fetch_whitelist() -> Set[str]:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://raw.githubusercontent.com/gleasonw/dnd-init-tracker/main/whitelist.txt"
+        ) as resp:
+            whitelist = set((await resp.text()).splitlines())
+            return whitelist
+        
+whitelist: Set[str] | None = None
+
 async def get_discord_user(
     token: Annotated[str, Depends(oauth2_scheme)]
 ) -> DiscordUser:
+    global whitelist
+    if not whitelist:
+        whitelist = await fetch_whitelist()
     if token in token_validation_cache:
         (last_validated, user) = token_validation_cache[token]
         time_diff = datetime.now() - last_validated
@@ -182,6 +195,8 @@ async def get_discord_user(
         ) as resp:
             if resp.status == 200:
                 user = DiscordUser(**await resp.json())
+                if user.username not in whitelist:
+                    raise HTTPException(status_code=403, detail="User not whitelisted")
                 token_validation_cache[token] = (datetime.now(), user)
                 return user
             else:

@@ -17,12 +17,21 @@ export async function middleware(request: NextRequest) {
   }
 }
 
-const whitelist = new Set(['merkelizer', 'merkelizer1'])
+async function fetchWhitelist(): Promise<Set<string>> {
+  console.log('fetching whitelist')
+  const response = await fetch(
+    "https://raw.githubusercontent.com/gleasonw/dnd-init-tracker/main/whitelist.txt"
+  );
+  const data = await response.text();
+  const whitelist = new Set(data.split("\n"));
+  return whitelist;
+}
 
 export async function verifyDiscordToken(): Promise<{
   status: number;
   user: unknown;
 }> {
+  const whitelist = await fetchWhitelist();
   const cookieStore = cookies();
   const token = cookieStore.get("token")?.value;
   const response = await fetch("https://discord.com/api/users/@me", {
@@ -31,15 +40,13 @@ export async function verifyDiscordToken(): Promise<{
     },
   });
   if (response.status === 200) {
-    const user = (await response.json());
+    const user = await response.json();
     if (user && whitelist.has(user.username)) {
       return { status: 200, user };
-    }
-    else {
+    } else {
       return { status: 403, user: null };
     }
-  }
-  else {
+  } else {
     return { status: response.status, user: null };
   }
 }
