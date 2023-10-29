@@ -18,7 +18,6 @@ export async function middleware(request: NextRequest) {
 }
 
 async function fetchWhitelist(): Promise<Set<string>> {
-  console.log('fetching whitelist')
   const response = await fetch(
     "https://raw.githubusercontent.com/gleasonw/dnd-init-tracker/main/whitelist.txt"
   );
