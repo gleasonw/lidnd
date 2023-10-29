@@ -70,5 +70,6 @@ export function getCreaturePostForm(creature: CreaturePost): FormData {
   formData.append("icon", creature.icon);
   formData.append("stat_block", creature.stat_block);
   formData.append("challenge_rating", creature.challenge_rating.toString());
+  formData.append("is_player", creature.is_player.toString());
   return formData;
 }

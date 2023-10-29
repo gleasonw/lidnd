@@ -21,6 +21,7 @@ export const creatureFormSchema = z.object({
   icon: z.any().optional(),
   stat_block: z.any().optional(),
   challenge_rating: z.number(),
+  is_player: z.boolean()
 });
 
 export type CreaturePost = z.infer<typeof creatureFormSchema>;
@@ -98,6 +99,7 @@ export function CustomCreature({
                 max_hp: parseInt(creatureData.max_hp),
                 stat_block: creatureData.stat_block,
                 challenge_rating: 0,
+                is_player: false,
               });
             } else {
               alert("Please fill out all fields");

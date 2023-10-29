@@ -60,6 +60,7 @@ app.add_middleware(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 bot = discord.Bot()
 
+
 class Id(BaseModel):
     id: int
 
@@ -68,6 +69,7 @@ class Creature(Id):
     name: str
     max_hp: int
     challenge_rating: int
+    is_player: bool = False
 
 
 class EncounterParticipant(Id):
@@ -290,6 +292,30 @@ async def create_encounter(
                 raise HTTPException(
                     status_code=500, detail="Failed to create encounter"
                 )
+        async with conn.cursor(row_factory=class_row(Creature)) as cur:
+            await cur.execute(
+                "SELECT * FROM creatures WHERE user_id = %s AND is_player = TRUE",
+                (user.id,),
+            )
+            players = await cur.fetchall()
+            if not players:
+                return encounter
+            await cur.executemany(
+                """
+                INSERT INTO encounter_participants (encounter_id, creature_id, hp, initiative, is_active)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                [
+                    (
+                        encounter.id,
+                        player.id,
+                        player.max_hp,
+                        0,
+                        False,
+                    )
+                    for player in players
+                ],
+            )
             return encounter
 
 
@@ -460,6 +486,7 @@ async def create_creature_and_add_to_encounter(
     icon: Annotated[UploadFile, Form()],
     stat_block: Annotated[UploadFile, Form()],
     challenge_rating: Annotated[int, Form()] = 0,
+    is_player: Annotated[bool, Form()] = False,
     user=Depends(get_discord_user),
 ) -> List[EncounterCreature]:
     if icon.content_type not in ["image/png"] or stat_block.content_type not in [
@@ -477,6 +504,7 @@ async def create_creature_and_add_to_encounter(
                 stat_block=stat_block,
                 user=user,
                 challenge_rating=challenge_rating,
+                is_player=is_player,
             )
         )
     if user_encounter.exception():
@@ -564,11 +592,12 @@ async def update_creature(
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(Creature)) as cur:
             await cur.execute(
-                "UPDATE creatures SET name=%s, max_hp=%s, challenge_rating=%s WHERE id=%s AND user_id=%s RETURNING *",
+                "UPDATE creatures SET name=%s, max_hp=%s, challenge_rating=%s, is_player=%s WHERE id=%s AND user_id=%s RETURNING *",
                 (
                     creature.name,
                     creature.max_hp,
                     creature.challenge_rating,
+                    creature.is_player,
                     creature_id,
                     user.id,
                 ),
@@ -586,6 +615,7 @@ async def create_creature(
     icon: Annotated[UploadFile, Form()],
     stat_block: Annotated[UploadFile, Form()],
     challenge_rating: Annotated[int, Form()] = 0,
+    is_player: Annotated[bool, Form()] = False,
     user=Depends(get_discord_user),
 ) -> Creature:
     if icon.content_type not in ["image/png"] or stat_block.content_type not in [
@@ -600,8 +630,8 @@ async def create_creature(
                 WITH creature_count AS (
                 SELECT COUNT(*) FROM creatures WHERE user_id = %s
                 ), insert_creature AS (
-                INSERT INTO creatures (user_id, name, max_hp, challenge_rating)
-                SELECT %s, %s, %s, %s
+                INSERT INTO creatures (user_id, name, max_hp, challenge_rating, is_player)
+                SELECT %s, %s, %s, %s, %s
                 WHERE (SELECT COUNT(*) FROM creature_count) < 30
                 RETURNING *
                 )
@@ -613,6 +643,7 @@ async def create_creature(
                     name,
                     max_hp,
                     challenge_rating,
+                    is_player,
                 ),
             )
             new_creature = await cur.fetchone()
@@ -645,6 +676,20 @@ async def delete_creature(
             )
             if cur.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Creature not found")
+            s3 = boto3.resource(
+                "s3",
+                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            )
+            bucket = s3.Bucket(os.getenv("AWS_BUCKET_NAME"))
+            bucket.delete_objects(
+                Delete={
+                    "Objects": [
+                        {"Key": f"icon-{creature_id}.png"},
+                        {"Key": f"stat_block-{creature_id}.png"},
+                    ]
+                }
+            )
     return await get_user_creatures(user=user)
 
 
@@ -669,7 +714,8 @@ async def get_user_creatures(
                 filter_clause = "AND id NOT IN (SELECT creature_id FROM encounter_participants WHERE encounter_id = %s)"
                 params.append(filter_encounter)
             await cur.execute(
-                f"SELECT * FROM creatures WHERE user_id = %s {filter_clause} ORDER BY name ASC", params
+                f"SELECT * FROM creatures WHERE user_id = %s {filter_clause} ORDER BY name ASC",
+                params,
             )
             return await cur.fetchall()
 

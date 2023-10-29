@@ -26,6 +26,7 @@ import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
 import InitiativeInput from "@/app/dashboard/encounters/[id]/InitiativeInput";
+import { access } from "fs/promises";
 
 export default function SingleEncounter() {
   const { data: encounterParticipants, isLoading } = useEncounterCreatures();
@@ -131,7 +132,18 @@ export default function SingleEncounter() {
         </div>
       </AnimatePresence>
       {settings && (
-        <EncounterStats turnTimeEstimate={settings.average_turn_duration} savedPlayerLevel={settings.player_level}/>
+        <EncounterStats
+          turnTimeEstimate={settings.average_turn_duration}
+          savedPlayerLevel={settings.player_level}
+          numPlayers={
+            encounterParticipants?.reduce((sum, participant) => {
+              if (participant.is_player) {
+                return sum + 1;
+              }
+              return sum;
+            }, 0) ?? 0
+          }
+        />
       )}
 
       <div className={"flex flex-col w-full gap-3"}>
@@ -158,11 +170,13 @@ export default function SingleEncounter() {
 function EncounterStats({
   turnTimeEstimate,
   savedPlayerLevel,
+  numPlayers,
 }: {
   turnTimeEstimate: number;
   savedPlayerLevel: number;
+  numPlayers: number;
 }) {
-  const [numPlayers, setNumPlayers] = React.useState(4);
+  const [localNumPlayers, setNumPlayers] = React.useState(numPlayers);
   const [estimatedTurnSeconds, setEstimatedTurnSeconds] =
     React.useState(turnTimeEstimate);
   const [estimatedRounds, setEstimatedRounds] = React.useState(3);
@@ -200,7 +214,7 @@ function EncounterStats({
   }
 
   return (
-    <div className={"flex flex-wrap gap-20 "}>
+    <div className={"flex flex-wrap gap-20 justify-center"}>
       <div className={"flex flex-col items-center gap-3 justify-between"}>
         <span className="flex gap-5 items-center text-2xl">
           <Clock />

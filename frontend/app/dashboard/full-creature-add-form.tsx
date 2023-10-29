@@ -4,6 +4,7 @@ import {
 } from "@/app/dashboard/encounters/[id]/creature-add-form";
 import { useAddCreatureToEncounter } from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   FormControl,
   FormField,
@@ -49,6 +50,7 @@ export function FullCreatureAddForm({
       challenge_rating: 0,
       icon: undefined,
       stat_block: undefined,
+      is_player: false,
     },
   });
   const [keyToResetFile, setKeyToResetFile] = React.useState(0);
@@ -65,6 +67,7 @@ export function FullCreatureAddForm({
             name: data.name,
             stat_block: data.stat_block,
             challenge_rating: data.challenge_rating,
+            is_player: data.is_player ?? false,
           });
           form.reset();
           setKeyToResetFile(keyToResetFile + 1);
@@ -142,6 +145,18 @@ export function FullCreatureAddForm({
               </FormControl>
               <FormMessage />
             </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="is_player"
+          render={({ field }) => (
+            <CreatureFormItems name="Player">
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(checked) => field.onChange(checked)}
+              />
+            </CreatureFormItems>
           )}
         />
         <div className="flex gap-5">

@@ -13,6 +13,7 @@ import {
 import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { MoreHorizontal, Plus } from "lucide-react";
@@ -109,6 +110,7 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
   );
   const [maxHp, setMaxHp] = useState(creature.max_hp);
   const [name, setName] = useState(creature.name);
+  const [isPlayer, setIsPlayer] = useState(creature.is_player);
 
   const { mutate: updateCreature, isPending } = useUpdateCreature();
 
@@ -138,6 +140,15 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
           onChange={(e) => setName(e.target.value)}
         />
       </label>
+      <label>
+        Player
+        <Checkbox
+          checked={isPlayer}
+          onCheckedChange={(checked) =>
+            checked !== "indeterminate" && setIsPlayer(checked)
+          }
+        />
+      </label>
       <LoadingButton
         onClick={(e) => {
           e.preventDefault();
@@ -148,6 +159,7 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
               challenge_rating: challengeRating,
               max_hp: maxHp,
               name,
+              is_player: isPlayer,
             },
           });
         }}

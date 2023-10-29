@@ -124,6 +124,11 @@ export interface components {
        * @default 0
        */
       challenge_rating?: number;
+      /**
+       * Is Player
+       * @default false
+       */
+      is_player?: boolean;
     };
     /** Creature */
     Creature: {
@@ -135,6 +140,11 @@ export interface components {
       max_hp: number;
       /** Challenge Rating */
       challenge_rating: number;
+      /**
+       * Is Player
+       * @default false
+       */
+      is_player?: boolean;
     };
     /** DiscordTextChannel */
     DiscordTextChannel: {
@@ -157,6 +167,11 @@ export interface components {
       max_hp: number;
       /** Challenge Rating */
       challenge_rating: number;
+      /**
+       * Is Player
+       * @default false
+       */
+      is_player?: boolean;
       /** Creature Id */
       creature_id: number;
       /** Encounter Id */
