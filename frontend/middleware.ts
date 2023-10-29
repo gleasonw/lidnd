@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
   }
 }
 
-const whitelist = new Set(['merkelizer'])
+const whitelist = new Set(['merkelizer', 'merkelizer1'])
 
 export async function verifyDiscordToken(): Promise<{
   status: number;
