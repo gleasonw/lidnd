@@ -176,7 +176,7 @@ function EncounterStats({
   savedPlayerLevel: number;
   numPlayers: number;
 }) {
-  const [localNumPlayers, setLocalNumPlayers] = React.useState(numPlayers);
+  const [localNumPlayers, setLocalNumPlayers] = React.useState<number | null>(null);
   const [estimatedTurnSeconds, setEstimatedTurnSeconds] =
     React.useState(turnTimeEstimate);
   const [estimatedRounds, setEstimatedRounds] = React.useState(3);
@@ -185,6 +185,8 @@ function EncounterStats({
   const { data: creatures } = useEncounterCreatures();
 
   const numParticipants = creatures?.length ?? 0;
+
+  const displayedNumPlayers = localNumPlayers ?? numPlayers;
 
   const estimatedEncounterDuration =
     (numParticipants * estimatedRounds * estimatedTurnSeconds) / 60;
@@ -255,7 +257,7 @@ function EncounterStats({
           Number of players in encounter
           <Input
             type={"number"}
-            value={localNumPlayers}
+            value={displayedNumPlayers}
             onChange={(e) => setLocalNumPlayers(parseInt(e.target.value))}
           />
         </label>
