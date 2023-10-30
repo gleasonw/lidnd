@@ -117,36 +117,36 @@ token_validation_cache: Dict[str, Tuple[datetime, DiscordUser]] = {}
 
 
 async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
+    start_time = datetime.now()
     async with pool.connection() as conn:
-        encounter = await get_user_encounter_by_id(encounter_id, UserId(id=user_id))
-        encounter_creatures = await get_encounter_creatures(encounter_id)
+        async with asyncio.TaskGroup() as tg:
+            encounter = tg.create_task(
+                get_user_encounter_by_id(encounter_id, UserId(id=user_id))
+            )
+            encounter_creatures = tg.create_task(get_encounter_creatures(encounter_id))
+            channel_info = tg.create_task(get_discord_channel(UserId(id=user_id)))
+            discord_settings = tg.create_task(get_settings(UserId(id=user_id)))
+        encounter = encounter.result()
+        encounter_creatures = encounter_creatures.result()
         overview = EncounterOverview(
             **encounter.model_dump(), participants=encounter_creatures
         )
+        channel_info = channel_info.result()
+        discord_settings = discord_settings.result()
+        channel = bot.get_channel(channel_info.id)
+        if not channel:
+            return
+        assert isinstance(
+            channel, discord.TextChannel
+        ), "Channel is not a text channel"
+        rendered_md = template.render(
+            overview=overview,
+            settings=discord_settings,
+        )
         async with conn.cursor() as cur:
-            await cur.execute(
-                "SELECT channel_id, message_id FROM channels WHERE user_id = %s",
-                (user_id,),
-            )
-            ids = await cur.fetchone()
-            if not ids:
-                return
-            discord_settings = await get_settings(UserId(id=user_id))
-            channel_id, message_id = ids
-            channel = bot.get_channel(channel_id)
-            if not channel:
-                return
-            assert isinstance(
-                channel, discord.TextChannel
-            ), "Channel is not a text channel"
-            print(overview)
-            rendered_md = template.render(
-                overview=overview,
-                settings=discord_settings,
-            )
-            if message_id:
+            if channel_info.encounter_message_id:
                 try:
-                    message = await channel.fetch_message(message_id)
+                    message = await channel.fetch_message(channel_info.encounter_message_id)
                     await message.edit(content=rendered_md)
                 except discord.NotFound:
                     new_message = await channel.send(rendered_md)
@@ -160,6 +160,7 @@ async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
                     "UPDATE channels SET message_id = %s WHERE user_id = %s",
                     (new_message.id, user_id),
                 )
+    print(f"Posting encounter took {(datetime.now() - start_time).total_seconds()}s")
 
 
 @app.get("/")
@@ -174,8 +175,10 @@ async def fetch_whitelist() -> Set[str]:
         ) as resp:
             whitelist = set((await resp.text()).splitlines())
             return whitelist
-        
+
+
 whitelist: Set[str] | None = None
+
 
 async def get_discord_user(
     token: Annotated[str, Depends(oauth2_scheme)]
@@ -758,6 +761,7 @@ class DiscordTextChannel(BaseModel):
     name: str
     members: List[str]
     guild: str
+    encounter_message_id: Optional[int] = None
 
 
 @app.get("/api/discord-channel")
@@ -765,13 +769,13 @@ async def get_discord_channel(user=Depends(get_discord_user)) -> DiscordTextChan
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                "SELECT channel_id FROM channels WHERE user_id = %s",
+                "SELECT channel_id, message_id FROM channels WHERE user_id = %s",
                 (user.id,),
             )
-            channel_id = await cur.fetchone()
-            if not channel_id:
+            ids = await cur.fetchone()
+            if not ids:
                 raise HTTPException(status_code=404, detail="Discord channel not found")
-            channel_id = channel_id[0]
+            channel_id, message_id = ids
             channel = bot.get_channel(channel_id)
             assert isinstance(
                 channel, discord.TextChannel
@@ -781,6 +785,7 @@ async def get_discord_channel(user=Depends(get_discord_user)) -> DiscordTextChan
                 name=channel.name,
                 members=[member.name for member in channel.members],
                 guild=channel.guild.name,
+                encounter_message_id=message_id,
             )
 
 
