@@ -26,6 +26,7 @@ import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
 import InitiativeInput from "@/app/dashboard/encounters/[id]/InitiativeInput";
+import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 
 export default function SingleEncounter() {
   const { data: encounterParticipants, isLoading } = useEncounterCreatures();
@@ -109,7 +110,12 @@ export default function SingleEncounter() {
       )}
 
       <AnimatePresence>
-        <div className={"flex gap-10 overflow-auto px-5 max-w-full"}>
+        <div
+          className={clsx(
+            "flex gap-5 flex-col",
+            "md:flex-row md:gap-10 md:px-10 md:max-w-full md:items-center md:overflow-auto"
+          )}
+        >
           {encounterParticipants
             ?.slice()
             .sort(sortEncounterCreatures)
@@ -124,6 +130,24 @@ export default function SingleEncounter() {
                     <X />
                   </Button>
                 </BattleCard>
+                <div className="flex gap-10 items-center md:hidden">
+                  <Button
+                    variant="ghost"
+                    onClick={() => removeCreatureFromEncounter(participant.id)}
+                  >
+                    <X />
+                  </Button>
+                  <Card className="w-full flex items-center gap-5 overflow-hidden relative transition-all">
+                    <CharacterIcon
+                      id={participant.creature_id}
+                      name={participant.name}
+                      width={100}
+                      height={100}
+                    />
+                    <h1 className="p-7">{participant.name}</h1>
+                  </Card>
+                  <InitiativeInput creature={participant} />
+                </div>
               </AnimationListItem>
             ))}
           {encounterParticipants?.length === 0 && (

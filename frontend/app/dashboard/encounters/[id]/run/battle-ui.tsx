@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   ChevronDown,
+  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronUp,
@@ -74,10 +75,6 @@ export function BattleUI() {
     (participant) => participant.id === selectedId
   );
 
-  const [participantOrientation, setParticipantOrientation] = React.useState<
-    "vertical" | "horizontal"
-  >("horizontal");
-
   const [addingCreature, setAddingCreature] = React.useState(false);
 
   const scrollContainer = React.useRef<HTMLDivElement>(null);
@@ -102,27 +99,11 @@ export function BattleUI() {
     <div className="flex flex-col gap-5 justify-center items-center">
       <div className={"flex gap-3 items-center w-full justify-between"}>
         <EncounterTime time={encounter?.started_at ?? undefined} />
-        <div className="flex gap-2">
-          <div className="flex gap-2">
-            <Toggle
-              onClick={() => setParticipantOrientation("horizontal")}
-              pressed={participantOrientation === "horizontal"}
-            >
-              <StretchVertical />
-            </Toggle>
-            <Toggle
-              pressed={participantOrientation === "vertical"}
-              onClick={() => setParticipantOrientation("vertical")}
-            >
-              <Rows />
-            </Toggle>
-          </div>
-          {!addingCreature && (
-            <Button onClick={() => setAddingCreature(true)}>
-              <Plus /> Add creature
-            </Button>
-          )}
-        </div>
+        {!addingCreature && (
+          <Button onClick={() => setAddingCreature(true)}>
+            <Plus /> Add creature
+          </Button>
+        )}
       </div>
       {addingCreature && (
         <BattleAddCreatureForm>
@@ -133,25 +114,19 @@ export function BattleUI() {
       )}
       <AnimatePresence>
         <div
-          className={clsx({
-            "flex gap-10 px-10 max-w-full items-center overflow-auto h-80":
-              participantOrientation === "horizontal",
-            "flex flex-col gap-2": participantOrientation === "vertical",
-          })}
+          className={clsx(
+            "flex gap-5 flex-col",
+            "md:flex-row md:gap-10 md:px-10 md:max-w-full md:items-center md:overflow-auto md:h-80"
+          )}
           ref={scrollContainer}
         >
           <Button
             onClick={() => handleChangeTurn("previous")}
             disabled={isPending}
-            className={clsx({
-              "absolute left-0 z-10 h-20": participantOrientation === "horizontal",
-            })}
+            className="md:absolute left-0 md:z-10 md:h-20"
           >
-            <ChevronLeftIcon
-              className={clsx({
-                "transform rotate-90": participantOrientation === "vertical",
-              })}
-            />
+            <ChevronLeftIcon className="hidden md:flex" />
+            <ChevronUp className="md:hidden" />
           </Button>
           {displayedParticipants
             ?.slice()
@@ -162,64 +137,55 @@ export function BattleUI() {
                   onClick={() => setDmSelectedCreature(participant.id)}
                   className="w-full"
                 >
-                  {participantOrientation === "vertical" ? (
-                    <div className="flex gap-10 items-center">
-                      <Swords
-                        className={clsx({
-                          "opacity-0": !participant.is_active,
-                          "opacity-100": participant.is_active,
-                        })}
-                        size={50}
-                      />
-                      <Card
-                        className={clsx(
-                          "w-full flex items-center gap-5 overflow-hidden relative transition-all",
-                          {
-                            "transform scale-105": participant.is_active,
-                            "outline-4 outline": participant.id === selectedId,
-                          }
-                        )}
-                      >
-                        <HealthMeterOverlay creature={participant} />
-                        <CharacterIcon
-                          id={participant.creature_id}
-                          name={participant.name}
-                          width={100}
-                          height={199}
-                        />
-                        <h1>{participant.name}</h1>
-                      </Card>
-                      <Swords
-                        className={clsx({
-                          "opacity-0": !participant.is_active,
-                          "opacity-100": participant.is_active,
-                        })}
-                        size={50}
-                      />
-                    </div>
-                  ) : (
-                    <BattleCard
-                      creature={participant}
-                      isSelected={participant.id === selectedId}
+                  <div className="flex gap-10 items-center md:hidden">
+                    <Swords
+                      className={clsx({
+                        "opacity-0": !participant.is_active,
+                        "opacity-100": participant.is_active,
+                      })}
+                      size={50}
                     />
-                  )}
+                    <Card
+                      className={clsx(
+                        "w-full flex items-center gap-5 overflow-hidden relative transition-all",
+                        {
+                          "transform scale-105": participant.is_active,
+                          "outline-4 outline": participant.id === selectedId,
+                        }
+                      )}
+                    >
+                      <HealthMeterOverlay creature={participant} />
+                      <CharacterIcon
+                        id={participant.creature_id}
+                        name={participant.name}
+                        width={200}
+                        height={200}
+                      />
+                      <h1 className="p-7">{participant.name}</h1>
+                    </Card>
+                    <Swords
+                      className={clsx({
+                        "opacity-0": !participant.is_active,
+                        "opacity-100": participant.is_active,
+                      })}
+                      size={50}
+                    />
+                  </div>
+                  <BattleCard
+                    className="hidden md:flex"
+                    creature={participant}
+                    isSelected={participant.id === selectedId}
+                  />
                 </button>
               </AnimationListItem>
             ))}
           <Button
-            className={clsx({
-              "absolute right-0 h-20": participantOrientation === "horizontal",
-            })}
+            className="md:absolute right-0 md:h-20"
             onClick={() => handleChangeTurn("next")}
             disabled={isPending}
           >
-            {
-              <ChevronRightIcon
-                className={clsx({
-                  "transform rotate-90": participantOrientation === "vertical",
-                })}
-              />
-            }
+            <ChevronRightIcon className="hidden md:flex" />
+            <ChevronDownIcon className="md:hidden" />
           </Button>
         </div>
 
@@ -274,7 +240,7 @@ export function BattleCard({
   return (
     <div
       key={creature.id}
-      className={`flex relative flex-col gap-6 items-center w-40 justify-between`}
+      className={`relative flex-col gap-6 items-center w-40 justify-between hidden md:flex`}
     >
       <Swords
         className={clsx({
