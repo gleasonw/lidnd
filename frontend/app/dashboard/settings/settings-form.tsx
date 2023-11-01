@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
 import { Settings, updateDiscordSettings } from "@/app/dashboard/actions";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
@@ -30,26 +29,30 @@ export function SettingsForm({
 
   return (
     <div className={"flex flex-col gap-5 max-w-sm"}>
-      <div className={"flex gap-5 justify-between"}>
-        <label className="flex justify-between w-full">
-          Show monster health
-          <Switch
-            id="health"
-            checked={health}
-            onCheckedChange={(checked) => setHealth(checked)}
-          />
-        </label>
+      <div className="flex gap-3 flex-col shadow-md p-3">
+        <h2 className="text-xl">Discord encounter tracking</h2>
+        <div className={"flex gap-5 justify-between"}>
+          <label className="flex justify-between w-full">
+            Show monster health
+            <Switch
+              id="health"
+              checked={health}
+              onCheckedChange={(checked) => setHealth(checked)}
+            />
+          </label>
+        </div>
+        <div className={"flex gap-5 justify-between"}>
+          <label className="flex justify-between w-full">
+            Show active icon
+            <Switch
+              id="icon"
+              checked={icon}
+              onCheckedChange={(checked) => setIcon(checked)}
+            />
+          </label>
+        </div>
       </div>
-      <div className={"flex gap-5 justify-between"}>
-        <label className="flex justify-between w-full">
-          Show active icon
-          <Switch
-            id="icon"
-            checked={icon}
-            onCheckedChange={(checked) => setIcon(checked)}
-          />
-        </label>
-      </div>
+
       <div className={"flex gap-5 justify-between"}>
         <label>
           Default average turn seconds

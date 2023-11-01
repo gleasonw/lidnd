@@ -138,13 +138,6 @@ export function BattleUI() {
                   className="w-full"
                 >
                   <div className="flex gap-10 items-center md:hidden">
-                    <Swords
-                      className={clsx({
-                        "opacity-0": !participant.is_active,
-                        "opacity-100": participant.is_active,
-                      })}
-                      size={50}
-                    />
                     <Card
                       className={clsx(
                         "w-full flex items-center gap-5 overflow-hidden relative transition-all",
@@ -161,15 +154,15 @@ export function BattleUI() {
                         width={200}
                         height={200}
                       />
-                      <h1 className="p-7">{participant.name}</h1>
+                      <h1 className="p-3">{participant.name}</h1>
+                      <Swords
+                        className={clsx({
+                          "opacity-0": !participant.is_active,
+                          "opacity-100": participant.is_active,
+                        })}
+                        size={50}
+                      />
                     </Card>
-                    <Swords
-                      className={clsx({
-                        "opacity-0": !participant.is_active,
-                        "opacity-100": participant.is_active,
-                      })}
-                      size={50}
-                    />
                   </div>
                   <BattleCard
                     className="hidden md:flex"
