@@ -38,7 +38,6 @@ import {
   sortEncounterCreatures,
 } from "@/app/dashboard/encounters/utils";
 import clsx from "clsx";
-import { Toggle } from "@/components/ui/toggle";
 
 export function BattleUI() {
   const { data: encounter } = useEncounter();
@@ -113,73 +112,87 @@ export function BattleUI() {
         </BattleAddCreatureForm>
       )}
       <AnimatePresence>
-        <div
-          className={clsx(
-            "flex gap-5 flex-col",
-            "md:flex-row md:gap-10 md:px-10 md:max-w-full md:items-center md:overflow-auto md:h-80"
-          )}
-          ref={scrollContainer}
-        >
-          <Button
-            onClick={() => handleChangeTurn("previous")}
-            disabled={isPending}
-            className="md:absolute left-0 md:z-10 md:h-20"
+        <div className="relative w-full">
+          <div
+            className={clsx(
+              "flex gap-5 flex-col",
+              "sm:flex-row sm:gap-10 sm:px-10 sm:max-w-full sm:items-center sm:overflow-auto sm:h-80"
+            )}
+            ref={scrollContainer}
           >
-            <ChevronLeftIcon className="hidden md:flex" />
-            <ChevronUp className="md:hidden" />
-          </Button>
-          {displayedParticipants
-            ?.slice()
-            .sort(sortEncounterCreatures)
-            .map((participant) => (
-              <AnimationListItem key={participant.id}>
-                <button
-                  onClick={() => setDmSelectedCreature(participant.id)}
-                  className="w-full"
-                >
-                  <div className="flex gap-10 items-center md:hidden">
-                    <Card
-                      className={clsx(
-                        "w-full flex items-center gap-5 overflow-hidden relative transition-all",
-                        {
-                          "transform scale-105": participant.is_active,
-                          "outline-4 outline": participant.id === selectedId,
-                        }
-                      )}
-                    >
-                      <HealthMeterOverlay creature={participant} />
-                      <CharacterIcon
-                        id={participant.creature_id}
-                        name={participant.name}
-                        width={200}
-                        height={200}
-                      />
-                      <h1 className="p-3">{participant.name}</h1>
-                      <Swords
-                        className={clsx({
-                          "opacity-0": !participant.is_active,
-                          "opacity-100": participant.is_active,
-                        })}
-                        size={50}
-                      />
-                    </Card>
-                  </div>
-                  <BattleCard
-                    className="hidden md:flex"
-                    creature={participant}
-                    isSelected={participant.id === selectedId}
-                  />
-                </button>
-              </AnimationListItem>
-            ))}
-          <Button
-            className="md:absolute right-0 md:h-20"
-            onClick={() => handleChangeTurn("next")}
-            disabled={isPending}
-          >
-            <ChevronRightIcon className="hidden md:flex" />
-            <ChevronDownIcon className="md:hidden" />
-          </Button>
+            <Button
+              className="absolute left-0 sm:flex hidden z-10 h-20"
+              onClick={() => handleChangeTurn("previous")}
+              disabled={isPending}
+            >
+              <ChevronLeftIcon />
+            </Button>
+            <Button
+              className=" sm:hidden"
+              onClick={() => handleChangeTurn("previous")}
+              disabled={isPending}
+            >
+              <ChevronUp />
+            </Button>
+            {displayedParticipants
+              ?.slice()
+              .sort(sortEncounterCreatures)
+              .map((participant) => (
+                <AnimationListItem key={participant.id}>
+                  <button
+                    onClick={() => setDmSelectedCreature(participant.id)}
+                    className="w-full"
+                  >
+                    <div className="flex gap-10 items-center w-full sm:hidden">
+                      <Card
+                        className={clsx(
+                          "w-full flex items-center gap-5 overflow-hidden relative transition-all",
+                          {
+                            "transform scale-105": participant.is_active,
+                            "outline-4 outline": participant.id === selectedId,
+                          }
+                        )}
+                      >
+                        <HealthMeterOverlay creature={participant} />
+                        <CharacterIcon
+                          id={participant.creature_id}
+                          name={participant.name}
+                          width={100}
+                          height={100}
+                        />
+                        <h1 className="p-3">{participant.name}</h1>
+                        <Swords
+                          className={clsx({
+                            "opacity-0": !participant.is_active,
+                            "opacity-100": participant.is_active,
+                          })}
+                          size={50}
+                        />
+                      </Card>
+                    </div>
+                    <BattleCard
+                      className="hidden sm:flex"
+                      creature={participant}
+                      isSelected={participant.id === selectedId}
+                    />
+                  </button>
+                </AnimationListItem>
+              ))}
+            <Button
+              className="absolute right-0 sm:flex hidden z-10 h-20"
+              onClick={() => handleChangeTurn("next")}
+              disabled={isPending}
+            >
+              <ChevronRightIcon />
+            </Button>
+            <Button
+              className="sm:hidden"
+              onClick={() => handleChangeTurn("next")}
+              disabled={isPending}
+            >
+              <ChevronDown />
+            </Button>
+          </div>
         </div>
 
         {selectedParticipant && (
@@ -233,7 +246,7 @@ export function BattleCard({
   return (
     <div
       key={creature.id}
-      className={`relative flex-col gap-6 items-center w-40 justify-between hidden md:flex`}
+      className={`relative flex-col gap-6 items-center w-40 justify-between hidden sm:flex`}
     >
       <Swords
         className={clsx({

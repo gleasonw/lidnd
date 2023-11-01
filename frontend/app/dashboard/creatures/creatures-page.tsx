@@ -16,7 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { MoreHorizontal, Plus, X } from "lucide-react";
 import { useState } from "react";
 import clsx from "clsx";
 
@@ -50,19 +50,26 @@ export default function CreaturesPage() {
           onChange={(e) => setName(e.target.value)}
           value={name}
         />
-        <Button
-          onClick={() => setIsAddingCreatures(!isAddingCreatures)}
-          className="flex gap-3"
-        >
-          {isAddingCreatures ? "Cancel" : <Plus />}
-        </Button>
+        {!isAddingCreatures && (
+          <Button
+            onClick={() => setIsAddingCreatures(true)}
+            className="flex gap-3"
+          >
+            <Plus />
+          </Button>
+        )}
       </div>
       {isAddingCreatures && (
-        <Card className='max-w-700 mx-auto pt-5'>
-          <CardContent>
-            <FullCreatureAddForm createCreatureMutation={createCreature} />
-          </CardContent>
-        </Card>
+        <>
+          <Button variant="ghost" onClick={() => setIsAddingCreatures(false)}>
+            <X />
+          </Button>
+          <Card className="max-w-700 mx-auto pt-5">
+            <CardContent>
+              <FullCreatureAddForm createCreatureMutation={createCreature} />
+            </CardContent>
+          </Card>
+        </>
       )}
       <span className={!name ? "opacity-100" : "opacity-0"}>
         {displayCreatures?.length} / 30

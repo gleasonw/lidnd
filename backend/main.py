@@ -68,7 +68,7 @@ class Id(BaseModel):
 class Creature(Id):
     name: str
     max_hp: int
-    challenge_rating: int
+    challenge_rating: float
     is_player: bool = False
 
 
@@ -629,7 +629,7 @@ async def create_creature(
     max_hp: Annotated[int, Form()],
     icon: Annotated[UploadFile, Form()],
     stat_block: Annotated[UploadFile, Form()],
-    challenge_rating: Annotated[int, Form()] = 0,
+    challenge_rating: Annotated[float, Form()] = 0,
     is_player: Annotated[bool, Form()] = False,
     user=Depends(get_discord_user),
 ) -> Creature:
