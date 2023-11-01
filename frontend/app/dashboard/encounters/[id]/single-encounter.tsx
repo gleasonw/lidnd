@@ -112,8 +112,7 @@ export default function SingleEncounter() {
       <AnimatePresence>
         <div
           className={clsx(
-            "flex gap-5 flex-col",
-            "md:flex-row md:gap-10 md:px-10 md:max-w-full md:items-center md:overflow-auto"
+            "flex flex-row gap-10 px-10 max-w-full items-center overflow-auto"
           )}
         >
           {encounterParticipants
@@ -130,24 +129,6 @@ export default function SingleEncounter() {
                     <X />
                   </Button>
                 </BattleCard>
-                <div className="flex gap-10 items-center md:hidden">
-                  <Button
-                    variant="ghost"
-                    onClick={() => removeCreatureFromEncounter(participant.id)}
-                  >
-                    <X />
-                  </Button>
-                  <Card className="w-full flex items-center gap-5 overflow-hidden relative transition-all">
-                    <CharacterIcon
-                      id={participant.creature_id}
-                      name={participant.name}
-                      width={100}
-                      height={100}
-                    />
-                    <h1 className="p-7">{participant.name}</h1>
-                  </Card>
-                  <InitiativeInput creature={participant} />
-                </div>
               </AnimationListItem>
             ))}
           {encounterParticipants?.length === 0 && (
