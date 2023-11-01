@@ -4,7 +4,7 @@ import "@/app/globals.css";
 export const rerouteUrl =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
-    : "https://dnd-init-tracker.vercel.app";
+    : "https://lidnd.vercel.app";
 
 export default function Login() {
   return (
