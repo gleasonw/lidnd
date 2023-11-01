@@ -26,7 +26,6 @@ import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
 import InitiativeInput from "@/app/dashboard/encounters/[id]/InitiativeInput";
-import { access } from "fs/promises";
 
 export default function SingleEncounter() {
   const { data: encounterParticipants, isLoading } = useEncounterCreatures();
@@ -94,9 +93,23 @@ export default function SingleEncounter() {
           </Link>
         )}
       </div>
+      {settings && (
+        <EncounterStats
+          turnTimeEstimate={settings.average_turn_duration}
+          savedPlayerLevel={settings.player_level}
+          numPlayers={
+            encounterParticipants?.reduce((sum, participant) => {
+              if (participant.is_player) {
+                return sum + 1;
+              }
+              return sum;
+            }, 0) ?? 0
+          }
+        />
+      )}
 
       <AnimatePresence>
-        <div className={"flex gap-10 overflow-auto p-5 max-w-full"}>
+        <div className={"flex gap-10 overflow-auto px-5 max-w-full"}>
           {encounterParticipants
             ?.slice()
             .sort(sortEncounterCreatures)
@@ -131,20 +144,6 @@ export default function SingleEncounter() {
               ))}
         </div>
       </AnimatePresence>
-      {settings && (
-        <EncounterStats
-          turnTimeEstimate={settings.average_turn_duration}
-          savedPlayerLevel={settings.player_level}
-          numPlayers={
-            encounterParticipants?.reduce((sum, participant) => {
-              if (participant.is_player) {
-                return sum + 1;
-              }
-              return sum;
-            }, 0) ?? 0
-          }
-        />
-      )}
 
       <div className={"flex flex-col w-full gap-3"}>
         <div className={"flex flex-wrap w-full justify-center gap-5"}>
@@ -176,7 +175,9 @@ function EncounterStats({
   savedPlayerLevel: number;
   numPlayers: number;
 }) {
-  const [localNumPlayers, setLocalNumPlayers] = React.useState<number | null>(null);
+  const [localNumPlayers, setLocalNumPlayers] = React.useState<number | null>(
+    null
+  );
   const [estimatedTurnSeconds, setEstimatedTurnSeconds] =
     React.useState(turnTimeEstimate);
   const [estimatedRounds, setEstimatedRounds] = React.useState(3);
@@ -215,12 +216,24 @@ function EncounterStats({
     difficulty = "Deadly";
   }
 
+  let encounterTime = "";
+  const hourTime = estimatedEncounterDuration / 60;
+  const hourCount = Math.floor(hourTime);
+  const minuteRemainder = estimatedEncounterDuration % 60;
+  if (hourTime >= 1) {
+    encounterTime = `${hourCount} hour${hourCount > 1 ? "s" : ""} ${
+      minuteRemainder ? `${Math.floor(minuteRemainder)} minutes` : ""
+    }`;
+  } else {
+    encounterTime = `${Math.floor(estimatedEncounterDuration % 60)} minutes`;
+  }
+
   return (
-    <div className={"flex flex-wrap gap-20 justify-center"}>
+    <div className={"flex flex-wrap gap-14 justify-center"}>
       <div className={"flex flex-col items-center gap-3 justify-between"}>
         <span className="flex gap-5 items-center text-2xl">
           <Clock />
-          {estimatedEncounterDuration.toFixed(2)} minutes
+          {encounterTime}
         </span>
 
         <div className="flex flex-col gap-3">
@@ -249,7 +262,7 @@ function EncounterStats({
           <Skull />
           {difficulty}
         </span>
-        <span>Total Cr: {totalCr}</span>
+        <span>Total CR: {totalCr}</span>
         <span>
           Budget: {easyTier} / {standardTier} / {hardTier}
         </span>

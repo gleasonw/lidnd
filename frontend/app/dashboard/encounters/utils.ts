@@ -47,7 +47,7 @@ export function optimisticTurnUpdate(
           ];
       }
       return participants.map((c: EncounterCreature) => {
-        if (c.creature_id === nextActive?.creature_id) {
+        if (c.id === nextActive?.id) {
           return {
             ...c,
             is_active: true,

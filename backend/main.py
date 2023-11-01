@@ -251,7 +251,7 @@ async def update_turn(
             active_participants = [
                 p
                 for p in participants
-                if p.hp > 0 or p.creature_id == current_active.creature_id
+                if p.hp > 0 or p.id == current_active.id
             ]
 
             if not active_participants:
@@ -274,14 +274,14 @@ async def update_turn(
                 """
                 UPDATE encounter_participants
                 SET is_active = CASE 
-                    WHEN creature_id = %s THEN TRUE
-                    WHEN creature_id = %s THEN FALSE
+                    WHEN id = %s THEN TRUE
+                    WHEN id = %s THEN FALSE
                     ELSE is_active
                 END
                 WHERE encounter_id = %s
                 RETURNING *
                 """,
-                (next_active.creature_id, current_active.creature_id, encounter_id),
+                (next_active.id, current_active.id, encounter_id),
             )
             background_tasks.add_task(
                 post_encounter_to_user_channel, user.id, encounter_id
@@ -362,9 +362,10 @@ async def update_encounter(
             return updated_encounter
 
 
-@app.put("/api/encounters/{encounter_id}/creatures/{creature_id}")
+@app.put("/api/encounters/{encounter_id}/{participant_id}}")
 async def update_encounter_creature(
     encounter_id: int,
+    participant_id: int,
     creature_id: int,
     encounter_data: EncounterParticipant,
     background_tasks: BackgroundTasks,
@@ -382,7 +383,7 @@ async def update_encounter_creature(
                         ELSE %s
                     END,
                     initiative = %s
-                WHERE encounter_id = %s AND creature_id = %s
+                WHERE encounter_id = %s AND id = %s
                 RETURNING *
                 """,
                 (
@@ -393,7 +394,7 @@ async def update_encounter_creature(
                     encounter_data.hp,
                     encounter_data.initiative,
                     encounter_id,
-                    creature_id,
+                    participant_id,
                 ),
             )
             if cur.rowcount == 0:
@@ -446,7 +447,7 @@ async def start_encounter(
                 """
                 UPDATE encounter_participants
                 SET is_active = CASE 
-                    WHEN creature_id = (SELECT creature_id FROM encounter_participants WHERE encounter_id = %s ORDER BY initiative DESC, creature_id DESC LIMIT 1) THEN TRUE
+                    WHEN id = (SELECT id FROM encounter_participants WHERE encounter_id = %s ORDER BY initiative DESC, id DESC LIMIT 1) THEN TRUE
                     ELSE FALSE
                 END
                 WHERE encounter_id = %s
@@ -555,10 +556,6 @@ async def add_creature_to_encounter(
                 """
                 INSERT INTO encounter_participants (encounter_id, creature_id, hp, initiative, is_active)
                 VALUES (%s, %s, %s, %s, %s)
-                ON CONFLICT (encounter_id, creature_id) DO UPDATE SET
-                    hp = EXCLUDED.hp,
-                    initiative = EXCLUDED.initiative,
-                    is_active = EXCLUDED.is_active;
                 """,
                 (
                     encounter_id,
@@ -714,23 +711,15 @@ async def delete_creature(
 @app.get("/api/creatures")
 async def get_user_creatures(
     name: Optional[str] = None,
-    filter_encounter: Optional[int] = None,
     user=Depends(get_discord_user),
 ) -> List[Creature]:
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(Creature)) as cur:
             params = [user.id]
             filter_clause = ""
-            if name and filter_encounter:
-                filter_clause = "AND name ILIKE %s AND id NOT IN (SELECT creature_id FROM encounter_participants WHERE encounter_id = %s)"
-                params.append(f"%{name}%")
-                params.append(filter_encounter)
-            elif name:
+            if name:
                 filter_clause = "AND name ILIKE %s"
                 params.append(f"%{name}%")
-            elif filter_encounter:
-                filter_clause = "AND id NOT IN (SELECT creature_id FROM encounter_participants WHERE encounter_id = %s)"
-                params.append(filter_encounter)
             await cur.execute(
                 f"SELECT * FROM creatures WHERE user_id = %s {filter_clause} ORDER BY name ASC",
                 params,

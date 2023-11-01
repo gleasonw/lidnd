@@ -27,11 +27,9 @@ export interface paths {
     /** Update Turn */
     post: operations["update_turn_api_encounters__encounter_id__turn_post"];
   };
-  "/api/encounters/{encounter_id}/creatures/{creature_id}": {
+  "/api/encounters/{encounter_id}/{participant_id}}": {
     /** Update Encounter Creature */
-    put: operations["update_encounter_creature_api_encounters__encounter_id__creatures__creature_id__put"];
-    /** Add Existing Creature To Encounter */
-    post: operations["add_existing_creature_to_encounter_api_encounters__encounter_id__creatures__creature_id__post"];
+    put: operations["update_encounter_creature_api_encounters__encounter_id___participant_id___put"];
   };
   "/api/encounters/{encounter_id}/start": {
     /** Start Encounter */
@@ -40,6 +38,10 @@ export interface paths {
   "/api/encounters/{encounter_id}/stop": {
     /** Stop Encounter */
     post: operations["stop_encounter_api_encounters__encounter_id__stop_post"];
+  };
+  "/api/encounters/{encounter_id}/creatures/{creature_id}": {
+    /** Add Existing Creature To Encounter */
+    post: operations["add_existing_creature_to_encounter_api_encounters__encounter_id__creatures__creature_id__post"];
   };
   "/api/encounters/{encounter_id}/creatures": {
     /** Get Encounter Creatures */
@@ -102,6 +104,11 @@ export interface components {
        * @default 0
        */
       challenge_rating?: number;
+      /**
+       * Is Player
+       * @default false
+       */
+      is_player?: boolean;
     };
     /** Body_create_creature_api_creatures_post */
     Body_create_creature_api_creatures_post: {
@@ -156,6 +163,8 @@ export interface components {
       members: string[];
       /** Guild */
       guild: string;
+      /** Encounter Message Id */
+      encounter_message_id?: number | null;
     };
     /** EncounterCreature */
     EncounterCreature: {
@@ -398,39 +407,19 @@ export interface operations {
     };
   };
   /** Update Encounter Creature */
-  update_encounter_creature_api_encounters__encounter_id__creatures__creature_id__put: {
+  update_encounter_creature_api_encounters__encounter_id___participant_id___put: {
     parameters: {
+      query: {
+        creature_id: number;
+      };
       path: {
         encounter_id: number;
-        creature_id: number;
+        participant_id: number;
       };
     };
     requestBody: {
       content: {
         "application/json": components["schemas"]["EncounterParticipant"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterCreature"][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Add Existing Creature To Encounter */
-  add_existing_creature_to_encounter_api_encounters__encounter_id__creatures__creature_id__post: {
-    parameters: {
-      path: {
-        encounter_id: number;
-        creature_id: number;
       };
     };
     responses: {
@@ -482,6 +471,29 @@ export interface operations {
       200: {
         content: {
           "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /** Add Existing Creature To Encounter */
+  add_existing_creature_to_encounter_api_encounters__encounter_id__creatures__creature_id__post: {
+    parameters: {
+      path: {
+        encounter_id: number;
+        creature_id: number;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EncounterCreature"][];
         };
       };
       /** @description Validation Error */
@@ -640,7 +652,6 @@ export interface operations {
     parameters: {
       query?: {
         name?: string | null;
-        filter_encounter?: number | null;
       };
     };
     responses: {

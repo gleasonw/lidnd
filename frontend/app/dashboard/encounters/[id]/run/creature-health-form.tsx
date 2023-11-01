@@ -20,7 +20,7 @@ export function CreatureHealthForm({
     <div className="flex gap-4">
       <Input
         placeholder="Modify HP"
-        type="text"
+        type="number"
         value={hpDiff}
         onChange={(e) => {
           if (!isNaN(parseInt(e.target.value))) {

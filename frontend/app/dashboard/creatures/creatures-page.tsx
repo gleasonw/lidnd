@@ -12,12 +12,13 @@ import {
 } from "@/app/dashboard/encounters/api";
 import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { MoreHorizontal, Plus } from "lucide-react";
 import { useState } from "react";
+import clsx from "clsx";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");
@@ -57,13 +58,16 @@ export default function CreaturesPage() {
         </Button>
       </div>
       {isAddingCreatures && (
-        <FullCreatureAddForm createCreatureMutation={createCreature} />
+        <Card className='max-w-700 mx-auto pt-5'>
+          <CardContent>
+            <FullCreatureAddForm createCreatureMutation={createCreature} />
+          </CardContent>
+        </Card>
       )}
-
       <span className={!name ? "opacity-100" : "opacity-0"}>
         {displayCreatures?.length} / 30
       </span>
-      <div className="flex gap-5 flex-wrap">
+      <div className="flex gap-10 flex-wrap justify-center">
         {isLoadingCreatures &&
           Array(5)
             .fill(null)
@@ -73,30 +77,24 @@ export default function CreaturesPage() {
         {displayCreatures?.map((creature) => (
           <Card
             key={creature.id}
-            className={"p-8 flex flex-col gap-3 relative"}
+            className={clsx(
+              "relative select-none p-3 justify-between overflow-hidden pt-3 gap-5 items-center flex flex-col transition-all"
+            )}
           >
-            <BasePopover
-              trigger={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-0 right-0"
-                >
-                  <MoreHorizontal />
-                </Button>
-              }
-              className={"w-fit flex flex-col gap-3"}
-            >
-              <CreatureUpdateForm creature={creature} />
-              <Button
-                variant="destructive"
-                onClick={() => deleteCreature(creature.id)}
-              >
-                Delete
-              </Button>
-            </BasePopover>
             <h2>{creature.name}</h2>
-            <CharacterIcon id={creature.id} name={creature.name} />
+            <CharacterIcon
+              width={200}
+              height={200}
+              id={creature.id}
+              name={creature.name}
+            />
+            <CreatureUpdateForm creature={creature} />
+            <Button
+              variant="destructive"
+              onClick={() => deleteCreature(creature.id)}
+            >
+              Delete
+            </Button>
           </Card>
         ))}
       </div>
@@ -115,15 +113,18 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
   const { mutate: updateCreature, isPending } = useUpdateCreature();
 
   return (
-    <form className="flex flex-col gap-2">
-      <label>
-        Challenge Rating
-        <Input
-          type="number"
-          value={challengeRating}
-          onChange={(e) => setChallengeRating(parseInt(e.target.value))}
-        />
-      </label>
+    <form className="flex flex-col gap-5 justify-between">
+      {!creature.is_player && (
+        <label>
+          Challenge Rating
+          <Input
+            type="number"
+            value={challengeRating}
+            onChange={(e) => setChallengeRating(parseInt(e.target.value))}
+          />
+        </label>
+      )}
+
       <label>
         Max HP
         <Input

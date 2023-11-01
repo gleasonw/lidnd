@@ -26,7 +26,6 @@ import { LoadingButton } from "@/components/ui/loading-button";
 
 export default function Dashboard() {
   const router = useRouter();
-  const { data: user } = useUser();
   const { data: encounters, isLoading } = useEncounters();
   const {
     mutate: deleteEncounter,
@@ -60,16 +59,6 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-14 mx-auto max-w-screen-xl">
-      <section>
-        <p
-          className={`text-center text-xl ${
-            !user ? "opacity-0" : "opacity-100"
-          } transition-opacity`}
-        >
-          Welcome, <span className={"font-bold"}>{user?.username}</span>, to
-          LiDnD!
-        </p>
-      </section>
       <form
         onSubmit={(e) => {
           e.preventDefault();

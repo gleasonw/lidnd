@@ -8,8 +8,14 @@ const nextConfig = {
         pathname: "/*",
         port: "",
       },
+      {
+        protocol: "https",
+        hostname: "cdn.discordapp.com",
+        pathname: "/*",
+        port: "",
+      },
     ],
-  }
+  },
 };
 
 module.exports = nextConfig;

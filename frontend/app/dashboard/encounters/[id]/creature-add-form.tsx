@@ -117,7 +117,7 @@ export function ImageUpload({ onUpload }: { onUpload: (file?: any) => void }) {
   const [hasContent, setHasContent] = React.useState(false);
   return (
     <span className="h-auto relative flex flex-col gap-5 items-center justify-center group">
-      <span className="flex gap-2 items-center w-full relative rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+      <span className="flex flex-wrap gap-2 items-center w-full relative rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
         <Input
           type={"file"}
           disabled={hasContent}
@@ -174,21 +174,17 @@ export function ExistingCreature({
     variables,
   } = useAddExistingCreatureToEncounter();
 
-  const displayedCreatures = isAddingExistingCreature
-    ? creatures?.filter((creature) => creature.id !== variables.creature_id)
-    : creatures;
-
   return (
     <>
       <Input
-        placeholder="Search for a creature name"
+        placeholder="Search..."
         type="text"
         onChange={(e) => setName(e.target.value)}
         value={name}
       />
       {isLoadingCreatures ? <Spinner /> : null}
       <div className={"grid grid-cols-3 gap-5"}>
-        {displayedCreatures?.map((creature) => (
+        {creatures?.map((creature) => (
           <button
             key={creature.id}
             disabled={isAddingExistingCreature}

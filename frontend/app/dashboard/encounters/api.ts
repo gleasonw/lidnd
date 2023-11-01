@@ -56,7 +56,7 @@ export function useUpdateCreature() {
       return data;
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['userCreatures'] });
+      await queryClient.invalidateQueries({ queryKey: ["userCreatures"] });
     },
   });
 }
@@ -213,7 +213,6 @@ export function useUserCreatures(name?: string, filterEncounter?: number) {
         params: {
           query: {
             name,
-            filter_encounter: filterEncounter,
           },
         },
         headers: {
@@ -281,18 +280,20 @@ export function useOptimisticUpdate<T>(
 }
 
 export function useUpdateEncounterCreature() {
-  const queryClient = useQueryClient();
   const id = useEncounterId();
   return useMutation({
     mutationFn: async (
       creature: components["schemas"]["EncounterParticipant"]
     ) => {
       const { error, data } = await PUT(
-        `/api/encounters/{encounter_id}/creatures/{creature_id}`,
+        `/api/encounters/{encounter_id}/{participant_id}}`,
         {
           params: {
             path: {
               encounter_id: id,
+              participant_id: creature.id,
+            },
+            query: {
               creature_id: creature.creature_id,
             },
           },
@@ -312,7 +313,7 @@ export function useUpdateEncounterCreature() {
       encounterCreaturesKey(id),
       (oldData = [], newData) => {
         return oldData.map((c) => {
-          if (c.creature_id === newData.creature_id) {
+          if (c.id === newData.id) {
             return { ...c, ...newData };
           }
           return c;

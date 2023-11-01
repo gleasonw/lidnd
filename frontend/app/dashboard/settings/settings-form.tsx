@@ -31,40 +31,46 @@ export function SettingsForm({
   return (
     <div className={"flex flex-col gap-5 max-w-sm"}>
       <div className={"flex gap-5 justify-between"}>
-        <label htmlFor="health">Show monster health</label>
-        <Switch
-          id="health"
-          checked={health}
-          onCheckedChange={(checked) => setHealth(checked)}
-        />
-      </div>
-      <div className={"flex gap-5 justify-between"}>
-        <label htmlFor="icon">Show active icon</label>
-        <Switch
-          id="icon"
-          checked={icon}
-          onCheckedChange={(checked) => setIcon(checked)}
-        />
-      </div>
-      <div className={"flex gap-5 justify-between"}>
-        <label htmlFor="average_turn_duration">
-          Default average turn seconds
+        <label className="flex justify-between w-full">
+          Show monster health
+          <Switch
+            id="health"
+            checked={health}
+            onCheckedChange={(checked) => setHealth(checked)}
+          />
         </label>
-        <Input
-          id="average_turn_duration"
-          type="number"
-          value={averageTurnDuration}
-          onChange={(e) => setAverageTurnDuration(parseInt(e.target.value))}
-        />
       </div>
       <div className={"flex gap-5 justify-between"}>
-        <label htmlFor="average_turn_duration">Default player level</label>
-        <Input
-          id="average_turn_duration"
-          type="number"
-          value={playerLevel}
-          onChange={(e) => setPlayerLevel(parseInt(e.target.value))}
-        />
+        <label className="flex justify-between w-full">
+          Show active icon
+          <Switch
+            id="icon"
+            checked={icon}
+            onCheckedChange={(checked) => setIcon(checked)}
+          />
+        </label>
+      </div>
+      <div className={"flex gap-5 justify-between"}>
+        <label>
+          Default average turn seconds
+          <Input
+            id="average_turn_duration"
+            type="number"
+            value={averageTurnDuration}
+            onChange={(e) => setAverageTurnDuration(parseInt(e.target.value))}
+          />
+        </label>
+      </div>
+      <div className={"flex gap-5 justify-between"}>
+        <label>
+          Default player level
+          <Input
+            id="average_turn_duration"
+            type="number"
+            value={playerLevel}
+            onChange={(e) => setPlayerLevel(parseInt(e.target.value))}
+          />
+        </label>
       </div>
       <form action={updateSettingsWithArgs}>
         <LoadingButton type={"submit"} className="w-32">

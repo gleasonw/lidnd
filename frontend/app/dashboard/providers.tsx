@@ -8,6 +8,8 @@ import { logOut } from "@/app/dashboard/actions";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useUser } from "@/app/hooks";
+import Image from "next/image";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(() => new QueryClient());
@@ -45,7 +47,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             {routeLabels[route]}
           </Link>
         ))}
-        <form action={logOut} className={"ml-auto pr-5"}>
+        <form action={logOut} className={"ml-auto pr-5 flex gap-5"}>
+          <UserAvatar />
           <button type="submit">
             <LogOut />
           </button>
@@ -54,5 +57,24 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
+  );
+}
+
+function UserAvatar() {
+  const { data: user, isLoading } = useUser();
+
+  if (isLoading)
+    return (
+      <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+    );
+
+  return (
+    <img
+      alt={user?.username ?? "User"}
+      src={`https://cdn.discordapp.com/avatars/${user?.id}/${user?.avatar}.png`}
+      width={40}
+      height={40}
+      className={"rounded-full"}
+    />
   );
 }
