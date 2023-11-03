@@ -96,10 +96,6 @@ class EncounterResponse(Id):
     ended_at: Optional[NaiveDatetime] = None
 
 
-class EncounterOverview(EncounterResponse):
-    participants: List[EncounterCreature]
-
-
 class DiscordUser(BaseModel):
     id: int
     username: str
@@ -123,14 +119,9 @@ async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
             encounter = tg.create_task(
                 get_user_encounter_by_id(encounter_id, UserId(id=user_id))
             )
-            encounter_creatures = tg.create_task(get_encounter_creatures(encounter_id))
             channel_info = tg.create_task(get_discord_channel(UserId(id=user_id)))
             discord_settings = tg.create_task(get_settings(UserId(id=user_id)))
         encounter = encounter.result()
-        encounter_creatures = encounter_creatures.result()
-        overview = EncounterOverview(
-            **encounter.model_dump(), participants=encounter_creatures
-        )
         channel_info = channel_info.result()
         discord_settings = discord_settings.result()
         channel = bot.get_channel(channel_info.id)
@@ -138,7 +129,7 @@ async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
             return
         assert isinstance(channel, discord.TextChannel), "Channel is not a text channel"
         rendered_md = template.render(
-            overview=overview,
+            overview=encounter,
             settings=discord_settings,
         )
         async with conn.cursor() as cur:
@@ -443,7 +434,7 @@ async def update_encounter_creature(
 @app.delete("/api/encounters/{encounter_id}")
 async def delete_encounter(
     encounter_id: int, user=Depends(get_discord_user)
-) -> List[EncounterResponse]:
+) -> List[EncounterResponseWithParticipants]:
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
