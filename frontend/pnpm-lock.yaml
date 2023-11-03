@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -50,6 +50,9 @@ dependencies:
   '@tanstack/react-query-devtools':
     specifier: ^5.4.2
     version: 5.4.2(@tanstack/react-query@5.0.5)(react-dom@18.2.0)(react@18.2.0)
+  '@tanstack/react-query-next-experimental':
+    specifier: ^5.5.0
+    version: 5.5.0(@tanstack/react-query@5.0.5)(next@14.0.0)(react-dom@18.2.0)(react@18.2.0)
   '@types/node':
     specifier: 20.5.7
     version: 20.5.7
@@ -1887,6 +1890,20 @@ packages:
     dependencies:
       '@tanstack/query-devtools': 5.4.2
       '@tanstack/react-query': 5.0.5(react-dom@18.2.0)(react@18.2.0)
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+    dev: false
+
+  /@tanstack/react-query-next-experimental@5.5.0(@tanstack/react-query@5.0.5)(next@14.0.0)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-EgpAaUbjvMkkZbzyedprfNzmCpLVmiWv/utsgQS37KtBDkdikXfDdpsdsh+XbGl8GJrVNpQdGKemjdSiKVg0Rw==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.4.3
+      next: ^13 || ^14
+      react: ^18.0.0
+      react-dom: ^18.0.0
+    dependencies:
+      '@tanstack/react-query': 5.0.5(react-dom@18.2.0)(react@18.2.0)
+      next: 14.0.0(react-dom@18.2.0)(react@18.2.0)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
     dev: false

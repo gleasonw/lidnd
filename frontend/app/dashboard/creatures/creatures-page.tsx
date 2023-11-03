@@ -1,13 +1,11 @@
 "use client";
 
-import { BasePopover } from "@/app/dashboard/base-popover";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import {
   Creature,
   useCreateCreature,
   useDeleteCreature,
   useUpdateCreature,
-  useUpdateEncounterCreature,
   useUserCreatures,
 } from "@/app/dashboard/encounters/api";
 import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
@@ -16,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { MoreHorizontal, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import clsx from "clsx";
 
@@ -29,8 +27,6 @@ export default function CreaturesPage() {
     variables: deletedId,
     isPending,
   } = useDeleteCreature();
-  const { mutate: updateCreature } = useUpdateCreature();
-
   const [isAddingCreatures, setIsAddingCreatures] = useState(false);
 
   const { mutate: createCreature } = useCreateCreature();
@@ -79,7 +75,7 @@ export default function CreaturesPage() {
           Array(5)
             .fill(null)
             .map((_, i) => (
-              <Card key={i} className={"w-32 h-52 animate-pulse bg-gray-200"} />
+              <Card key={i} className={"animate-pulse w-72 h-[600px] bg-gray-200"} />
             ))}
         {displayCreatures?.map((creature) => (
           <Card

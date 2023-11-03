@@ -5,7 +5,6 @@ import {
   Encounter,
   useCreateEncounter,
   useDeleteEncounter,
-  useEncounterCreatures,
   useEncounters,
 } from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,6 @@ import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/app/hooks";
 import {
   Popover,
   PopoverContent,
@@ -21,7 +19,6 @@ import {
 } from "@/components/ui/popover";
 import { ExternalLink, MoreHorizontal, Plus } from "lucide-react";
 import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-time";
-import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingButton } from "@/components/ui/loading-button";
 
 export default function Dashboard() {
@@ -113,10 +110,7 @@ function EncounterCard({
   deleteEncounter: (id: number) => void;
 }) {
   return (
-    <Card
-      className="flex flex-col transition-all w-full"
-      key={encounter.id}
-    >
+    <Card className="flex flex-col transition-all w-full" key={encounter.id}>
       <Link
         href={
           encounter.started_at
@@ -161,7 +155,11 @@ function EncounterCard({
 }
 
 function CharacterIconRow({ id }: { id: number }) {
-  const { data: creatures } = useEncounterCreatures(id);
+  const { data: encounters } = useEncounters();
+
+  const creatures = encounters
+    ?.filter((encounter) => encounter.id === id)
+    ?.at(0)?.participants;
 
   return (
     <div className={"flex gap-3 flex-wrap"}>

@@ -227,6 +227,21 @@ export interface components {
       /** Ended At */
       ended_at?: string | null;
     };
+    /** EncounterResponseWithParticipants */
+    EncounterResponseWithParticipants: {
+      /** Id */
+      id: number;
+      /** Name */
+      name?: string | null;
+      /** Description */
+      description?: string | null;
+      /** Started At */
+      started_at?: string | null;
+      /** Ended At */
+      ended_at?: string | null;
+      /** Participants */
+      participants: components["schemas"]["EncounterCreature"][];
+    };
     /** HTTPValidationError */
     HTTPValidationError: {
       /** Detail */
@@ -283,7 +298,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["EncounterResponse"][];
+          "application/json": components["schemas"]["EncounterResponseWithParticipants"][];
         };
       };
     };
@@ -321,7 +336,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["EncounterResponse"];
+          "application/json": components["schemas"]["EncounterResponseWithParticipants"];
         };
       };
       /** @description Validation Error */

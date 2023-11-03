@@ -136,9 +136,7 @@ async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
         channel = bot.get_channel(channel_info.id)
         if not channel:
             return
-        assert isinstance(
-            channel, discord.TextChannel
-        ), "Channel is not a text channel"
+        assert isinstance(channel, discord.TextChannel), "Channel is not a text channel"
         rendered_md = template.render(
             overview=overview,
             settings=discord_settings,
@@ -146,7 +144,9 @@ async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
         async with conn.cursor() as cur:
             if channel_info.encounter_message_id:
                 try:
-                    message = await channel.fetch_message(channel_info.encounter_message_id)
+                    message = await channel.fetch_message(
+                        channel_info.encounter_message_id
+                    )
                     await message.edit(content=rendered_md)
                 except discord.NotFound:
                     new_message = await channel.send(rendered_md)
@@ -208,20 +208,48 @@ async def get_discord_user(
                 raise HTTPException(status_code=401, detail="Invalid token")
 
 
+class EncounterResponseWithParticipants(EncounterResponse):
+    participants: List[EncounterCreature]
+
+
+async def encounter_with_participant(
+    encounter: EncounterResponse,
+) -> EncounterResponseWithParticipants:
+    print('fetching')
+    return EncounterResponseWithParticipants(
+        **encounter.model_dump(),
+        participants=await get_encounter_creatures(encounter.id),
+    )
+
+
+async def get_encounters_with_participants(
+    encounters: List[EncounterResponse],
+) -> List[EncounterResponseWithParticipants]:
+    encounters_with_participants = []
+    async with asyncio.TaskGroup() as tg:
+        for encounter in encounters:
+            encounters_with_participants.append(
+                tg.create_task(encounter_with_participant(encounter))
+            )
+    encounters_with_participants = [task.result() for task in encounters_with_participants]
+    return encounters_with_participants
+
+
 @app.get("/api/encounters")
 async def get_user_encounters(
     user=Depends(get_discord_user),
-) -> List[EncounterResponse]:
+) -> List[EncounterResponseWithParticipants]:
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(EncounterResponse)) as cur:
             await cur.execute("SELECT * FROM encounters WHERE user_id = %s", (user.id,))
-            return await cur.fetchall()
+            encounters = await cur.fetchall()
+            return await get_encounters_with_participants(encounters)
 
 
 @app.get("/api/encounters/{encounter_id}")
 async def get_user_encounter_by_id(
     encounter_id: int, user=Depends(get_discord_user)
-) -> EncounterResponse:
+) -> EncounterResponseWithParticipants:
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(EncounterResponse)) as cur:
             await cur.execute(
@@ -231,7 +259,10 @@ async def get_user_encounter_by_id(
             encounter = await cur.fetchone()
             if not encounter:
                 raise HTTPException(status_code=404, detail="Encounter not found")
-            return encounter
+            return EncounterResponseWithParticipants(
+                **encounter.model_dump(),
+                participants=await get_encounter_creatures(encounter.id),
+            )
 
 
 @app.post("/api/encounters/{encounter_id}/turn")
@@ -249,9 +280,7 @@ async def update_turn(
                 current_active = [p for p in participants if p.hp > 0]
             current_active = current_active[0]
             active_participants = [
-                p
-                for p in participants
-                if p.hp > 0 or p.id == current_active.id
+                p for p in participants if p.hp > 0 or p.id == current_active.id
             ]
 
             if not active_participants:
@@ -340,7 +369,7 @@ async def create_encounter(
 @app.put("/api/encounters/{encounter_id}")
 async def update_encounter(
     encounter_id: int, encounter_data: EncounterRequest, user=Depends(get_discord_user)
-) -> EncounterResponse:
+) -> EncounterResponseWithParticipants:
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=class_row(EncounterResponse)) as cur:
             await cur.execute(
@@ -359,7 +388,10 @@ async def update_encounter(
                 raise HTTPException(
                     status_code=500, detail="Failed to update encounter"
                 )
-            return updated_encounter
+            return EncounterResponseWithParticipants(
+                **updated_encounter.model_dump(),
+                participants=await get_encounter_creatures(encounter_id)
+            )
 
 
 @app.put("/api/encounters/{encounter_id}/{participant_id}}")

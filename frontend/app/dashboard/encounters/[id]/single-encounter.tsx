@@ -7,7 +7,6 @@ import {
 } from "@/app/dashboard/encounters/[id]/run/battle-ui";
 import {
   useEncounter,
-  useEncounterCreatures,
   useRemoveCreatureFromEncounter,
   useSettings,
   useStartEncounter,
@@ -16,7 +15,7 @@ import {
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence } from "framer-motion";
-import { Check, Clock, Play, Skull, X } from "lucide-react";
+import { Clock, Play, Skull, X } from "lucide-react";
 import Link from "next/link";
 import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -26,14 +25,11 @@ import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
 import InitiativeInput from "@/app/dashboard/encounters/[id]/InitiativeInput";
-import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 
 export default function SingleEncounter() {
-  const { data: encounterParticipants, isLoading } = useEncounterCreatures();
-  const { data: encounter } = useEncounter();
+  const { data: encounter, isLoading } = useEncounter();
   const { mutate: startEncounter } = useStartEncounter();
-  const { mutate: updateEncounter, isPending: isUpdatePending } =
-    useUpdateEncounter();
+  const { mutate: updateEncounter } = useUpdateEncounter();
   const id = useEncounterId();
   const [encounterName, setEncounterName] = React.useState(
     encounter?.name ?? ""
@@ -54,29 +50,25 @@ export default function SingleEncounter() {
   return (
     <div className={"flex flex-col items-center gap-10 relative"}>
       <div className="flex gap-5 items-center justify-between w-full">
-        {encounter?.name !== undefined ? (
-          <div className="flex gap-5 items-center">
-            <Input
-              value={encounterName}
-              placeholder={encounter.name ?? "Encounter name"}
-              className={"text-xl max-w-lg"}
-              onChange={(e) => {
-                setEncounterName(e.target.value);
-                debouncedNameUpdate(e.target.value);
-              }}
-            />
-            <span
-              className={clsx("transition-opacity", {
-                "opacity-0": encounterName !== encounter?.name,
-                "opacity-80": encounterName === encounter?.name,
-              })}
-            >
-              Saved
-            </span>
-          </div>
-        ) : (
-          <div />
-        )}
+        <div className="flex gap-5 items-center">
+          <Input
+            value={encounterName}
+            placeholder={encounter?.name ?? ""}
+            className={"text-xl max-w-lg"}
+            onChange={(e) => {
+              setEncounterName(e.target.value);
+              debouncedNameUpdate(e.target.value);
+            }}
+          />
+          <span
+            className={clsx("transition-opacity", {
+              "opacity-0": encounterName !== encounter?.name,
+              "opacity-80": encounterName === encounter?.name,
+            })}
+          >
+            Saved
+          </span>
+        </div>
 
         {encounter?.started_at ? (
           <Link href={`${id}/run`}>
@@ -94,20 +86,6 @@ export default function SingleEncounter() {
           </Link>
         )}
       </div>
-      {settings && (
-        <EncounterStats
-          turnTimeEstimate={settings.average_turn_duration}
-          savedPlayerLevel={settings.player_level}
-          numPlayers={
-            encounterParticipants?.reduce((sum, participant) => {
-              if (participant.is_player) {
-                return sum + 1;
-              }
-              return sum;
-            }, 0) ?? 0
-          }
-        />
-      )}
 
       <AnimatePresence>
         <div
@@ -115,7 +93,7 @@ export default function SingleEncounter() {
             "flex flex-row gap-10 px-10 max-w-full items-center overflow-auto"
           )}
         >
-          {encounterParticipants
+          {encounter?.participants
             ?.slice()
             .sort(sortEncounterCreatures)
             .map((participant) => (
@@ -131,7 +109,7 @@ export default function SingleEncounter() {
                 </BattleCard>
               </AnimationListItem>
             ))}
-          {encounterParticipants?.length === 0 && (
+          {encounter?.participants?.length === 0 && (
             <div className="h-56 justify-evenly w-40 gap-0 items-center flex flex-col">
               <h1 className={"text-2xl text-center"}>
                 No creatures in this encounter
@@ -167,6 +145,20 @@ export default function SingleEncounter() {
           </Card>
         </div>
       </div>
+      {settings && (
+        <EncounterStats
+          turnTimeEstimate={settings.average_turn_duration}
+          savedPlayerLevel={settings.player_level}
+          numPlayers={
+            encounter?.participants?.reduce((sum, participant) => {
+              if (participant.is_player) {
+                return sum + 1;
+              }
+              return sum;
+            }, 0) ?? 0
+          }
+        />
+      )}
     </div>
   );
 }
@@ -188,9 +180,9 @@ function EncounterStats({
   const [estimatedRounds, setEstimatedRounds] = React.useState(3);
   const [playerLevel, setPlayerLevel] = React.useState(savedPlayerLevel);
 
-  const { data: creatures } = useEncounterCreatures();
+  const { data: encounter } = useEncounter();
 
-  const numParticipants = creatures?.length ?? 0;
+  const numParticipants = encounter?.participants?.length ?? 0;
 
   const displayedNumPlayers = localNumPlayers ?? numPlayers;
 
@@ -198,7 +190,7 @@ function EncounterStats({
     (numParticipants * estimatedRounds * estimatedTurnSeconds) / 60;
 
   const totalCr =
-    creatures?.reduce((acc, creature) => {
+    encounter?.participants?.reduce((acc, creature) => {
       return acc + creature.challenge_rating;
     }, 0) ?? 0;
 

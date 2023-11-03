@@ -14,5 +14,8 @@ export function LoadingButton(props: LoadingButtonProps) {
 
   const isPending = props.isLoading || pending;
 
-  return <Button {...props} disabled={isPending}>{isPending ? <Spinner /> : props.children}</Button>;
+  const propsWithoutIsLoading = { ...props };
+  delete propsWithoutIsLoading.isLoading;
+
+  return <Button {...propsWithoutIsLoading} disabled={isPending}>{isPending ? <Spinner /> : props.children}</Button>;
 }
