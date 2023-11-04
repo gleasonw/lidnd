@@ -1,0 +1,1 @@
+ALTER TABLE "encounters-drizzle" ADD COLUMN "user_id" bigint;

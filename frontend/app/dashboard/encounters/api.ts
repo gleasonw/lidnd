@@ -20,7 +20,8 @@ import { CreaturePost } from "@/app/dashboard/encounters/[id]/creature-add-form"
 const { GET, PUT, POST, DELETE } = createClient<paths>({ baseUrl: apiURL });
 
 export type EncounterCreature = components["schemas"]["EncounterCreature"];
-export type Encounter = components["schemas"]["EncounterResponse"];
+export type Encounter =
+  components["schemas"]["EncounterResponseWithParticipants"];
 export type EncounterParticipant =
   components["schemas"]["EncounterParticipant"];
 export type Creature = components["schemas"]["Creature"];
@@ -423,7 +424,7 @@ export function useRemoveCreatureFromEncounter() {
   const id = useEncounterId();
   const queryClient = useQueryClient();
 
-  const queryKey = encounterCreaturesKey(id);
+  const queryKey = encounterKey(id);
 
   return useMutation({
     mutationFn: async (participant_id: number) => {
@@ -449,12 +450,13 @@ export function useRemoveCreatureFromEncounter() {
     },
     onMutate: async (deletedId: number) => {
       await queryClient.cancelQueries({ queryKey });
-      const previousData =
-        queryClient.getQueryData<EncounterCreature[]>(queryKey);
+      const previousData = queryClient.getQueryData<Encounter>(queryKey);
 
-      queryClient.setQueryData<EncounterCreature[]>(queryKey, (oldData) => {
-        console.log(oldData);
-        return oldData?.filter((c) => c.id !== deletedId);
+      queryClient.setQueryData<Encounter>(queryKey, (oldData) => {
+        return {
+          ...oldData,
+          participants: oldData?.participants?.filter((c) => c.id !== deletedId)
+        }
       });
 
       return { previousData };
@@ -465,7 +467,7 @@ export function useRemoveCreatureFromEncounter() {
     onSettled: async () => {
       await Promise.allSettled(
         [
-          encounterCreaturesKey(id),
+          queryKey,
           [queryKey, ["userCreatures", { filterEncounter: id }]],
         ].map((queryKey) => queryClient.invalidateQueries(queryKey as any))
       );

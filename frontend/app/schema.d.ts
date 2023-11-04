@@ -363,7 +363,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["EncounterResponse"];
+          "application/json": components["schemas"]["EncounterResponseWithParticipants"];
         };
       };
       /** @description Validation Error */
@@ -385,7 +385,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["EncounterResponse"][];
+          "application/json": components["schemas"]["EncounterResponseWithParticipants"][];
         };
       };
       /** @description Validation Error */
@@ -580,7 +580,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["EncounterCreature"][];
+          "application/json": components["schemas"]["EncounterResponseWithParticipants"];
         };
       };
       /** @description Validation Error */

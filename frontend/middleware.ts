@@ -26,9 +26,14 @@ async function fetchWhitelist(): Promise<Set<string>> {
   return whitelist;
 }
 
+export type DiscordUser = {
+  id: number;
+  username: string;
+}
+
 export async function verifyDiscordToken(): Promise<{
   status: number;
-  user: unknown;
+  user: DiscordUser | null;
 }> {
   const whitelist = await fetchWhitelist();
   const cookieStore = cookies();
@@ -39,7 +44,7 @@ export async function verifyDiscordToken(): Promise<{
     },
   });
   if (response.status === 200) {
-    const user = await response.json();
+    const user = await response.json() as DiscordUser;
     if (user && whitelist.has(user.username)) {
       return { status: 200, user };
     } else {

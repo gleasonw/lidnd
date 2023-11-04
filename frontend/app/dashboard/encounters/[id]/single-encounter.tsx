@@ -25,6 +25,7 @@ import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
 import InitiativeInput from "@/app/dashboard/encounters/[id]/InitiativeInput";
+import { BasePopover } from "@/app/dashboard/base-popover";
 
 export default function SingleEncounter() {
   const { data: encounter, isLoading } = useEncounter();
@@ -49,8 +50,8 @@ export default function SingleEncounter() {
 
   return (
     <div className={"flex flex-col items-center gap-10 relative"}>
-      <div className="flex gap-5 items-center justify-between w-full">
-        <div className="flex gap-5 items-center">
+      <div className="flex gap-5 items-center w-full justify-between">
+        <div className="flex gap-5">
           <Input
             value={encounterName}
             placeholder={encounter?.name ?? ""}
@@ -68,6 +69,20 @@ export default function SingleEncounter() {
           >
             Saved
           </span>
+          {settings && (
+            <EncounterStats
+              turnTimeEstimate={settings.average_turn_duration}
+              savedPlayerLevel={settings.player_level}
+              numPlayers={
+                encounter?.participants?.reduce((sum, participant) => {
+                  if (participant.is_player) {
+                    return sum + 1;
+                  }
+                  return sum;
+                }, 0) ?? 0
+              }
+            />
+          )}
         </div>
 
         {encounter?.started_at ? (
@@ -145,20 +160,6 @@ export default function SingleEncounter() {
           </Card>
         </div>
       </div>
-      {settings && (
-        <EncounterStats
-          turnTimeEstimate={settings.average_turn_duration}
-          savedPlayerLevel={settings.player_level}
-          numPlayers={
-            encounter?.participants?.reduce((sum, participant) => {
-              if (participant.is_player) {
-                return sum + 1;
-              }
-              return sum;
-            }, 0) ?? 0
-          }
-        />
-      )}
     </div>
   );
 }
@@ -167,10 +168,12 @@ function EncounterStats({
   turnTimeEstimate,
   savedPlayerLevel,
   numPlayers,
+  className,
 }: {
   turnTimeEstimate: number;
   savedPlayerLevel: number;
   numPlayers: number;
+  className?: string;
 }) {
   const [localNumPlayers, setLocalNumPlayers] = React.useState<number | null>(
     null
@@ -198,9 +201,9 @@ function EncounterStats({
     (cr) => cr.level === playerLevel
   );
 
-  const easyTier = (crBudget?.easy ?? 0) * numPlayers;
-  const standardTier = (crBudget?.standard ?? 0) * numPlayers;
-  const hardTier = (crBudget?.hard ?? 0) * numPlayers;
+  const easyTier = (crBudget?.easy ?? 0) * displayedNumPlayers;
+  const standardTier = (crBudget?.standard ?? 0) * displayedNumPlayers;
+  const hardTier = (crBudget?.hard ?? 0) * displayedNumPlayers;
 
   let difficulty = "";
   if (totalCr <= easyTier) {
@@ -226,39 +229,16 @@ function EncounterStats({
   }
 
   return (
-    <div className={"flex flex-wrap gap-14 justify-center"}>
-      <div className={"flex flex-col items-center gap-3 justify-between"}>
-        <span className="flex gap-5 items-center text-2xl">
-          <Clock />
-          {encounterTime}
-        </span>
-
-        <div className="flex flex-col gap-3">
-          <label>
-            Estimated turn seconds
-            <Input
-              type={"number"}
-              value={estimatedTurnSeconds}
-              onChange={(e) =>
-                setEstimatedTurnSeconds(parseInt(e.target.value))
-              }
-            />
-          </label>
-          <label>
-            Estimated rounds
-            <Input
-              type={"number"}
-              value={estimatedRounds}
-              onChange={(e) => setEstimatedRounds(parseInt(e.target.value))}
-            />
-          </label>
-        </div>
-      </div>
-      <div className={"flex flex-col items-center gap-3"}>
-        <span className="flex text-2xl items-center gap-5">
-          <Skull />
-          {difficulty}
-        </span>
+    <div className={clsx(className, "flex gap-14")}>
+      <BasePopover
+        trigger={
+          <Button className="flex text-2xl items-center gap-5 w-44" variant="ghost">
+            <Skull />
+            {difficulty}
+          </Button>
+        }
+        className="flex flex-col items-center gap-5"
+      >
         <span>Total CR: {totalCr}</span>
         <span>
           Budget: {easyTier} / {standardTier} / {hardTier}
@@ -279,7 +259,40 @@ function EncounterStats({
             onChange={(e) => setPlayerLevel(parseInt(e.target.value))}
           />
         </label>
-      </div>
+      </BasePopover>
+      <BasePopover
+        className="flex flex-col items-center gap-5 w-52"
+        trigger={
+          <Button
+            className="flex gap-5 items-center text-2xl whitespace-nowrap"
+            variant="ghost"
+          >
+            <Clock />
+            {encounterTime}
+          </Button>
+        }
+      >
+        <div className="flex flex-col gap-3">
+          <label>
+            Estimated turn seconds
+            <Input
+              type={"number"}
+              value={estimatedTurnSeconds}
+              onChange={(e) =>
+                setEstimatedTurnSeconds(parseInt(e.target.value))
+              }
+            />
+          </label>
+          <label>
+            Estimated rounds
+            <Input
+              type={"number"}
+              value={estimatedRounds}
+              onChange={(e) => setEstimatedRounds(parseInt(e.target.value))}
+            />
+          </label>
+        </div>
+      </BasePopover>
     </div>
   );
 }

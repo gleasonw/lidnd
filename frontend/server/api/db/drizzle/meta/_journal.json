@@ -1,0 +1,20 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1699104836339,
+      "tag": "0000_nifty_sunset_bain",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1699110046089,
+      "tag": "0001_aromatic_veda",
+      "breakpoints": true
+    }
+  ]
+}

@@ -203,10 +203,9 @@ class EncounterResponseWithParticipants(EncounterResponse):
     participants: List[EncounterCreature]
 
 
-async def encounter_with_participant(
+async def get_encounter_with_participant(
     encounter: EncounterResponse,
 ) -> EncounterResponseWithParticipants:
-    print('fetching')
     return EncounterResponseWithParticipants(
         **encounter.model_dump(),
         participants=await get_encounter_creatures(encounter.id),
@@ -220,7 +219,7 @@ async def get_encounters_with_participants(
     async with asyncio.TaskGroup() as tg:
         for encounter in encounters:
             encounters_with_participants.append(
-                tg.create_task(encounter_with_participant(encounter))
+                tg.create_task(get_encounter_with_participant(encounter))
             )
     encounters_with_participants = [task.result() for task in encounters_with_participants]
     return encounters_with_participants
@@ -593,8 +592,7 @@ async def add_creature_to_encounter(
 @app.post("/api/encounters/{encounter_id}/remove/{participant_id}")
 async def remove_creature_from_encounter(
     encounter_id: int, participant_id: int, user=Depends(get_discord_user)
-) -> List[EncounterCreature]:
-    print(encounter_id, participant_id)
+) -> EncounterResponseWithParticipants:
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             user_encounter = await get_user_encounter_by_id(encounter_id, user)
@@ -602,7 +600,10 @@ async def remove_creature_from_encounter(
                 "DELETE FROM encounter_participants WHERE encounter_id=%s AND id=%s",
                 (user_encounter.id, participant_id),
             )
-    return await get_encounter_creatures(encounter_id)
+    return EncounterResponseWithParticipants(
+        **user_encounter.model_dump(),
+        participants=await get_encounter_creatures(user_encounter.id),
+    )
 
 
 @app.get("/api/creatures/{creature_id}")

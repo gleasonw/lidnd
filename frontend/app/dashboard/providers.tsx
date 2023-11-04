@@ -1,7 +1,6 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryStreamedHydration } from "@tanstack/react-query-next-experimental";
+import { QueryClient } from "@tanstack/react-query";
 import React from "react";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
@@ -10,9 +9,9 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useUser } from "@/app/hooks";
+import { TRPCReactProvider } from "@/trpc/react";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = React.useState(() => new QueryClient());
   const routes = ["/dashboard", "/dashboard/creatures"] as const;
 
   const routeLabels = {
@@ -23,46 +22,41 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const path = usePathname();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ReactQueryStreamedHydration>
-        <nav className="border-bottom border flex items-center gap-3 flex-col sm:flex-row sm:gap-5">
-          <Link href="/dashboard" className={"text-2xl p-5"}>
-            LiDnD
-          </Link>
-          {routes.map((route) => (
-            <Link
-              key={route}
-              href={route}
-              className={clsx(
-                "flex h-[48px] grow items-center justify-center gap-2 rounded-md p-3 text-sm font-medium hover:bg-gray-200 md:flex-none md:justify-start md:p-2 md:px-3",
-                {
-                  "bg-gray-200 font-bold": path === route,
-                }
-              )}
-            >
-              {routeLabels[route]}
-            </Link>
-          ))}
-          <form
-            action={logOut}
-            className={"ml-auto pr-5 flex gap-5  items-center"}
+    <>
+      <nav className="border-bottom border flex items-center gap-3 flex-col sm:flex-row sm:gap-5">
+        <Link href="/dashboard" className={"text-2xl p-5"}>
+          LiDnD
+        </Link>
+        {routes.map((route) => (
+          <Link
+            key={route}
+            href={route}
+            className={clsx(
+              "flex h-[48px] grow items-center justify-center gap-2 rounded-md p-3 text-sm font-medium hover:bg-gray-200 md:flex-none md:justify-start md:p-2 md:px-3",
+              {
+                "bg-gray-200 font-bold": path === route,
+              }
+            )}
           >
-            <Link
-              href="/dashboard/settings"
-              className="flex gap-5 items-center"
-            >
-              Settings
-              <UserAvatar />
-            </Link>
-            <button type="submit">
-              <LogOut />
-            </button>
-          </form>
-        </nav>
-        {children}
-        <ReactQueryDevtools initialIsOpen={false} />
-      </ReactQueryStreamedHydration>
-    </QueryClientProvider>
+            {routeLabels[route]}
+          </Link>
+        ))}
+        <form
+          action={logOut}
+          className={"ml-auto pr-5 flex gap-5  items-center"}
+        >
+          <Link href="/dashboard/settings" className="flex gap-5 items-center">
+            Settings
+            <UserAvatar />
+          </Link>
+          <button type="submit">
+            <LogOut />
+          </button>
+        </form>
+      </nav>
+      {children}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </>
   );
 }
 
