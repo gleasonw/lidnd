@@ -1,9 +1,7 @@
 "use client";
 
 import {
-  EncounterCreature,
   useEncounterCreatures,
-  useEncounter,
   useRemoveCreatureFromEncounter,
   useTurn,
   useAddCreatureToEncounter,
@@ -38,9 +36,12 @@ import {
   sortEncounterCreatures,
 } from "@/app/dashboard/encounters/utils";
 import clsx from "clsx";
+import { api } from "@/trpc/react";
+import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 
 export function BattleUI() {
-  const { data: encounter } = useEncounter();
+  const id = useEncounterId();
+  const { data: encounter } = api.encounterById.useQuery(id);
   const { data: encounterParticipants } = useEncounterCreatures();
   const { mutate: changeActiveTo, isPending, variables } = useTurn();
 

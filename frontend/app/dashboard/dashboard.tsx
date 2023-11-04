@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import {
-  Encounter,
   useCreateEncounter,
   useDeleteEncounter,
-  useEncounters,
 } from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
@@ -21,6 +19,7 @@ import { ExternalLink, MoreHorizontal, Plus } from "lucide-react";
 import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-time";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { api } from "@/trpc/react";
+import { Encounter } from "@/server/api/router";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -38,7 +37,7 @@ export default function Dashboard() {
     description: "",
   });
 
-  const displayedEncounters = encounters
+  const displayedEncounters = encounters;
 
   const startedEncounters = displayedEncounters?.filter(
     (encounter) => encounter.started_at !== null
@@ -106,7 +105,7 @@ function EncounterCard({
   deleteEncounter,
 }: {
   encounter: Encounter;
-  deleteEncounter: (id: number) => void;
+  deleteEncounter: (id: string) => void;
 }) {
   return (
     <Card className="flex flex-col transition-all w-full" key={encounter.id}>
@@ -153,8 +152,8 @@ function EncounterCard({
   );
 }
 
-function CharacterIconRow({ id }: { id: number }) {
-  const { data: encounters } = useEncounters();
+function CharacterIconRow({ id }: { id: string }) {
+  const { data: encounters } = api.encounters.useQuery();
 
   const creatures = encounters
     ?.filter((encounter) => encounter.id === id)

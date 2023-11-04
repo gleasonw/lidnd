@@ -17,13 +17,6 @@ import { CreaturePost } from "@/app/dashboard/encounters/[id]/creature-add-form"
 
 const { GET, PUT, POST, DELETE } = createClient<paths>({ baseUrl: apiURL });
 
-export type EncounterCreature = components["schemas"]["EncounterCreature"];
-export type Encounter =
-  components["schemas"]["EncounterResponseWithParticipants"];
-export type EncounterParticipant =
-  components["schemas"]["EncounterParticipant"];
-export type Creature = components["schemas"]["Creature"];
-
 export function clientToken() {
   return getCookie("token");
 }
@@ -155,20 +148,6 @@ function encounterKey(id: number) {
   return ["encounter", id];
 }
 
-export function useEncounters() {
-  return useQuery({
-    queryKey: encountersQueryKey,
-    queryFn: async () => {
-      const { data } = await GET(`/api/encounters`, {
-        headers: {
-          Authorization: `Bearer ${clientToken()}`,
-        },
-      });
-      return data;
-    },
-  });
-}
-
 export function useEncounterCreatures(encounter_id?: number) {
   const localId = useEncounterId();
   const id = encounter_id ? encounter_id : localId;
@@ -213,30 +192,6 @@ export function useUserCreatures(name?: string, filterEncounter?: number) {
         params: {
           query: {
             name,
-          },
-        },
-        headers: {
-          Authorization: `Bearer ${clientToken()}`,
-        },
-      });
-      if (error) {
-        console.log(error.detail);
-        throw error;
-      }
-      return data;
-    },
-  });
-}
-
-export function useEncounter() {
-  const id = useEncounterId();
-  return useQuery({
-    queryKey: encounterKey(id),
-    queryFn: async () => {
-      const { data, error } = await GET(`/api/encounters/{encounter_id}`, {
-        params: {
-          path: {
-            encounter_id: id,
           },
         },
         headers: {

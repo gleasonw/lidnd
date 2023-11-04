@@ -6,7 +6,6 @@ import {
   BattleCard,
 } from "@/app/dashboard/encounters/[id]/run/battle-ui";
 import {
-  useEncounter,
   useRemoveCreatureFromEncounter,
   useSettings,
   useStartEncounter,
@@ -26,12 +25,13 @@ import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
 import InitiativeInput from "@/app/dashboard/encounters/[id]/InitiativeInput";
 import { BasePopover } from "@/app/dashboard/base-popover";
+import { api } from "@/trpc/react";
 
 export default function SingleEncounter() {
-  const { data: encounter, isLoading } = useEncounter();
+  const id = useEncounterId();
+  const { data: encounter, isLoading } = api.encounterById.useQuery(id);
   const { mutate: startEncounter } = useStartEncounter();
   const { mutate: updateEncounter } = useUpdateEncounter();
-  const id = useEncounterId();
   const [encounterName, setEncounterName] = React.useState(
     encounter?.name ?? ""
   );
@@ -183,7 +183,8 @@ function EncounterStats({
   const [estimatedRounds, setEstimatedRounds] = React.useState(3);
   const [playerLevel, setPlayerLevel] = React.useState(savedPlayerLevel);
 
-  const { data: encounter } = useEncounter();
+  const id = useEncounterId();
+  const { data: encounter } = api.encounterById.useQuery(id);
 
   const numParticipants = encounter?.participants?.length ?? 0;
 
@@ -232,7 +233,10 @@ function EncounterStats({
     <div className={clsx(className, "flex gap-14")}>
       <BasePopover
         trigger={
-          <Button className="flex text-2xl items-center gap-5 w-44" variant="ghost">
+          <Button
+            className="flex text-2xl items-center gap-5 w-44"
+            variant="ghost"
+          >
             <Skull />
             {difficulty}
           </Button>

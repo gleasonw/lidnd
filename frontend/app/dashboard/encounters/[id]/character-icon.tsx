@@ -8,7 +8,7 @@ export function CharacterIcon({
   width,
   height,
 }: {
-  id: number;
+  id: string;
   name: string;
   className?: string;
   width?: number;

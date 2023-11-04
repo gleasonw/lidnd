@@ -31,7 +31,7 @@ export const creatures = pgTable(
   "creatures-drizzle",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    name: varchar("name", { length: 256 }),
+    name: varchar("name", { length: 256 }).notNull(),
     created_at: timestamp("created_at").defaultNow(),
     max_hp: integer("max_hp"),
     challenge_rating: decimal("challenge_rating"),
@@ -49,11 +49,16 @@ export const encounter_participant = pgTable(
   "encounter_participant-drizzle",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    encounter_id: uuid("encounter_id").references(() => encounters.id),
-    creature_id: uuid("creature_id").references(() => creatures.id),
+    encounter_id: uuid("encounter_id")
+      .references(() => encounters.id)
+      .notNull(),
+    creature_id: uuid("creature_id")
+      .references(() => creatures.id)
+      .notNull(),
     created_at: timestamp("created_at").defaultNow(),
-    initiative: integer("initiative").default(0),
-    hp: integer("hp").default(0),
+    initiative: integer("initiative").default(0).notNull(),
+    hp: integer("hp").default(0).notNull(),
+    is_active: boolean("is_active").default(false),
   },
   (table) => {
     return {

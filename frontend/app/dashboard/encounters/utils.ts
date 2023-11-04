@@ -1,8 +1,8 @@
 import { CreaturePost } from "@/app/dashboard/encounters/[id]/creature-add-form";
-import { EncounterCreature } from "@/app/dashboard/encounters/api";
+import { EncounterCreature } from "@/server/api/router";
 
 export function getAWSimageURL(
-  creature_id: number,
+  creature_id: string,
   type: "icon" | "stat_block"
 ): string {
   return `https://dnd-init-tracker-icons-stats.s3.us-west-1.amazonaws.com/${type}-${creature_id}.png`;
