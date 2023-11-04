@@ -20,16 +20,17 @@ import {
 import { ExternalLink, MoreHorizontal, Plus } from "lucide-react";
 import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-time";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { api } from "@/trpc/react";
 
 export default function Dashboard() {
   const router = useRouter();
-  const { data: encounters, isLoading } = useEncounters();
+  const { data: encounters } = api.encounters.useQuery();
   const {
     mutate: deleteEncounter,
     variables: deletedEncounterId,
     isPending: isDeleteEncounterPending,
   } = useDeleteEncounter();
-  const { mutate: createDefaultEncounter, isPending } = useCreateEncounter(
+  const { mutate: createDefaultEncounter, isLoading } = useCreateEncounter(
     (encounter) => router.push(`dashboard/encounters/${encounter.id}`)
   );
   const [encounter, setEncounter] = React.useState({
@@ -37,9 +38,7 @@ export default function Dashboard() {
     description: "",
   });
 
-  const displayedEncounters = isDeleteEncounterPending
-    ? encounters?.filter((encounter) => encounter.id !== deletedEncounterId)
-    : encounters;
+  const displayedEncounters = encounters
 
   const startedEncounters = displayedEncounters?.filter(
     (encounter) => encounter.started_at !== null
@@ -63,7 +62,7 @@ export default function Dashboard() {
         }}
       >
         <LoadingButton
-          isLoading={isPending}
+          isLoading={isLoading}
           type={"submit"}
           className={"flex gap-5 w-52"}
         >

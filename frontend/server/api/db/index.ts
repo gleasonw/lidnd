@@ -1,5 +1,4 @@
 import { drizzle } from "drizzle-orm/postgres-js";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 import * as schema from "./schema";
 
@@ -11,4 +10,3 @@ if (!db_url) {
 // for query purposes
 const queryClient = postgres(db_url);
 export const db = drizzle(queryClient, { schema });
-await migrate(db, { migrationsFolder: "drizzle" });

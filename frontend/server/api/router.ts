@@ -1,4 +1,4 @@
-import { Context, createContext } from "@/server/api/context";
+import { createContext } from "@/server/api/context";
 import { TRPCError, initTRPC } from "@trpc/server";
 import { encounters } from "@/server/api/db/schema";
 import { eq } from "drizzle-orm";
@@ -46,7 +46,7 @@ export const appRouter = t.router({
       .where(eq(encounters.user_id, opts.ctx.user.id));
   }),
 
-  hello: publicProcedure.input(z.string()).query(async (opts) => {
+  hello: protectedProcedure.input(z.string()).query(async (opts) => {
     return `hello ${opts.input}`;
   }),
 });

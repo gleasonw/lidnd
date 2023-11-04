@@ -18,7 +18,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   } as const;
 
   const path = usePathname();
-  const { data: test } = api.hello.useQuery("will");
 
   return (
     <>

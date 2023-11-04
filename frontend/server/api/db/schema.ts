@@ -10,23 +10,40 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-export const encounters = pgTable("encounters-drizzle", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name", { length: 256 }),
-  description: varchar("description", { length: 256 }),
-  started_at: timestamp("started_at"),
-  created_at: timestamp("created_at").defaultNow(),
-  user_id: bigint("user_id", { mode: "number" }),
-});
+export const encounters = pgTable(
+  "encounters-drizzle",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: varchar("name", { length: 256 }),
+    description: varchar("description", { length: 256 }),
+    started_at: timestamp("started_at"),
+    created_at: timestamp("created_at").defaultNow(),
+    user_id: bigint("user_id", { mode: "number" }).notNull(),
+  },
+  (t) => {
+    return {
+      userIndex: index("user_index").on(t.user_id),
+    };
+  }
+);
 
-export const creatures = pgTable("creatures-drizzle", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name", { length: 256 }),
-  created_at: timestamp("created_at").defaultNow(),
-  max_hp: integer("max_hp"),
-  challenge_rating: decimal("challenge_rating"),
-  is_player: boolean("is_player"),
-});
+export const creatures = pgTable(
+  "creatures-drizzle",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: varchar("name", { length: 256 }),
+    created_at: timestamp("created_at").defaultNow(),
+    max_hp: integer("max_hp"),
+    challenge_rating: decimal("challenge_rating"),
+    is_player: boolean("is_player"),
+    user_id: bigint("user_id", { mode: "number" }).notNull(),
+  },
+  (t) => {
+    return {
+      userIndex: index("user_index").on(t.user_id),
+    };
+  }
+);
 
 export const encounter_participant = pgTable(
   "encounter_participant-drizzle",
@@ -35,6 +52,8 @@ export const encounter_participant = pgTable(
     encounter_id: uuid("encounter_id").references(() => encounters.id),
     creature_id: uuid("creature_id").references(() => creatures.id),
     created_at: timestamp("created_at").defaultNow(),
+    initiative: integer("initiative").default(0),
+    hp: integer("hp").default(0),
   },
   (table) => {
     return {

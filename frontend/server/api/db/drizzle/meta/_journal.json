@@ -15,6 +15,20 @@
       "when": 1699110046089,
       "tag": "0001_aromatic_veda",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1699117389723,
+      "tag": "0002_swift_black_widow",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1699120434011,
+      "tag": "0003_left_iron_monger",
+      "breakpoints": true
     }
   ]
 }
