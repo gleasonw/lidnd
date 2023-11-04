@@ -4,7 +4,7 @@ import { encounters } from "@/server/api/db/schema";
 import { eq } from "drizzle-orm";
 import { db } from "@/server/api/db";
 import superjson from "superjson";
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 
 const t = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -36,6 +36,7 @@ const isAuthed = t.middleware((opts) => {
 });
 
 export const protectedProcedure = t.procedure.use(isAuthed);
+export const publicProcedure = t.procedure;
 
 export const appRouter = t.router({
   encounters: protectedProcedure.query((opts) => {
@@ -43,6 +44,10 @@ export const appRouter = t.router({
       .select()
       .from(encounters)
       .where(eq(encounters.user_id, opts.ctx.user.id));
+  }),
+
+  hello: publicProcedure.input(z.string()).query(async (opts) => {
+    return `hello ${opts.input}`;
   }),
 });
 

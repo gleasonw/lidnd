@@ -6,8 +6,6 @@ import {
   useMutation,
   useQueryClient,
   QueryKey,
-  Query,
-  useSuspenseQuery,
 } from "@tanstack/react-query";
 import { getCookie } from "cookies-next";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";

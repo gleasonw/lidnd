@@ -3,9 +3,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createTRPCReact } from "@trpc/react-query";
 import { useState } from "react";
+import { loggerLink, unstable_httpBatchStreamLink } from "@trpc/client";
 
 import { type AppRouter } from "@/server/api/router";
-import { transformer } from "./shared";
+import { transformer, getUrl } from "./shared";
 
 export const api = createTRPCReact<AppRouter>();
 
@@ -18,7 +19,22 @@ export function TRPCReactProvider(props: {
   const [trpcClient] = useState(() =>
     api.createClient({
       transformer,
-      links: [],
+      links: [
+        loggerLink({
+          enabled: (op) =>
+            process.env.NODE_ENV === "development" ||
+            (op.direction === "down" && op.result instanceof Error),
+        }),
+        unstable_httpBatchStreamLink({
+          url: getUrl(),
+          headers() {
+            return {
+              cookie: props.cookies,
+              "x-trpc-source": "react",
+            };
+          },
+        }),
+      ],
     })
   );
 

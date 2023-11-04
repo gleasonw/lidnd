@@ -1,15 +1,13 @@
 "use client";
 
-import { QueryClient } from "@tanstack/react-query";
 import React from "react";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { logOut } from "@/app/dashboard/actions";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useUser } from "@/app/hooks";
-import { TRPCReactProvider } from "@/trpc/react";
+import { api } from "@/trpc/react";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const routes = ["/dashboard", "/dashboard/creatures"] as const;
@@ -20,6 +18,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   } as const;
 
   const path = usePathname();
+  const { data: test } = api.hello.useQuery("will");
 
   return (
     <>
@@ -55,7 +54,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         </form>
       </nav>
       {children}
-      <ReactQueryDevtools initialIsOpen={false} />
     </>
   );
 }

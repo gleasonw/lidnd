@@ -21,7 +21,6 @@ export function CharacterIcon({
       width={width ?? 100}
       height={height ?? 100}
       className={className}
-      objectFit="cover"
     />
   );
 }

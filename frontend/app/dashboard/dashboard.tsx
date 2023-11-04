@@ -133,7 +133,7 @@ function EncounterCard({
       </Link>
       <div className="p-3 flex flex-col relative gap-5">
         <Popover>
-          <PopoverTrigger className="absolute top-0 right-0">
+          <PopoverTrigger asChild className="absolute top-0 right-0">
             <Button variant="ghost" size="icon">
               <MoreHorizontal />
             </Button>

@@ -1,7 +1,9 @@
 import Providers from "@/app/dashboard/providers";
 import "@/app/globals.css";
+import { TRPCReactProvider } from "@/trpc/react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { cookies } from "next/headers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,9 +22,11 @@ export default function RootLayout({
       <body className={inter.className}>
         {/* Include shared UI here e.g. a header or sidebar */}
 
-        <Providers>
-          <div className="md:px-5 pt-2 pb-10">{children}</div>
-        </Providers>
+        <TRPCReactProvider cookies={cookies().toString()}>
+          <Providers>
+            <div className="md:px-5 pt-2 pb-10">{children}</div>
+          </Providers>
+        </TRPCReactProvider>
       </body>
     </html>
   );
