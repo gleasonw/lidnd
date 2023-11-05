@@ -1,7 +1,7 @@
 import { Timer } from "lucide-react";
 import { useState, useEffect } from "react";
 
-export function EncounterTime({ time }: { time?: string }) {
+export function EncounterTime({ time }: { time?: Date }) {
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const interval = setInterval(() => {
@@ -15,7 +15,7 @@ export function EncounterTime({ time }: { time?: string }) {
   if (!time) return <div></div>;
 
   // time is in UTC, so we need to convert it to local time
-  const startedAtUTC = new Date(time);
+  const startedAtUTC = time;
   const startedAtLocal = new Date(
     startedAtUTC.getTime() - startedAtUTC.getTimezoneOffset() * 60000
   );

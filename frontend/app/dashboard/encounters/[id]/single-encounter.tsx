@@ -5,12 +5,6 @@ import {
   AnimationListItem,
   BattleCard,
 } from "@/app/dashboard/encounters/[id]/run/battle-ui";
-import {
-  useRemoveCreatureFromEncounter,
-  useSettings,
-  useStartEncounter,
-  useUpdateEncounter,
-} from "@/app/dashboard/encounters/api";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence } from "framer-motion";
@@ -30,12 +24,16 @@ import { api } from "@/trpc/react";
 export default function SingleEncounter() {
   const id = useEncounterId();
   const { data: encounter, isLoading } = api.encounterById.useQuery(id);
-  const { mutate: startEncounter } = useStartEncounter();
-  const { mutate: updateEncounter } = useUpdateEncounter();
+  const { mutate: startEncounter } = api.startEncounter.useMutation();
+  const { mutate: updateEncounter } = api.updateEncounter.useMutation();
   const [encounterName, setEncounterName] = React.useState(
     encounter?.name ?? ""
   );
-  const { data: settings } = useSettings();
+  const { data: settings } = api.settings.useQuery();
+
+  if (!encounter) {
+    return null;
+  }
 
   const debouncedNameUpdate = useDebouncedCallback((name: string) => {
     updateEncounter({
@@ -46,7 +44,7 @@ export default function SingleEncounter() {
   }, 500);
 
   const { mutate: removeCreatureFromEncounter } =
-    useRemoveCreatureFromEncounter();
+    api.removeParticipantFromEncounter.useMutation();
 
   return (
     <div className={"flex flex-col items-center gap-10 relative"}>
@@ -71,8 +69,8 @@ export default function SingleEncounter() {
           </span>
           {settings && (
             <EncounterStats
-              turnTimeEstimate={settings.average_turn_duration}
-              savedPlayerLevel={settings.player_level}
+              turnTimeEstimate={settings.average_turn_seconds}
+              savedPlayerLevel={settings.default_player_level}
               numPlayers={
                 encounter?.participants?.reduce((sum, participant) => {
                   if (participant.is_player) {
@@ -93,7 +91,7 @@ export default function SingleEncounter() {
             </Button>
           </Link>
         ) : (
-          <Link href={`${id}/run`} onClick={startEncounter}>
+          <Link href={`${id}/run`} onClick={() => startEncounter(encounter.id)}>
             <Button>
               <Play />
               Commence the battle!
@@ -117,7 +115,12 @@ export default function SingleEncounter() {
                   <InitiativeInput creature={participant} />
                   <Button
                     variant="ghost"
-                    onClick={() => removeCreatureFromEncounter(participant.id)}
+                    onClick={() =>
+                      removeCreatureFromEncounter({
+                        encounter_id: encounter.id,
+                        participant_id: participant.id,
+                      })
+                    }
                   >
                     <X />
                   </Button>

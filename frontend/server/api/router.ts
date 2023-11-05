@@ -4,11 +4,16 @@ import {
   encounters,
   encounter_participant,
   creatures,
+  settings,
 } from "@/server/api/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { db } from "@/server/api/db";
 import superjson from "superjson";
 import { ZodError, z } from "zod";
+import {
+  sortEncounterCreatures,
+  updateTurnOrder,
+} from "@/app/dashboard/encounters/utils";
 
 const t = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -44,7 +49,7 @@ export const publicProcedure = t.procedure;
 
 export type Encounter = typeof encounters.$inferSelect;
 type Creature = typeof creatures.$inferSelect;
-type EncounterParticipant = typeof encounter_participant.$inferSelect;
+export type EncounterParticipant = typeof encounter_participant.$inferSelect;
 
 export type EncounterCreature = EncounterParticipant & Creature;
 export type EncounterWithParticipants = Encounter & {
@@ -161,6 +166,182 @@ export const appRouter = t.router({
       }
       return result[0];
     }),
+
+  updateEncounter: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        description: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const result = await db
+        .update(encounters)
+        .set({
+          name: opts.input.name,
+          description: opts.input.description,
+        })
+        .where(
+          and(
+            eq(encounters.id, opts.input.id),
+            eq(encounters.user_id, opts.ctx.user.id)
+          )
+        )
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update encounter",
+        });
+      }
+      return result[0];
+    }),
+
+  startEncounter: protectedProcedure
+    .input(z.string())
+    .mutation(async (opts) => {
+      const result = await db.transaction(async (tx) => {
+        const encounter = await tx
+          .update(encounters)
+          .set({
+            started_at: new Date(),
+          })
+          .where(
+            and(
+              eq(encounters.id, opts.input),
+              eq(encounters.user_id, opts.ctx.user.id)
+            )
+          )
+          .returning();
+        const encounterParticipants = await tx
+          .select()
+          .from(encounter_participant)
+          .where(eq(encounter_participant.encounter_id, opts.input));
+        const sortedParticipants = encounterParticipants.sort(
+          sortEncounterCreatures
+        );
+        const activeParticipant = sortedParticipants[0];
+        await tx
+          .update(encounter_participant)
+          .set({
+            is_active: true,
+          })
+          .where(
+            and(
+              eq(encounter_participant.encounter_id, opts.input),
+              eq(encounter_participant.id, activeParticipant.id)
+            )
+          );
+        return encounter;
+      });
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to start encounter",
+        });
+      }
+      return result[0];
+    }),
+
+  updateTurn: protectedProcedure
+    .input(z.literal("next").or(z.literal("previous")))
+    .mutation(async (opts) => {
+      const result = await db.transaction(async (tx) => {
+        const encounter = await tx
+          .select()
+          .from(encounters)
+          .where(and(eq(encounters.user_id, opts.ctx.user.id)));
+        if (encounter.length === 0) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "No encounter found",
+          });
+        }
+        const encounterParticipants = await tx
+          .select()
+          .from(encounter_participant)
+          .where(eq(encounter_participant.encounter_id, encounter[0].id));
+        const updatedOrder = updateTurnOrder(opts.input, encounterParticipants);
+        const newActive = updatedOrder?.find((c) => c.is_active);
+
+        if (!newActive) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update turn",
+          });
+        }
+
+        await tx.execute(
+          sql`
+          UPDATE encounter_participants
+          SET is_active = CASE 
+              WHEN id = ${newActive.id} THEN TRUE
+              ELSE FALSE
+          END
+          WHERE encounter_id = ${encounter[0].id}
+          `
+        );
+        return encounter;
+      });
+      return result[0];
+    }),
+
+  removeParticipantFromEncounter: protectedProcedure
+    .input(
+      z.object({
+        encounter_id: z.string(),
+        participant_id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const encounter = await db
+        .select()
+        .from(encounters)
+        .where(
+          and(
+            eq(encounters.id, opts.input.encounter_id),
+            eq(encounters.user_id, opts.ctx.user.id)
+          )
+        );
+      if (encounter.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "No encounter found",
+        });
+      }
+      const result = await db
+        .delete(encounter_participant)
+        .where(
+          and(
+            eq(encounter_participant.encounter_id, opts.input.encounter_id),
+            eq(encounter_participant.id, opts.input.participant_id)
+          )
+        )
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to remove participant from encounter",
+        });
+      }
+      return result[0];
+    }),
+
+  settings: protectedProcedure.query(async (opts) => {
+    opts.ctx.user.id;
+    const userSettings = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.user_id, opts.ctx.user.id));
+    if (userSettings.length === 0) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "No settings found",
+      });
+    }
+    return userSettings[0];
+  }),
 });
 
 // export type definition of API

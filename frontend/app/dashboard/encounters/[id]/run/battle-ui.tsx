@@ -1,22 +1,12 @@
 "use client";
 
-import {
-  useEncounterCreatures,
-  useRemoveCreatureFromEncounter,
-  useTurn,
-  useAddCreatureToEncounter,
-} from "@/app/dashboard/encounters/api";
+import { useAddCreatureToEncounter } from "@/app/dashboard/encounters/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  ChevronDown,
-  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChevronUp,
   Plus,
-  Rows,
-  StretchVertical,
   Swords,
   X,
 } from "lucide-react";
@@ -32,7 +22,7 @@ import React from "react";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-time";
 import {
-  optimisticTurnUpdate,
+  updateTurnOrder,
   sortEncounterCreatures,
 } from "@/app/dashboard/encounters/utils";
 import clsx from "clsx";
@@ -42,29 +32,31 @@ import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 export function BattleUI() {
   const id = useEncounterId();
   const { data: encounter } = api.encounterById.useQuery(id);
-  const { data: encounterParticipants } = useEncounterCreatures();
-  const { mutate: changeActiveTo, isPending, variables } = useTurn();
+  const encounterParticipants = encounter?.participants;
+  const {
+    mutate: changeActiveTo,
+    isLoading: isTurnLoading,
+    variables,
+  } = api.updateTurn.useMutation();
 
-  const displayedParticipants = isPending
-    ? optimisticTurnUpdate(variables, encounterParticipants)
-    : encounterParticipants;
+  const displayedParticipants =
+    isTurnLoading && variables
+      ? updateTurnOrder(variables, encounterParticipants)
+      : encounterParticipants;
   const activeParticipant = displayedParticipants?.find(
     (creature) => creature.is_active
   );
-  const [dmSelectedCreature, setDmSelectedCreature] = React.useState<
-    number | null
-  >(activeParticipant?.id ?? null);
+  const [dmSelectedCreature, setDmSelectedCreature] = React.useState(
+    activeParticipant?.id ?? null
+  );
 
   const selectedId = dmSelectedCreature ?? activeParticipant?.id ?? null;
 
   const { mutate: removeCreatureFromEncounter } =
-    useRemoveCreatureFromEncounter();
+    api.removeParticipantFromEncounter.useMutation();
 
   function handleChangeTurn(direction: "next" | "previous") {
-    const newParticipants = optimisticTurnUpdate(
-      direction,
-      encounterParticipants
-    );
+    const newParticipants = updateTurnOrder(direction, encounterParticipants);
     setDmSelectedCreature(
       newParticipants?.find((creature) => creature.is_active)?.id ?? 0
     );
@@ -115,7 +107,7 @@ export function BattleUI() {
       <AnimatePresence>
         <div
           className={clsx(
-            "flex flex-row gap-10 px-10 max-w-full items-center overflow-auto h-80",
+            "flex flex-row gap-10 px-10 max-w-full items-center overflow-auto h-80"
           )}
           ref={scrollContainer}
         >

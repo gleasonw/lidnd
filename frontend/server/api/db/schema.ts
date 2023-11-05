@@ -32,7 +32,7 @@ export const creatures = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: varchar("name", { length: 256 }).notNull(),
-    created_at: timestamp("created_at").defaultNow(),
+    created_at: timestamp("created_at").defaultNow().notNull(),
     max_hp: integer("max_hp"),
     challenge_rating: real("challenge_rating").default(0).notNull(),
     is_player: boolean("is_player"),
@@ -55,7 +55,7 @@ export const encounter_participant = pgTable(
     creature_id: uuid("creature_id")
       .references(() => creatures.id, { onDelete: "cascade" })
       .notNull(),
-    created_at: timestamp("created_at").defaultNow(),
+    created_at: timestamp("created_at").defaultNow().notNull(),
     initiative: integer("initiative").default(0).notNull(),
     hp: integer("hp").default(0).notNull(),
     is_active: boolean("is_active").default(false),
@@ -69,9 +69,9 @@ export const encounter_participant = pgTable(
 );
 
 export const settings = pgTable("settings-drizzle", {
-  user_id: uuid("user_id").primaryKey(),
+  user_id: bigint("user_id", { mode: "number" }).primaryKey(),
   show_health_in_discord: boolean("show_health_in_discord").default(false),
   show_icons_in_discord: boolean("show_icons_in_discord").default(true),
-  average_turn_seconds: integer("average_turn_seconds").default(180),
-  default_player_level: integer("default_player_level").default(1),
+  average_turn_seconds: integer("average_turn_seconds").default(180).notNull(),
+  default_player_level: integer("default_player_level").default(1).notNull(),
 });

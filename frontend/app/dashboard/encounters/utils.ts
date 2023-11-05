@@ -1,5 +1,5 @@
 import { CreaturePost } from "@/app/dashboard/encounters/[id]/creature-add-form";
-import { EncounterCreature } from "@/server/api/router";
+import { EncounterCreature, EncounterParticipant } from "@/server/api/router";
 
 export function getAWSimageURL(
   creature_id: string,
@@ -9,28 +9,29 @@ export function getAWSimageURL(
 }
 
 export function sortEncounterCreatures(
-  a: EncounterCreature,
-  b: EncounterCreature
+  a: EncounterParticipant,
+  b: EncounterParticipant
 ) {
-  return b.initiative - a.initiative || b.creature_id - a.creature_id;
+  return (
+    b.initiative - a.initiative ||
+    b.created_at.getTime() - a.created_at.getTime()
+  );
 }
 
-export function optimisticTurnUpdate(
+export function updateTurnOrder(
   to: "next" | "previous",
-  participants?: EncounterCreature[]
-): EncounterCreature[] | undefined {
+  participants?: EncounterParticipant[]
+): EncounterParticipant[] | undefined {
   if (participants && Array.isArray(participants)) {
     const sortedParticipants = participants
       .slice()
       .sort(sortEncounterCreatures);
-    const currentActive = participants.find(
-      (c: EncounterCreature) => c.is_active
-    );
+    const currentActive = participants.find((c) => c.is_active);
     const activeParticipants = sortedParticipants.filter(
-      (c: EncounterCreature) => c.hp > 0 || c.is_active
+      (c) => c.hp > 0 || c.is_active
     );
     if (currentActive && activeParticipants.length > 1) {
-      let nextActive: EncounterCreature;
+      let nextActive: EncounterParticipant;
       if (to === "previous") {
         nextActive =
           activeParticipants[
@@ -46,7 +47,7 @@ export function optimisticTurnUpdate(
               activeParticipants.length
           ];
       }
-      return participants.map((c: EncounterCreature) => {
+      return participants.map((c) => {
         if (c.id === nextActive?.id) {
           return {
             ...c,
