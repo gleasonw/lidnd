@@ -1,10 +1,10 @@
 import {
   bigint,
   boolean,
-  decimal,
   index,
   integer,
   pgTable,
+  real,
   timestamp,
   uuid,
   varchar,
@@ -34,7 +34,7 @@ export const creatures = pgTable(
     name: varchar("name", { length: 256 }).notNull(),
     created_at: timestamp("created_at").defaultNow(),
     max_hp: integer("max_hp"),
-    challenge_rating: decimal("challenge_rating"),
+    challenge_rating: real("challenge_rating").default(0).notNull(),
     is_player: boolean("is_player"),
     user_id: bigint("user_id", { mode: "number" }).notNull(),
   },
@@ -50,10 +50,10 @@ export const encounter_participant = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     encounter_id: uuid("encounter_id")
-      .references(() => encounters.id)
+      .references(() => encounters.id, { onDelete: "cascade" })
       .notNull(),
     creature_id: uuid("creature_id")
-      .references(() => creatures.id)
+      .references(() => creatures.id, { onDelete: "cascade" })
       .notNull(),
     created_at: timestamp("created_at").defaultNow(),
     initiative: integer("initiative").default(0).notNull(),

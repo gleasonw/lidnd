@@ -1,10 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import {
-  useCreateEncounter,
-  useDeleteEncounter,
-} from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
@@ -24,14 +20,12 @@ import { Encounter } from "@/server/api/router";
 export default function Dashboard() {
   const router = useRouter();
   const { data: encounters } = api.encounters.useQuery();
-  const {
-    mutate: deleteEncounter,
-    variables: deletedEncounterId,
-    isPending: isDeleteEncounterPending,
-  } = useDeleteEncounter();
-  const { mutate: createDefaultEncounter, isLoading } = useCreateEncounter(
-    (encounter) => router.push(`dashboard/encounters/${encounter.id}`)
-  );
+  const { mutate: deleteEncounter } = api.deleteEncounter.useMutation();
+  const { mutate: createDefaultEncounter, isLoading } =
+    api.createEncounter.useMutation({
+      onSuccess: (encounter) =>
+        router.push(`dashboard/encounters/${encounter.id}`),
+    });
   const [encounter, setEncounter] = React.useState({
     name: "Unnamed encounter",
     description: "",

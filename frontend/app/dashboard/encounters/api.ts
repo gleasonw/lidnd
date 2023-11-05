@@ -52,35 +52,6 @@ export function useUpdateCreature() {
       await queryClient.invalidateQueries({ queryKey: ["userCreatures"] });
     },
   });
-}
-
-export function useCreateEncounter(onCreate?: (encounter: Encounter) => void) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (
-      encounter: components["schemas"]["EncounterRequest"]
-    ) => {
-      const { error, data } = await POST(`/api/encounters`, {
-        headers: {
-          Authorization: `Bearer ${clientToken()}`,
-        },
-        body: encounter,
-      });
-      if (error) {
-        console.log(error.detail);
-        throw error;
-      }
-      queryClient.invalidateQueries({ queryKey: ["encounters"] });
-      return data;
-    },
-    onSuccess: (data) => {
-      if (onCreate) {
-        onCreate(data as unknown as Encounter);
-      }
-    },
-  });
-}
 
 export function useUpdateEncounter() {
   const queryClient = useQueryClient();
@@ -108,32 +79,6 @@ export function useUpdateEncounter() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(encounterKey(id), data);
-    },
-  });
-}
-
-export function useDeleteEncounter() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: number) => {
-      const { error, data } = await DELETE(`/api/encounters/{encounter_id}`, {
-        params: {
-          path: {
-            encounter_id: id,
-          },
-        },
-        headers: {
-          Authorization: `Bearer ${clientToken()}`,
-        },
-      });
-      if (error) {
-        console.log(error.detail);
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(encountersQueryKey, data);
     },
   });
 }

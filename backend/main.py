@@ -313,49 +313,6 @@ async def update_turn(
     return await get_encounter_creatures(encounter_id)
 
 
-@app.post("/api/encounters")
-async def create_encounter(
-    encounter_data: EncounterRequest,
-    user=Depends(get_discord_user),
-) -> EncounterResponse:
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(EncounterResponse)) as cur:
-            await cur.execute(
-                "INSERT INTO encounters (user_id, name, description) VALUES (%s, %s, %s) RETURNING *",
-                (user.id, encounter_data.name, encounter_data.description),
-            )
-            encounter = await cur.fetchone()
-            if not encounter:
-                raise HTTPException(
-                    status_code=500, detail="Failed to create encounter"
-                )
-        async with conn.cursor(row_factory=class_row(Creature)) as cur:
-            await cur.execute(
-                "SELECT * FROM creatures WHERE user_id = %s AND is_player = TRUE",
-                (user.id,),
-            )
-            players = await cur.fetchall()
-            if not players:
-                return encounter
-            await cur.executemany(
-                """
-                INSERT INTO encounter_participants (encounter_id, creature_id, hp, initiative, is_active)
-                VALUES (%s, %s, %s, %s, %s)
-                """,
-                [
-                    (
-                        encounter.id,
-                        player.id,
-                        player.max_hp,
-                        0,
-                        False,
-                    )
-                    for player in players
-                ],
-            )
-            return encounter
-
-
 @app.put("/api/encounters/{encounter_id}")
 async def update_encounter(
     encounter_id: int, encounter_data: EncounterRequest, user=Depends(get_discord_user)
@@ -428,21 +385,6 @@ async def update_encounter_creature(
                 post_encounter_to_user_channel, user.id, encounter_id
             )
     return await get_encounter_creatures(encounter_id)
-
-
-@app.delete("/api/encounters/{encounter_id}")
-async def delete_encounter(
-    encounter_id: int, user=Depends(get_discord_user)
-) -> List[EncounterResponseWithParticipants]:
-    async with pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                "DELETE FROM encounters WHERE id=%s AND user_id=%s",
-                (encounter_id, user.id),
-            )
-            if cur.rowcount == 0:
-                raise HTTPException(status_code=404, detail="Encounter not found")
-    return await get_user_encounters(UserId(id=user.id))
 
 
 @app.post("/api/encounters/{encounter_id}/start")

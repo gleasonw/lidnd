@@ -123,9 +123,44 @@ export const appRouter = t.router({
     return Object.values(response)[0];
   }),
 
-  hello: protectedProcedure.input(z.string()).query(async (opts) => {
-    return `hello ${opts.input}`;
-  }),
+  deleteEncounter: protectedProcedure
+    .input(z.string())
+    .mutation(async (opts) => {
+      return await db
+        .delete(encounters)
+        .where(
+          and(
+            eq(encounters.id, opts.input),
+            eq(encounters.user_id, opts.ctx.user.id)
+          )
+        )
+        .returning();
+    }),
+
+  createEncounter: protectedProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        description: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const result = await db
+        .insert(encounters)
+        .values({
+          name: opts.input.name,
+          description: opts.input.description,
+          user_id: opts.ctx.user.id,
+        })
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create encounter",
+        });
+      }
+      return result[0];
+    }),
 });
 
 // export type definition of API
