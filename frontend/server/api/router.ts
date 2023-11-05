@@ -14,6 +14,8 @@ import {
   sortEncounterCreatures,
   updateTurnOrder,
 } from "@/app/dashboard/encounters/utils";
+import { createInsertSchema } from "drizzle-zod";
+import { uploadCreatureImages } from "@/server/api/utils";
 
 const t = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -48,13 +50,15 @@ export const protectedProcedure = t.procedure.use(isAuthed);
 export const publicProcedure = t.procedure;
 
 export type Encounter = typeof encounters.$inferSelect;
-type Creature = typeof creatures.$inferSelect;
+export type Creature = typeof creatures.$inferSelect;
 export type EncounterParticipant = typeof encounter_participant.$inferSelect;
 
 export type EncounterCreature = EncounterParticipant & Creature;
 export type EncounterWithParticipants = Encounter & {
   participants: EncounterCreature[];
 };
+
+const insertCreatureSchema = createInsertSchema(creatures);
 
 export const appRouter = t.router({
   encounters: protectedProcedure.query(async (opts) => {
@@ -326,6 +330,59 @@ export const appRouter = t.router({
         });
       }
       return result[0];
+    }),
+
+  createCreatureAndAddToEncounter: protectedProcedure
+    .input(
+      z.object({
+        creature: insertCreatureSchema,
+        encounter_id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const newParticipant = await db.transaction(async (tx) => {
+        const newCreature = await tx
+          .insert(creatures)
+          .values(opts.input.creature)
+          .returning();
+        if (newCreature.length === 0) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create creature",
+          });
+        }
+        await uploadCreatureImages(newCreature[0]);
+        const encounter = await tx
+          .select()
+          .from(encounters)
+          .where(
+            and(
+              eq(encounters.id, opts.input.encounter_id),
+              eq(encounters.user_id, opts.ctx.user.id)
+            )
+          );
+        if (encounter.length === 0) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "No encounter found",
+          });
+        }
+        const encounterParticipant = await tx
+          .insert(encounter_participant)
+          .values({
+            encounter_id: opts.input.encounter_id,
+            creature_id: newCreature[0].id,
+          })
+          .returning();
+        if (encounterParticipant.length === 0) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to add creature to encounter",
+          });
+        }
+        return encounterParticipant;
+      });
+      return newParticipant[0];
     }),
 
   settings: protectedProcedure.query(async (opts) => {

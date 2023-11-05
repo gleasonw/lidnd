@@ -1,6 +1,5 @@
 "use client";
 
-import { useAddCreatureToEncounter } from "@/app/dashboard/encounters/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +27,7 @@ import {
 import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
+import { EncounterCreature } from "@/server/api/router";
 
 export function BattleUI() {
   const id = useEncounterId();
@@ -58,7 +58,7 @@ export function BattleUI() {
   function handleChangeTurn(direction: "next" | "previous") {
     const newParticipants = updateTurnOrder(direction, encounterParticipants);
     setDmSelectedCreature(
-      newParticipants?.find((creature) => creature.is_active)?.id ?? 0
+      newParticipants?.find((creature) => creature.is_active)?.id ?? null
     );
     changeActiveTo(direction);
   }
@@ -114,7 +114,7 @@ export function BattleUI() {
           <Button
             className="absolute left-0 sm:left-10 z-10 h-20"
             onClick={() => handleChangeTurn("previous")}
-            disabled={isPending}
+            disabled={isTurnLoading}
           >
             <ChevronLeftIcon />
           </Button>
@@ -137,7 +137,7 @@ export function BattleUI() {
           <Button
             className="absolute right-0 sm:right-10 z-10 h-20"
             onClick={() => handleChangeTurn("next")}
-            disabled={isPending}
+            disabled={isTurnLoading}
           >
             <ChevronRightIcon />
           </Button>
@@ -166,7 +166,10 @@ export function BattleUI() {
             <Button
               variant="destructive"
               onClick={() =>
-                removeCreatureFromEncounter(selectedParticipant.id)
+                removeCreatureFromEncounter({
+                  encounter_id: id,
+                  participant_id: selectedParticipant.id,
+                })
               }
             >
               Remove from encounter
@@ -218,7 +221,7 @@ export function BattleCard({
         <CardHeader className="text-ellipsis max-w-full p-3">
           <CardTitle>{creature.name}</CardTitle>
         </CardHeader>
-        {creature.creature_id === 1 ? (
+        {creature.creature_id === "" ? (
           <span>Loading</span>
         ) : (
           <CharacterIcon
@@ -271,8 +274,8 @@ export const AnimationListItem = ({
 };
 
 function BattleAddCreatureForm({ children }: { children?: React.ReactNode }) {
-  const { mutate: addCreature, isPending: isPendingCreatureAdd } =
-    useAddCreatureToEncounter();
+  const { mutate: addCreature, isLoading: isPendingCreatureAdd } =
+    api.createCreatureAndAddToEncounter.useMutation();
   return (
     <div className={"flex flex-col w-full items-center gap-3"}>
       {children}

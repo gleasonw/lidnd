@@ -33,7 +33,7 @@ export const creatures = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     name: varchar("name", { length: 256 }).notNull(),
     created_at: timestamp("created_at").defaultNow().notNull(),
-    max_hp: integer("max_hp"),
+    max_hp: integer("max_hp").notNull(),
     challenge_rating: real("challenge_rating").default(0).notNull(),
     is_player: boolean("is_player"),
     user_id: bigint("user_id", { mode: "number" }).notNull(),
@@ -58,7 +58,7 @@ export const encounter_participant = pgTable(
     created_at: timestamp("created_at").defaultNow().notNull(),
     initiative: integer("initiative").default(0).notNull(),
     hp: integer("hp").default(0).notNull(),
-    is_active: boolean("is_active").default(false),
+    is_active: boolean("is_active").default(false).notNull(),
   },
   (table) => {
     return {

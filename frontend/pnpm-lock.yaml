@@ -86,6 +86,9 @@ dependencies:
   drizzle-orm:
     specifier: ^0.28.6
     version: 0.28.6(postgres@3.4.3)
+  drizzle-zod:
+    specifier: ^0.5.1
+    version: 0.5.1(drizzle-orm@0.28.6)(zod@3.21.4)
   eslint:
     specifier: 8.48.0
     version: 8.48.0
@@ -95,9 +98,6 @@ dependencies:
   framer-motion:
     specifier: ^10.16.4
     version: 10.16.4(react-dom@18.2.0)(react@18.2.0)
-  latest:
-    specifier: link:@tanstack/react-query/latest
-    version: link:@tanstack/react-query/latest
   lodash.debounce:
     specifier: ^4.0.8
     version: 4.0.8
@@ -2901,6 +2901,16 @@ packages:
         optional: true
     dependencies:
       postgres: 3.4.3
+    dev: false
+
+  /drizzle-zod@0.5.1(drizzle-orm@0.28.6)(zod@3.21.4):
+    resolution: {integrity: sha512-C/8bvzUH/zSnVfwdSibOgFjLhtDtbKYmkbPbUCq46QZyZCH6kODIMSOgZ8R7rVjoI+tCj3k06MRJMDqsIeoS4A==}
+    peerDependencies:
+      drizzle-orm: '>=0.23.13'
+      zod: '*'
+    dependencies:
+      drizzle-orm: 0.28.6(postgres@3.4.3)
+      zod: 3.21.4
     dev: false
 
   /electron-to-chromium@1.4.569:

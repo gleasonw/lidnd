@@ -2,7 +2,6 @@ import {
   CreaturePost,
   ImageUpload,
 } from "@/app/dashboard/encounters/[id]/creature-add-form";
-import { useAddCreatureToEncounter } from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -14,6 +13,7 @@ import {
   Form,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -41,7 +41,8 @@ export function FullCreatureAddForm({
   children?: React.ReactNode;
   createCreatureMutation?: (data: CreaturePost) => void;
 }) {
-  const { mutate: addCreatureToEncounter } = useAddCreatureToEncounter();
+  const { mutate: addCreatureToEncounter } =
+    api.createCreatureAndAddToEncounter.useMutation();
   const form = useForm<z.infer<typeof creatureForm>>({
     resolver: zodResolver(creatureForm),
     defaultValues: {

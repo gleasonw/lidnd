@@ -1,5 +1,4 @@
 import { CreaturePost } from "@/app/dashboard/encounters/[id]/creature-add-form";
-import { EncounterCreature, EncounterParticipant } from "@/server/api/router";
 
 export function getAWSimageURL(
   creature_id: string,
@@ -8,20 +7,24 @@ export function getAWSimageURL(
   return `https://dnd-init-tracker-icons-stats.s3.us-west-1.amazonaws.com/${type}-${creature_id}.png`;
 }
 
-export function sortEncounterCreatures(
-  a: EncounterParticipant,
-  b: EncounterParticipant
-) {
+export function sortEncounterCreatures<
+  T extends { initiative: number; created_at: Date }
+>(a: T, b: T) {
   return (
     b.initiative - a.initiative ||
     b.created_at.getTime() - a.created_at.getTime()
   );
 }
 
-export function updateTurnOrder(
-  to: "next" | "previous",
-  participants?: EncounterParticipant[]
-): EncounterParticipant[] | undefined {
+export function updateTurnOrder<
+  T extends {
+    is_active: boolean;
+    hp: number;
+    id: string;
+    initiative: number;
+    created_at: Date;
+  }
+>(to: "next" | "previous", participants?: T[]): T[] | undefined {
   if (participants && Array.isArray(participants)) {
     const sortedParticipants = participants
       .slice()
@@ -31,7 +34,7 @@ export function updateTurnOrder(
       (c) => c.hp > 0 || c.is_active
     );
     if (currentActive && activeParticipants.length > 1) {
-      let nextActive: EncounterParticipant;
+      let nextActive: T;
       if (to === "previous") {
         nextActive =
           activeParticipants[

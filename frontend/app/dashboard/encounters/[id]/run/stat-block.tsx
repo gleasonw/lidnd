@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { getAWSimageURL } from "@/app/dashboard/encounters/utils";
 
-export function StatBlock({ id, name }: { id: number; name: string }) {
+export function StatBlock({ id, name }: { id: string; name: string }) {
   // some strange infinite render behavior can occur if the width and height is not
   // extremely large. I don't much understand Next Image, but this seems to work.
   const [width, setWidth] = React.useState(1000);

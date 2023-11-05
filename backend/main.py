@@ -271,7 +271,7 @@ async def update_encounter_creature(
                 UPDATE encounter_participants
                 SET 
                     hp = CASE 
-                        WHEN %s < 0 THEN 0
+                        WHEN %s < 0 THEN 0F
                         WHEN %s > (SELECT max_hp FROM creatures WHERE id = %s) THEN (SELECT max_hp FROM creatures WHERE id = %s)
                         ELSE %s
                     END,
