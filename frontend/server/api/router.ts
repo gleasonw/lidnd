@@ -15,7 +15,7 @@ import {
   updateTurnOrder,
 } from "@/app/dashboard/encounters/utils";
 import { createInsertSchema } from "drizzle-zod";
-import { uploadCreatureImages } from "@/server/api/utils";
+import { getUserEncounter, uploadCreatureImages } from "@/server/api/utils";
 
 const t = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -58,7 +58,14 @@ export type EncounterWithParticipants = Encounter & {
   participants: EncounterCreature[];
 };
 
-const insertCreatureSchema = createInsertSchema(creatures);
+export const insertCreatureSchema = createInsertSchema(creatures);
+
+export const creatureUploadSchema = insertCreatureSchema
+  .extend({
+    icon_image: z.instanceof(File),
+    stat_block_image: z.instanceof(File),
+  })
+  .omit({ user_id: true });
 
 export const appRouter = t.router({
   encounters: protectedProcedure.query(async (opts) => {
@@ -332,10 +339,51 @@ export const appRouter = t.router({
       return result[0];
     }),
 
+  addExistingCreatureToEncounter: protectedProcedure
+    .input(
+      z.object({
+        encounter_id: z.string(),
+        creature_id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      await getUserEncounter(opts.ctx.user.id, opts.input.encounter_id);
+
+      const userCreature = await db
+        .select()
+        .from(creatures)
+        .where(
+          and(
+            eq(creatures.id, opts.input.creature_id),
+            eq(creatures.user_id, opts.ctx.user.id)
+          )
+        );
+      if (userCreature.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "No creature found",
+        });
+      }
+      const encounterParticipant = await db
+        .insert(encounter_participant)
+        .values({
+          encounter_id: opts.input.encounter_id,
+          creature_id: opts.input.creature_id,
+        })
+        .returning();
+      if (encounterParticipant.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to add creature to encounter",
+        });
+      }
+      return encounterParticipant[0];
+    }),
+
   createCreatureAndAddToEncounter: protectedProcedure
     .input(
       z.object({
-        creature: insertCreatureSchema,
+        creature: creatureUploadSchema,
         encounter_id: z.string(),
       })
     )
@@ -343,7 +391,7 @@ export const appRouter = t.router({
       const newParticipant = await db.transaction(async (tx) => {
         const newCreature = await tx
           .insert(creatures)
-          .values(opts.input.creature)
+          .values({ ...opts.input.creature, user_id: opts.ctx.user.id })
           .returning();
         if (newCreature.length === 0) {
           throw new TRPCError({

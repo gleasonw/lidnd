@@ -3,10 +3,6 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
-import {
-  useAddExistingCreatureToEncounter,
-  useUserCreatures,
-} from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import { Spinner } from "@/components/ui/spinner";
@@ -14,17 +10,13 @@ import { UseMutateFunction } from "@tanstack/react-query";
 import * as z from "zod";
 import { Card, CardContent } from "@/components/ui/card";
 import clsx from "clsx";
+import {
+  creatureUploadSchema,
+  insertCreatureSchema,
+} from "@/server/api/router";
+import { api } from "@/trpc/react";
 
-export const creatureFormSchema = z.object({
-  name: z.string(),
-  max_hp: z.number(),
-  icon: z.any().optional(),
-  stat_block: z.any().optional(),
-  challenge_rating: z.number(),
-  is_player: z.boolean()
-});
-
-export type CreaturePost = z.infer<typeof creatureFormSchema>;
+export type CreaturePost = z.infer<typeof creatureUploadSchema>;
 
 export function CustomCreature({
   children,
@@ -95,9 +87,9 @@ export function CustomCreature({
             ) {
               mutation.onAddCreature({
                 name: creatureData.name,
-                icon: creatureData.icon,
+                icon_image: creatureData.icon,
                 max_hp: parseInt(creatureData.max_hp),
-                stat_block: creatureData.stat_block,
+                stat_block_image: creatureData.stat_block,
                 challenge_rating: 0,
                 is_player: false,
               });
@@ -164,15 +156,15 @@ export function ExistingCreature({
   const [name, setName] = useState("");
   const id = useEncounterId();
 
-  const { data: creatures, isLoading: isLoadingCreatures } = useUserCreatures(
-    name,
-    id
-  );
+  const { data: encounter, isLoading: isLoadingCreatures } =
+    api.encounterById.useQuery(id);
   const {
     mutate: addCreature,
-    isPending: isAddingExistingCreature,
+    isLoading: isAddingExistingCreature,
     variables,
-  } = useAddExistingCreatureToEncounter();
+  } = api.addExistingCreatureToEncounter.useMutation();
+
+  const creatures = encounter?.participants;
 
   return (
     <>
@@ -193,7 +185,6 @@ export function ExistingCreature({
               addCreature({
                 creature_id: creature.id,
                 encounter_id: id,
-                name: creature.name,
               });
             }}
           >

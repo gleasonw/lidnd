@@ -285,7 +285,11 @@ function BattleAddCreatureForm({ children }: { children?: React.ReactNode }) {
             <CardTitle>New creature</CardTitle>
             <CustomCreature
               mutation={{
-                onAddCreature: addCreature,
+                onAddCreature: (data) =>
+                  addCreature({
+                    encounter_id: useEncounterId(),
+                    creature: data,
+                  }),
                 isPending: isPendingCreatureAdd,
               }}
             />

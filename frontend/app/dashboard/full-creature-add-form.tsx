@@ -2,6 +2,7 @@ import {
   CreaturePost,
   ImageUpload,
 } from "@/app/dashboard/encounters/[id]/creature-add-form";
+import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -13,62 +14,43 @@ import {
   Form,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { creatureUploadSchema } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-export const creatureForm = z.object({
-  name: z.string().min(1, { message: "Name is required." }),
-  max_hp: z.coerce.number().gte(1, { message: "Max HP must be at least 1." }),
-  challenge_rating: z.coerce.number(),
-  icon: z.any(),
-  stat_block: z.any(),
-  strategy_notes: z.string().optional(),
-  resistances: z.array(z.string()).optional(),
-  immunities: z.array(z.string()).optional(),
-  vulnerabilities: z.array(z.string()).optional(),
-  is_player: z.boolean().default(false).optional(),
-});
-
 export function FullCreatureAddForm({
   className,
   children,
-  createCreatureMutation,
 }: {
   className?: string;
   children?: React.ReactNode;
-  createCreatureMutation?: (data: CreaturePost) => void;
 }) {
+  const id = useEncounterId();
   const { mutate: addCreatureToEncounter } =
     api.createCreatureAndAddToEncounter.useMutation();
-  const form = useForm<z.infer<typeof creatureForm>>({
-    resolver: zodResolver(creatureForm),
+  const form = useForm<z.infer<typeof creatureUploadSchema>>({
+    resolver: zodResolver(creatureUploadSchema),
     defaultValues: {
       name: "",
       max_hp: 0,
       challenge_rating: 0,
-      icon: undefined,
-      stat_block: undefined,
+      icon_image: undefined,
+      stat_block_image: undefined,
       is_player: false,
     },
   });
   const [keyToResetFile, setKeyToResetFile] = React.useState(0);
 
-  const addCreatureMutation = createCreatureMutation ?? addCreatureToEncounter;
-
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((data, e) => {
-          addCreatureMutation({
-            icon: data.icon,
-            max_hp: data.max_hp,
-            name: data.name,
-            stat_block: data.stat_block,
-            challenge_rating: data.challenge_rating,
-            is_player: data.is_player ?? false,
+          addCreatureToEncounter({
+            encounter_id: id,
+            creature: data,
           });
           form.reset();
           setKeyToResetFile(keyToResetFile + 1);
@@ -107,14 +89,14 @@ export function FullCreatureAddForm({
                 type="text"
                 placeholder="1..."
                 {...field}
-                value={field.value.toString()}
+                value={field.value?.toString()}
               />
             </CreatureFormItems>
           )}
         />
         <FormField
           control={form.control}
-          name="icon"
+          name="icon_image"
           render={({ field }) => (
             <FormItem className="flex flex-col gap-2">
               <FormLabel>Select or paste icon</FormLabel>
@@ -132,7 +114,7 @@ export function FullCreatureAddForm({
         />
         <FormField
           control={form.control}
-          name="stat_block"
+          name="stat_block_image"
           render={({ field }) => (
             <FormItem className="flex flex-col gap-2">
               <FormLabel>Select or paste stat block</FormLabel>
@@ -154,7 +136,7 @@ export function FullCreatureAddForm({
           render={({ field }) => (
             <CreatureFormItems name="Player">
               <Checkbox
-                checked={field.value}
+                checked={field.value ?? false}
                 onCheckedChange={(checked) => field.onChange(checked)}
               />
             </CreatureFormItems>
