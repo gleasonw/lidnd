@@ -1,6 +1,9 @@
 "use client";
 
-import { ExistingCreature } from "@/app/dashboard/encounters/[id]/creature-add-form";
+import {
+  CreaturePost,
+  ExistingCreature,
+} from "@/app/dashboard/encounters/[id]/creature-add-form";
 import {
   AnimationListItem,
   BattleCard,
@@ -14,17 +17,40 @@ import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import React from "react";
-import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
+import {
+  getCreaturePostForm,
+  sortEncounterCreatures,
+} from "@/app/dashboard/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
 import InitiativeInput from "@/app/dashboard/encounters/[id]/InitiativeInput";
 import { BasePopover } from "@/app/dashboard/base-popover";
 import { api } from "@/trpc/react";
+import { useMutation } from "@tanstack/react-query";
+import { rerouteUrl } from "@/app/login/page";
 
 export default function SingleEncounter() {
   const id = useEncounterId();
-  const { mutate: addCreatureToEncounter } =
-    api.createCreatureAndAddToEncounter.useMutation();
+  const { mutate: addCreatureToEncounter } = useMutation({
+    mutationFn: async (rawData: CreaturePost) => {
+      if (!encounter) {
+        throw new Error("No encounter");
+      }
+      const formData = getCreaturePostForm(rawData);
+      formData.append("encounter_id", encounter.id);
+
+      const response = await fetch(`${rerouteUrl}/api/create-creature`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (response.status !== 200) {
+        console.log(data.detail);
+        throw data;
+      }
+      return data;
+    },
+  });
   const { data: encounter, isLoading } = api.encounterById.useQuery(id);
   const { mutate: startEncounter } = api.startEncounter.useMutation();
   const { mutate: updateEncounter } = api.updateEncounter.useMutation();
@@ -149,18 +175,20 @@ export default function SingleEncounter() {
       </AnimatePresence>
 
       <div className={"flex flex-col w-full gap-3"}>
-        <div className={"flex flex-wrap w-full justify-center gap-5"}>
+        <div className={"flex flex-wrap w-full justify-center gap-20"}>
           <Card className="max-w-[600px] w-full p-3">
             <CardContent className={"flex flex-col gap-3"}>
               <CardTitle className="py-3">Add new creature</CardTitle>
               <FullCreatureAddForm
-                uploadCreature={(data) =>
-                  encounter &&
-                  addCreatureToEncounter({
-                    encounter_id: encounter.id,
-                    creature: data,
-                  })
-                }
+                uploadCreature={(data) => {
+                  console.log(data);
+                  if (encounter) {
+                    addCreatureToEncounter({
+                      ...data,
+                      encounter_id: encounter.id,
+                    });
+                  }
+                }}
               />
             </CardContent>
           </Card>

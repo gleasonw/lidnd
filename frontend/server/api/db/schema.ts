@@ -19,7 +19,7 @@ export const encounters = pgTable(
     description: varchar("description", { length: 256 }),
     started_at: timestamp("started_at"),
     created_at: timestamp("created_at").defaultNow(),
-    user_id: bigint("user_id", { mode: "number" }).notNull(),
+    user_id: text("user_id").notNull(),
   },
   (t) => {
     return {
@@ -37,7 +37,7 @@ export const creatures = pgTable(
     max_hp: integer("max_hp").notNull(),
     challenge_rating: real("challenge_rating").default(0).notNull(),
     is_player: boolean("is_player"),
-    user_id: bigint("user_id", { mode: "number" }).notNull(),
+    user_id: text("user_id").notNull(),
   },
   (t) => {
     return {
@@ -70,7 +70,7 @@ export const encounter_participant = pgTable(
 );
 
 export const settings = pgTable("settings-drizzle", {
-  user_id: bigint("user_id", { mode: "number" }).primaryKey(),
+  user_id: text("user_id").primaryKey(),
   show_health_in_discord: boolean("show_health_in_discord").default(false),
   show_icons_in_discord: boolean("show_icons_in_discord").default(true),
   average_turn_seconds: integer("average_turn_seconds").default(180).notNull(),
@@ -86,11 +86,11 @@ export const session = pgTable("user_session", {
   id: varchar("id", {
     length: 256,
   }).primaryKey(),
-  userId: text("user_id").notNull(),
-  activeExpires: bigint("active_expires", {
+  user_id: text("user_id").notNull(),
+  active_expires: bigint("active_expires", {
     mode: "number",
   }).notNull(),
-  idleExpires: bigint("idle_expires", {
+  idle_expires: bigint("idle_expires", {
     mode: "number",
   }).notNull(),
 });
@@ -99,8 +99,8 @@ export const key = pgTable("user_key", {
   id: varchar("id", {
     length: 256,
   }).primaryKey(),
-  userId: text("user_id").notNull(),
-  hashedPassword: varchar("hashed_password", {
+  user_id: text("user_id").notNull(),
+  hashed_password: varchar("hashed_password", {
     length: 256,
   }),
 });

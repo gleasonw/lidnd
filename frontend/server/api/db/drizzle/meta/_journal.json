@@ -1,27 +1,5 @@
 {
   "version": "5",
   "dialect": "pg",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "5",
-      "when": 1699356447538,
-      "tag": "0000_closed_squadron_sinister",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1699356597418,
-      "tag": "0001_furry_ken_ellis",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1699356737585,
-      "tag": "0002_broken_stranger",
-      "breakpoints": true
-    }
-  ]
+  "entries": []
 }

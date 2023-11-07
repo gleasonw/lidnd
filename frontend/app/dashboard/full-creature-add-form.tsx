@@ -23,10 +23,11 @@ const formSchema = z.object({
   id: z.string().optional(),
   name: z.string(),
   created_at: z.date().optional(),
-  max_hp: z.number(),
-  challenge_rating: z.number().optional(),
+  max_hp: z.coerce.number(),
+  challenge_rating: z.coerce.number().optional(),
   is_player: z.boolean().optional(),
-  user_id: z.number(),
+  icon_image: z.instanceof(File),
+  stat_block_image: z.instanceof(File),
 });
 
 export function FullCreatureAddForm({
@@ -72,34 +73,6 @@ export function FullCreatureAddForm({
         />
         <FormField
           control={form.control}
-          name="max_hp"
-          render={({ field }) => (
-            <CreatureFormItems name="Max HP">
-              <Input
-                type="text"
-                placeholder="10..."
-                {...field}
-                value={field.value.toString()}
-              />
-            </CreatureFormItems>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="challenge_rating"
-          render={({ field }) => (
-            <CreatureFormItems name="Challenge Rating">
-              <Input
-                type="text"
-                placeholder="1..."
-                {...field}
-                value={field.value?.toString()}
-              />
-            </CreatureFormItems>
-          )}
-        />
-        <FormField
-          control={form.control}
           name="icon_image"
           render={({ field }) => (
             <FormItem className="flex flex-col gap-2">
@@ -134,6 +107,35 @@ export function FullCreatureAddForm({
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="max_hp"
+          render={({ field }) => (
+            <CreatureFormItems name="Max HP">
+              <Input
+                type="text"
+                placeholder="10..."
+                {...field}
+                value={field.value.toString()}
+              />
+            </CreatureFormItems>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="challenge_rating"
+          render={({ field }) => (
+            <CreatureFormItems name="Challenge Rating">
+              <Input
+                type="text"
+                placeholder="1..."
+                {...field}
+                value={field.value?.toString()}
+              />
+            </CreatureFormItems>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="is_player"

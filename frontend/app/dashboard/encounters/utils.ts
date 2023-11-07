@@ -70,9 +70,9 @@ export function updateTurnOrder<
 export function getCreaturePostForm(creature: CreaturePost): FormData {
   const formData = new FormData();
   formData.append("name", creature.name);
-  formData.append("max_hp", creature.max_hp.toString());
-  formData.append("icon", creature.icon_image);
-  formData.append("stat_block", creature.stat_block_image);
+  formData.append("max_hp", creature.max_hp?.toString() || "");
+  formData.append("icon_image", creature.icon_image);
+  formData.append("stat_block_image", creature.stat_block_image);
   formData.append(
     "challenge_rating",
     creature.challenge_rating?.toString() || ""

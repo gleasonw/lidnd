@@ -1,14 +1,16 @@
 import { db } from "@/server/api/db";
 import { creatures, encounters } from "@/server/api/db/schema";
 import { and, eq } from "drizzle-orm";
+import { Upload } from "@aws-sdk/lib-storage";
 import { creatureUploadSchema } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import * as z from "zod";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { get } from "http";
-
+import { cache } from "react";
+import { auth } from "@/server/api/auth/lucia";
+import * as context from "next/headers";
 export async function createCreature(
-  user_id: number,
+  user_id: string,
   creature: z.infer<typeof creatureUploadSchema>,
   dbObject = db
 ) {
@@ -31,36 +33,31 @@ export async function createCreature(
     },
   });
 
-  try {
-    await Promise.all([
-      s3Client.send(
-        new PutObjectCommand({
-          Bucket: process.env.AWS_BUCKET_NAME!,
-          Key: getIconAWSname(newCreature[0].id),
-          Body: creature.icon_image,
-        })
-      ),
-      s3Client.send(
-        new PutObjectCommand({
-          Bucket: process.env.AWS_BUCKET_NAME!,
-          Key: getStatBlockAWSname(newCreature[0].id),
-          Body: creature.stat_block_image,
-        })
-      ),
-    ]);
-  } catch (e) {
-    console.error(e);
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Failed to upload images",
-    });
-  }
+  const iconUpload = new Upload({
+    client: s3Client,
+    params: {
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: getIconAWSname(newCreature[0].id),
+      Body: creature.icon_image,
+    },
+  });
+
+  const statBlockUpload = new Upload({
+    client: s3Client,
+    params: {
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: getStatBlockAWSname(newCreature[0].id),
+      Body: creature.stat_block_image,
+    },
+  });
+
+  await Promise.all([iconUpload.done(), statBlockUpload.done()]);
 
   return newCreature[0];
 }
 
 export async function getUserEncounter(
-  user_id: number,
+  user_id: string,
   encounter_id: string,
   dbObject = db
 ) {
@@ -86,3 +83,17 @@ export function getIconAWSname(creature_id: string) {
 export function getStatBlockAWSname(creature_id: string) {
   return `stat_block-${creature_id}.png`;
 }
+
+export async function fetchWhitelist() {
+  const response = await fetch(
+    "https://raw.githubusercontent.com/gleasonw/dnd-init-tracker/main/whitelist.txt"
+  );
+  const data = await response.text();
+  const whitelist = new Set(data.split("\n"));
+  return whitelist;
+}
+
+export const getPageSession = cache(() => {
+  const authRequest = auth.handleRequest("GET", context);
+  return authRequest.validate();
+});

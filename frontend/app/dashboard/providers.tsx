@@ -45,7 +45,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         >
           <Link href="/dashboard/settings" className="flex gap-5 items-center">
             Settings
-            <UserAvatar />
           </Link>
           <button type="submit">
             <LogOut />

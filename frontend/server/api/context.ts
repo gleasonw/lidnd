@@ -1,8 +1,8 @@
-import * as trpc from "@trpc/server";
 import { inferAsyncReturnType } from "@trpc/server";
-import * as trpcNext from "@trpc/server/adapters/next";
-import { verifyDiscordToken } from "@/middleware";
 import { NextRequest } from "next/server";
+import { auth } from "@/server/api/auth/lucia";
+import * as context from "next/headers";
+import { getPageSession } from "@/server/api/utils";
 
 export async function createContext({
   req,
@@ -11,15 +11,10 @@ export async function createContext({
   req: NextRequest;
   res?: any;
 }) {
-  const auth = await verifyDiscordToken();
-  if (!auth.user) {
-    return {
-      user: null,
-    };
-  }
-
+  const session = await getPageSession();
+  if (!session) return { user: null };
   return {
-    user: auth.user,
+    user: session.user as { username: string; userId: string },
   };
 }
 export type Context = inferAsyncReturnType<typeof createContext>;

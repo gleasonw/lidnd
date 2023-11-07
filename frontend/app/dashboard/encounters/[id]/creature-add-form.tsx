@@ -105,7 +105,7 @@ export function CustomCreature({
   );
 }
 
-export function ImageUpload({ onUpload }: { onUpload: (file?: any) => void }) {
+export function ImageUpload({ onUpload }: { onUpload: (file?: File) => void }) {
   const [hasContent, setHasContent] = React.useState(false);
   return (
     <span className="h-auto relative flex flex-col gap-5 items-center justify-center group">
@@ -132,9 +132,7 @@ export function ImageUpload({ onUpload }: { onUpload: (file?: any) => void }) {
               e.preventDefault();
               return;
             }
-
-            const file = item.getAsFile();
-            file !== null ? onUpload(file) : onUpload(undefined);
+            onUpload(item.getAsFile() ?? undefined);
             setHasContent(true);
           }}
           onKeyDown={(e) => {

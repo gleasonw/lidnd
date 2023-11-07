@@ -74,6 +74,9 @@ export const creatureUploadSchema = insertCreatureSchema
   .extend({
     icon_image: z.instanceof(File),
     stat_block_image: z.instanceof(File),
+    max_hp: z.coerce.number(),
+    challenge_rating: z.coerce.number(),
+    is_player: z.coerce.boolean(),
   })
   .omit({ user_id: true });
 
@@ -82,7 +85,7 @@ export const appRouter = t.router({
     const encountersWithParticipants = await db
       .select()
       .from(encounters)
-      .where(eq(encounters.user_id, opts.ctx.user.id))
+      .where(eq(encounters.user_id, opts.ctx.user.userId))
       .leftJoin(
         encounter_participant,
         eq(encounters.id, encounter_participant.encounter_id)
@@ -117,7 +120,7 @@ export const appRouter = t.router({
       .from(encounters)
       .where(
         and(
-          eq(encounters.user_id, opts.ctx.user.id),
+          eq(encounters.user_id, opts.ctx.user.userId),
           eq(encounters.id, opts.input)
         )
       )
@@ -157,7 +160,7 @@ export const appRouter = t.router({
         .where(
           and(
             eq(encounters.id, opts.input),
-            eq(encounters.user_id, opts.ctx.user.id)
+            eq(encounters.user_id, opts.ctx.user.userId)
           )
         )
         .returning();
@@ -176,7 +179,7 @@ export const appRouter = t.router({
         .values({
           name: opts.input.name,
           description: opts.input.description,
-          user_id: opts.ctx.user.id,
+          user_id: opts.ctx.user.userId,
         })
         .returning();
       if (result.length === 0) {
@@ -206,7 +209,7 @@ export const appRouter = t.router({
         .where(
           and(
             eq(encounters.id, opts.input.id),
-            eq(encounters.user_id, opts.ctx.user.id)
+            eq(encounters.user_id, opts.ctx.user.userId)
           )
         )
         .returning();
@@ -224,7 +227,7 @@ export const appRouter = t.router({
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
         const [encounter, encounterParticipants] = await Promise.all([
-          getUserEncounter(opts.ctx.user.id, opts.input, tx),
+          getUserEncounter(opts.ctx.user.userId, opts.input, tx),
           tx
             .select()
             .from(encounter_participant)
@@ -266,7 +269,7 @@ export const appRouter = t.router({
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
         const [encounter, encounterParticipants] = await Promise.all([
-          getUserEncounter(opts.ctx.user.id, opts.input.encounter_id, tx),
+          getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id, tx),
           tx
             .select()
             .from(encounter_participant)
@@ -310,7 +313,7 @@ export const appRouter = t.router({
       })
     )
     .mutation(async (opts) => {
-      await getUserEncounter(opts.ctx.user.id, opts.input.encounter_id);
+      await getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id);
       const result = await db
         .delete(encounter_participant)
         .where(
@@ -344,10 +347,10 @@ export const appRouter = t.router({
           .where(
             and(
               eq(creatures.id, opts.input.creature_id),
-              eq(creatures.user_id, opts.ctx.user.id)
+              eq(creatures.user_id, opts.ctx.user.userId)
             )
           ),
-        getUserEncounter(opts.ctx.user.id, opts.input.encounter_id),
+        getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id),
       ]);
       if (userCreature.length === 0) {
         throw new TRPCError({
@@ -371,74 +374,6 @@ export const appRouter = t.router({
       return encounterParticipant[0];
     }),
 
-  createCreature: protectedProcedure
-    .input(creatureUploadSchema)
-    .mutation(async (opts) => {
-      return createCreature(opts.ctx.user.id, opts.input);
-    }),
-
-  createCreatureAndAddToEncounter: protectedProcedure
-    .input(
-      z.object({
-        creature: creatureUploadSchema,
-        encounter_id: z.string(),
-      })
-    )
-    .mutation(async (opts) => {
-      const newParticipant = await db.transaction(async (tx) => {
-        const [newCreature, _] = await Promise.all([
-          createCreature(opts.ctx.user.id, opts.input.creature, tx),
-          getUserEncounter(opts.ctx.user.id, opts.input.encounter_id, tx),
-        ]);
-        const encounterParticipant = await tx
-          .insert(encounter_participant)
-          .values({
-            encounter_id: opts.input.encounter_id,
-            creature_id: newCreature.id,
-          })
-          .returning();
-        if (encounterParticipant.length === 0) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to add creature to encounter",
-          });
-        }
-        return encounterParticipant;
-      });
-      return newParticipant[0];
-    }),
-
-  updateEncounterParticipant: protectedProcedure
-    .input(insertParticipantSchema)
-    .mutation(async (opts) => {
-      if (!opts.input.id) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "No participant id in reqquest",
-        });
-      }
-      const [newParticipant, _] = await Promise.all([
-        db
-          .update(encounter_participant)
-          .set(opts.input)
-          .where(
-            and(
-              eq(encounter_participant.encounter_id, opts.input.encounter_id),
-              eq(encounter_participant.id, opts.input.id)
-            )
-          )
-          .returning(),
-        getUserEncounter(opts.ctx.user.id, opts.input.encounter_id),
-      ]);
-      if (newParticipant.length === 0) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update encounter participant",
-        });
-      }
-      return newParticipant[0];
-    }),
-
   updateCreature: protectedProcedure
     .input(insertCreatureSchema.omit({ user_id: true }))
     .mutation(async (opts) => {
@@ -454,7 +389,7 @@ export const appRouter = t.router({
         .where(
           and(
             eq(creatures.id, opts.input.id),
-            eq(creatures.user_id, opts.ctx.user.id)
+            eq(creatures.user_id, opts.ctx.user.userId)
           )
         )
         .returning();
@@ -475,7 +410,7 @@ export const appRouter = t.router({
         .where(
           and(
             eq(creatures.id, opts.input),
-            eq(creatures.user_id, opts.ctx.user.id)
+            eq(creatures.user_id, opts.ctx.user.userId)
           )
         )
         .returning();
@@ -525,7 +460,7 @@ export const appRouter = t.router({
       })
     )
     .query(async (opts) => {
-      const filters = [eq(creatures.user_id, opts.ctx.user.id)];
+      const filters = [eq(creatures.user_id, opts.ctx.user.userId)];
       if (opts.input.name) {
         filters.push(ilike(creatures.name, opts.input.name));
       }
@@ -539,11 +474,11 @@ export const appRouter = t.router({
     }),
 
   settings: protectedProcedure.query(async (opts) => {
-    opts.ctx.user.id;
+    opts.ctx.user.userId;
     const userSettings = await db
       .select()
       .from(settings)
-      .where(eq(settings.user_id, opts.ctx.user.id));
+      .where(eq(settings.user_id, opts.ctx.user.userId));
     if (userSettings.length === 0) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
@@ -553,29 +488,13 @@ export const appRouter = t.router({
     return userSettings[0];
   }),
 
-  initSettings: protectedProcedure.mutation(async (opts) => {
-    const result = await db
-      .insert(settings)
-      .values({
-        user_id: opts.ctx.user.id,
-      })
-      .returning();
-    if (result.length === 0) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create settings",
-      });
-    }
-    return result[0];
-  }),
-
   updateSettings: protectedProcedure
     .input(insertSettingsSchema.omit({ user_id: true }))
     .mutation(async (opts) => {
       const result = await db
         .update(settings)
         .set(opts.input)
-        .where(eq(settings.user_id, opts.ctx.user.id))
+        .where(eq(settings.user_id, opts.ctx.user.userId))
         .returning();
       if (result.length === 0) {
         throw new TRPCError({
