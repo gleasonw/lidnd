@@ -31,30 +31,6 @@ export type DiscordUser = {
   username: string;
 }
 
-export async function verifyDiscordToken(): Promise<{
-  status: number;
-  user: DiscordUser | null;
-}> {
-  const whitelist = await fetchWhitelist();
-  const cookieStore = cookies();
-  const token = cookieStore.get("token")?.value;
-  const response = await fetch("https://discord.com/api/users/@me", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (response.status === 200) {
-    const user = await response.json() as DiscordUser;
-    if (user && whitelist.has(user.username)) {
-      return { status: 200, user };
-    } else {
-      return { status: 403, user: null };
-    }
-  } else {
-    return { status: response.status, user: null };
-  }
-}
-
 export const config = {
   matcher: ["/dashboard/:path*"],
 };

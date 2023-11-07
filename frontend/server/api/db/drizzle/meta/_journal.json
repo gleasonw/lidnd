@@ -5,71 +5,22 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1699104836339,
-      "tag": "0000_nifty_sunset_bain",
+      "when": 1699356447538,
+      "tag": "0000_closed_squadron_sinister",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "5",
-      "when": 1699110046089,
-      "tag": "0001_aromatic_veda",
+      "when": 1699356597418,
+      "tag": "0001_furry_ken_ellis",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "5",
-      "when": 1699117389723,
-      "tag": "0002_swift_black_widow",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1699120434011,
-      "tag": "0003_left_iron_monger",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1699132681493,
-      "tag": "0004_grey_swordsman",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "5",
-      "when": 1699181065918,
-      "tag": "0005_broken_miek",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "5",
-      "when": 1699181534927,
-      "tag": "0006_chubby_lady_ursula",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "5",
-      "when": 1699184878494,
-      "tag": "0007_harsh_gwen_stacy",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "5",
-      "when": 1699185137325,
-      "tag": "0008_busy_jack_flag",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "5",
-      "when": 1699185174096,
-      "tag": "0009_sweet_baron_zemo",
+      "when": 1699356737585,
+      "tag": "0002_broken_stranger",
       "breakpoints": true
     }
   ]

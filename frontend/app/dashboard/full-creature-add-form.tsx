@@ -2,7 +2,6 @@ import {
   CreaturePost,
   ImageUpload,
 } from "@/app/dashboard/encounters/[id]/creature-add-form";
-import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -15,11 +14,20 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { creatureUploadSchema } from "@/server/api/router";
-import { api } from "@/trpc/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+
+const formSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  created_at: z.date().optional(),
+  max_hp: z.number(),
+  challenge_rating: z.number().optional(),
+  is_player: z.boolean().optional(),
+  user_id: z.number(),
+});
 
 export function FullCreatureAddForm({
   className,
@@ -31,7 +39,7 @@ export function FullCreatureAddForm({
   uploadCreature: (data: CreaturePost) => void;
 }) {
   const form = useForm<z.infer<typeof creatureUploadSchema>>({
-    resolver: zodResolver(creatureUploadSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       max_hp: 0,

@@ -1,38 +1,63 @@
-import { rerouteUrl } from "@/app/login/page";
-import { NextResponse } from "next/server";
+// app/login/github/callback/route.ts
+import { auth, discordAuth } from "@/server/api/auth/lucia";
+import { OAuthRequestError } from "@lucia-auth/oauth";
+import { cookies, headers } from "next/headers";
 
+import type { NextRequest } from "next/server";
 
+export const GET = async (request: NextRequest) => {
+	const storedState = cookies().get("discord_oauth_state")?.value;
+	const url = new URL(request.url);
+	const state = url.searchParams.get("state");
+	const code = url.searchParams.get("code");
+	// validate state
+	if (!storedState || !state || storedState !== state || !code) {
+		return new Response(null, {
+			status: 400
+		});
+	}
+	try {
+		const { getExistingUser, discordUser, createUser } =
+			await discordAuth.validateCallback(code);
 
-export async function GET(request: Request) {
-  const code = request.url.split("?code=")[1];
-  if (code) {
-    // Make a POST request to Discord to exchange the code for a token
-    const tokenResponse = await fetch("https://discord.com/api/oauth2/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET,
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: `${rerouteUrl}/api/discord`,
-        scope: "identify",
-      } as Record<string, string>),
-    });
+		const getUser = async () => {
+			const existingUser = await getExistingUser();
+			if (existingUser) return existingUser;
+			const user = await createUser({
+				attributes: {
+					username: discordUser.username
+				}
+			});
+      // populate settings here
+			return user;
+		};
 
-    const tokenData = await tokenResponse.json();
-    console.log(tokenData);
-    let response = NextResponse.redirect(
-      new URL("/dashboard", request.url.split("?")[0])
-    );
-    response.cookies.set("token", tokenData.access_token, {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-    });
-    return response;
-  } else {
-    return new Response("No code provided", { status: 400 });
-  }
-}
+		const user = await getUser();
+		const session = await auth.createSession({
+			userId: user.userId,
+			attributes: {}
+		});
+		const authRequest = auth.handleRequest(request.method, {
+			cookies,
+			headers
+		});
+		authRequest.setSession(session);
+		return new Response(null, {
+			status: 302,
+			headers: {
+				Location: "/dashboard"
+			}
+		});
+	} catch (e) {
+    console.error(e)
+		if (e instanceof OAuthRequestError) {
+			// invalid code
+			return new Response(null, {
+				status: 400
+			});
+		}
+		return new Response(null, {
+			status: 500
+		});
+	}
+};

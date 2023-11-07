@@ -553,6 +553,22 @@ export const appRouter = t.router({
     return userSettings[0];
   }),
 
+  initSettings: protectedProcedure.mutation(async (opts) => {
+    const result = await db
+      .insert(settings)
+      .values({
+        user_id: opts.ctx.user.id,
+      })
+      .returning();
+    if (result.length === 0) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create settings",
+      });
+    }
+    return result[0];
+  }),
+
   updateSettings: protectedProcedure
     .input(insertSettingsSchema.omit({ user_id: true }))
     .mutation(async (opts) => {

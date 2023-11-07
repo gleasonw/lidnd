@@ -1,0 +1,1 @@
+ALTER TABLE "user_key" ADD COLUMN "hashed_password" varchar(256);

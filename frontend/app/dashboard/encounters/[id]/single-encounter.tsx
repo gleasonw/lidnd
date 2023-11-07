@@ -33,16 +33,13 @@ export default function SingleEncounter() {
   );
   const { data: settings } = api.settings.useQuery();
 
-  if (!encounter) {
-    return null;
-  }
-
   const debouncedNameUpdate = useDebouncedCallback((name: string) => {
-    updateEncounter({
-      ...encounter,
-      name,
-      description: encounter?.description ?? "",
-    });
+    encounter &&
+      updateEncounter({
+        ...encounter,
+        name,
+        description: encounter?.description ?? "",
+      });
   }, 500);
 
   const { mutate: removeCreatureFromEncounter } =
@@ -93,7 +90,10 @@ export default function SingleEncounter() {
             </Button>
           </Link>
         ) : (
-          <Link href={`${id}/run`} onClick={() => startEncounter(encounter.id)}>
+          <Link
+            href={`${id}/run`}
+            onClick={() => encounter && startEncounter(encounter.id)}
+          >
             <Button>
               <Play />
               Commence the battle!
@@ -155,6 +155,7 @@ export default function SingleEncounter() {
               <CardTitle className="py-3">Add new creature</CardTitle>
               <FullCreatureAddForm
                 uploadCreature={(data) =>
+                  encounter &&
                   addCreatureToEncounter({
                     encounter_id: encounter.id,
                     creature: data,

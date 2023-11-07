@@ -16,7 +16,7 @@ export default function Login() {
           className={
             "shadow p-5 rounded-md text-center text-white flex overflow-hidden border-2 hover:bg-gray-200 transition-all"
           }
-          href={`https://discord.com/oauth2/authorize?client_id=${process.env.CLIENT_ID}&scope=identify&response_type=code&redirect_uri=${rerouteUrl}/api/discord`}
+          href={`/login/discord`}
         >
           <DiscordIcon className="max-w-40" />
         </a>

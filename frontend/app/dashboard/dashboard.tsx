@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import React, { useState } from "react";
+import React from "react";
 import { Card } from "@/components/ui/card";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import { useRouter } from "next/navigation";

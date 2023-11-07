@@ -5,6 +5,7 @@ import {
   integer,
   pgTable,
   real,
+  text,
   timestamp,
   uuid,
   varchar,
@@ -74,4 +75,32 @@ export const settings = pgTable("settings-drizzle", {
   show_icons_in_discord: boolean("show_icons_in_discord").default(true),
   average_turn_seconds: integer("average_turn_seconds").default(180).notNull(),
   default_player_level: integer("default_player_level").default(1).notNull(),
+});
+
+export const users = pgTable("users-drizzle", {
+  id: text("id").primaryKey(),
+  username: varchar("username", { length: 256 }).notNull(),
+});
+
+export const session = pgTable("user_session", {
+  id: varchar("id", {
+    length: 256,
+  }).primaryKey(),
+  userId: text("user_id").notNull(),
+  activeExpires: bigint("active_expires", {
+    mode: "number",
+  }).notNull(),
+  idleExpires: bigint("idle_expires", {
+    mode: "number",
+  }).notNull(),
+});
+
+export const key = pgTable("user_key", {
+  id: varchar("id", {
+    length: 256,
+  }).primaryKey(),
+  userId: text("user_id").notNull(),
+  hashedPassword: varchar("hashed_password", {
+    length: 256,
+  }),
 });
