@@ -39,7 +39,7 @@ export default function SingleEncounter() {
       const formData = getCreaturePostForm(rawData);
       formData.append("encounter_id", encounter.id);
 
-      const response = await fetch(`${rerouteUrl}/api/create-creature`, {
+      const response = await fetch(`${rerouteUrl}/api/create-creature-and-add-to-encounter`, {
         method: "POST",
         body: formData,
       });

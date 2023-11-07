@@ -12,6 +12,10 @@ import { useState } from "react";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { Creature } from "@/server/api/router";
+import { useMutation } from "@tanstack/react-query";
+import { getCreaturePostForm } from "@/app/dashboard/encounters/utils";
+import { CreaturePost } from "@/app/dashboard/encounters/[id]/creature-add-form";
+import { rerouteUrl } from "@/app/login/page";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");
@@ -26,7 +30,21 @@ export default function CreaturesPage() {
   } = api.deleteCreature.useMutation();
   const [isAddingCreatures, setIsAddingCreatures] = useState(false);
 
-  const { mutate: createCreature } = api.createCreature.useMutation();
+  const { mutate: createCreature } = useMutation({
+    mutationFn: async (rawData: CreaturePost) => {
+      const formData = getCreaturePostForm(rawData);
+      const response = await fetch(`${rerouteUrl}/api/create-creature`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (response.status !== 200) {
+        console.log(data.detail);
+        throw data;
+      }
+      return data;
+    },
+  });
 
   const displayCreatures = isDeletePending
     ? creatures?.filter((creature) => creature.id !== deletedId)

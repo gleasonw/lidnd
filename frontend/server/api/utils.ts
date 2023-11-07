@@ -5,7 +5,7 @@ import { Upload } from "@aws-sdk/lib-storage";
 import { creatureUploadSchema } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import * as z from "zod";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client } from "@aws-sdk/client-s3";
 import { cache } from "react";
 import { auth } from "@/server/api/auth/lucia";
 import * as context from "next/headers";
