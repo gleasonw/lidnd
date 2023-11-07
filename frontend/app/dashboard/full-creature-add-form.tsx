@@ -24,13 +24,12 @@ import * as z from "zod";
 export function FullCreatureAddForm({
   className,
   children,
+  uploadCreature,
 }: {
   className?: string;
   children?: React.ReactNode;
+  uploadCreature: (data: CreaturePost) => void;
 }) {
-  const id = useEncounterId();
-  const { mutate: addCreatureToEncounter } =
-    api.createCreatureAndAddToEncounter.useMutation();
   const form = useForm<z.infer<typeof creatureUploadSchema>>({
     resolver: zodResolver(creatureUploadSchema),
     defaultValues: {
@@ -47,11 +46,8 @@ export function FullCreatureAddForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit((data, e) => {
-          addCreatureToEncounter({
-            encounter_id: id,
-            creature: data,
-          });
+        onSubmit={form.handleSubmit((data) => {
+          uploadCreature(data);
           form.reset();
           setKeyToResetFile(keyToResetFile + 1);
         })}

@@ -10,7 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { StatBlock } from "@/app/dashboard/encounters/[id]/run/stat-block";
-import { CreatureHealthForm } from "@/app/dashboard/encounters/[id]/run/creature-health-form";
+import { ParticipantHealthForm } from "@/app/dashboard/encounters/[id]/run/creature-health-form";
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 import {
   CustomCreature,
@@ -41,7 +41,7 @@ export function BattleUI() {
 
   const displayedParticipants =
     isTurnLoading && variables
-      ? updateTurnOrder(variables, encounterParticipants)
+      ? updateTurnOrder(variables.to, encounterParticipants)
       : encounterParticipants;
   const activeParticipant = displayedParticipants?.find(
     (creature) => creature.is_active
@@ -60,7 +60,10 @@ export function BattleUI() {
     setDmSelectedCreature(
       newParticipants?.find((creature) => creature.is_active)?.id ?? null
     );
-    changeActiveTo(direction);
+    changeActiveTo({
+      encounter_id: id,
+      to: direction,
+    });
   }
 
   const selectedParticipant = displayedParticipants?.find(
@@ -149,10 +152,10 @@ export function BattleUI() {
               <span className={"text-center text-xl"}>
                 {selectedParticipant.name}{" "}
               </span>
-              <CreatureHealthForm creature={selectedParticipant} />
+              <ParticipantHealthForm participant={selectedParticipant} />
               {selectedParticipant.hp > 0 ? (
                 <InitiativeInput
-                  creature={selectedParticipant}
+                  participant={selectedParticipant}
                   className="flex gap-5"
                   key={selectedParticipant.id}
                 />

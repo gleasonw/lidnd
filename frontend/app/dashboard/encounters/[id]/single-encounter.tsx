@@ -23,6 +23,8 @@ import { api } from "@/trpc/react";
 
 export default function SingleEncounter() {
   const id = useEncounterId();
+  const { mutate: addCreatureToEncounter } =
+    api.createCreatureAndAddToEncounter.useMutation();
   const { data: encounter, isLoading } = api.encounterById.useQuery(id);
   const { mutate: startEncounter } = api.startEncounter.useMutation();
   const { mutate: updateEncounter } = api.updateEncounter.useMutation();
@@ -112,7 +114,7 @@ export default function SingleEncounter() {
             .map((participant) => (
               <AnimationListItem key={participant.id}>
                 <BattleCard creature={participant}>
-                  <InitiativeInput creature={participant} />
+                  <InitiativeInput participant={participant} />
                   <Button
                     variant="ghost"
                     onClick={() =>
@@ -151,7 +153,14 @@ export default function SingleEncounter() {
           <Card className="max-w-[600px] w-full p-3">
             <CardContent className={"flex flex-col gap-3"}>
               <CardTitle className="py-3">Add new creature</CardTitle>
-              <FullCreatureAddForm />
+              <FullCreatureAddForm
+                uploadCreature={(data) =>
+                  addCreatureToEncounter({
+                    encounter_id: encounter.id,
+                    creature: data,
+                  })
+                }
+              />
             </CardContent>
           </Card>
 

@@ -6,7 +6,7 @@ import {
   creatures,
   settings,
 } from "@/server/api/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
 import superjson from "superjson";
 import { ZodError, z } from "zod";
@@ -15,7 +15,13 @@ import {
   updateTurnOrder,
 } from "@/app/dashboard/encounters/utils";
 import { createInsertSchema } from "drizzle-zod";
-import { getUserEncounter, uploadCreatureImages } from "@/server/api/utils";
+import {
+  createCreature,
+  getIconAWSname,
+  getStatBlockAWSname,
+  getUserEncounter,
+} from "@/server/api/utils";
+import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const t = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -58,7 +64,11 @@ export type EncounterWithParticipants = Encounter & {
   participants: EncounterCreature[];
 };
 
+export const insertParticipantSchema = createInsertSchema(
+  encounter_participant
+);
 export const insertCreatureSchema = createInsertSchema(creatures);
+export const insertSettingsSchema = createInsertSchema(settings);
 
 export const creatureUploadSchema = insertCreatureSchema
   .extend({
@@ -213,22 +223,13 @@ export const appRouter = t.router({
     .input(z.string())
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
-        const encounter = await tx
-          .update(encounters)
-          .set({
-            started_at: new Date(),
-          })
-          .where(
-            and(
-              eq(encounters.id, opts.input),
-              eq(encounters.user_id, opts.ctx.user.id)
-            )
-          )
-          .returning();
-        const encounterParticipants = await tx
-          .select()
-          .from(encounter_participant)
-          .where(eq(encounter_participant.encounter_id, opts.input));
+        const [encounter, encounterParticipants] = await Promise.all([
+          getUserEncounter(opts.ctx.user.id, opts.input, tx),
+          tx
+            .select()
+            .from(encounter_participant)
+            .where(eq(encounter_participant.encounter_id, opts.input)),
+        ]);
         const sortedParticipants = encounterParticipants.sort(
           sortEncounterCreatures
         );
@@ -246,34 +247,37 @@ export const appRouter = t.router({
           );
         return encounter;
       });
-      if (result.length === 0) {
+      if (!result) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to start encounter",
         });
       }
-      return result[0];
+      return result;
     }),
 
   updateTurn: protectedProcedure
-    .input(z.literal("next").or(z.literal("previous")))
+    .input(
+      z.object({
+        to: z.literal("next").or(z.literal("previous")),
+        encounter_id: z.string(),
+      })
+    )
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
-        const encounter = await tx
-          .select()
-          .from(encounters)
-          .where(and(eq(encounters.user_id, opts.ctx.user.id)));
-        if (encounter.length === 0) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "No encounter found",
-          });
-        }
-        const encounterParticipants = await tx
-          .select()
-          .from(encounter_participant)
-          .where(eq(encounter_participant.encounter_id, encounter[0].id));
-        const updatedOrder = updateTurnOrder(opts.input, encounterParticipants);
+        const [encounter, encounterParticipants] = await Promise.all([
+          getUserEncounter(opts.ctx.user.id, opts.input.encounter_id, tx),
+          tx
+            .select()
+            .from(encounter_participant)
+            .where(
+              eq(encounter_participant.encounter_id, opts.input.encounter_id)
+            ),
+        ]);
+        const updatedOrder = updateTurnOrder(
+          opts.input.to,
+          encounterParticipants
+        );
         const newActive = updatedOrder?.find((c) => c.is_active);
 
         if (!newActive) {
@@ -290,12 +294,12 @@ export const appRouter = t.router({
               WHEN id = ${newActive.id} THEN TRUE
               ELSE FALSE
           END
-          WHERE encounter_id = ${encounter[0].id}
+          WHERE encounter_id = ${encounter.id}
           `
         );
         return encounter;
       });
-      return result[0];
+      return result;
     }),
 
   removeParticipantFromEncounter: protectedProcedure
@@ -306,21 +310,7 @@ export const appRouter = t.router({
       })
     )
     .mutation(async (opts) => {
-      const encounter = await db
-        .select()
-        .from(encounters)
-        .where(
-          and(
-            eq(encounters.id, opts.input.encounter_id),
-            eq(encounters.user_id, opts.ctx.user.id)
-          )
-        );
-      if (encounter.length === 0) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "No encounter found",
-        });
-      }
+      await getUserEncounter(opts.ctx.user.id, opts.input.encounter_id);
       const result = await db
         .delete(encounter_participant)
         .where(
@@ -347,17 +337,18 @@ export const appRouter = t.router({
       })
     )
     .mutation(async (opts) => {
-      await getUserEncounter(opts.ctx.user.id, opts.input.encounter_id);
-
-      const userCreature = await db
-        .select()
-        .from(creatures)
-        .where(
-          and(
-            eq(creatures.id, opts.input.creature_id),
-            eq(creatures.user_id, opts.ctx.user.id)
-          )
-        );
+      const [userCreature, _] = await Promise.all([
+        db
+          .select()
+          .from(creatures)
+          .where(
+            and(
+              eq(creatures.id, opts.input.creature_id),
+              eq(creatures.user_id, opts.ctx.user.id)
+            )
+          ),
+        getUserEncounter(opts.ctx.user.id, opts.input.encounter_id),
+      ]);
       if (userCreature.length === 0) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -380,6 +371,12 @@ export const appRouter = t.router({
       return encounterParticipant[0];
     }),
 
+  createCreature: protectedProcedure
+    .input(creatureUploadSchema)
+    .mutation(async (opts) => {
+      return createCreature(opts.ctx.user.id, opts.input);
+    }),
+
   createCreatureAndAddToEncounter: protectedProcedure
     .input(
       z.object({
@@ -389,37 +386,15 @@ export const appRouter = t.router({
     )
     .mutation(async (opts) => {
       const newParticipant = await db.transaction(async (tx) => {
-        const newCreature = await tx
-          .insert(creatures)
-          .values({ ...opts.input.creature, user_id: opts.ctx.user.id })
-          .returning();
-        if (newCreature.length === 0) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to create creature",
-          });
-        }
-        await uploadCreatureImages(newCreature[0]);
-        const encounter = await tx
-          .select()
-          .from(encounters)
-          .where(
-            and(
-              eq(encounters.id, opts.input.encounter_id),
-              eq(encounters.user_id, opts.ctx.user.id)
-            )
-          );
-        if (encounter.length === 0) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "No encounter found",
-          });
-        }
+        const [newCreature, _] = await Promise.all([
+          createCreature(opts.ctx.user.id, opts.input.creature, tx),
+          getUserEncounter(opts.ctx.user.id, opts.input.encounter_id, tx),
+        ]);
         const encounterParticipant = await tx
           .insert(encounter_participant)
           .values({
             encounter_id: opts.input.encounter_id,
-            creature_id: newCreature[0].id,
+            creature_id: newCreature.id,
           })
           .returning();
         if (encounterParticipant.length === 0) {
@@ -431,6 +406,136 @@ export const appRouter = t.router({
         return encounterParticipant;
       });
       return newParticipant[0];
+    }),
+
+  updateEncounterParticipant: protectedProcedure
+    .input(insertParticipantSchema)
+    .mutation(async (opts) => {
+      if (!opts.input.id) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "No participant id in reqquest",
+        });
+      }
+      const [newParticipant, _] = await Promise.all([
+        db
+          .update(encounter_participant)
+          .set(opts.input)
+          .where(
+            and(
+              eq(encounter_participant.encounter_id, opts.input.encounter_id),
+              eq(encounter_participant.id, opts.input.id)
+            )
+          )
+          .returning(),
+        getUserEncounter(opts.ctx.user.id, opts.input.encounter_id),
+      ]);
+      if (newParticipant.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update encounter participant",
+        });
+      }
+      return newParticipant[0];
+    }),
+
+  updateCreature: protectedProcedure
+    .input(insertCreatureSchema.omit({ user_id: true }))
+    .mutation(async (opts) => {
+      if (!opts.input.id) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "No creature id in reqquest",
+        });
+      }
+      const result = await db
+        .update(creatures)
+        .set(opts.input)
+        .where(
+          and(
+            eq(creatures.id, opts.input.id),
+            eq(creatures.user_id, opts.ctx.user.id)
+          )
+        )
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update creature",
+        });
+      }
+      return result[0];
+    }),
+
+  deleteCreature: protectedProcedure
+    .input(z.string())
+    .mutation(async (opts) => {
+      const deletedCreature = await db
+        .delete(creatures)
+        .where(
+          and(
+            eq(creatures.id, opts.input),
+            eq(creatures.user_id, opts.ctx.user.id)
+          )
+        )
+        .returning();
+      if (deletedCreature.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete creature",
+        });
+      }
+      const s3Client = new S3Client({
+        region: process.env.AWS_REGION,
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+        },
+      });
+      try {
+        await Promise.all([
+          s3Client.send(
+            new DeleteObjectCommand({
+              Bucket: process.env.AWS_BUCKET_NAME!,
+              Key: getIconAWSname(deletedCreature[0].id),
+            })
+          ),
+          s3Client.send(
+            new DeleteObjectCommand({
+              Bucket: process.env.AWS_BUCKET_NAME!,
+              Key: getStatBlockAWSname(deletedCreature[0].id),
+            })
+          ),
+        ]);
+      } catch (e) {
+        console.error(e);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete images",
+        });
+      }
+      return deletedCreature[0];
+    }),
+
+  getUserCreatures: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().optional(),
+        is_player: z.boolean().optional(),
+      })
+    )
+    .query(async (opts) => {
+      const filters = [eq(creatures.user_id, opts.ctx.user.id)];
+      if (opts.input.name) {
+        filters.push(ilike(creatures.name, opts.input.name));
+      }
+      if (opts.input.is_player) {
+        filters.push(eq(creatures.is_player, opts.input.is_player));
+      }
+      return await db
+        .select()
+        .from(creatures)
+        .where(and(...filters));
     }),
 
   settings: protectedProcedure.query(async (opts) => {
@@ -447,6 +552,23 @@ export const appRouter = t.router({
     }
     return userSettings[0];
   }),
+
+  updateSettings: protectedProcedure
+    .input(insertSettingsSchema.omit({ user_id: true }))
+    .mutation(async (opts) => {
+      const result = await db
+        .update(settings)
+        .set(opts.input)
+        .where(eq(settings.user_id, opts.ctx.user.id))
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update settings",
+        });
+      }
+      return result[0];
+    }),
 });
 
 // export type definition of API

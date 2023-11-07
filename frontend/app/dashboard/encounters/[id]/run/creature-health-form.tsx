@@ -1,20 +1,19 @@
 "use client";
 
-import {
-  EncounterCreature,
-  useUpdateEncounterCreature,
-} from "@/app/dashboard/encounters/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EncounterParticipant } from "@/server/api/router";
+import { api } from "@/trpc/react";
 import { useState } from "react";
 
-export function CreatureHealthForm({
-  creature,
+export function ParticipantHealthForm({
+  participant,
 }: {
-  creature: EncounterCreature;
+  participant: EncounterParticipant;
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
-  const { mutate: edit, isPending } = useUpdateEncounterCreature();
+  const { mutate: edit, isLoading } =
+    api.updateEncounterParticipant.useMutation();
 
   return (
     <div className="flex gap-4">
@@ -31,28 +30,28 @@ export function CreatureHealthForm({
         }}
       />
       <Button
-        disabled={isPending}
+        disabled={isLoading}
         variant="default"
         className={"bg-rose-800"}
         onClick={(e) => {
           e.stopPropagation();
           edit({
-            ...creature,
-            hp: typeof hpDiff === "number" ? creature.hp - hpDiff : creature.hp,
+            ...participant,
+            hp: typeof hpDiff === "number" ? participant.hp - hpDiff : participant.hp,
           });
         }}
       >
         Damage
       </Button>
       <Button
-        disabled={isPending}
+        disabled={isLoading}
         variant="default"
         className={"bg-lime-800"}
         onClick={(e) => {
           e.stopPropagation();
           edit({
-            ...creature,
-            hp: typeof hpDiff === "number" ? creature.hp + hpDiff : creature.hp,
+            ...participant,
+            hp: typeof hpDiff === "number" ? participant.hp + hpDiff : participant.hp,
           });
         }}
       >

@@ -56,40 +56,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 bot = discord.Bot()
 
 
-class Id(BaseModel):
+class EncounterResponse(BaseModel):
     id: int
-
-
-class Creature(Id):
-    name: str
-    max_hp: int
-    challenge_rating: float
-    is_player: bool = False
-
-
-class EncounterParticipant(Id):
-    creature_id: int
-    encounter_id: int
-    hp: int
-    initiative: int
-    is_active: bool
-
-
-class EncounterCreature(EncounterParticipant, Creature):
-    pass
-
-
-class EncounterRequest(BaseModel):
-    name: str
-    description: str
-
-
-class EncounterResponse(Id):
     name: Optional[str] = None
     description: Optional[str] = None
     started_at: Optional[NaiveDatetime] = None
@@ -103,6 +75,14 @@ class DiscordUser(BaseModel):
     flags: int
     premium_type: int
     public_flags: int
+
+
+class DiscordTextChannel(BaseModel):
+    id: int
+    name: str
+    members: List[str]
+    guild: str
+    encounter_message_id: Optional[int] = None
 
 
 class UserId(BaseModel):
@@ -199,222 +179,20 @@ async def get_discord_user(
                 raise HTTPException(status_code=401, detail="Invalid token")
 
 
-
-
-@app.put("/api/encounters/{encounter_id}/{participant_id}}")
-async def update_encounter_creature(
-    encounter_id: int,
-    participant_id: int,
-    creature_id: int,
-    encounter_data: EncounterParticipant,
-    background_tasks: BackgroundTasks,
-    user=Depends(get_discord_user),
-) -> List[EncounterCreature]:
+@app.get("/api/encounters/{encounter_id}")
+async def get_user_encounter_by_id(
+    encounter_id: int, user=Depends(get_discord_user)
+) -> EncounterResponse:
     async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(EncounterParticipant)) as cur:
+        async with conn.cursor(row_factory=class_row(EncounterResponse)) as cur:
             await cur.execute(
-                """
-                UPDATE encounter_participants
-                SET 
-                    hp = CASE 
-                        WHEN %s < 0 THEN 0F
-                        WHEN %s > (SELECT max_hp FROM creatures WHERE id = %s) THEN (SELECT max_hp FROM creatures WHERE id = %s)
-                        ELSE %s
-                    END,
-                    initiative = %s
-                WHERE encounter_id = %s AND id = %s
-                RETURNING *
-                """,
-                (
-                    encounter_data.hp,
-                    encounter_data.hp,
-                    creature_id,
-                    creature_id,
-                    encounter_data.hp,
-                    encounter_data.initiative,
-                    encounter_id,
-                    participant_id,
-                ),
+                "SELECT * FROM encounters WHERE id = %s AND user_id = %s",
+                (encounter_id, user.id),
             )
-            if cur.rowcount == 0:
+            encounter = await cur.fetchone()
+            if not encounter:
                 raise HTTPException(status_code=404, detail="Encounter not found")
-            updated_creature = await cur.fetchone()
-            if not updated_creature:
-                raise HTTPException(status_code=500, detail="Failed to update creature")
-            background_tasks.add_task(
-                post_encounter_to_user_channel, user.id, encounter_id
-            )
-    return await get_encounter_creatures(encounter_id)
-
-
-@app.post("/api/encounters/{encounter_id}/remove/{participant_id}")
-async def remove_creature_from_encounter(
-    encounter_id: int, participant_id: int, user=Depends(get_discord_user)
-) -> EncounterResponseWithParticipants:
-    async with pool.connection() as conn:
-        async with conn.cursor() as cur:
-            user_encounter = await get_user_encounter_by_id(encounter_id, user)
-            await cur.execute(
-                "DELETE FROM encounter_participants WHERE encounter_id=%s AND id=%s",
-                (user_encounter.id, participant_id),
-            )
-    return EncounterResponseWithParticipants(
-        **user_encounter.model_dump(),
-        participants=await get_encounter_creatures(user_encounter.id),
-    )
-
-
-@app.get("/api/creatures/{creature_id}")
-async def get_user_creature(
-    creature_id: int, user=Depends(get_discord_user)
-) -> Creature:
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(Creature)) as cur:
-            await cur.execute(
-                "SELECT * FROM creatures WHERE id = %s AND user_id = %s",
-                (creature_id, user.id),
-            )
-            creature = await cur.fetchone()
-            if not creature:
-                raise HTTPException(status_code=404, detail="Creature not found")
-            return creature
-
-
-@app.put("/api/creatures/{creature_id}")
-async def update_creature(
-    creature_id: int,
-    creature: Creature,
-    user=Depends(get_discord_user),
-) -> Creature:
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(Creature)) as cur:
-            await cur.execute(
-                "UPDATE creatures SET name=%s, max_hp=%s, challenge_rating=%s, is_player=%s WHERE id=%s AND user_id=%s RETURNING *",
-                (
-                    creature.name,
-                    creature.max_hp,
-                    creature.challenge_rating,
-                    creature.is_player,
-                    creature_id,
-                    user.id,
-                ),
-            )
-            updated_creature = await cur.fetchone()
-            if not updated_creature:
-                raise HTTPException(status_code=404, detail="Creature not found")
-            return updated_creature
-
-
-@app.post("/api/creatures")
-async def create_creature(
-    name: Annotated[str, Form()],
-    max_hp: Annotated[int, Form()],
-    icon: Annotated[UploadFile, Form()],
-    stat_block: Annotated[UploadFile, Form()],
-    challenge_rating: Annotated[float, Form()] = 0,
-    is_player: Annotated[bool, Form()] = False,
-    user=Depends(get_discord_user),
-) -> Creature:
-    if icon.content_type not in ["image/png"] or stat_block.content_type not in [
-        "image/png"
-    ]:
-        raise HTTPException(status_code=400, detail="Icon must be a JPEG or PNG file")
-
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(Creature)) as cur:
-            await cur.execute(
-                """
-                WITH creature_count AS (
-                SELECT COUNT(*) FROM creatures WHERE user_id = %s
-                ), insert_creature AS (
-                INSERT INTO creatures (user_id, name, max_hp, challenge_rating, is_player)
-                SELECT %s, %s, %s, %s, %s
-                WHERE (SELECT COUNT(*) FROM creature_count) < 30
-                RETURNING *
-                )
-                SELECT * FROM insert_creature;
-                """,
-                (
-                    user.id,
-                    user.id,
-                    name,
-                    max_hp,
-                    challenge_rating,
-                    is_player,
-                ),
-            )
-            new_creature = await cur.fetchone()
-            if not new_creature:
-                raise HTTPException(status_code=500, detail="Failed to create creature")
-
-            s3 = boto3.resource(
-                "s3",
-                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            )
-            bucket = s3.Bucket(os.getenv("AWS_BUCKET_NAME"))
-
-            bucket.put_object(Key=f"icon-{new_creature.id}.png", Body=icon.file)
-            bucket.put_object(
-                Key=f"stat_block-{new_creature.id}.png", Body=stat_block.file
-            )
-            return new_creature
-
-
-@app.delete("/api/creatures/{creature_id}")
-async def delete_creature(
-    creature_id: int, user=Depends(get_discord_user)
-) -> List[Creature]:
-    async with pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                "DELETE FROM creatures WHERE id=%s AND user_id=%s",
-                (creature_id, user.id),
-            )
-            if cur.rowcount == 0:
-                raise HTTPException(status_code=404, detail="Creature not found")
-            s3 = boto3.resource(
-                "s3",
-                aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-                aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            )
-            bucket = s3.Bucket(os.getenv("AWS_BUCKET_NAME"))
-            bucket.delete_objects(
-                Delete={
-                    "Objects": [
-                        {"Key": f"icon-{creature_id}.png"},
-                        {"Key": f"stat_block-{creature_id}.png"},
-                    ]
-                }
-            )
-    return await get_user_creatures(user=user)
-
-
-@app.get("/api/creatures")
-async def get_user_creatures(
-    name: Optional[str] = None,
-    user=Depends(get_discord_user),
-) -> List[Creature]:
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(Creature)) as cur:
-            params = [user.id]
-            filter_clause = ""
-            if name:
-                filter_clause = "AND name ILIKE %s"
-                params.append(f"%{name}%")
-            await cur.execute(
-                f"SELECT * FROM creatures WHERE user_id = %s {filter_clause} ORDER BY name ASC",
-                params,
-            )
-            return await cur.fetchall()
-
-
-class DiscordTextChannel(BaseModel):
-    id: int
-    name: str
-    members: List[str]
-    guild: str
-    encounter_message_id: Optional[int] = None
+            return encounter
 
 
 @app.get("/api/discord-channel")
@@ -473,27 +251,6 @@ async def get_settings(
             if not settings:
                 raise HTTPException(status_code=404, detail="Settings not found")
             return settings
-
-
-@app.put("/api/settings")
-async def update_settings(settings: Settings, user=Depends(get_discord_user)) -> None:
-    async with pool.connection() as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(
-                """
-            INSERT INTO discord_settings (user_id, show_health, show_icons, average_turn_duration, player_level) 
-            VALUES (%s, %s, %s, %s, %s) 
-            ON CONFLICT (user_id) 
-            DO UPDATE SET show_health = EXCLUDED.show_health, show_icons = EXCLUDED.show_icons, average_turn_duration = EXCLUDED.average_turn_duration, player_level = EXCLUDED.player_level
-            """,
-                (
-                    user.id,
-                    settings.show_health,
-                    settings.show_icons,
-                    settings.average_turn_duration,
-                    settings.player_level,
-                ),
-            )
 
 
 @bot.event

@@ -1,24 +1,26 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { EncounterCreature, useUpdateEncounterCreature } from "../api";
+import { EncounterParticipant } from "@/server/api/router";
+import { api } from "@/trpc/react";
 import React from "react";
 import { useDebouncedCallback } from "use-debounce";
 
 export default function InitiativeInput({
-  creature,
+  participant,
   className,
 }: {
-  creature: EncounterCreature;
+  participant: EncounterParticipant;
   className?: string;
 }) {
   const [initiative, setInitiative] = React.useState<string | number>(
-    creature.initiative
+    participant.initiative
   );
-  const { mutate: updateCreature } = useUpdateEncounterCreature();
+  const { mutate: updateParticipant } =
+    api.updateEncounterParticipant.useMutation();
   const debouncedUpdate = useDebouncedCallback((initiative: number) => {
-    updateCreature({
-      ...creature,
+    updateParticipant({
+      ...participant,
       initiative: parseInt(initiative.toString()),
     });
   }, 500);

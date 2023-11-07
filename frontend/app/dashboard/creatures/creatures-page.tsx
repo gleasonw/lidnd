@@ -1,13 +1,6 @@
 "use client";
 
 import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
-import {
-  Creature,
-  useCreateCreature,
-  useDeleteCreature,
-  useUpdateCreature,
-  useUserCreatures,
-} from "@/app/dashboard/encounters/api";
 import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,21 +10,25 @@ import { LoadingButton } from "@/components/ui/loading-button";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import clsx from "clsx";
+import { api } from "@/trpc/react";
+import { Creature } from "@/server/api/router";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");
   const { data: creatures, isLoading: isLoadingCreatures } =
-    useUserCreatures(name);
+    api.getUserCreatures.useQuery({
+      name,
+    });
   const {
     mutate: deleteCreature,
     variables: deletedId,
-    isPending,
-  } = useDeleteCreature();
+    isLoading: isDeletePending,
+  } = api.deleteCreature.useMutation();
   const [isAddingCreatures, setIsAddingCreatures] = useState(false);
 
-  const { mutate: createCreature } = useCreateCreature();
+  const { mutate: createCreature } = api.createCreature.useMutation();
 
-  const displayCreatures = isPending
+  const displayCreatures = isDeletePending
     ? creatures?.filter((creature) => creature.id !== deletedId)
     : creatures;
   return (
@@ -62,7 +59,7 @@ export default function CreaturesPage() {
           </Button>
           <Card className="max-w-700 mx-auto pt-5">
             <CardContent>
-              <FullCreatureAddForm createCreatureMutation={createCreature} />
+              <FullCreatureAddForm uploadCreature={createCreature} />
             </CardContent>
           </Card>
         </>
@@ -75,7 +72,10 @@ export default function CreaturesPage() {
           Array(5)
             .fill(null)
             .map((_, i) => (
-              <Card key={i} className={"animate-pulse w-72 h-[600px] bg-gray-200"} />
+              <Card
+                key={i}
+                className={"animate-pulse w-72 h-[600px] bg-gray-200"}
+              />
             ))}
         {displayCreatures?.map((creature) => (
           <Card
@@ -113,7 +113,8 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
   const [name, setName] = useState(creature.name);
   const [isPlayer, setIsPlayer] = useState(creature.is_player);
 
-  const { mutate: updateCreature, isPending } = useUpdateCreature();
+  const { mutate: updateCreature, isLoading } =
+    api.updateCreature.useMutation();
 
   return (
     <form className="flex flex-col gap-5 justify-between">
@@ -147,7 +148,7 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
       <label>
         Player
         <Checkbox
-          checked={isPlayer}
+          checked={isPlayer ?? false}
           onCheckedChange={(checked) =>
             checked !== "indeterminate" && setIsPlayer(checked)
           }
@@ -158,16 +159,13 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
           e.preventDefault();
           updateCreature({
             id: creature.id,
-            creature: {
-              id: creature.id,
-              challenge_rating: challengeRating,
-              max_hp: maxHp,
-              name,
-              is_player: isPlayer,
-            },
+            challenge_rating: challengeRating,
+            max_hp: maxHp,
+            name,
+            is_player: isPlayer,
           });
         }}
-        isLoading={isPending}
+        isLoading={isLoading}
       >
         Update
       </LoadingButton>

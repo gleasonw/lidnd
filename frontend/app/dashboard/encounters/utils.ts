@@ -71,9 +71,12 @@ export function getCreaturePostForm(creature: CreaturePost): FormData {
   const formData = new FormData();
   formData.append("name", creature.name);
   formData.append("max_hp", creature.max_hp.toString());
-  formData.append("icon", creature.icon);
-  formData.append("stat_block", creature.stat_block);
-  formData.append("challenge_rating", creature.challenge_rating.toString());
-  formData.append("is_player", creature.is_player.toString());
+  formData.append("icon", creature.icon_image);
+  formData.append("stat_block", creature.stat_block_image);
+  formData.append(
+    "challenge_rating",
+    creature.challenge_rating?.toString() || ""
+  );
+  formData.append("is_player", creature.is_player?.toString() || "");
   return formData;
 }
