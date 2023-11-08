@@ -19,6 +19,7 @@ import { rerouteUrl } from "@/app/login/page";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");
+  const { getUserCreatures } = api.useUtils();
   const { data: creatures, isLoading: isLoadingCreatures } =
     api.getUserCreatures.useQuery({
       name,
@@ -27,16 +28,31 @@ export default function CreaturesPage() {
     mutate: deleteCreature,
     variables: deletedId,
     isLoading: isDeletePending,
-  } = api.deleteCreature.useMutation();
+  } = api.deleteCreature.useMutation({
+    onSettled: async () => {
+      await getUserCreatures.invalidate();
+    },
+    onMutate: async (id) => {
+      await getUserCreatures.cancel();
+      const previous = getUserCreatures.getData();
+      getUserCreatures.setData({}, (old) => {
+        return old?.filter((creature) => creature.id !== id);
+      });
+      return { previous };
+    },
+  });
   const [isAddingCreatures, setIsAddingCreatures] = useState(false);
 
   const { mutate: createCreature } = useMutation({
     mutationFn: async (rawData: CreaturePost) => {
       const formData = getCreaturePostForm(rawData);
-      const response = await fetch(`${rerouteUrl}/api/creature/create-creature`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `${rerouteUrl}/api/creature/create-creature`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
       const data = await response.json();
       if (response.status !== 200) {
         console.log(data.detail);

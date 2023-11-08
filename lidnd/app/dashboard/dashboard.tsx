@@ -23,7 +23,20 @@ export default function Dashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: encounters, isLoading } = api.encounters.useQuery();
-  const { mutate: deleteEncounter } = api.deleteEncounter.useMutation();
+  const { encounters: encountersQuery } = api.useUtils();
+  const { mutate: deleteEncounter } = api.deleteEncounter.useMutation({
+    onSettled: async () => {
+      await encountersQuery.invalidate();
+    },
+    onMutate: async (id) => {
+      await encountersQuery.cancel();
+      const previous = encountersQuery.getData();
+      encountersQuery.setData(undefined, (old) => {
+        return old?.filter((encounter) => encounter.id !== id);
+      });
+      return { previous };
+    },
+  });
   const { mutate: createDefaultEncounter, isLoading: isCreatingEncounter } =
     api.createEncounter.useMutation({
       onSuccess: async (encounter) => {

@@ -235,7 +235,7 @@ export function BattleCard({
         <CardHeader className="text-ellipsis max-w-full p-3">
           <CardTitle>{creature.name}</CardTitle>
         </CardHeader>
-        {creature.creature_id === "" ? (
+        {creature.creature_id === "pending" ? (
           <span>Loading</span>
         ) : (
           <CharacterIcon

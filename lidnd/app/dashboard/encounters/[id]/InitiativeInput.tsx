@@ -3,7 +3,6 @@
 import { useUpdateEncounterParticipant } from "@/app/dashboard/encounters/[id]/hooks";
 import { Input } from "@/components/ui/input";
 import { EncounterParticipant } from "@/server/api/router";
-import { api } from "@/trpc/react";
 import React from "react";
 import { useDebouncedCallback } from "use-debounce";
 

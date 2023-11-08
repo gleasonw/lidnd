@@ -46,7 +46,7 @@ export function useCreateCreatureInEncounter() {
         const newParticipant: EncounterCreature = {
           ...data,
           encounter_id: old.id,
-          creature_id: optimisticId,
+          creature_id: 'pending',
           id: optimisticId,
           initiative: 0,
           hp: data.max_hp,

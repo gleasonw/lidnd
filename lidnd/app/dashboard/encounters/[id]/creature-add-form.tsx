@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import * as z from "zod";
 import { Card, CardContent } from "@/components/ui/card";
 import clsx from "clsx";
 import {
+  Creature,
+  EncounterCreature,
   creatureUploadSchema,
   insertCreatureSchema,
 } from "@/server/api/router";
@@ -153,16 +155,56 @@ export function ExistingCreature({
 }) {
   const [name, setName] = useState("");
   const id = useEncounterId();
+  const { encounterById } = api.useUtils();
+  const optimisticId = useId();
 
-  const { data: encounter, isLoading: isLoadingCreatures } =
-    api.encounterById.useQuery(id);
-  const {
-    mutate: addCreature,
-    isLoading: isAddingExistingCreature,
-    variables,
-  } = api.addExistingCreatureToEncounter.useMutation();
-
-  const creatures = encounter?.participants;
+  const { data: creatures, isLoading: isLoadingCreatures } =
+    api.getUserCreatures.useQuery({
+      name,
+    });
+  const { mutate: addCreature, isLoading: isAddingExistingCreature } =
+    api.addExistingCreatureToEncounter.useMutation({
+      onMutate: async ({ creature_id }) => {
+        await encounterById.cancel(id);
+        const previousEncounterData = encounterById.getData(id);
+        encounterById.setData(id, (old) => {
+          if (!old) {
+            return;
+          }
+          const selectedCreature = creatures?.find(
+            (creature) => creature.id === creature_id
+          );
+          if (!selectedCreature) return;
+          const newParticipant: EncounterCreature = {
+            encounter_id: old.id,
+            creature_id: creature_id,
+            id: optimisticId,
+            initiative: 0,
+            hp: selectedCreature.max_hp,
+            name: selectedCreature.name,
+            challenge_rating: selectedCreature.challenge_rating,
+            max_hp: selectedCreature.max_hp,
+            is_player: selectedCreature.is_player,
+            is_active: false,
+            created_at: new Date(),
+            user_id: old.user_id,
+          };
+          return {
+            ...old,
+            participants: [...old.participants, newParticipant],
+          };
+        });
+        return { previousEncounterData };
+      },
+      onError: (err, variables, context) => {
+        if (context?.previousEncounterData) {
+          encounterById.setData(id, context.previousEncounterData);
+        }
+      },
+      onSettled: () => {
+        encounterById.invalidate(id);
+      },
+    });
 
   return (
     <>

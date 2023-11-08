@@ -4,7 +4,6 @@ import { useUpdateEncounterParticipant } from "@/app/dashboard/encounters/[id]/h
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EncounterParticipant } from "@/server/api/router";
-import { api } from "@/trpc/react";
 import { useState } from "react";
 
 export function ParticipantHealthForm({

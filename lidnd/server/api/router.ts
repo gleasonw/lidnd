@@ -406,6 +406,7 @@ export const appRouter = t.router({
         .values({
           encounter_id: opts.input.encounter_id,
           creature_id: opts.input.creature_id,
+          hp: userCreature[0].max_hp,
         })
         .returning();
       if (encounterParticipant.length === 0) {
