@@ -26,10 +26,25 @@ export function updateTurnOrder<
   }
 >(to: "next" | "previous", participants?: T[]): T[] | undefined {
   if (participants && Array.isArray(participants)) {
-    const sortedParticipants = participants
-      .slice()
-      .sort(sortEncounterCreatures);
-    const currentActive = participants.find((c) => c.is_active);
+    let sortedParticipants = participants.slice().sort(sortEncounterCreatures);
+    let currentActive = participants.find((c) => c.is_active);
+    if (!currentActive) {
+      // this should never happen, but just in case
+      console.warn("No active creature found, defaulting to first creature");
+      currentActive = sortedParticipants[0];
+      sortedParticipants = sortedParticipants.map((c) => {
+        if (c.id === currentActive?.id) {
+          return {
+            ...c,
+            is_active: true,
+          };
+        }
+        return {
+          ...c,
+          is_active: false,
+        };
+      });
+    }
     const activeParticipants = sortedParticipants.filter(
       (c) => c.hp > 0 || c.is_active
     );
@@ -50,7 +65,7 @@ export function updateTurnOrder<
               activeParticipants.length
           ];
       }
-      return participants.map((c) => {
+      return sortedParticipants.map((c) => {
         if (c.id === nextActive?.id) {
           return {
             ...c,
@@ -62,6 +77,9 @@ export function updateTurnOrder<
           is_active: false,
         };
       });
+    } else {
+      // if there is only one active participant, just return the original array
+      return sortedParticipants;
     }
   }
   return participants;

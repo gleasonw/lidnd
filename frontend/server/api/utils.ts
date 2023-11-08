@@ -1,6 +1,10 @@
 import { db } from "@/server/api/db";
-import { creatures, encounters } from "@/server/api/db/schema";
-import { and, eq } from "drizzle-orm";
+import {
+  creatures,
+  encounter_participant,
+  encounters,
+} from "@/server/api/db/schema";
+import { and, eq, sql } from "drizzle-orm";
 import { Upload } from "@aws-sdk/lib-storage";
 import {
   Creature,
@@ -121,4 +125,31 @@ export function mergeEncounterCreature(
     created_at: participant.created_at,
     user_id: creature.user_id,
   };
+}
+
+export async function setActiveParticipant(
+  participant_id: string,
+  encounter_id: string,
+  dbObject = db
+) {
+  await db.execute(
+    sql`
+    UPDATE encounter_participant
+    SET is_active = CASE 
+        WHEN id = ${participant_id} THEN TRUE
+        ELSE FALSE
+    END
+    WHERE encounter_id = ${encounter_id}
+    `
+  );
+}
+
+export async function getEncounterParticipants(
+  encounter_id: string,
+  dbObject = db
+) {
+  return await dbObject
+    .select()
+    .from(encounter_participant)
+    .where(eq(encounter_participant.encounter_id, encounter_id));
 }

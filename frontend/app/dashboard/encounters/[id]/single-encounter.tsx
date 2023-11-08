@@ -23,7 +23,10 @@ import clsx from "clsx";
 import InitiativeInput from "@/app/dashboard/encounters/[id]/InitiativeInput";
 import { BasePopover } from "@/app/dashboard/base-popover";
 import { api } from "@/trpc/react";
-import { useCreateCreatureInEncounter } from "@/app/dashboard/encounters/[id]/hooks";
+import {
+  useCreateCreatureInEncounter,
+  useRemoveParticipantFromEncounter,
+} from "@/app/dashboard/encounters/[id]/hooks";
 
 export default function SingleEncounter() {
   const id = useEncounterId();
@@ -46,7 +49,7 @@ export default function SingleEncounter() {
   }, 500);
 
   const { mutate: removeCreatureFromEncounter } =
-    api.removeParticipantFromEncounter.useMutation();
+    useRemoveParticipantFromEncounter();
 
   return (
     <div className={"flex flex-col items-center gap-10 relative"}>

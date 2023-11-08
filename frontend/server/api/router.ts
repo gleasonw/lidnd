@@ -17,10 +17,12 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import {
   createCreature,
+  getEncounterParticipants,
   getIconAWSname,
   getStatBlockAWSname,
   getUserEncounter,
   mergeEncounterCreature,
+  setActiveParticipant,
 } from "@/server/api/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
@@ -261,10 +263,7 @@ export const appRouter = t.router({
       const result = await db.transaction(async (tx) => {
         const [encounter, encounterParticipants] = await Promise.all([
           getUserEncounter(opts.ctx.user.userId, opts.input, tx),
-          tx
-            .select()
-            .from(encounter_participant)
-            .where(eq(encounter_participant.encounter_id, opts.input)),
+          getEncounterParticipants(opts.input, tx),
         ]);
         const sortedParticipants = encounterParticipants.sort(
           sortEncounterCreatures
@@ -311,12 +310,7 @@ export const appRouter = t.router({
       const result = await db.transaction(async (tx) => {
         const [encounter, encounterParticipants] = await Promise.all([
           getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id, tx),
-          tx
-            .select()
-            .from(encounter_participant)
-            .where(
-              eq(encounter_participant.encounter_id, opts.input.encounter_id)
-            ),
+          getEncounterParticipants(opts.input.encounter_id, tx),
         ]);
         const updatedOrder = updateTurnOrder(
           opts.input.to,
@@ -331,16 +325,7 @@ export const appRouter = t.router({
           });
         }
 
-        await tx.execute(
-          sql`
-          UPDATE encounter_participant
-          SET is_active = CASE 
-              WHEN id = ${newActive.id} THEN TRUE
-              ELSE FALSE
-          END
-          WHERE encounter_id = ${encounter.id}
-          `
-        );
+        await setActiveParticipant(newActive.id, opts.input.encounter_id, tx);
         return encounter;
       });
       return result;
@@ -354,7 +339,10 @@ export const appRouter = t.router({
       })
     )
     .mutation(async (opts) => {
-      await getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id);
+      const [_, encounterParticipants] = await Promise.all([
+        getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id),
+        getEncounterParticipants(opts.input.encounter_id),
+      ]);
       const result = await db
         .delete(encounter_participant)
         .where(
@@ -364,11 +352,26 @@ export const appRouter = t.router({
           )
         )
         .returning();
+
       if (result.length === 0) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to remove participant from encounter",
         });
+      }
+      if (result[0].is_active) {
+        const updatedOrder = updateTurnOrder("next", encounterParticipants);
+        const newActive = updatedOrder?.find((c) => c.is_active);
+
+        if (!newActive) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message:
+              "Failed to update turn: could not set new active participant",
+          });
+        }
+
+        await setActiveParticipant(newActive.id, opts.input.encounter_id);
       }
       return result[0];
     }),

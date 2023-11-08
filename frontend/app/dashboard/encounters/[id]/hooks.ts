@@ -71,3 +71,35 @@ export function useCreateCreatureInEncounter() {
     },
   });
 }
+
+export function useRemoveParticipantFromEncounter() {
+  const { encounterById } = api.useUtils();
+  const id = useEncounterId();
+
+  return api.removeParticipantFromEncounter.useMutation({
+    onMutate: async (data) => {
+      await encounterById.cancel(id);
+      const previousEncounterData = encounterById.getData(id);
+      encounterById.setData(id, (old) => {
+        if (!old) {
+          return;
+        }
+        return {
+          ...old,
+          participants: old.participants.filter(
+            (p) => p.id !== data.participant_id
+          ),
+        };
+      });
+      return { previousEncounterData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousEncounterData) {
+        encounterById.setData(id, context.previousEncounterData);
+      }
+    },
+    onSettled: () => {
+      encounterById.invalidate(id);
+    },
+  });
+}

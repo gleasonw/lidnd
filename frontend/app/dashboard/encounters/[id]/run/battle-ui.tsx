@@ -28,7 +28,10 @@ import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { EncounterCreature } from "@/server/api/router";
-import { useCreateCreatureInEncounter } from "@/app/dashboard/encounters/[id]/hooks";
+import {
+  useCreateCreatureInEncounter,
+  useRemoveParticipantFromEncounter,
+} from "@/app/dashboard/encounters/[id]/hooks";
 
 export function BattleUI() {
   const id = useEncounterId();
@@ -59,7 +62,7 @@ export function BattleUI() {
   const selectedId = dmSelectedCreature ?? activeParticipant?.id ?? null;
 
   const { mutate: removeCreatureFromEncounter } =
-    api.removeParticipantFromEncounter.useMutation();
+    useRemoveParticipantFromEncounter();
 
   function handleChangeTurn(direction: "next" | "previous") {
     const newParticipants = updateTurnOrder(direction, encounterParticipants);
@@ -106,6 +109,7 @@ export function BattleUI() {
           </Button>
         )}
       </div>
+      
       {addingCreature && (
         <BattleAddCreatureForm>
           <Button variant={"ghost"} onClick={() => setAddingCreature(false)}>
@@ -113,24 +117,25 @@ export function BattleUI() {
           </Button>
         </BattleAddCreatureForm>
       )}
-      <AnimatePresence>
-        <div
-          className={clsx(
-            "flex flex-row gap-10 px-10 max-w-full items-center overflow-auto h-80"
-          )}
-          ref={scrollContainer}
+
+      <div
+        className={clsx(
+          "flex flex-row gap-10 px-10 max-w-full items-center overflow-auto h-80"
+        )}
+        ref={scrollContainer}
+      >
+        <Button
+          className="absolute left-0 sm:left-10 z-10 h-20"
+          onClick={() => handleChangeTurn("previous")}
+          disabled={isTurnLoading}
         >
-          <Button
-            className="absolute left-0 sm:left-10 z-10 h-20"
-            onClick={() => handleChangeTurn("previous")}
-            disabled={isTurnLoading}
-          >
-            <ChevronLeftIcon />
-          </Button>
+          <ChevronLeftIcon />
+        </Button>
+        <AnimatePresence>
           {displayedParticipants
             ?.slice()
             .sort(sortEncounterCreatures)
-            .map((participant) => (
+            .map((participant, index) => (
               <AnimationListItem key={participant.id}>
                 <button
                   onClick={() => setDmSelectedCreature(participant.id)}
@@ -143,49 +148,50 @@ export function BattleUI() {
                 </button>
               </AnimationListItem>
             ))}
-          <Button
-            className="absolute right-0 sm:right-10 z-10 h-20"
-            onClick={() => handleChangeTurn("next")}
-            disabled={isTurnLoading}
-          >
-            <ChevronRightIcon />
-          </Button>
-        </div>
+        </AnimatePresence>
+        <Button
+          className="absolute right-0 sm:right-10 z-10 h-20"
+          onClick={() => handleChangeTurn("next")}
+          disabled={isTurnLoading}
+        >
+          <ChevronRightIcon />
+        </Button>
+      </div>
 
-        {selectedParticipant && (
-          <>
-            <div className="flex flex-col gap-5">
-              <span className={"text-center text-xl"}>
-                {selectedParticipant.name}{" "}
-              </span>
-              <ParticipantHealthForm participant={selectedParticipant} />
-              {selectedParticipant.hp > 0 ? (
-                <InitiativeInput
-                  participant={selectedParticipant}
-                  className="flex gap-5"
-                  key={selectedParticipant.id}
-                />
-              ) : null}
-            </div>
-            <StatBlock
-              id={selectedParticipant.creature_id}
-              name={selectedParticipant.name}
-              key={selectedParticipant.creature_id}
-            />
-            <Button
-              variant="destructive"
-              onClick={() =>
-                removeCreatureFromEncounter({
-                  encounter_id: id,
-                  participant_id: selectedParticipant.id,
-                })
-              }
-            >
-              Remove from encounter
-            </Button>
-          </>
-        )}
-      </AnimatePresence>
+      {selectedParticipant && (
+        <>
+          <div className="flex flex-col gap-5">
+            <span className={"text-center text-xl"}>
+              {selectedParticipant.name}{" "}
+            </span>
+            <ParticipantHealthForm participant={selectedParticipant} />
+            {selectedParticipant.hp > 0 ? (
+              <InitiativeInput
+                participant={selectedParticipant}
+                className="flex gap-5"
+                key={selectedParticipant.id}
+              />
+            ) : null}
+          </div>
+          <StatBlock
+            id={selectedParticipant.creature_id}
+            name={selectedParticipant.name}
+            key={selectedParticipant.creature_id}
+          />
+          <Button
+            variant="destructive"
+            onClick={() =>
+              removeCreatureFromEncounter({
+                encounter_id: id,
+                participant_id: selectedParticipant.id,
+              })
+            }
+          >
+            Remove from encounter
+          </Button>
+        </>
+      )}
+      
     </div>
   );
 }
@@ -205,7 +211,6 @@ export function BattleCard({
 }: BattleCardProps) {
   return (
     <div
-      key={creature.id}
       className={`relative flex-col gap-6 items-center w-40 justify-between flex`}
     >
       <Swords
