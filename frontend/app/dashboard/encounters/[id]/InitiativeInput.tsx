@@ -20,8 +20,10 @@ export default function InitiativeInput({
     api.updateEncounterParticipant.useMutation();
   const debouncedUpdate = useDebouncedCallback((initiative: number) => {
     updateParticipant({
-      ...participant,
+      participant_id: participant.id,
+      encounter_id: participant.encounter_id,
       initiative: parseInt(initiative.toString()),
+      hp: participant.hp,
     });
   }, 500);
 

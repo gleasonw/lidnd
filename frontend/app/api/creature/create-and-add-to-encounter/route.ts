@@ -24,6 +24,7 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
     .values({
       encounter_id: creature.value.encounter_id,
       creature_id: newCreature.id,
+      hp: newCreature.max_hp,
     });
   return NextResponse.json({ Message: "Success", status: 201 });
 };

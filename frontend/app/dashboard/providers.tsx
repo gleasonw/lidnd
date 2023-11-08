@@ -7,7 +7,7 @@ import { logOut } from "@/app/dashboard/actions";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { useUser } from "@/app/hooks";
-import { api } from "@/trpc/react";
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const routes = ["/dashboard", "/dashboard/creatures"] as const;
@@ -52,6 +52,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         </form>
       </nav>
       {children}
+      <ReactQueryDevtools initialIsOpen={false} />
     </>
   );
 }

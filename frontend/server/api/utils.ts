@@ -2,7 +2,12 @@ import { db } from "@/server/api/db";
 import { creatures, encounters } from "@/server/api/db/schema";
 import { and, eq } from "drizzle-orm";
 import { Upload } from "@aws-sdk/lib-storage";
-import { creatureUploadSchema } from "@/server/api/router";
+import {
+  Creature,
+  EncounterCreature,
+  EncounterParticipant,
+  creatureUploadSchema,
+} from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import * as z from "zod";
 import { S3Client } from "@aws-sdk/client-s3";
@@ -97,3 +102,23 @@ export const getPageSession = cache(() => {
   const authRequest = auth.handleRequest("GET", context);
   return authRequest.validate();
 });
+
+export function mergeEncounterCreature(
+  participant: EncounterParticipant,
+  creature: Creature
+): EncounterCreature {
+  return {
+    id: participant.id,
+    encounter_id: participant.encounter_id,
+    creature_id: participant.creature_id,
+    name: creature.name,
+    challenge_rating: creature.challenge_rating,
+    max_hp: creature.max_hp,
+    hp: participant.hp,
+    is_active: participant.is_active,
+    is_player: creature.is_player,
+    initiative: participant.initiative,
+    created_at: participant.created_at,
+    user_id: creature.user_id,
+  };
+}

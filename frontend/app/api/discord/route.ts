@@ -30,6 +30,7 @@ export const GET = async (request: NextRequest) => {
       const user = await createUser({
         attributes: {
           username: discordUser.username,
+          avatar: discordUser.avatar,
         },
       });
       await db.insert(settings).values({

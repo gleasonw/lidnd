@@ -7,7 +7,7 @@ import { rerouteUrl } from "@/app/login/page";
 
 export const auth = lucia({
   adapter: postgresAdapter(queryClient, {
-    user: "users-drizzle",
+    user: "users",
     key: "user_key",
     session: "user_session",
   }),

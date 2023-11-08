@@ -16,15 +16,20 @@ import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-tim
 import { LoadingButton } from "@/components/ui/loading-button";
 import { api } from "@/trpc/react";
 import { Encounter } from "@/server/api/router";
+import { getQueryKey } from "@trpc/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Dashboard() {
   const router = useRouter();
-  const { data: encounters } = api.encounters.useQuery();
+  const queryClient = useQueryClient();
+  const { data: encounters, isLoading } = api.encounters.useQuery();
   const { mutate: deleteEncounter } = api.deleteEncounter.useMutation();
-  const { mutate: createDefaultEncounter, isLoading } =
+  const { mutate: createDefaultEncounter, isLoading: isCreatingEncounter } =
     api.createEncounter.useMutation({
-      onSuccess: (encounter) =>
-        router.push(`dashboard/encounters/${encounter.id}`),
+      onSuccess: async (encounter) => {
+        router.push(`dashboard/encounters/${encounter.id}`);
+        return await queryClient.invalidateQueries(getQueryKey(api.encounters));
+      },
     });
   const [encounter, setEncounter] = React.useState({
     name: "Unnamed encounter",
@@ -55,7 +60,7 @@ export default function Dashboard() {
         }}
       >
         <LoadingButton
-          isLoading={isLoading}
+          isLoading={isCreatingEncounter}
           type={"submit"}
           className={"flex gap-5 w-52"}
         >

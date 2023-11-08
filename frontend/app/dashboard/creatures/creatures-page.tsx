@@ -33,7 +33,7 @@ export default function CreaturesPage() {
   const { mutate: createCreature } = useMutation({
     mutationFn: async (rawData: CreaturePost) => {
       const formData = getCreaturePostForm(rawData);
-      const response = await fetch(`${rerouteUrl}/api/create-creature`, {
+      const response = await fetch(`${rerouteUrl}/api/creature/create-creature`, {
         method: "POST",
         body: formData,
       });

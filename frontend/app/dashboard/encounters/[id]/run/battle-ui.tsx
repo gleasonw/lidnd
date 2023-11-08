@@ -28,16 +28,22 @@ import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { EncounterCreature } from "@/server/api/router";
+import { useCreateCreatureInEncounter } from "@/app/dashboard/encounters/[id]/hooks";
 
 export function BattleUI() {
   const id = useEncounterId();
   const { data: encounter } = api.encounterById.useQuery(id);
   const encounterParticipants = encounter?.participants;
+  const { encounterById } = api.useUtils();
   const {
     mutate: changeActiveTo,
     isLoading: isTurnLoading,
     variables,
-  } = api.updateTurn.useMutation();
+  } = api.updateTurn.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(id);
+    },
+  });
 
   const displayedParticipants =
     isTurnLoading && variables
@@ -278,7 +284,7 @@ export const AnimationListItem = ({
 
 function BattleAddCreatureForm({ children }: { children?: React.ReactNode }) {
   const { mutate: addCreature, isLoading: isPendingCreatureAdd } =
-    api.createCreatureAndAddToEncounter.useMutation();
+    useCreateCreatureInEncounter();
   return (
     <div className={"flex flex-col w-full items-center gap-3"}>
       {children}
@@ -288,11 +294,7 @@ function BattleAddCreatureForm({ children }: { children?: React.ReactNode }) {
             <CardTitle>New creature</CardTitle>
             <CustomCreature
               mutation={{
-                onAddCreature: (data) =>
-                  addCreature({
-                    encounter_id: useEncounterId(),
-                    creature: data,
-                  }),
+                onAddCreature: (data) => addCreature(data),
                 isPending: isPendingCreatureAdd,
               }}
             />

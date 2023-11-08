@@ -12,14 +12,16 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const encounters = pgTable(
-  "encounters-drizzle",
+  "encounters",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: varchar("name", { length: 256 }),
     description: varchar("description", { length: 256 }),
     started_at: timestamp("started_at"),
     created_at: timestamp("created_at").defaultNow(),
-    user_id: text("user_id").notNull(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
   },
   (t) => {
     return {
@@ -29,7 +31,7 @@ export const encounters = pgTable(
 );
 
 export const creatures = pgTable(
-  "creatures-drizzle",
+  "creatures",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: varchar("name", { length: 256 }).notNull(),
@@ -37,7 +39,9 @@ export const creatures = pgTable(
     max_hp: integer("max_hp").notNull(),
     challenge_rating: real("challenge_rating").default(0).notNull(),
     is_player: boolean("is_player"),
-    user_id: text("user_id").notNull(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
   },
   (t) => {
     return {
@@ -47,7 +51,7 @@ export const creatures = pgTable(
 );
 
 export const encounter_participant = pgTable(
-  "encounter_participant-drizzle",
+  "encounter_participant",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     encounter_id: uuid("encounter_id")
@@ -69,7 +73,7 @@ export const encounter_participant = pgTable(
   }
 );
 
-export const settings = pgTable("settings-drizzle", {
+export const settings = pgTable("settings", {
   user_id: text("user_id").primaryKey(),
   show_health_in_discord: boolean("show_health_in_discord").default(false),
   show_icons_in_discord: boolean("show_icons_in_discord").default(true),
@@ -77,16 +81,19 @@ export const settings = pgTable("settings-drizzle", {
   default_player_level: integer("default_player_level").default(1).notNull(),
 });
 
-export const users = pgTable("users-drizzle", {
+export const users = pgTable("users", {
   id: text("id").primaryKey(),
   username: varchar("username", { length: 256 }).notNull(),
+  avatar: varchar("avatar", { length: 256 }),
 });
 
 export const session = pgTable("user_session", {
   id: varchar("id", {
     length: 256,
   }).primaryKey(),
-  user_id: text("user_id").notNull(),
+  user_id: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   active_expires: bigint("active_expires", {
     mode: "number",
   }).notNull(),
@@ -99,7 +106,9 @@ export const key = pgTable("user_key", {
   id: varchar("id", {
     length: 256,
   }).primaryKey(),
-  user_id: text("user_id").notNull(),
+  user_id: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   hashed_password: varchar("hashed_password", {
     length: 256,
   }),

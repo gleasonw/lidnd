@@ -20,6 +20,7 @@ import {
   getIconAWSname,
   getStatBlockAWSname,
   getUserEncounter,
+  mergeEncounterCreature,
 } from "@/server/api/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
@@ -95,9 +96,9 @@ export const appRouter = t.router({
     const response = encountersWithParticipants.reduce<
       Record<string, EncounterWithParticipants>
     >((acc, row) => {
-      const encounter = row["encounters-drizzle"];
-      const participant = row["encounter_participant-drizzle"];
-      const creature = row["creatures-drizzle"];
+      const encounter = row["encounters"];
+      const participant = row["encounter_participant"];
+      const creature = row["creatures"];
       if (!acc[encounter.id]) {
         acc[encounter.id] = {
           ...encounter,
@@ -105,10 +106,9 @@ export const appRouter = t.router({
         };
       }
       if (!participant || !creature) return acc;
-      acc[encounter.id].participants.push({
-        ...participant,
-        ...creature,
-      });
+      acc[encounter.id].participants.push(
+        mergeEncounterCreature(participant, creature)
+      );
       return acc;
     }, {});
     return Object.values(response);
@@ -133,9 +133,9 @@ export const appRouter = t.router({
     const response = encounter.reduce<
       Record<string, EncounterWithParticipants>
     >((acc, row) => {
-      const encounter = row["encounters-drizzle"];
-      const participant = row["encounter_participant-drizzle"];
-      const creature = row["creatures-drizzle"];
+      const encounter = row["encounters"];
+      const participant = row["encounter_participant"];
+      const creature = row["creatures"];
       if (!acc[encounter.id]) {
         acc[encounter.id] = {
           ...encounter,
@@ -143,10 +143,9 @@ export const appRouter = t.router({
         };
       }
       if (!participant || !creature) return acc;
-      acc[encounter.id].participants.push({
-        ...participant,
-        ...creature,
-      });
+      acc[encounter.id].participants.push(
+        mergeEncounterCreature(participant, creature)
+      );
       return acc;
     }, {});
     return Object.values(response)[0];
@@ -222,6 +221,40 @@ export const appRouter = t.router({
       return result[0];
     }),
 
+  updateEncounterParticipant: protectedProcedure
+    .input(
+      z.object({
+        participant_id: z.string(),
+        hp: z.number(),
+        initiative: z.number(),
+        encounter_id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      console.log(opts);
+      const result = await db.transaction(async (tx) => {
+        const [updatedParticipant, _] = await Promise.all([
+          await tx
+            .update(encounter_participant)
+            .set({
+              hp: opts.input.hp,
+              initiative: opts.input.initiative,
+            })
+            .where(eq(encounter_participant.id, opts.input.participant_id))
+            .returning(),
+          getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id, tx),
+        ]);
+        if (updatedParticipant.length === 0) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update encounter participant",
+          });
+        }
+        return updatedParticipant[0];
+      });
+      return result;
+    }),
+
   startEncounter: protectedProcedure
     .input(z.string())
     .mutation(async (opts) => {
@@ -237,17 +270,25 @@ export const appRouter = t.router({
           sortEncounterCreatures
         );
         const activeParticipant = sortedParticipants[0];
-        await tx
-          .update(encounter_participant)
-          .set({
-            is_active: true,
-          })
-          .where(
-            and(
-              eq(encounter_participant.encounter_id, opts.input),
-              eq(encounter_participant.id, activeParticipant.id)
-            )
-          );
+        await Promise.all([
+          tx
+            .update(encounter_participant)
+            .set({
+              is_active: true,
+            })
+            .where(
+              and(
+                eq(encounter_participant.encounter_id, opts.input),
+                eq(encounter_participant.id, activeParticipant.id)
+              )
+            ),
+          tx
+            .update(encounters)
+            .set({
+              started_at: new Date(),
+            })
+            .where(eq(encounters.id, opts.input)),
+        ]);
         return encounter;
       });
       if (!result) {
@@ -292,7 +333,7 @@ export const appRouter = t.router({
 
         await tx.execute(
           sql`
-          UPDATE encounter_participants
+          UPDATE encounter_participant
           SET is_active = CASE 
               WHEN id = ${newActive.id} THEN TRUE
               ELSE FALSE
