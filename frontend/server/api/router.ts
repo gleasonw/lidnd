@@ -16,7 +16,6 @@ import {
 } from "@/app/dashboard/encounters/utils";
 import { createInsertSchema } from "drizzle-zod";
 import {
-  createCreature,
   getEncounterParticipants,
   getIconAWSname,
   getStatBlockAWSname,

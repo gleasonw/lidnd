@@ -1,5 +1,6 @@
 "use client";
 
+import { useUpdateEncounterParticipant } from "@/app/dashboard/encounters/[id]/hooks";
 import { Input } from "@/components/ui/input";
 import { EncounterParticipant } from "@/server/api/router";
 import { api } from "@/trpc/react";
@@ -17,7 +18,7 @@ export default function InitiativeInput({
     participant.initiative
   );
   const { mutate: updateParticipant } =
-    api.updateEncounterParticipant.useMutation();
+    useUpdateEncounterParticipant(participant);
   const debouncedUpdate = useDebouncedCallback((initiative: number) => {
     updateParticipant({
       participant_id: participant.id,

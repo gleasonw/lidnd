@@ -2,7 +2,7 @@ import { CreaturePost } from "@/app/dashboard/encounters/[id]/creature-add-form"
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { getCreaturePostForm } from "@/app/dashboard/encounters/utils";
 import { rerouteUrl } from "@/app/login/page";
-import { EncounterCreature } from "@/server/api/router";
+import { EncounterCreature, EncounterParticipant } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { useMutation } from "@tanstack/react-query";
 import { useId } from "react";
@@ -100,6 +100,38 @@ export function useRemoveParticipantFromEncounter() {
     },
     onSettled: () => {
       encounterById.invalidate(id);
+    },
+  });
+}
+
+export function useUpdateEncounterParticipant(
+  participant: EncounterParticipant
+) {
+  const { encounterById } = api.useUtils();
+  return api.updateEncounterParticipant.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(participant.encounter_id);
+    },
+    onMutate: async (newParticipant) => {
+      await encounterById.cancel(participant.encounter_id);
+      const previousEncounter = encounterById.getData(participant.encounter_id);
+      encounterById.setData(participant.encounter_id, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          participants: old.participants.map((p) => {
+            if (p.id === newParticipant.participant_id) {
+              return {
+                ...p,
+                initiative: newParticipant.initiative,
+                hp: newParticipant.hp,
+              };
+            }
+            return p;
+          }),
+        };
+      });
+      return { previousEncounter };
     },
   });
 }
