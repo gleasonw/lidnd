@@ -18,6 +18,7 @@ import discord
 from discord import ApplicationContext
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
+from zoneinfo import ZoneInfo
 
 load_dotenv()
 
@@ -57,27 +58,17 @@ bot = discord.Bot()
 
 
 class Settings(BaseModel):
-    show_health: bool
-    show_icons: bool
-    average_turn_duration: int
-    player_level: int
+    user_id: str
+    show_health_in_discord: bool
+    show_icons_in_discord: bool
+    average_turn_seconds: int
+    default_player_level: int
 
 
-class EncounterResponse(BaseModel):
-    id: int
+class Encounter(BaseModel):
+    id: str
     name: Optional[str] = None
     description: Optional[str] = None
-    started_at: Optional[NaiveDatetime] = None
-    ended_at: Optional[NaiveDatetime] = None
-
-
-class DiscordUser(BaseModel):
-    id: int
-    username: str
-    locale: str
-    flags: int
-    premium_type: int
-    public_flags: int
 
 
 class DiscordTextChannel(BaseModel):
@@ -88,19 +79,77 @@ class DiscordTextChannel(BaseModel):
     encounter_message_id: Optional[int] = None
 
 
+class Session(BaseModel):
+    id: str
+    user_id: str
+    active_expires: datetime
+    idle_expires: datetime
+
+
+class User(BaseModel):
+    id: str
+    username: str
+    avatar: str
+    discord_id: str
+
+
 class UserId(BaseModel):
     id: int
 
 
-token_validation_cache: Dict[str, Tuple[datetime, DiscordUser]] = {}
+async def fetch_whitelist() -> Set[str]:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://raw.githubusercontent.com/gleasonw/dnd-init-tracker/main/whitelist.txt"
+        ) as resp:
+            whitelist = set((await resp.text()).splitlines())
+            return whitelist
 
 
+whitelist: Set[str] | None = None
+
+
+async def validate_auth(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
+    global whitelist
+    if not whitelist:
+        whitelist = await fetch_whitelist()
+    async with pool.connection() as conn:
+        session = await get_session(token, conn)
+        user = await get_user(session.user_id, conn)
+        if user.username not in whitelist:
+            raise HTTPException(status_code=401, detail="User not whitelisted")
+        utc_now = datetime.utcnow().replace(tzinfo=ZoneInfo("UTC"))
+        if session.idle_expires < utc_now:
+            raise HTTPException(status_code=401, detail="Session has expired")
+        return user
+
+
+async def get_session(id: str, conn) -> Session:
+    async with conn.cursor(row_factory=class_row(Session)) as cur:
+        await cur.execute("SELECT * FROM user_session WHERE id = %s", (id,))
+        session = await cur.fetchone()
+        if not session:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return session
+
+
+async def get_user(id: str, conn) -> User:
+    async with conn.cursor(row_factory=class_row(User)) as cur:
+        await cur.execute("SELECT * FROM users WHERE id = %s", (id,))
+        user = await cur.fetchone()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
+
+
+@app.post("/api/post_encounter_to_user_channel")
 async def post_encounter_to_user_channel(
-    user_id: int, encounter: EncounterResponse, settings: Settings
+    encounter: Encounter, settings: Settings, user=Depends(validate_auth)
 ):
+    user_id = user.id
     start_time = datetime.now()
     async with pool.connection() as conn:
-        channel_info = await get_discord_channel(UserId(id=user_id))
+        channel_info = await get_discord_channel(UserId(id=user.discord_id))
         channel = bot.get_channel(channel_info.id)
         if not channel:
             return
@@ -131,74 +180,13 @@ async def post_encounter_to_user_channel(
     print(f"Posting encounter took {(datetime.now() - start_time).total_seconds()}s")
 
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
-async def fetch_whitelist() -> Set[str]:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            "https://raw.githubusercontent.com/gleasonw/dnd-init-tracker/main/whitelist.txt"
-        ) as resp:
-            whitelist = set((await resp.text()).splitlines())
-            return whitelist
-
-
-whitelist: Set[str] | None = None
-
-
-async def get_discord_user(
-    token: Annotated[str, Depends(oauth2_scheme)]
-) -> DiscordUser:
-    global whitelist
-    if not whitelist:
-        whitelist = await fetch_whitelist()
-    if token in token_validation_cache:
-        (last_validated, user) = token_validation_cache[token]
-        time_diff = datetime.now() - last_validated
-        if time_diff.days < 1:
-            return user
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            "https://discord.com/api/users/@me",
-            headers={"Authorization": f"Bearer {token}"},
-        ) as resp:
-            if resp.status == 200:
-                user = DiscordUser(**await resp.json())
-                if user.username not in whitelist:
-                    raise HTTPException(status_code=403, detail="User not whitelisted")
-                token_validation_cache[token] = (datetime.now(), user)
-                return user
-            else:
-                print(resp.headers)
-                print(await resp.text())
-                raise HTTPException(status_code=401, detail="Invalid token")
-
-
-@app.get("/api/encounters/{encounter_id}")
-async def get_user_encounter_by_id(
-    encounter_id: int, user=Depends(get_discord_user)
-) -> EncounterResponse:
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(EncounterResponse)) as cur:
-            await cur.execute(
-                "SELECT * FROM encounters WHERE id = %s AND user_id = %s",
-                (encounter_id, user.id),
-            )
-            encounter = await cur.fetchone()
-            if not encounter:
-                raise HTTPException(status_code=404, detail="Encounter not found")
-            return encounter
-
-
 @app.get("/api/discord-channel")
-async def get_discord_channel(user=Depends(get_discord_user)) -> DiscordTextChannel:
+async def get_discord_channel(user=Depends(validate_auth)) -> DiscordTextChannel:
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                "SELECT channel_id, message_id FROM channels WHERE user_id = %s",
-                (user.id,),
+                "SELECT channel_id, message_id FROM channels WHERE discord_user_id = %s",
+                (user.discord_id,),
             )
             ids = await cur.fetchone()
             if not ids:
@@ -229,7 +217,7 @@ async def setup(ctx: ApplicationContext):
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                "INSERT INTO channels (channel_id, user_id) VALUES (%s, %s)",
+                "INSERT INTO channels (channel_id, discord_user_id) VALUES (%s, %s)",
                 (ctx.channel_id, ctx.author.id),
             )
             await ctx.respond(

@@ -21,6 +21,7 @@ import {
   getStatBlockAWSname,
   getUserEncounter,
   mergeEncounterCreature,
+  postEncounterToUserChannel,
   setActiveParticipant,
 } from "@/server/api/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
@@ -349,6 +350,7 @@ export const appRouter = t.router({
         }
 
         await setActiveParticipant(newActive.id, opts.input.encounter_id, tx);
+        await postEncounterToUserChannel(encounter);
         return encounter;
       });
       return result;

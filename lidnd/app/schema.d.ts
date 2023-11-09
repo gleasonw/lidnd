@@ -5,77 +5,13 @@
 
 
 export interface paths {
-  "/": {
-    /** Read Root */
-    get: operations["read_root__get"];
-  };
-  "/api/encounters": {
-    /** Get User Encounters */
-    get: operations["get_user_encounters_api_encounters_get"];
-    /** Create Encounter */
-    post: operations["create_encounter_api_encounters_post"];
-  };
-  "/api/encounters/{encounter_id}": {
-    /** Get User Encounter By Id */
-    get: operations["get_user_encounter_by_id_api_encounters__encounter_id__get"];
-    /** Update Encounter */
-    put: operations["update_encounter_api_encounters__encounter_id__put"];
-    /** Delete Encounter */
-    delete: operations["delete_encounter_api_encounters__encounter_id__delete"];
-  };
-  "/api/encounters/{encounter_id}/turn": {
-    /** Update Turn */
-    post: operations["update_turn_api_encounters__encounter_id__turn_post"];
-  };
-  "/api/encounters/{encounter_id}/{participant_id}}": {
-    /** Update Encounter Creature */
-    put: operations["update_encounter_creature_api_encounters__encounter_id___participant_id___put"];
-  };
-  "/api/encounters/{encounter_id}/start": {
-    /** Start Encounter */
-    post: operations["start_encounter_api_encounters__encounter_id__start_post"];
-  };
-  "/api/encounters/{encounter_id}/stop": {
-    /** Stop Encounter */
-    post: operations["stop_encounter_api_encounters__encounter_id__stop_post"];
-  };
-  "/api/encounters/{encounter_id}/creatures/{creature_id}": {
-    /** Add Existing Creature To Encounter */
-    post: operations["add_existing_creature_to_encounter_api_encounters__encounter_id__creatures__creature_id__post"];
-  };
-  "/api/encounters/{encounter_id}/creatures": {
-    /** Get Encounter Creatures */
-    get: operations["get_encounter_creatures_api_encounters__encounter_id__creatures_get"];
-    /** Create Creature And Add To Encounter */
-    post: operations["create_creature_and_add_to_encounter_api_encounters__encounter_id__creatures_post"];
-  };
-  "/api/encounters/{encounter_id}/remove/{participant_id}": {
-    /** Remove Creature From Encounter */
-    post: operations["remove_creature_from_encounter_api_encounters__encounter_id__remove__participant_id__post"];
-  };
-  "/api/creatures/{creature_id}": {
-    /** Get User Creature */
-    get: operations["get_user_creature_api_creatures__creature_id__get"];
-    /** Update Creature */
-    put: operations["update_creature_api_creatures__creature_id__put"];
-    /** Delete Creature */
-    delete: operations["delete_creature_api_creatures__creature_id__delete"];
-  };
-  "/api/creatures": {
-    /** Get User Creatures */
-    get: operations["get_user_creatures_api_creatures_get"];
-    /** Create Creature */
-    post: operations["create_creature_api_creatures_post"];
+  "/api/post_encounter_to_user_channel": {
+    /** Post Encounter To User Channel */
+    post: operations["post_encounter_to_user_channel_api_post_encounter_to_user_channel_post"];
   };
   "/api/discord-channel": {
     /** Get Discord Channel */
     get: operations["get_discord_channel_api_discord_channel_get"];
-  };
-  "/api/settings": {
-    /** Get Settings */
-    get: operations["get_settings_api_settings_get"];
-    /** Update Settings */
-    put: operations["update_settings_api_settings_put"];
   };
 }
 
@@ -83,75 +19,10 @@ export type webhooks = Record<string, never>;
 
 export interface components {
   schemas: {
-    /** Body_create_creature_and_add_to_encounter_api_encounters__encounter_id__creatures_post */
-    Body_create_creature_and_add_to_encounter_api_encounters__encounter_id__creatures_post: {
-      /** Name */
-      name: string;
-      /** Max Hp */
-      max_hp: number;
-      /**
-       * Icon
-       * Format: binary
-       */
-      icon: string;
-      /**
-       * Stat Block
-       * Format: binary
-       */
-      stat_block: string;
-      /**
-       * Challenge Rating
-       * @default 0
-       */
-      challenge_rating?: number;
-      /**
-       * Is Player
-       * @default false
-       */
-      is_player?: boolean;
-    };
-    /** Body_create_creature_api_creatures_post */
-    Body_create_creature_api_creatures_post: {
-      /** Name */
-      name: string;
-      /** Max Hp */
-      max_hp: number;
-      /**
-       * Icon
-       * Format: binary
-       */
-      icon: string;
-      /**
-       * Stat Block
-       * Format: binary
-       */
-      stat_block: string;
-      /**
-       * Challenge Rating
-       * @default 0
-       */
-      challenge_rating?: number;
-      /**
-       * Is Player
-       * @default false
-       */
-      is_player?: boolean;
-    };
-    /** Creature */
-    Creature: {
-      /** Id */
-      id: number;
-      /** Name */
-      name: string;
-      /** Max Hp */
-      max_hp: number;
-      /** Challenge Rating */
-      challenge_rating: number;
-      /**
-       * Is Player
-       * @default false
-       */
-      is_player?: boolean;
+    /** Body_post_encounter_to_user_channel_api_post_encounter_to_user_channel_post */
+    Body_post_encounter_to_user_channel_api_post_encounter_to_user_channel_post: {
+      encounter: components["schemas"]["Encounter"];
+      settings: components["schemas"]["Settings"];
     };
     /** DiscordTextChannel */
     DiscordTextChannel: {
@@ -166,81 +37,14 @@ export interface components {
       /** Encounter Message Id */
       encounter_message_id?: number | null;
     };
-    /** EncounterCreature */
-    EncounterCreature: {
+    /** Encounter */
+    Encounter: {
       /** Id */
-      id: number;
-      /** Name */
-      name: string;
-      /** Max Hp */
-      max_hp: number;
-      /** Challenge Rating */
-      challenge_rating: number;
-      /**
-       * Is Player
-       * @default false
-       */
-      is_player?: boolean;
-      /** Creature Id */
-      creature_id: number;
-      /** Encounter Id */
-      encounter_id: number;
-      /** Hp */
-      hp: number;
-      /** Initiative */
-      initiative: number;
-      /** Is Active */
-      is_active: boolean;
-    };
-    /** EncounterParticipant */
-    EncounterParticipant: {
-      /** Id */
-      id: number;
-      /** Creature Id */
-      creature_id: number;
-      /** Encounter Id */
-      encounter_id: number;
-      /** Hp */
-      hp: number;
-      /** Initiative */
-      initiative: number;
-      /** Is Active */
-      is_active: boolean;
-    };
-    /** EncounterRequest */
-    EncounterRequest: {
-      /** Name */
-      name: string;
-      /** Description */
-      description: string;
-    };
-    /** EncounterResponse */
-    EncounterResponse: {
-      /** Id */
-      id: number;
+      id: string;
       /** Name */
       name?: string | null;
       /** Description */
       description?: string | null;
-      /** Started At */
-      started_at?: string | null;
-      /** Ended At */
-      ended_at?: string | null;
-    };
-    /** EncounterResponseWithParticipants */
-    EncounterResponseWithParticipants: {
-      /** Id */
-      id: number;
-      /** Name */
-      name?: string | null;
-      /** Description */
-      description?: string | null;
-      /** Started At */
-      started_at?: string | null;
-      /** Ended At */
-      ended_at?: string | null;
-      /** Participants */
-      participants: components["schemas"]["EncounterCreature"][];
     };
     /** HTTPValidationError */
     HTTPValidationError: {
@@ -249,14 +53,16 @@ export interface components {
     };
     /** Settings */
     Settings: {
-      /** Show Health */
-      show_health: boolean;
-      /** Show Icons */
-      show_icons: boolean;
-      /** Average Turn Duration */
-      average_turn_duration: number;
-      /** Player Level */
-      player_level: number;
+      /** User Id */
+      user_id: string;
+      /** Show Health In Discord */
+      show_health_in_discord: boolean;
+      /** Show Icons In Discord */
+      show_icons_in_discord: boolean;
+      /** Average Turn Seconds */
+      average_turn_seconds: number;
+      /** Default Player Level */
+      default_player_level: number;
     };
     /** ValidationError */
     ValidationError: {
@@ -281,204 +87,11 @@ export type external = Record<string, never>;
 
 export interface operations {
 
-  /** Read Root */
-  read_root__get: {
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": unknown;
-        };
-      };
-    };
-  };
-  /** Get User Encounters */
-  get_user_encounters_api_encounters_get: {
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterResponseWithParticipants"][];
-        };
-      };
-    };
-  };
-  /** Create Encounter */
-  create_encounter_api_encounters_post: {
+  /** Post Encounter To User Channel */
+  post_encounter_to_user_channel_api_post_encounter_to_user_channel_post: {
     requestBody: {
       content: {
-        "application/json": components["schemas"]["EncounterRequest"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterResponse"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Get User Encounter By Id */
-  get_user_encounter_by_id_api_encounters__encounter_id__get: {
-    parameters: {
-      path: {
-        encounter_id: number;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterResponseWithParticipants"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Update Encounter */
-  update_encounter_api_encounters__encounter_id__put: {
-    parameters: {
-      path: {
-        encounter_id: number;
-      };
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["EncounterRequest"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterResponseWithParticipants"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Delete Encounter */
-  delete_encounter_api_encounters__encounter_id__delete: {
-    parameters: {
-      path: {
-        encounter_id: number;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterResponseWithParticipants"][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Update Turn */
-  update_turn_api_encounters__encounter_id__turn_post: {
-    parameters: {
-      query: {
-        to: "next" | "previous";
-      };
-      path: {
-        encounter_id: number;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterCreature"][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Update Encounter Creature */
-  update_encounter_creature_api_encounters__encounter_id___participant_id___put: {
-    parameters: {
-      query: {
-        creature_id: number;
-      };
-      path: {
-        encounter_id: number;
-        participant_id: number;
-      };
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["EncounterParticipant"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterCreature"][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Start Encounter */
-  start_encounter_api_encounters__encounter_id__start_post: {
-    parameters: {
-      path: {
-        encounter_id: number;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterCreature"][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Stop Encounter */
-  stop_encounter_api_encounters__encounter_id__stop_post: {
-    parameters: {
-      path: {
-        encounter_id: number;
+        "application/json": components["schemas"]["Body_post_encounter_to_user_channel_api_post_encounter_to_user_channel_post"];
       };
     };
     responses: {
@@ -486,216 +99,6 @@ export interface operations {
       200: {
         content: {
           "application/json": unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Add Existing Creature To Encounter */
-  add_existing_creature_to_encounter_api_encounters__encounter_id__creatures__creature_id__post: {
-    parameters: {
-      path: {
-        encounter_id: number;
-        creature_id: number;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterCreature"][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Get Encounter Creatures */
-  get_encounter_creatures_api_encounters__encounter_id__creatures_get: {
-    parameters: {
-      path: {
-        encounter_id: number;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterCreature"][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Create Creature And Add To Encounter */
-  create_creature_and_add_to_encounter_api_encounters__encounter_id__creatures_post: {
-    parameters: {
-      path: {
-        encounter_id: number;
-      };
-    };
-    requestBody: {
-      content: {
-        "application/x-www-form-urlencoded": components["schemas"]["Body_create_creature_and_add_to_encounter_api_encounters__encounter_id__creatures_post"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterCreature"][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Remove Creature From Encounter */
-  remove_creature_from_encounter_api_encounters__encounter_id__remove__participant_id__post: {
-    parameters: {
-      path: {
-        encounter_id: number;
-        participant_id: number;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["EncounterResponseWithParticipants"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Get User Creature */
-  get_user_creature_api_creatures__creature_id__get: {
-    parameters: {
-      path: {
-        creature_id: number;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Creature"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Update Creature */
-  update_creature_api_creatures__creature_id__put: {
-    parameters: {
-      path: {
-        creature_id: number;
-      };
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["Creature"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Creature"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Delete Creature */
-  delete_creature_api_creatures__creature_id__delete: {
-    parameters: {
-      path: {
-        creature_id: number;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Creature"][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Get User Creatures */
-  get_user_creatures_api_creatures_get: {
-    parameters: {
-      query?: {
-        name?: string | null;
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Creature"][];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  /** Create Creature */
-  create_creature_api_creatures_post: {
-    requestBody: {
-      content: {
-        "application/x-www-form-urlencoded": components["schemas"]["Body_create_creature_api_creatures_post"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Creature"];
         };
       };
       /** @description Validation Error */
@@ -713,39 +116,6 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["DiscordTextChannel"];
-        };
-      };
-    };
-  };
-  /** Get Settings */
-  get_settings_api_settings_get: {
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Settings"];
-        };
-      };
-    };
-  };
-  /** Update Settings */
-  update_settings_api_settings_put: {
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["Settings"];
-      };
-    };
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
         };
       };
     };

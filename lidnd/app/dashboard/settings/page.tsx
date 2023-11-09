@@ -6,20 +6,22 @@ import { settings } from "@/server/api/db/schema";
 import { getPageSession } from "@/server/api/utils";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function DiscordPage() {
   const session = await getPageSession();
-  const user = session.user
-  const currentSettings = await db.select().from(settings).where(
-    eq(
-      settings.user_id,
-      user.userId
-    )
-  )
-  if(currentSettings.length === 0) {
-    return 'no settings... hmmm'
+  if (!session) {
+    return redirect("/login");
   }
-  const userSettings = currentSettings[0]
+  const user = session.user;
+  const currentSettings = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.user_id, user.userId));
+  if (currentSettings.length === 0) {
+    return "no settings... hmmm";
+  }
+  const userSettings = currentSettings[0];
 
   return (
     <section
@@ -32,10 +34,14 @@ export default async function DiscordPage() {
 }
 
 async function DiscordChannelInformation() {
+  const session = await getPageSession();
+  if (!session) {
+    return redirect("/login");
+  }
   const channelResponse = await fetch(`${apiURL}/api/discord-channel`, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${token?.value}`,
+      Authorization: `Bearer ${session.sessionId}`,
     },
   });
 

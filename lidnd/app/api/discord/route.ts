@@ -31,6 +31,7 @@ export const GET = async (request: NextRequest) => {
         attributes: {
           username: discordUser.username,
           avatar: discordUser.avatar,
+          discord_id: discordUser.id,
         },
       });
       await db.insert(settings).values({

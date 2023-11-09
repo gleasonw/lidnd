@@ -75,8 +75,12 @@ export const encounter_participant = pgTable(
 
 export const settings = pgTable("settings", {
   user_id: text("user_id").primaryKey(),
-  show_health_in_discord: boolean("show_health_in_discord").default(false),
-  show_icons_in_discord: boolean("show_icons_in_discord").default(true),
+  show_health_in_discord: boolean("show_health_in_discord")
+    .default(false)
+    .notNull(),
+  show_icons_in_discord: boolean("show_icons_in_discord")
+    .default(true)
+    .notNull(),
   average_turn_seconds: integer("average_turn_seconds").default(180).notNull(),
   default_player_level: integer("default_player_level").default(1).notNull(),
 });
@@ -85,6 +89,7 @@ export const users = pgTable("users", {
   id: text("id").primaryKey(),
   username: varchar("username", { length: 256 }).notNull(),
   avatar: varchar("avatar", { length: 256 }),
+  discord_id: text("discord_id").notNull(),
 });
 
 export const session = pgTable("user_session", {
@@ -115,10 +120,8 @@ export const key = pgTable("user_key", {
 });
 
 export const channels = pgTable("channels", {
-  id: text("id").primaryKey(),
-  channel_id: text("channel_id").notNull(),
-  message_id: text("message_id").notNull(),
-  user_id: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  id: uuid("id").primaryKey().defaultRandom(),
+  channel_id: bigint("channel_id", { mode: "number" }).notNull(),
+  message_id: bigint("message_id", { mode: "number" }),
+  discord_user_id: bigint("discord_user_id", { mode: "number" }).notNull(),
 });

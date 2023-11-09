@@ -3,9 +3,11 @@ import {
   creatures,
   encounter_participant,
   encounters,
+  settings,
 } from "@/server/api/db/schema";
 import { and, eq, sql } from "drizzle-orm";
-import { Upload } from "@aws-sdk/lib-storage";
+import { paths, components } from "@/app/schema";
+import createClient from "openapi-fetch";
 import {
   Creature,
   EncounterCreature,
@@ -18,6 +20,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { cache } from "react";
 import { auth } from "@/server/api/auth/lucia";
 import * as context from "next/headers";
+import apiURL from "@/app/apiURL";
 
 export const toUint8Array = async (data: AsyncIterable<Uint8Array>) => {
   const result = [];
@@ -161,4 +164,44 @@ export async function getEncounterParticipants(
     .select()
     .from(encounter_participant)
     .where(eq(encounter_participant.encounter_id, encounter_id));
+}
+
+const { POST } = createClient<paths>({ baseUrl: apiURL });
+
+export async function postEncounterToUserChannel(
+  encounter: components["schemas"]["Encounter"],
+) {
+  const session = await getPageSession();
+  if (!session) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "No session found",
+    });
+  }
+  const userSettings = await db.select().from(settings).where(
+    eq(settings.user_id, session.user.userId)
+  )
+  if(userSettings.length === 0) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "No settings found",
+    });
+  }
+  const response = await POST("/api/post_encounter_to_user_channel", {
+    body: {
+      encounter,
+      settings: userSettings[0]
+    },
+    headers: {
+      Authorization: `Bearer ${session.user.userId}`,
+    },
+  });
+  if (response.error) {
+    console.error(response.error);
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Failed to post encounter",
+    });
+  }
+  return response;
 }
