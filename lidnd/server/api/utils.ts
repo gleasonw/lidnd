@@ -14,10 +14,22 @@ import {
 } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import * as z from "zod";
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { cache } from "react";
 import { auth } from "@/server/api/auth/lucia";
 import * as context from "next/headers";
+
+export const toUint8Array = async (data: AsyncIterable<Uint8Array>) => {
+  const result = [];
+  for await (const chunk of data) {
+    for (const byte of chunk) {
+      result.push(byte);
+    }
+  }
+
+  return Uint8Array.from(result);
+};
+
 export async function createCreature(
   user_id: string,
   creature: z.infer<typeof creatureUploadSchema>,
@@ -42,25 +54,22 @@ export async function createCreature(
     },
   });
 
-  const iconUpload = new Upload({
-    client: s3Client,
-    params: {
-      Bucket: process.env.AWS_BUCKET_NAME!,
-      Key: getIconAWSname(newCreature[0].id),
-      Body: creature.icon_image,
-    },
+  const iconUpload = new PutObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME!,
+    Key: getIconAWSname(newCreature[0].id),
+    Body: Buffer.from(await creature.icon_image.arrayBuffer()),
   });
 
-  const statBlockUpload = new Upload({
-    client: s3Client,
-    params: {
-      Bucket: process.env.AWS_BUCKET_NAME!,
-      Key: getStatBlockAWSname(newCreature[0].id),
-      Body: creature.stat_block_image,
-    },
+  const statBlockUpload = new PutObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME!,
+    Key: getStatBlockAWSname(newCreature[0].id),
+    Body: Buffer.from(await creature.stat_block_image.arrayBuffer()),
   });
 
-  await Promise.all([iconUpload.done(), statBlockUpload.done()]);
+  await Promise.all([
+    s3Client.send(iconUpload),
+    s3Client.send(statBlockUpload),
+  ]);
 
   return newCreature[0];
 }

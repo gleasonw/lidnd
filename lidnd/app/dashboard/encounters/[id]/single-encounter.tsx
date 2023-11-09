@@ -30,10 +30,32 @@ import {
 
 export default function SingleEncounter() {
   const id = useEncounterId();
+  const { encounters, encounterById } = api.useUtils();
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
   const { data: encounter, isLoading } = api.encounterById.useQuery(id);
-  const { mutate: startEncounter } = api.startEncounter.useMutation();
-  const { mutate: updateEncounter } = api.updateEncounter.useMutation();
+  const { mutate: startEncounter } = api.startEncounter.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(id);
+    }
+  });
+  const { mutate: updateEncounter } = api.updateEncounter.useMutation({
+    onSettled: async () => {
+      return await encounters.invalidate();
+    },
+    onMutate: async (encounter) => {
+      await encounters.cancel();
+      const previous = encounters.getData();
+      encounters.setData(undefined, (old) => {
+        if(!old) return;
+        return {
+          ...old,
+          name: encounter.name,
+          description: encounter.description,
+        };
+      });
+      return { previous };
+    },
+  });
   const [encounterName, setEncounterName] = React.useState(
     encounter?.name ?? ""
   );
@@ -155,8 +177,8 @@ export default function SingleEncounter() {
       </AnimatePresence>
 
       <div className={"flex flex-col w-full gap-3"}>
-        <div className={"flex flex-wrap w-full justify-center gap-20"}>
-          <Card className="max-w-[600px] w-full p-3">
+        <div className={"flex flex-wrap md:flex-nowrap w-full justify-center md:gap-5 lg:gap-14"}>
+          <Card className="max-w-[900px] w-full p-3">
             <CardContent className={"flex flex-col gap-3"}>
               <CardTitle className="py-3">Add new creature</CardTitle>
               <FullCreatureAddForm
@@ -165,7 +187,7 @@ export default function SingleEncounter() {
             </CardContent>
           </Card>
 
-          <Card className={"max-w-[600px] w-full p-3"}>
+          <Card className={"max-w-[700px] w-full p-3"}>
             <CardContent className={"flex flex-col gap-3"}>
               <CardTitle className="py-3">Add existing creature</CardTitle>
               <ExistingCreature />

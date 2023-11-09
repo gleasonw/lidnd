@@ -60,6 +60,7 @@ export const publicProcedure = t.procedure;
 export type Encounter = typeof encounters.$inferSelect;
 export type Creature = typeof creatures.$inferSelect;
 export type EncounterParticipant = typeof encounter_participant.$inferSelect;
+export type Settings = typeof settings.$inferSelect;
 
 export type EncounterCreature = EncounterParticipant & Creature;
 export type EncounterWithParticipants = Encounter & {
@@ -174,21 +175,44 @@ export const appRouter = t.router({
       })
     )
     .mutation(async (opts) => {
-      const result = await db
-        .insert(encounters)
-        .values({
-          name: opts.input.name,
-          description: opts.input.description,
-          user_id: opts.ctx.user.userId,
-        })
-        .returning();
-      if (result.length === 0) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create encounter",
-        });
-      }
-      return result[0];
+      return await db.transaction(async (tx) => {
+        const [encounter, userPlayers] = await Promise.all([
+          tx
+            .insert(encounters)
+            .values({
+              name: opts.input.name,
+              description: opts.input.description,
+              user_id: opts.ctx.user.userId,
+            })
+            .returning(),
+          tx
+            .select()
+            .from(creatures)
+            .where(
+              and(
+                eq(creatures.user_id, opts.ctx.user.userId),
+                eq(creatures.is_player, true)
+              )
+            ),
+        ]);
+        if (encounter.length === 0) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create encounter",
+          });
+        }
+        if (userPlayers.length > 0) {
+          await tx.insert(encounter_participant).values(
+            userPlayers.map((player) => ({
+              encounter_id: encounter[0].id,
+              creature_id: player.id,
+              hp: player.max_hp,
+            }))
+          );
+        }
+
+        return encounter[0];
+      });
     }),
 
   updateEncounter: protectedProcedure
@@ -506,7 +530,7 @@ export const appRouter = t.router({
     .query(async (opts) => {
       const filters = [eq(creatures.user_id, opts.ctx.user.userId)];
       if (opts.input.name) {
-        filters.push(ilike(creatures.name, opts.input.name));
+        filters.push(ilike(creatures.name, `%${opts.input.name}%`));
       }
       if (opts.input.is_player) {
         filters.push(eq(creatures.is_player, opts.input.is_player));

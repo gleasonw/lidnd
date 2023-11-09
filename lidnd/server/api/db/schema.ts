@@ -38,7 +38,7 @@ export const creatures = pgTable(
     created_at: timestamp("created_at").defaultNow().notNull(),
     max_hp: integer("max_hp").notNull(),
     challenge_rating: real("challenge_rating").default(0).notNull(),
-    is_player: boolean("is_player"),
+    is_player: boolean("is_player").default(false),
     user_id: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -112,4 +112,13 @@ export const key = pgTable("user_key", {
   hashed_password: varchar("hashed_password", {
     length: 256,
   }),
+});
+
+export const channels = pgTable("channels", {
+  id: text("id").primaryKey(),
+  channel_id: text("channel_id").notNull(),
+  message_id: text("message_id").notNull(),
+  user_id: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
 });

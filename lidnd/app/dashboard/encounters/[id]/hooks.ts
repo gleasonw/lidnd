@@ -7,6 +7,7 @@ import { api } from "@/trpc/react";
 import { useMutation } from "@tanstack/react-query";
 import { useId } from "react";
 
+
 export function useCreateCreatureInEncounter() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
@@ -46,7 +47,7 @@ export function useCreateCreatureInEncounter() {
         const newParticipant: EncounterCreature = {
           ...data,
           encounter_id: old.id,
-          creature_id: 'pending',
+          creature_id: "pending",
           id: optimisticId,
           initiative: 0,
           hp: data.max_hp,
@@ -62,6 +63,7 @@ export function useCreateCreatureInEncounter() {
       return { previousEncounterData };
     },
     onError: (err, variables, context) => {
+      console.error(err);
       if (context?.previousEncounterData) {
         encounterById.setData(id, context.previousEncounterData);
       }

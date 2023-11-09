@@ -1,31 +1,37 @@
 import apiURL from "@/app/apiURL";
-import { getDiscordSettings } from "@/app/dashboard/actions";
 import { SettingsForm } from "@/app/dashboard/settings/settings-form";
 import { Button } from "@/components/ui/button";
-import { cookies } from "next/headers";
+import { db } from "@/server/api/db";
+import { settings } from "@/server/api/db/schema";
+import { getPageSession } from "@/server/api/utils";
+import { eq } from "drizzle-orm";
 import Link from "next/link";
 
 export default async function DiscordPage() {
-  const cookieStore = cookies();
-  const token = cookieStore.get("token");
-  console.log(token);
-
-  const currentSettings = await getDiscordSettings();
+  const session = await getPageSession();
+  const user = session.user
+  const currentSettings = await db.select().from(settings).where(
+    eq(
+      settings.user_id,
+      user.userId
+    )
+  )
+  if(currentSettings.length === 0) {
+    return 'no settings... hmmm'
+  }
+  const userSettings = currentSettings[0]
 
   return (
     <section
       className={" mx-auto max-w-screen-xl flex flex-col items-center gap-20"}
     >
       <DiscordChannelInformation />
-      <SettingsForm initialSettings={currentSettings} />
+      <SettingsForm initialSettings={userSettings} />
     </section>
   );
 }
 
 async function DiscordChannelInformation() {
-  const cookieStore = cookies();
-  const token = cookieStore.get("token");
-
   const channelResponse = await fetch(`${apiURL}/api/discord-channel`, {
     method: "GET",
     headers: {

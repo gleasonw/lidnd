@@ -215,7 +215,7 @@ export function ExistingCreature({
         value={name}
       />
       {isLoadingCreatures ? <Spinner /> : null}
-      <div className={"grid grid-cols-3 gap-5"}>
+      <div className={"flex flex-col gap-2"}>
         {creatures?.map((creature) => (
           <button
             key={creature.id}
@@ -230,24 +230,24 @@ export function ExistingCreature({
           >
             <Card
               className={clsx(
-                "flex flex-col hover:bg-gray-100 transition-all",
+                "flex hover:bg-gray-100 transition-all items-center gap-10 overflow-hidden",
                 {
                   "opacity-80": isAddingExistingCreature,
                 }
               )}
             >
-              <CardContent
-                className={
-                  "flex flex-col justify-center gap-2 items-center p-2"
-                }
-              >
-                <CharacterIcon
-                  id={creature.id}
-                  name={creature.name}
-                  className={"w-20 h-20"}
-                />
-                {creature.name}
-              </CardContent>
+              <CharacterIcon
+                id={creature.id}
+                name={creature.name}
+                className={"w-50 h-50"}
+              />
+              <section className="text-xl flex gap-3 flex-col w-full h-full justify-start">
+                <span>{creature.name}</span>
+                <section className="text-lg flex gap-3">
+                  <span>CR: {creature.challenge_rating}</span>
+                  <span>HP: {creature.max_hp}</span>
+                </section>
+              </section>
             </Card>
           </button>
         ))}

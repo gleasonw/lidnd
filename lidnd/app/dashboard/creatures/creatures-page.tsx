@@ -46,19 +46,33 @@ export default function CreaturesPage() {
   const { mutate: createCreature } = useMutation({
     mutationFn: async (rawData: CreaturePost) => {
       const formData = getCreaturePostForm(rawData);
-      const response = await fetch(
-        `${rerouteUrl}/api/creature/create-creature`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch(`${rerouteUrl}/api/creature/create`, {
+        method: "POST",
+        body: formData,
+      });
       const data = await response.json();
       if (response.status !== 200) {
         console.log(data.detail);
         throw data;
       }
       return data;
+    },
+    onSettled: async () => {
+      await getUserCreatures.invalidate();
+    },
+    onMutate: async (data) => {
+      await getUserCreatures.cancel();
+      const previous = getUserCreatures.getData();
+      getUserCreatures.setData({}, (old) => {
+        if (!old) {
+          return old;
+        }
+        return [
+          ...old,
+          { ...data, user_id: '', id: data.id ?? "", created_at: new Date() },
+        ];
+      });
+      return { previous };
     },
   });
 

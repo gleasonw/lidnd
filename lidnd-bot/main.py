@@ -1,16 +1,13 @@
-from typing import Annotated, Any, List, Literal, Optional, Dict, Tuple, Set
+from typing import Annotated, List, Optional, Dict, Tuple, Set
 import aiohttp
 from dotenv import load_dotenv
 import os
 from contextlib import asynccontextmanager
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import (
-    BackgroundTasks,
     FastAPI,
-    Form,
     HTTPException,
     Depends,
-    UploadFile,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from psycopg_pool import AsyncConnectionPool
@@ -21,7 +18,6 @@ import discord
 from discord import ApplicationContext
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
-import boto3
 
 load_dotenv()
 
@@ -60,6 +56,13 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 bot = discord.Bot()
 
 
+class Settings(BaseModel):
+    show_health: bool
+    show_icons: bool
+    average_turn_duration: int
+    player_level: int
+
+
 class EncounterResponse(BaseModel):
     id: int
     name: Optional[str] = None
@@ -92,25 +95,19 @@ class UserId(BaseModel):
 token_validation_cache: Dict[str, Tuple[datetime, DiscordUser]] = {}
 
 
-async def post_encounter_to_user_channel(user_id: int, encounter_id: int):
+async def post_encounter_to_user_channel(
+    user_id: int, encounter: EncounterResponse, settings: Settings
+):
     start_time = datetime.now()
     async with pool.connection() as conn:
-        async with asyncio.TaskGroup() as tg:
-            encounter = tg.create_task(
-                get_user_encounter_by_id(encounter_id, UserId(id=user_id))
-            )
-            channel_info = tg.create_task(get_discord_channel(UserId(id=user_id)))
-            discord_settings = tg.create_task(get_settings(UserId(id=user_id)))
-        encounter = encounter.result()
-        channel_info = channel_info.result()
-        discord_settings = discord_settings.result()
+        channel_info = await get_discord_channel(UserId(id=user_id))
         channel = bot.get_channel(channel_info.id)
         if not channel:
             return
         assert isinstance(channel, discord.TextChannel), "Channel is not a text channel"
         rendered_md = template.render(
             overview=encounter,
-            settings=discord_settings,
+            settings=settings,
         )
         async with conn.cursor() as cur:
             if channel_info.encounter_message_id:
@@ -218,39 +215,6 @@ async def get_discord_channel(user=Depends(get_discord_user)) -> DiscordTextChan
                 guild=channel.guild.name,
                 encounter_message_id=message_id,
             )
-
-
-class Settings(BaseModel):
-    show_health: bool
-    show_icons: bool
-    average_turn_duration: int
-    player_level: int
-
-
-@app.get("/api/settings")
-async def get_settings(
-    user=Depends(get_discord_user),
-) -> Settings:
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=class_row(Settings)) as cur:
-            await cur.execute(
-                "SELECT show_health, show_icons, average_turn_duration, player_level FROM discord_settings WHERE user_id = %s",
-                (user.id,),
-            )
-            if cur.rowcount == 0:
-                await cur.execute(
-                    "INSERT INTO discord_settings (user_id, show_health, show_icons, average_turn_duration, player_level) VALUES (%s, %s, %s, %s, %s)",
-                    (user.id, True, True, 180, 1),
-                )
-                await conn.commit()
-                await cur.execute(
-                    "SELECT show_health, show_icons, average_turn_duration, player_level FROM discord_settings WHERE user_id = %s",
-                    (user.id,),
-                )
-            settings = await cur.fetchone()
-            if not settings:
-                raise HTTPException(status_code=404, detail="Settings not found")
-            return settings
 
 
 @bot.event

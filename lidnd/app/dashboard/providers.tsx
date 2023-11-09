@@ -3,11 +3,10 @@
 import React from "react";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
-import { logOut } from "@/app/dashboard/actions";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { useUser } from "@/app/hooks";
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const routes = ["/dashboard", "/dashboard/creatures"] as const;
@@ -39,10 +38,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             {routeLabels[route]}
           </Link>
         ))}
-        <form
-          action={logOut}
-          className={"ml-auto pr-5 flex gap-5  items-center"}
-        >
+        <form className={"ml-auto pr-5 flex gap-5  items-center"}>
           <Link href="/dashboard/settings" className="flex gap-5 items-center">
             Settings
           </Link>
