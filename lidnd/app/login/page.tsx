@@ -1,5 +1,6 @@
 import { DiscordIcon } from "@/app/login/discord";
 import "@/app/globals.css";
+import Link from "next/link";
 
 export const rerouteUrl =
   process.env.NODE_ENV === "development"
@@ -12,14 +13,14 @@ export default function Login() {
       <div className="flex flex-col gap-20">
         <h1 className="text-5xl">Welcome to LiDnD.</h1>
 
-        <a
+        <Link
           className={
             "shadow p-5 rounded-md text-center text-white flex overflow-hidden border-2 hover:bg-gray-200 transition-all"
           }
           href={`/login/discord`}
         >
           <DiscordIcon className="max-w-40" />
-        </a>
+        </Link>
       </div>
     </main>
   );
