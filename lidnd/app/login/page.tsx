@@ -5,7 +5,7 @@ import Link from "next/link";
 export const rerouteUrl =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
-    : "https://lidnd.vercel.app";
+    : process.env.DOMAIN;
 
 export default function Login() {
   return (
