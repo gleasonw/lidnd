@@ -33,9 +33,9 @@ export default function CreaturesPage() {
       await getUserCreatures.invalidate();
     },
     onMutate: async (id) => {
-      await getUserCreatures.cancel();
-      const previous = getUserCreatures.getData();
-      getUserCreatures.setData({}, (old) => {
+      await getUserCreatures.cancel({ name });
+      const previous = getUserCreatures.getData({ name });
+      getUserCreatures.setData({ name }, (old) => {
         return old?.filter((creature) => creature.id !== id);
       });
       return { previous };
@@ -58,18 +58,18 @@ export default function CreaturesPage() {
       return data;
     },
     onSettled: async () => {
-      await getUserCreatures.invalidate();
+      await getUserCreatures.invalidate({ name });
     },
     onMutate: async (data) => {
-      await getUserCreatures.cancel();
-      const previous = getUserCreatures.getData();
-      getUserCreatures.setData({}, (old) => {
+      await getUserCreatures.cancel({ name });
+      const previous = getUserCreatures.getData({ name });
+      getUserCreatures.setData({ name }, (old) => {
         if (!old) {
           return old;
         }
         return [
           ...old,
-          { ...data, user_id: '', id: data.id ?? "", created_at: new Date() },
+          { ...data, user_id: "", id: data.id ?? "", created_at: new Date() },
         ];
       });
       return { previous };
@@ -105,7 +105,7 @@ export default function CreaturesPage() {
           <Button variant="ghost" onClick={() => setIsAddingCreatures(false)}>
             <X />
           </Button>
-          <Card className="max-w-700 mx-auto pt-5">
+          <Card className="max-w-[900px] w-full mx-auto pt-5">
             <CardContent>
               <FullCreatureAddForm uploadCreature={createCreature} />
             </CardContent>

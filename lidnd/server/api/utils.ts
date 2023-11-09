@@ -5,7 +5,7 @@ import {
   encounters,
   settings,
 } from "@/server/api/db/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, sql, desc } from "drizzle-orm";
 import { paths, components } from "@/app/schema";
 import createClient from "openapi-fetch";
 import {
@@ -166,10 +166,24 @@ export async function getEncounterParticipants(
     .where(eq(encounter_participant.encounter_id, encounter_id));
 }
 
+export async function getEncounterParticipantsWithCreatureData(
+  encounter_id: string,
+  dbObject = db
+): Promise<EncounterCreature[]> {
+  const encouterCreatures = await dbObject
+    .select()
+    .from(encounter_participant)
+    .where(eq(encounter_participant.encounter_id, encounter_id))
+    .innerJoin(creatures, eq(encounter_participant.creature_id, creatures.id))
+    .orderBy(desc(encounter_participant.initiative));
+  return encouterCreatures.map(({ creatures, encounter_participant }) =>
+    mergeEncounterCreature(encounter_participant, creatures)
+  );
+}
 const { POST } = createClient<paths>({ baseUrl: apiURL });
 
 export async function postEncounterToUserChannel(
-  encounter: components["schemas"]["Encounter"],
+  encounter: components["schemas"]["Encounter"]
 ) {
   const session = await getPageSession();
   if (!session) {
@@ -178,10 +192,11 @@ export async function postEncounterToUserChannel(
       message: "No session found",
     });
   }
-  const userSettings = await db.select().from(settings).where(
-    eq(settings.user_id, session.user.userId)
-  )
-  if(userSettings.length === 0) {
+  const userSettings = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.user_id, session.user.userId));
+  if (userSettings.length === 0) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "No settings found",
@@ -190,10 +205,10 @@ export async function postEncounterToUserChannel(
   const response = await POST("/api/post_encounter_to_user_channel", {
     body: {
       encounter,
-      settings: userSettings[0]
+      settings: userSettings[0],
     },
     headers: {
-      Authorization: `Bearer ${session.user.userId}`,
+      Authorization: `Bearer ${session.sessionId}`,
     },
   });
   if (response.error) {

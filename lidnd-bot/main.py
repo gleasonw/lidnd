@@ -65,10 +65,18 @@ class Settings(BaseModel):
     default_player_level: int
 
 
+class EncounterCreature(BaseModel):
+    is_active: bool
+    name: str
+    hp: int
+    creature_id: str
+
+
 class Encounter(BaseModel):
     id: str
     name: Optional[str] = None
     description: Optional[str] = None
+    participants: List[EncounterCreature]
 
 
 class DiscordTextChannel(BaseModel):
@@ -149,7 +157,7 @@ async def post_encounter_to_user_channel(
     user_id = user.id
     start_time = datetime.now()
     async with pool.connection() as conn:
-        channel_info = await get_discord_channel(UserId(id=user.discord_id))
+        channel_info = await get_discord_channel(user)
         channel = bot.get_channel(channel_info.id)
         if not channel:
             return
@@ -168,14 +176,14 @@ async def post_encounter_to_user_channel(
                 except discord.NotFound:
                     new_message = await channel.send(rendered_md)
                     await cur.execute(
-                        "UPDATE channels SET message_id = %s WHERE user_id = %s",
-                        (new_message.id, user_id),
+                        "UPDATE channels SET message_id = %s WHERE discord_user_id = %s",
+                        (new_message.id, user.discord_id),
                     )
             else:
                 new_message = await channel.send(rendered_md)
                 await cur.execute(
-                    "UPDATE channels SET message_id = %s WHERE user_id = %s",
-                    (new_message.id, user_id),
+                    "UPDATE channels SET message_id = %s WHERE discord_user_id = %s",
+                    (new_message.id, user.discord_id),
                 )
     print(f"Posting encounter took {(datetime.now() - start_time).total_seconds()}s")
 

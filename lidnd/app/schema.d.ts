@@ -45,6 +45,19 @@ export interface components {
       name?: string | null;
       /** Description */
       description?: string | null;
+      /** Participants */
+      participants: components["schemas"]["EncounterCreature"][];
+    };
+    /** EncounterCreature */
+    EncounterCreature: {
+      /** Is Active */
+      is_active: boolean;
+      /** Name */
+      name: string;
+      /** Hp */
+      hp: number;
+      /** Creature Id */
+      creature_id: string;
     };
     /** HTTPValidationError */
     HTTPValidationError: {

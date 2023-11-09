@@ -17,6 +17,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import {
   getEncounterParticipants,
+  getEncounterParticipantsWithCreatureData,
   getIconAWSname,
   getStatBlockAWSname,
   getUserEncounter,
@@ -74,13 +75,17 @@ export const insertParticipantSchema = createInsertSchema(
 export const insertCreatureSchema = createInsertSchema(creatures);
 export const insertSettingsSchema = createInsertSchema(settings);
 
+const booleanSchema = z
+  .union([z.boolean(), z.literal("true"), z.literal("false")])
+  .transform((value) => value === true || value === "true");
+
 export const creatureUploadSchema = insertCreatureSchema
   .extend({
     icon_image: z.instanceof(File),
     stat_block_image: z.instanceof(File),
     max_hp: z.coerce.number(),
     challenge_rating: z.coerce.number(),
-    is_player: z.coerce.boolean(),
+    is_player: booleanSchema,
   })
   .omit({ user_id: true });
 
@@ -257,7 +262,6 @@ export const appRouter = t.router({
       })
     )
     .mutation(async (opts) => {
-      console.log(opts);
       const result = await db.transaction(async (tx) => {
         const [updatedParticipant, _] = await Promise.all([
           await tx
@@ -334,7 +338,7 @@ export const appRouter = t.router({
       const result = await db.transaction(async (tx) => {
         const [encounter, encounterParticipants] = await Promise.all([
           getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id, tx),
-          getEncounterParticipants(opts.input.encounter_id, tx),
+          getEncounterParticipantsWithCreatureData(opts.input.encounter_id, tx),
         ]);
         const updatedOrder = updateTurnOrder(
           opts.input.to,
@@ -350,7 +354,10 @@ export const appRouter = t.router({
         }
 
         await setActiveParticipant(newActive.id, opts.input.encounter_id, tx);
-        await postEncounterToUserChannel(encounter);
+        await postEncounterToUserChannel({
+          ...encounter,
+          participants: encounterParticipants,
+        });
         return encounter;
       });
       return result;

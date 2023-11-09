@@ -42,7 +42,6 @@ export function FullCreatureAddForm({
   const form = useForm<z.infer<typeof creatureUploadSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
       max_hp: 0,
       challenge_rating: 0,
       icon_image: undefined,
