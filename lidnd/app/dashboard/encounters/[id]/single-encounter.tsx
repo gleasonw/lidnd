@@ -37,9 +37,7 @@ export default function SingleEncounter() {
     <div className={"flex flex-col items-center gap-10 relative"}>
       <Suspense fallback={<div>Loading encounter details...</div>}>
         <EncounterDetailsEditor>
-          <Suspense fallback={<div>Loading stats...</div>}>
-            <EncounterStats />
-          </Suspense>
+          <EncounterStats />
         </EncounterDetailsEditor>
       </Suspense>
       <Suspense
