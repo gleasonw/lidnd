@@ -49,6 +49,7 @@
     "drizzle-zod": "^0.5.1",
     "eslint": "8.48.0",
     "eslint-config-next": "14.0.0",
+    "eslint-plugin-prettier": "^5.0.1",
     "framer-motion": "^10.16.4",
     "lodash.debounce": "^4.0.8",
     "lucia": "^2.7.3",
