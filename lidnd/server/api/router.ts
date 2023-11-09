@@ -384,7 +384,7 @@ export const appRouter = t.router({
     .mutation(async (opts) => {
       const [_, encounterParticipants] = await Promise.all([
         getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id),
-        getEncounterParticipants(opts.input.encounter_id),
+        getEncounterParticipantsWithCreatureData(opts.input.encounter_id),
       ]);
       const result = await db
         .delete(encounter_participant)

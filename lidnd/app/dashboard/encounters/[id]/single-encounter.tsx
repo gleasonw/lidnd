@@ -29,8 +29,6 @@ import {
 } from "@/app/dashboard/encounters/[id]/hooks";
 
 export default function SingleEncounter() {
-  const id = useEncounterId();
-  const { encounterById } = api.useUtils();
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
 
   return (

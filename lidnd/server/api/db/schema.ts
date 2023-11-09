@@ -38,7 +38,7 @@ export const creatures = pgTable(
     created_at: timestamp("created_at").defaultNow().notNull(),
     max_hp: integer("max_hp").notNull(),
     challenge_rating: real("challenge_rating").default(0).notNull(),
-    is_player: boolean("is_player").default(false),
+    is_player: boolean("is_player").default(false).notNull(),
     user_id: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
