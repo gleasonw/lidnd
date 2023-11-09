@@ -180,7 +180,7 @@ export async function getEncounterParticipantsWithCreatureData(
     mergeEncounterCreature(encounter_participant, creatures)
   );
 }
-const { POST } = createClient<paths>({ baseUrl: apiURL });
+const { POST } = createClient<paths>({ baseUrl: process.env.BOT_URL });
 
 export async function postEncounterToUserChannel(
   encounter: components["schemas"]["Encounter"]
