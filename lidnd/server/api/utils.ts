@@ -180,7 +180,7 @@ export async function getEncounterParticipantsWithCreatureData(
     mergeEncounterCreature(encounter_participant, creatures)
   );
 }
-const { POST } = createClient<paths>({ baseUrl: process.env.BOT_URL });
+const { POST } = createClient<paths>({ baseUrl: 'http://dnd-init-tracker:8000' });
 
 export async function postEncounterToUserChannel(
   encounter: components["schemas"]["Encounter"]
@@ -211,6 +211,7 @@ export async function postEncounterToUserChannel(
       Authorization: `Bearer ${session.sessionId}`,
     },
   });
+  console.log(response.response.url)
   if (response.error) {
     console.error(response.error);
     throw new TRPCError({
