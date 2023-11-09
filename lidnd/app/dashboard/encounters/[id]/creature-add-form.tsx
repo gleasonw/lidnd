@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useId, useState } from "react";
+import React, { Suspense, useId, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
@@ -214,46 +214,65 @@ export function ExistingCreature({
         onChange={(e) => setName(e.target.value)}
         value={name}
       />
-      {isLoadingCreatures ? <Spinner /> : null}
-      <div className={"flex flex-col gap-2"}>
-        {creatures?.map((creature) => (
-          <button
-            key={creature.id}
-            disabled={isAddingExistingCreature}
-            onClick={(e) => {
-              e.stopPropagation();
-              addCreature({
-                creature_id: creature.id,
-                encounter_id: id,
-              });
-            }}
-          >
-            <Card
-              className={clsx(
-                "flex hover:bg-gray-100 transition-all items-center gap-10 overflow-hidden",
-                {
-                  "opacity-80": isAddingExistingCreature,
-                }
-              )}
-            >
-              <CharacterIcon
-                id={creature.id}
-                name={creature.name}
-                className={"w-50 h-50"}
-              />
-              <section className="text-xl flex gap-3 flex-col w-full h-full justify-start">
-                <span>{creature.name}</span>
-                <section className="text-lg flex gap-3">
-                  <span>CR: {creature.challenge_rating}</span>
-                  <span>HP: {creature.max_hp}</span>
-                </section>
-              </section>
-            </Card>
-          </button>
-        ))}
-      </div>
+      <Suspense key={name} fallback={<div>Loading creatures</div>}>
+        <ExistingCreatureOptions name={name} addCreature={addCreature} />
+      </Suspense>
 
       <div className={"flex gap-5"}>{children}</div>
     </>
+  );
+}
+
+function ExistingCreatureOptions({
+  name,
+  addCreature,
+}: {
+  name: string;
+  addCreature: ({
+    creature_id,
+    encounter_id,
+  }: {
+    creature_id: string;
+    encounter_id: string;
+  }) => void;
+}) {
+  const id = useEncounterId();
+  const [creatures, creaturesQuery] = api.getUserCreatures.useSuspenseQuery({
+    name,
+  });
+  return (
+    <div className={"flex flex-col gap-2"}>
+      {creatures?.map((creature) => (
+        <button
+          key={creature.id}
+          onClick={(e) => {
+            e.stopPropagation();
+            addCreature({
+              creature_id: creature.id,
+              encounter_id: id,
+            });
+          }}
+        >
+          <Card
+            className={clsx(
+              "flex hover:bg-gray-100 transition-all items-center gap-10 overflow-hidden"
+            )}
+          >
+            <CharacterIcon
+              id={creature.id}
+              name={creature.name}
+              className={"w-50 h-50"}
+            />
+            <section className="text-xl flex gap-3 flex-col w-full h-full justify-start">
+              <span>{creature.name}</span>
+              <section className="text-lg flex gap-3">
+                <span>CR: {creature.challenge_rating}</span>
+                <span>HP: {creature.max_hp}</span>
+              </section>
+            </section>
+          </Card>
+        </button>
+      ))}
+    </div>
   );
 }

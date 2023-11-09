@@ -1,34 +1,22 @@
 import apiURL from "@/app/apiURL";
 import { SettingsForm } from "@/app/dashboard/settings/settings-form";
 import { Button } from "@/components/ui/button";
-import { db } from "@/server/api/db";
-import { settings } from "@/server/api/db/schema";
 import { getPageSession } from "@/server/api/utils";
-import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 export default async function DiscordPage() {
-  const session = await getPageSession();
-  if (!session) {
-    return redirect("/login");
-  }
-  const user = session.user;
-  const currentSettings = await db
-    .select()
-    .from(settings)
-    .where(eq(settings.user_id, user.userId));
-  if (currentSettings.length === 0) {
-    return "no settings... hmmm";
-  }
-  const userSettings = currentSettings[0];
-
   return (
     <section
       className={" mx-auto max-w-screen-xl flex flex-col items-center gap-20"}
     >
-      <DiscordChannelInformation />
-      <SettingsForm initialSettings={userSettings} />
+      <Suspense fallback={<div>Loading channel information...</div>}>
+        <DiscordChannelInformation />
+      </Suspense>
+      <Suspense fallback={<div>Loading settings...</div>}>
+        <SettingsForm />
+      </Suspense>
     </section>
   );
 }

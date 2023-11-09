@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -9,7 +9,13 @@ import { useUser } from "@/app/hooks";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { logOut } from "@/app/dashboard/actions";
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+  children,
+  userAvatar,
+}: {
+  children: React.ReactNode;
+  userAvatar: React.ReactNode;
+}) {
   const routes = ["/dashboard", "/dashboard/creatures"] as const;
 
   const routeLabels = {
@@ -46,6 +52,13 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           <Link href="/dashboard/settings" className="flex gap-5 items-center">
             Settings
           </Link>
+          <Suspense
+            fallback={
+              <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+            }
+          >
+            {userAvatar}
+          </Suspense>
           <button type="submit">
             <LogOut />
           </button>
@@ -54,24 +67,5 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </>
-  );
-}
-
-function UserAvatar() {
-  const { data: user, isLoading } = useUser();
-
-  if (isLoading)
-    return (
-      <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
-    );
-
-  return (
-    <img
-      alt={user?.username ?? "User"}
-      src={`https://cdn.discordapp.com/avatars/${user?.id}/${user?.avatar}.png`}
-      width={40}
-      height={40}
-      className={"rounded-full"}
-    />
   );
 }

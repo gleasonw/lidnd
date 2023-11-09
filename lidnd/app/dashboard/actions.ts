@@ -17,3 +17,7 @@ export async function logOut() {
   await auth.invalidateSession(session?.sessionId);
   redirect("/login");
 }
+
+export async function updateSettings(form: FormData) {
+  console.log(form);
+}

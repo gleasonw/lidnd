@@ -1,3 +1,6 @@
+"use client"
+
+
 import { Button, ButtonProps } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import React from "react";

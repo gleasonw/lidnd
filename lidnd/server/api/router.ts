@@ -89,6 +89,17 @@ export const creatureUploadSchema = insertCreatureSchema
   })
   .omit({ user_id: true });
 
+export const updateSettingsSchema = insertSettingsSchema
+  .omit({ user_id: true })
+  .merge(
+    z.object({
+      show_health_in_discord: booleanSchema,
+      show_icons_in_discord: booleanSchema,
+      average_turn_seconds: z.coerce.number(),
+      default_player_level: z.coerce.number(),
+    })
+  );
+
 export const appRouter = t.router({
   encounters: protectedProcedure.query(async (opts) => {
     const encountersWithParticipants = await db
@@ -566,7 +577,7 @@ export const appRouter = t.router({
   }),
 
   updateSettings: protectedProcedure
-    .input(insertSettingsSchema.omit({ user_id: true }))
+    .input(updateSettingsSchema)
     .mutation(async (opts) => {
       const result = await db
         .update(settings)
