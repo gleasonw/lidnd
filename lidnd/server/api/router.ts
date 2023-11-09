@@ -346,7 +346,7 @@ export const appRouter = t.router({
         );
         const newActive = updatedOrder?.find((c) => c.is_active);
 
-        if (!newActive) {
+        if (!newActive || !updatedOrder) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Failed to update turn",
@@ -356,7 +356,7 @@ export const appRouter = t.router({
         await setActiveParticipant(newActive.id, opts.input.encounter_id, tx);
         await postEncounterToUserChannel({
           ...encounter,
-          participants: encounterParticipants,
+          participants: updatedOrder,
         });
         return encounter;
       });
