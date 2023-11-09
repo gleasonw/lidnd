@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { useUser } from "@/app/hooks";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { logOut } from "@/app/dashboard/actions";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const routes = ["/dashboard", "/dashboard/creatures"] as const;
@@ -38,7 +39,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             {routeLabels[route]}
           </Link>
         ))}
-        <form className={"ml-auto pr-5 flex gap-5  items-center"}>
+        <form
+          className={"ml-auto pr-5 flex gap-5  items-center"}
+          action={logOut}
+        >
           <Link href="/dashboard/settings" className="flex gap-5 items-center">
             Settings
           </Link>

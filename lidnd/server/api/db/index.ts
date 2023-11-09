@@ -9,12 +9,15 @@ if (!db_url) {
   throw new Error("DATABASE_URL not set");
 }
 
-if(process.env.NODE_ENV === "production"){
+if (process.env.NODE_ENV === "production") {
   queryClient = postgres(db_url);
-}else{
-  if(!global.queryClient){
+} else {
+  // @ts-ignore
+  if (!global.queryClient) {
+      // @ts-ignore
     global.queryClient = postgres(db_url);
   }
+  // @ts-ignore
   queryClient = global.queryClient;
 }
 
