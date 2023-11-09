@@ -4,7 +4,7 @@ declare namespace Lucia {
   type DatabaseUserAttributes = {
     username: string;
     avatar: string | null;
-    discord_id: string;
+    discord_id: number;
   };
   type DatabaseSessionAttributes = {};
 }

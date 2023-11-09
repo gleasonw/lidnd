@@ -14,7 +14,7 @@ export async function createContext({
   const session = await getPageSession();
   if (!session) return { user: null };
   return {
-    user: session.user as { username: string; userId: string },
+    user: session.user
   };
 }
 export type Context = inferAsyncReturnType<typeof createContext>;
