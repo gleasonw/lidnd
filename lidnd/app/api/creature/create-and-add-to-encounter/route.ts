@@ -6,7 +6,7 @@ import { db } from "@/server/api/db";
 import { encounter_participant } from "@/server/api/db/schema";
 import { z } from "zod";
 
-export const POST = async (req: NextRequest, res: NextResponse) => {
+export const POST = async (req: NextRequest) => {
   const session = await getPageSession();
   if (!session) {
     return NextResponse.json({ error: "No session found." }, { status: 400 });
