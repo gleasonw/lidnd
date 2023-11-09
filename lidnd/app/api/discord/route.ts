@@ -24,7 +24,6 @@ export const GET = async (request: NextRequest) => {
 
     const getUser = async () => {
       const existingUser = await getExistingUser();
-      console.log(existingUser);
       if (existingUser) return existingUser;
 
       const user = await createUser({

@@ -49,8 +49,6 @@ export function updateTurnOrder<
     const activeParticipants = sortedParticipants.filter(
       (c) => c.hp > 0 || c.is_active || c.is_player
     );
-    console.log("activeParticipants", activeParticipants);
-    console.log("currentActive", currentActive);
     if (currentActive && activeParticipants.length > 1) {
       let nextActive: T;
       if (to === "previous") {
