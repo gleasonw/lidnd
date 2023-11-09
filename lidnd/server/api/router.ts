@@ -81,8 +81,8 @@ const booleanSchema = z
 
 export const creatureUploadSchema = insertCreatureSchema
   .extend({
-    icon_image: z.instanceof(File),
-    stat_block_image: z.instanceof(File),
+    icon_image: z.instanceof(any),
+    stat_block_image: z.instanceof(any),
     max_hp: z.coerce.number(),
     challenge_rating: z.coerce.number(),
     is_player: booleanSchema,
