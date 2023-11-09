@@ -135,7 +135,7 @@ export function BattleUI() {
           {displayedParticipants
             ?.slice()
             .sort(sortEncounterCreatures)
-            .map((participant, index) => (
+            .map((participant) => (
               <AnimationListItem key={participant.id}>
                 <button
                   onClick={() => setDmSelectedCreature(participant.id)}
