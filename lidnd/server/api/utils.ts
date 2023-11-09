@@ -60,13 +60,13 @@ export async function createCreature(
   const iconUpload = new PutObjectCommand({
     Bucket: process.env.AWS_BUCKET_NAME!,
     Key: getIconAWSname(newCreature[0].id),
-    Body: Buffer.from(await creature.icon_image.arrayBuffer()),
+    Body: await creature.icon_image.arrayBuffer(),
   });
 
   const statBlockUpload = new PutObjectCommand({
     Bucket: process.env.AWS_BUCKET_NAME!,
     Key: getStatBlockAWSname(newCreature[0].id),
-    Body: Buffer.from(await creature.stat_block_image.arrayBuffer()),
+    Body: await creature.stat_block_image.arrayBuffer(),
   });
 
   await Promise.all([
@@ -180,7 +180,9 @@ export async function getEncounterParticipantsWithCreatureData(
     mergeEncounterCreature(encounter_participant, creatures)
   );
 }
-const { POST } = createClient<paths>({ baseUrl: 'http://dnd-init-tracker:8000' });
+const { POST } = createClient<paths>({
+  baseUrl: "http://dnd-init-tracker:8000",
+});
 
 export async function postEncounterToUserChannel(
   encounter: components["schemas"]["Encounter"]
@@ -211,7 +213,7 @@ export async function postEncounterToUserChannel(
       Authorization: `Bearer ${session.sessionId}`,
     },
   });
-  console.log(response.response.url)
+  console.log(response.response.url);
   if (response.error) {
     console.error(response.error);
     throw new TRPCError({
