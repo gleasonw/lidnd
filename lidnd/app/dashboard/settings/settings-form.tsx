@@ -32,6 +32,7 @@ export function SettingsForm() {
           };
           updateSettings(updateSettingsSchema.parse(settingsWithBooleans));
         }}
+        className={'flex flex-col gap-5'}
       >
         <div className={"flex gap-5 justify-between"}>
           <label className="flex justify-between w-full">

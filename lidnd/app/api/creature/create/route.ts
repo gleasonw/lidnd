@@ -15,6 +15,6 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
   if (!creature.value) {
     return NextResponse.json({ error: creature.error }, { status: 400 });
   }
-  // await createCreature(session.user.userId, creature.value);
+  await createCreature(session.user.userId, creature.value);
   return NextResponse.json({ Message: "Success", status: 201 });
 };

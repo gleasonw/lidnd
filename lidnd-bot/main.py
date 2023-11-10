@@ -28,7 +28,7 @@ template = env.get_template("encounter.md")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
-pool = AsyncConnectionPool(os.getenv("DATABASE_URL", default=""), open=False)
+pool = AsyncConnectionPool(os.getenv("DATABASE_URL", default="postgresql://will:password@localhost:5432/dnd"), open=False)
 
 
 @asynccontextmanager

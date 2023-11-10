@@ -33,7 +33,7 @@ export default function SingleEncounter() {
 
   return (
     <div className={"flex flex-col items-center gap-10 relative"}>
-      <Suspense fallback={<div>Loading encounter details...</div>}>
+      <Suspense>
         <EncounterDetailsEditor>
           <EncounterStats />
         </EncounterDetailsEditor>
@@ -201,27 +201,33 @@ function EncounterParticipantRow() {
 
 function EncounterStats() {
   const id = useEncounterId();
-  const [estimatedRounds, setEstimatedRounds] = React.useState(3);
-  const [settings, settingsQuery] = api.settings.useSuspenseQuery();
-  const [encounter, encounterQuery] = api.encounterById.useSuspenseQuery(id);
+  const { data: settings } = api.settings.useQuery();
+  const { data: encounter } = api.encounterById.useQuery(id);
 
-  const [estimatedTurnSeconds, setEstimatedTurnSeconds] = React.useState(
-    settings.average_turn_seconds
+  const [estimatedTurnSeconds, setEstimatedTurnSeconds] = React.useState<
+    number | null
+  >(null);
+  const [playerLevel, setPlayerLevel] = React.useState<number | null>(null);
+  const [localNumPlayers, setLocalNumPlayers] = React.useState<number | null>(
+    null
   );
-  const [playerLevel, setPlayerLevel] = React.useState(
-    settings.default_player_level
+  const [estimatedRounds, setEstimatedRounds] = React.useState<number | null>(
+    null
   );
+
+  const finalTurnSeconds =
+    estimatedTurnSeconds ?? settings?.average_turn_seconds ?? 180;
+  const finalPlayerLevel = playerLevel ?? settings?.default_player_level ?? 1;
+  const finalNumPlayers =
+    localNumPlayers ??
+    encounter?.participants?.filter((p) => p.is_player)?.length ??
+    4;
+  const finalEstimatedRounds = estimatedRounds ?? 3;
 
   const numParticipants = encounter?.participants?.length ?? 0;
 
-  const numPlayers = encounter?.participants?.filter(
-    (creature) => creature.is_player
-  ).length;
-
-  const [localNumPlayers, setLocalNumPlayers] = React.useState(numPlayers);
-
   const estimatedEncounterDuration =
-    (numParticipants * estimatedRounds * estimatedTurnSeconds) / 60;
+    (numParticipants * finalEstimatedRounds * finalTurnSeconds) / 60;
 
   const totalCr =
     encounter?.participants?.reduce((acc, creature) => {
@@ -229,12 +235,12 @@ function EncounterStats() {
     }, 0) ?? 0;
 
   const crBudget = encounterCRPerCharacter.find(
-    (cr) => cr.level === playerLevel
+    (cr) => cr.level === finalPlayerLevel
   );
 
-  const easyTier = (crBudget?.easy ?? 0) * localNumPlayers;
-  const standardTier = (crBudget?.standard ?? 0) * localNumPlayers;
-  const hardTier = (crBudget?.hard ?? 0) * localNumPlayers;
+  const easyTier = (crBudget?.easy ?? 0) * finalNumPlayers;
+  const standardTier = (crBudget?.standard ?? 0) * finalNumPlayers;
+  const hardTier = (crBudget?.hard ?? 0) * finalNumPlayers;
 
   let difficulty = "";
   if (totalCr <= easyTier) {
@@ -281,7 +287,7 @@ function EncounterStats() {
           Number of players in encounter
           <Input
             type={"number"}
-            value={localNumPlayers}
+            value={finalNumPlayers}
             onChange={(e) => setLocalNumPlayers(parseInt(e.target.value))}
           />
         </label>
@@ -289,7 +295,7 @@ function EncounterStats() {
           Player level
           <Input
             type={"number"}
-            value={playerLevel}
+            value={finalPlayerLevel}
             onChange={(e) => setPlayerLevel(parseInt(e.target.value))}
           />
         </label>
@@ -311,7 +317,7 @@ function EncounterStats() {
             Estimated turn seconds
             <Input
               type={"number"}
-              value={estimatedTurnSeconds}
+              value={finalTurnSeconds}
               onChange={(e) =>
                 setEstimatedTurnSeconds(parseInt(e.target.value))
               }
@@ -321,7 +327,7 @@ function EncounterStats() {
             Estimated rounds
             <Input
               type={"number"}
-              value={estimatedRounds}
+              value={finalEstimatedRounds}
               onChange={(e) => setEstimatedRounds(parseInt(e.target.value))}
             />
           </label>
