@@ -15,14 +15,14 @@ export const encounters = pgTable(
   "encounters",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    name: varchar("name", { length: 256 }),
-    description: varchar("description", { length: 256 }),
+    name: text("name"),
+    description: text("description"),
     started_at: timestamp("started_at"),
     created_at: timestamp("created_at").defaultNow(),
     user_id: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    turn_count: integer("turn_count").default(0).notNull(),
+    current_round: integer("current_round").default(1).notNull(),
     ended_at: timestamp("ended_at"),
   },
   (t) => {

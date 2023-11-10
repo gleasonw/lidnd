@@ -115,20 +115,12 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
       <span className="flex gap-3 items-center flex-col md:flex-row">
         <Input
           value={encounterName}
-          placeholder={encounter?.name ?? ""}
+          placeholder={encounter?.name ?? "Unnamed encounter"}
           onChange={(e) => {
             setEncounterName(e.target.value);
             debouncedNameUpdate(e.target.value);
           }}
         />
-        <span
-          className={clsx("transition-opacity", {
-            "opacity-0": encounterName !== encounter?.name,
-            "opacity-80": encounterName === encounter?.name,
-          })}
-        >
-          Saved
-        </span>
         {children}
       </span>
       {encounter?.started_at ? (
@@ -163,7 +155,7 @@ function EncounterParticipantRow() {
     <AnimatePresence>
       <div
         className={clsx(
-          "flex flex-row gap-10 px-10 max-w-full items-center overflow-auto"
+          "flex flex-row gap-10 px-10 max-w-full items-center overflow-auto pb-5"
         )}
       >
         {encounter?.participants
@@ -266,7 +258,7 @@ function EncounterStats() {
   }
 
   return (
-    <div className={clsx("flex gap-14")}>
+    <div className={clsx("flex gap-2")}>
       <BasePopover
         trigger={
           <Button

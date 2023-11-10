@@ -45,8 +45,8 @@ export default function Dashboard() {
       },
     });
   const [encounter, setEncounter] = React.useState({
-    name: "Unnamed encounter",
-    description: "",
+    name: null,
+    description: null,
   });
 
   const displayedEncounters = encounters;

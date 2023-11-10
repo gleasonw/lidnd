@@ -53,19 +53,6 @@ export function BattleUI() {
       ? updateTurnOrder(variables.to, encounterParticipants)
       : encounterParticipants;
 
-  let numberTurns = encounter?.turn_count ?? 0;
-  if (isTurnLoading && variables) {
-    if (variables.to === "next") {
-      numberTurns += 1;
-    } else {
-      numberTurns -= 1;
-    }
-  }
-
-  const roundNumber = encounterParticipants
-    ? Math.ceil((numberTurns + 1) / encounterParticipants?.length)
-    : 1;
-
   const activeParticipant = displayedParticipants?.find(
     (creature) => creature.is_active
   );
@@ -117,7 +104,7 @@ export function BattleUI() {
     <div className="flex flex-col gap-5 justify-center items-center">
       <div className={"flex gap-3 items-center w-full justify-between"}>
         <EncounterTime time={encounter?.started_at ?? undefined} />
-        <h1 className="text-xl">Round {roundNumber}</h1>
+        <h1 className="text-xl">Round {encounter?.current_round}</h1>
         {!addingCreature && (
           <Button onClick={() => setAddingCreature(true)}>
             <Plus /> Add creature

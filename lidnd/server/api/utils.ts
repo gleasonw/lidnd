@@ -5,7 +5,7 @@ import {
   encounters,
   settings,
 } from "@/server/api/db/schema";
-import { and, eq, sql, desc } from "drizzle-orm";
+import { and, eq, sql, desc, asc } from "drizzle-orm";
 import { paths, components } from "@/app/schema";
 import createClient from "openapi-fetch";
 import {
@@ -175,7 +175,10 @@ export async function getEncounterParticipantsWithCreatureData(
     .from(encounter_participant)
     .where(eq(encounter_participant.encounter_id, encounter_id))
     .innerJoin(creatures, eq(encounter_participant.creature_id, creatures.id))
-    .orderBy(desc(encounter_participant.initiative));
+    .orderBy(
+      desc(encounter_participant.initiative),
+      asc(creatures.created_at)
+    );
   return encouterCreatures.map(({ creatures, encounter_participant }) =>
     mergeEncounterCreature(encounter_participant, creatures)
   );

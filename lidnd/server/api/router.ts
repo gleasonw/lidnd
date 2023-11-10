@@ -168,7 +168,13 @@ export const appRouter = t.router({
       );
       return acc;
     }, {});
-    return Object.values(response)[0];
+    const encounterWithParticipants = Object.values(response)[0];
+    return {
+      ...encounterWithParticipants,
+      participants: encounterWithParticipants.participants.sort(
+        sortEncounterCreatures
+      ),
+    };
   }),
 
   deleteEncounter: protectedProcedure
@@ -188,8 +194,8 @@ export const appRouter = t.router({
   createEncounter: protectedProcedure
     .input(
       z.object({
-        name: z.string(),
-        description: z.string(),
+        name: z.string().nullable(),
+        description: z.string().nullable(),
       })
     )
     .mutation(async (opts) => {
@@ -356,6 +362,9 @@ export const appRouter = t.router({
             .from(channels)
             .where(eq(channels.discord_user_id, opts.ctx.user.discord_id)),
         ]);
+        const previousActiveIndex = encounterParticipants
+          .sort(sortEncounterCreatures)
+          .findIndex((c) => c.is_active);
         const updatedOrder = updateTurnOrder(
           opts.input.to,
           encounterParticipants
@@ -368,17 +377,24 @@ export const appRouter = t.router({
             message: "Failed to update turn",
           });
         }
+        let currentRound = encounter.current_round;
+        const newActiveIndex = updatedOrder.findIndex((c) => c.is_active);
 
-        const numTurns =
-          encounter.turn_count + (opts.input.to === "next" ? 1 : -1);
-        console.log(numTurns)
+        if (opts.input.to === "next" && newActiveIndex < previousActiveIndex) {
+          currentRound++;
+        } else if (
+          opts.input.to === "previous" &&
+          newActiveIndex > previousActiveIndex
+        ) {
+          currentRound--;
+        }
 
         await Promise.all([
           setActiveParticipant(newActive.id, opts.input.encounter_id, tx),
           tx
             .update(encounters)
             .set({
-              turn_count: numTurns,
+              current_round: currentRound,
             })
             .where(eq(encounters.id, opts.input.encounter_id)),
         ]);

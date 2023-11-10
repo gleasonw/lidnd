@@ -12,7 +12,7 @@ export function sortEncounterCreatures<
 >(a: T, b: T) {
   return (
     b.initiative - a.initiative ||
-    b.created_at.getTime() - a.created_at.getTime()
+    a.created_at.getTime() - b.created_at.getTime()
   );
 }
 

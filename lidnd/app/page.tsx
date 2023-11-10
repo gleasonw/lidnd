@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getPageSession } from "@/server/api/utils";
 
 import type { Metadata } from "next";
 
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
+  const session = await getPageSession();
+  if (!session) {
+    return redirect("/login");
+  }
   redirect("/dashboard");
 }

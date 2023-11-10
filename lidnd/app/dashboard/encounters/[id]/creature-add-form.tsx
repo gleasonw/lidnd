@@ -11,10 +11,8 @@ import * as z from "zod";
 import { Card, CardContent } from "@/components/ui/card";
 import clsx from "clsx";
 import {
-  Creature,
   EncounterCreature,
   creatureUploadSchema,
-  insertCreatureSchema,
 } from "@/server/api/router";
 import { api } from "@/trpc/react";
 
@@ -156,9 +154,8 @@ export function ExistingCreature({
   const [name, setName] = useState("");
   const id = useEncounterId();
   const { encounterById } = api.useUtils();
-  const optimisticId = useId();
 
-  const { data: creatures, isLoading: isLoadingCreatures } =
+  const { data: creatures } =
     api.getUserCreatures.useQuery({
       name,
     });
@@ -167,6 +164,7 @@ export function ExistingCreature({
       onMutate: async ({ creature_id }) => {
         await encounterById.cancel(id);
         const previousEncounterData = encounterById.getData(id);
+        const optimisticId = Math.random().toString();
         encounterById.setData(id, (old) => {
           if (!old) {
             return;

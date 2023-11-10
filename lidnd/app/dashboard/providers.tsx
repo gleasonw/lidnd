@@ -27,7 +27,7 @@ export default function Providers({
 
   return (
     <>
-      <nav className="border-bottom border flex items-center gap-3 flex-col sm:flex-row sm:gap-5">
+      <nav className="border-bottom border flex items-center gap-3 flex-col sm:flex-row sm:gap-5 mb-3">
         <Link href="/dashboard" className={"text-2xl p-5"}>
           LiDnD
         </Link>
@@ -36,7 +36,7 @@ export default function Providers({
             key={route}
             href={route}
             className={clsx(
-              "flex h-[48px] grow items-center justify-center gap-2 rounded-md p-3 font-medium hover:bg-gray-200 md:flex-none md:justify-start md:p-2 md:px-3",
+              "flex h-[48px] grow items-center justify-center gap-2 rounded-md p-3 hover:bg-gray-200 md:flex-none md:justify-start md:p-2 md:px-3",
               {
                 "bg-gray-200 font-bold": path === route,
               }
@@ -46,10 +46,18 @@ export default function Providers({
           </Link>
         ))}
         <form
-          className={"ml-auto pr-5 flex gap-5  items-center"}
+          className={"ml-auto pr-5 flex gap-5 items-center"}
           action={logOut}
         >
-          <Link href="/dashboard/settings" className="flex gap-5 items-center">
+          <Link
+            href="/dashboard/settings"
+            className={clsx(
+              "flex h-[48px] grow items-center justify-center gap-2 rounded-md p-3 hover:bg-gray-200 md:flex-none md:justify-start md:p-2 md:px-3",
+              {
+                "bg-gray-200 font-bold": path === "/dashboard/settings",
+              }
+            )}
+          >
             Settings
           </Link>
           <Suspense

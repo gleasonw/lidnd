@@ -15,6 +15,20 @@
       "when": 1699624058780,
       "tag": "0001_breezy_skullbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1699648626349,
+      "tag": "0002_skinny_marrow",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1699649570637,
+      "tag": "0003_hot_odin",
+      "breakpoints": true
     }
   ]
 }
