@@ -36,7 +36,7 @@ export default function Providers({
             key={route}
             href={route}
             className={clsx(
-              "flex h-[48px] grow items-center justify-center gap-2 rounded-md p-3 text-sm font-medium hover:bg-gray-200 md:flex-none md:justify-start md:p-2 md:px-3",
+              "flex h-[48px] grow items-center justify-center gap-2 rounded-md p-3 font-medium hover:bg-gray-200 md:flex-none md:justify-start md:p-2 md:px-3",
               {
                 "bg-gray-200 font-bold": path === route,
               }
