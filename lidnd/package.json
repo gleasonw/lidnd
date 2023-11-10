@@ -54,7 +54,7 @@
     "lodash.debounce": "^4.0.8",
     "lucia": "^2.7.3",
     "lucide-react": "^0.277.0",
-    "next": "14.0.0",
+    "next": "13.4.12",
     "openapi-fetch": "^0.7.10",
     "postcss": "8.4.29",
     "postgres": "^3.4.3",
