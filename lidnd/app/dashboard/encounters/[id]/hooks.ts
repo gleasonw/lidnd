@@ -24,7 +24,7 @@ export function useCreateCreatureInEncounter() {
       formData.append("encounter_id", encounter.id);
 
       const response = await fetch(
-        `${rerouteUrl}/api/creature/create-and-add-to-encounter`,
+        `${process.env.DOMAIN}/api/creature/create-and-add-to-encounter`,
         {
           method: "POST",
           body: formData,
