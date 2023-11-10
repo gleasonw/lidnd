@@ -1,0 +1,1 @@
+ALTER TABLE "encounters" RENAME COLUMN "current_round" TO "turn_count";

@@ -369,7 +369,20 @@ export const appRouter = t.router({
           });
         }
 
-        await setActiveParticipant(newActive.id, opts.input.encounter_id, tx);
+        const numTurns =
+          encounter.turn_count + (opts.input.to === "next" ? 1 : -1);
+        console.log(numTurns)
+
+        await Promise.all([
+          setActiveParticipant(newActive.id, opts.input.encounter_id, tx),
+          tx
+            .update(encounters)
+            .set({
+              turn_count: numTurns,
+            })
+            .where(eq(encounters.id, opts.input.encounter_id)),
+        ]);
+
         if (channel.length > 0) {
           await postEncounterToUserChannel({
             ...encounter,

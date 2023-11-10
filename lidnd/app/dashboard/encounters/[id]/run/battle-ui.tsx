@@ -52,6 +52,20 @@ export function BattleUI() {
     isTurnLoading && variables
       ? updateTurnOrder(variables.to, encounterParticipants)
       : encounterParticipants;
+
+  let numberTurns = encounter?.turn_count ?? 0;
+  if (isTurnLoading && variables) {
+    if (variables.to === "next") {
+      numberTurns += 1;
+    } else {
+      numberTurns -= 1;
+    }
+  }
+
+  const roundNumber = encounterParticipants
+    ? Math.floor(numberTurns / encounterParticipants?.length) + 1
+    : 1;
+
   const activeParticipant = displayedParticipants?.find(
     (creature) => creature.is_active
   );
@@ -103,13 +117,14 @@ export function BattleUI() {
     <div className="flex flex-col gap-5 justify-center items-center">
       <div className={"flex gap-3 items-center w-full justify-between"}>
         <EncounterTime time={encounter?.started_at ?? undefined} />
+        <h1 className="text-xl">Round {roundNumber}</h1>
         {!addingCreature && (
           <Button onClick={() => setAddingCreature(true)}>
             <Plus /> Add creature
           </Button>
         )}
       </div>
-      
+
       {addingCreature && (
         <BattleAddCreatureForm>
           <Button variant={"ghost"} onClick={() => setAddingCreature(false)}>
@@ -120,7 +135,7 @@ export function BattleUI() {
 
       <div
         className={clsx(
-          "flex flex-row gap-10 px-10 max-w-full items-center overflow-auto h-80"
+          "flex flex-row gap-2 px-10 max-w-full items-center overflow-auto pb-10"
         )}
         ref={scrollContainer}
       >
@@ -191,7 +206,6 @@ export function BattleUI() {
           </Button>
         </>
       )}
-      
     </div>
   );
 }
@@ -223,11 +237,12 @@ export function BattleCard({
         key={creature.id}
         data-active={creature.is_active}
         className={clsx(
-          "relative select-none h-56 justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col transition-all",
+          "relative select-none h-56 mb-4 rounded-none justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col transition-all",
           className,
           {
-            "transform scale-110": creature.is_active,
-            "outline-4 outline": isSelected,
+            "transform h-60 translate-y-2 outline-4 mb-0 outline":
+              creature.is_active,
+            "border-gray-800 border": isSelected,
           }
         )}
       >

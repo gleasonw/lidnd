@@ -22,7 +22,7 @@ export const encounters = pgTable(
     user_id: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    current_round: integer("current_round").default(0).notNull(),
+    turn_count: integer("turn_count").default(0).notNull(),
     ended_at: timestamp("ended_at"),
   },
   (t) => {

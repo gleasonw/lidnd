@@ -8,6 +8,13 @@
       "when": 1699610459322,
       "tag": "0000_simple_micromax",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1699624058780,
+      "tag": "0001_breezy_skullbuster",
+      "breakpoints": true
     }
   ]
 }

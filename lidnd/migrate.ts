@@ -2,6 +2,8 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
+console.log(process.env.NODE_ENV);
+
 const db_url =
   process.env.NODE_ENV === "production"
     ? process.env.DATABASE_URL

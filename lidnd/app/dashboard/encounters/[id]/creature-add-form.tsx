@@ -111,7 +111,7 @@ export function ImageUpload({ onUpload }: { onUpload: (file?: File) => void }) {
   const [hasContent, setHasContent] = React.useState(false);
   return (
     <span className="h-auto relative flex flex-col gap-5 items-center justify-center group">
-      <span className="flex flex-wrap gap-2 items-center w-full relative rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+      <span className="flex flex-wrap gap-2 items-center relative rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
         <Input
           type={"file"}
           disabled={hasContent}
