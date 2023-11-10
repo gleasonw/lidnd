@@ -46,13 +46,10 @@ export default function CreaturesPage() {
   const { mutate: createCreature } = useMutation({
     mutationFn: async (rawData: CreaturePost) => {
       const formData = getCreaturePostForm(rawData);
-      const response = await fetch(
-        "https://dnd-init-tracker-production-682f.up.railway.app/api/creature/create",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch(`${rerouteUrl}/api/creature/create`, {
+        method: "POST",
+        body: formData,
+      });
       const data = await response.json();
       if (response.status !== 200) {
         console.log(data.detail);

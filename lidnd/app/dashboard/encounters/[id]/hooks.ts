@@ -7,6 +7,7 @@ import { api } from "@/trpc/react";
 import { useMutation } from "@tanstack/react-query";
 import { useId } from "react";
 
+
 export function useCreateCreatureInEncounter() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
@@ -23,7 +24,7 @@ export function useCreateCreatureInEncounter() {
       formData.append("encounter_id", encounter.id);
 
       const response = await fetch(
-        "https://dnd-init-tracker-production-682f.up.railway.app/api/creature/create-and-add-to-encounter",
+        `${rerouteUrl}/api/creature/create-and-add-to-encounter`,
         {
           method: "POST",
           body: formData,

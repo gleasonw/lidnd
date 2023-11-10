@@ -5,7 +5,7 @@ import Link from "next/link";
 export const rerouteUrl =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
-    : process.env.DOMAIN;
+    : "https://dnd-init-tracker-production-682f.up.railway.app";
 
 export default function Login() {
   return (
