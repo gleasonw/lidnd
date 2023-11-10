@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1699430576362,
-      "tag": "0000_square_baron_zemo",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1699524223244,
-      "tag": "0001_curvy_tomorrow_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1699526886071,
-      "tag": "0002_unique_swordsman",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1699527086408,
-      "tag": "0003_natural_lethal_legion",
+      "when": 1699610459322,
+      "tag": "0000_simple_micromax",
       "breakpoints": true
     }
   ]

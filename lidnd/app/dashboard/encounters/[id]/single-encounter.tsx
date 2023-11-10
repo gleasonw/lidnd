@@ -111,12 +111,11 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
   });
 
   return (
-    <div className="flex gap-5 items-center w-full justify-between">
-      <span className="flex gap-3 items-center">
+    <div className="flex gap-5 items-center w-full flex-col md:flex-row md:justify-between">
+      <span className="flex gap-3 items-center flex-col md:flex-row">
         <Input
           value={encounterName}
           placeholder={encounter?.name ?? ""}
-          className={"text-xl max-w-lg"}
           onChange={(e) => {
             setEncounterName(e.target.value);
             debouncedNameUpdate(e.target.value);
@@ -265,7 +264,7 @@ function EncounterStats() {
       <BasePopover
         trigger={
           <Button
-            className="flex text-2xl items-center gap-5 w-44"
+            className="flex text-xl items-center gap-5 w-44"
             variant="ghost"
           >
             <Skull />
@@ -296,13 +295,13 @@ function EncounterStats() {
         </label>
       </BasePopover>
       <BasePopover
-        className="flex flex-col items-center gap-5 w-52"
+        className="flex flex-col items-center gap-5"
         trigger={
           <Button
-            className="flex gap-5 items-center text-2xl whitespace-nowrap"
+            className="flex gap-5 items-center text-xl whitespace-nowrap w-60"
             variant="ghost"
           >
-            <Clock />
+            <Clock className="flex-shrink-0" />
             {encounterTime}
           </Button>
         }
