@@ -63,7 +63,7 @@ export function BattleUI() {
   }
 
   const roundNumber = encounterParticipants
-    ? Math.floor(numberTurns / encounterParticipants?.length) + 1
+    ? Math.ceil((numberTurns + 1) / encounterParticipants?.length)
     : 1;
 
   const activeParticipant = displayedParticipants?.find(
