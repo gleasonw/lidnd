@@ -181,7 +181,7 @@ export async function getEncounterParticipantsWithCreatureData(
   );
 }
 const { POST } = createClient<paths>({
-  baseUrl: "http://dnd-init-tracker:8000",
+  baseUrl: apiURL,
 });
 
 export async function postEncounterToUserChannel(
