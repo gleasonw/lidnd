@@ -187,13 +187,11 @@ export function BattleUI() {
               {selectedParticipant.name}{" "}
             </span>
             <ParticipantHealthForm participant={selectedParticipant} />
-            {selectedParticipant.hp > 0 ? (
-              <InitiativeInput
-                participant={selectedParticipant}
-                className="flex gap-5"
-                key={selectedParticipant.id}
-              />
-            ) : null}
+            <InitiativeInput
+              participant={selectedParticipant}
+              className="flex gap-5"
+              key={selectedParticipant.id}
+            />
           </div>
           <StatBlock
             id={selectedParticipant.creature_id}

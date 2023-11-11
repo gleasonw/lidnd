@@ -1,11 +1,9 @@
-import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import {
   TooltipProvider,
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-} from "@radix-ui/react-tooltip";
-import { AnimatePresence, motion } from "framer-motion";
+} from "@/components/ui/tooltip";
 
 export function Tip({
   children,
@@ -18,13 +16,7 @@ export function Tip({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent>
-          <AnimatePresence>
-            <FadePresenceItem className="p-2 m-2 border rounded-md shadow-sm">
-              {text}
-            </FadePresenceItem>
-          </AnimatePresence>
-        </TooltipContent>
+        <TooltipContent>{text}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

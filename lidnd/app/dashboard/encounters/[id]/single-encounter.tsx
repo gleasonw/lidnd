@@ -27,6 +27,7 @@ import {
 } from "@/app/dashboard/encounters/[id]/hooks";
 import { Toggle } from "@/components/ui/toggle";
 import { Tip } from "@/components/ui/tip";
+import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 
 export default function SingleEncounter() {
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
@@ -48,7 +49,11 @@ export default function SingleEncounter() {
           <EncounterDetailsEditor>
             <EncounterStats />
           </EncounterDetailsEditor>
-          <EncounterParticipantRow />
+          <div className="w-full flex items-center gap-3 flex-wrap justify-center">
+            <EncounterParticipantRow />
+            <GroupInitiativeInput />
+          </div>
+
           <div className={"flex flex-col w-full gap-3"}>
             <div
               className={
@@ -165,10 +170,9 @@ function EncounterParticipantRow() {
               <BattleCard
                 creature={participant}
                 header={
-                  <Tip text="Creature has surprise?">
+                  <Tip text="Surprise round">
                     <Toggle
                       aria-label="Does creature benefit from surprise?"
-                      tabIndex={index + 1 + numCreatures}
                       pressed={participant.has_surprise}
                       className={clsx({
                         "bg-gray-300": participant.has_surprise,
@@ -185,10 +189,6 @@ function EncounterParticipantRow() {
                   </Tip>
                 }
               >
-                <InitiativeInput
-                  participant={participant}
-                  tabIndex={index + 1 + 2 * numCreatures}
-                />
                 <Button
                   variant="ghost"
                   onClick={() =>
@@ -197,7 +197,6 @@ function EncounterParticipantRow() {
                       participant_id: participant.id,
                     })
                   }
-                  tabIndex={index + 1 + 3 * numCreatures}
                 >
                   <X />
                 </Button>
@@ -213,6 +212,29 @@ function EncounterParticipantRow() {
         )}
       </div>
     </AnimatePresence>
+  );
+}
+
+function GroupInitiativeInput() {
+  const id = useEncounterId();
+  const [encounter, encounterQuery] = api.encounterById.useSuspenseQuery(id);
+
+  return (
+    <div className={"flex flex-col gap-2"}>
+      {encounter.participants
+        .sort(
+          (a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id)
+        )
+        .map((participant) => (
+          <div
+            key={participant.id}
+            className="flex gap-3 items-center justify-between"
+          >
+            <span>{participant.name}</span>
+            <InitiativeInput participant={participant} />
+          </div>
+        ))}
+    </div>
   );
 }
 
