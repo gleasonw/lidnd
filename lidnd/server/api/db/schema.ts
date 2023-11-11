@@ -66,6 +66,7 @@ export const encounter_participant = pgTable(
     initiative: integer("initiative").default(0).notNull(),
     hp: integer("hp").default(0).notNull(),
     is_active: boolean("is_active").default(false).notNull(),
+    has_surprise: boolean("has_surprise").default(false).notNull(),
   },
   (table) => {
     return {
