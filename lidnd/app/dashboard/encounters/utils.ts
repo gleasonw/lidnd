@@ -43,70 +43,80 @@ export function updateTurnOrder<
 >(
   to: "next" | "previous",
   participants: Participant[],
-  encounter: Encounter
+  encounter: { current_round: number }
 ): UpdateTurnOrderReturn<Participant> {
   let sortedParticipants = participants.slice().sort(sortEncounterCreatures);
-  const previousActiveIndex = sortedParticipants.findIndex((c) => c.is_active);
-  let currentActive = participants.find((c) => c.is_active);
-  if (!currentActive) {
+  if (!sortedParticipants.some((p) => p.is_active)) {
     sortedParticipants[0].is_active = true;
-    currentActive = sortedParticipants[0];
   }
-
+  const encounterHasSurpriseRound = participants.some((p) => p.has_surprise);
   const isSurpriseRound =
-    encounter?.current_round === 0 && participants.some((p) => p.has_surprise);
+    encounter?.current_round === 0 && encounterHasSurpriseRound;
 
   let activeParticipants;
+
+  function participantIsActivatable(p: Participant) {
+    // if the active player is dead, we have to keep them in the order until the turn changes.
+    // a rare occurrence, but possible.
+    // Player characters are always active. Since their HP is default 0, we have to exempt them.
+    return p.hp > 0 || p.is_active || p.is_player;
+  }
 
   if (isSurpriseRound) {
     activeParticipants = sortedParticipants.filter((c) => c.has_surprise);
   } else {
-    // if the active player is dead, we have to keep them in the order until the turn changes.
-    // a rare occurrence, but possible.
-    // Player characters are always active. Since their HP is default 0, we have to exempt them.
-    activeParticipants = sortedParticipants.filter(
-      (c) => c.hp > 0 || c.is_active || c.is_player
-    );
+    activeParticipants = sortedParticipants.filter(participantIsActivatable);
   }
-  let nextActive: Participant;
+  let nextActiveIndex: number;
+  const previousActiveIndex = activeParticipants.findIndex((c) => c.is_active);
+
+  let currentRound = encounter.current_round;
   if (to === "previous") {
-    nextActive =
-      activeParticipants[
-        (activeParticipants.indexOf(currentActive) -
-          1 +
-          activeParticipants.length) %
-          activeParticipants.length
-      ];
+    nextActiveIndex =
+      (previousActiveIndex - 1 + activeParticipants.length) %
+      activeParticipants.length;
+    if (nextActiveIndex >= previousActiveIndex && currentRound > 0) {
+      if (encounter.current_round === 1 && encounterHasSurpriseRound) {
+        // we wrap back into surprise
+        nextActiveIndex = -1;
+        activeParticipants = sortedParticipants.filter((c) => c.has_surprise);
+      }
+      currentRound--;
+    }
   } else {
-    nextActive =
-      activeParticipants[
-        (activeParticipants.indexOf(currentActive) + 1) %
-          activeParticipants.length
-      ];
+    nextActiveIndex = (previousActiveIndex + 1) % activeParticipants.length;
+    if (nextActiveIndex <= previousActiveIndex) {
+      if (isSurpriseRound) {
+        // we wrap back into normal
+        nextActiveIndex = 0;
+        activeParticipants = sortedParticipants.filter(
+          participantIsActivatable
+        );
+      }
+      currentRound++;
+    }
   }
-  const updatedOrder = sortedParticipants.map((c) => {
-    if (c.id === nextActive?.id) {
+  const activeParticipant = activeParticipants.at(nextActiveIndex);
+  if (!activeParticipant) {
+    throw new Error("No active participant found");
+  }
+  sortedParticipants = sortedParticipants.map((p) => {
+    if (p.id === activeParticipant?.id) {
       return {
-        ...c,
+        ...p,
         is_active: true,
       };
+    } else {
+      return {
+        ...p,
+        is_active: false,
+      };
     }
-    return {
-      ...c,
-      is_active: false,
-    };
   });
-  let currentRound = encounter.current_round;
-  const newActiveIndex = updatedOrder.findIndex((c) => c.is_active);
-  if (to === "next" && newActiveIndex <= previousActiveIndex) {
-    currentRound++;
-  } else if (to === "previous" && newActiveIndex >= previousActiveIndex) {
-    currentRound--;
-  }
   return {
-    updatedParticipants: updatedOrder,
+    updatedParticipants: sortedParticipants,
     updatedRoundNumber: currentRound,
-    newlyActiveParticipant: nextActive,
+    newlyActiveParticipant: activeParticipant,
   };
 }
 

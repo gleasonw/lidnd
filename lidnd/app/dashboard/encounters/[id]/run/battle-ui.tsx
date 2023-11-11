@@ -76,14 +76,12 @@ export function BattleUI() {
   function handleChangeTurn(direction: "next" | "previous") {
     // TODO: make encounter query suspense so always defined
     if (encounterParticipants) {
-      const { updatedParticipants } = updateTurnOrder(
+      const { newlyActiveParticipant } = updateTurnOrder(
         direction,
         encounterParticipants,
         encounter
       );
-      setDmSelectedCreature(
-        updatedParticipants?.find((creature) => creature.is_active)?.id ?? null
-      );
+      setDmSelectedCreature(newlyActiveParticipant.id);
       changeActiveTo({
         encounter_id: id,
         to: direction,
