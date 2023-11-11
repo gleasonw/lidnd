@@ -8,7 +8,7 @@ import {
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, Play, Skull, X, Zap } from "lucide-react";
+import { Clock, Dices, Play, Skull, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -17,7 +17,6 @@ import React, { Suspense } from "react";
 import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
-import InitiativeInput from "@/app/dashboard/encounters/[id]/InitiativeInput";
 import { BasePopover } from "@/app/dashboard/base-popover";
 import { api } from "@/trpc/react";
 import {
@@ -27,7 +26,6 @@ import {
 } from "@/app/dashboard/encounters/[id]/hooks";
 import { Toggle } from "@/components/ui/toggle";
 import { Tip } from "@/components/ui/tip";
-import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
 
 export default function SingleEncounter() {
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
@@ -49,10 +47,7 @@ export default function SingleEncounter() {
           <EncounterDetailsEditor>
             <EncounterStats />
           </EncounterDetailsEditor>
-          <div className="w-full flex items-center gap-3 flex-wrap justify-center">
-            <EncounterParticipantRow />
-            <GroupInitiativeInput />
-          </div>
+          <EncounterParticipantRow />
 
           <div className={"flex flex-col w-full gap-3"}>
             <div
@@ -105,12 +100,6 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
       });
   }, 500);
 
-  const { mutate: startEncounter } = api.startEncounter.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(id);
-    },
-  });
-
   return (
     <div className="flex gap-5 items-center w-full flex-col md:flex-row md:justify-between">
       <span className="flex gap-3 items-center flex-col md:flex-row">
@@ -132,13 +121,10 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
           </Button>
         </Link>
       ) : (
-        <Link
-          href={`${id}/run`}
-          onClick={() => encounter && startEncounter(encounter.id)}
-        >
+        <Link href={`${id}/roll`}>
           <Button>
-            <Play />
-            Commence the battle!
+            <Dices />
+            Roll initiative!
           </Button>
         </Link>
       )}
@@ -151,9 +137,6 @@ function EncounterParticipantRow() {
     useRemoveParticipantFromEncounter();
   const id = useEncounterId();
   const [encounter, encounterQuery] = api.encounterById.useSuspenseQuery(id);
-  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
-
-  const numCreatures = encounter?.participants?.length;
 
   return (
     <AnimatePresence>
@@ -167,28 +150,7 @@ function EncounterParticipantRow() {
           .sort(sortEncounterCreatures)
           .map((participant, index) => (
             <AnimationListItem key={participant.id}>
-              <BattleCard
-                creature={participant}
-                header={
-                  <Tip text="Surprise round">
-                    <Toggle
-                      aria-label="Does creature benefit from surprise?"
-                      pressed={participant.has_surprise}
-                      className={clsx({
-                        "bg-gray-300": participant.has_surprise,
-                      })}
-                      onPressedChange={(has_surprise) =>
-                        updateParticipant({
-                          ...participant,
-                          has_surprise,
-                        })
-                      }
-                    >
-                      <Zap />
-                    </Toggle>
-                  </Tip>
-                }
-              >
+              <BattleCard creature={participant}>
                 <Button
                   variant="ghost"
                   onClick={() =>
@@ -212,29 +174,6 @@ function EncounterParticipantRow() {
         )}
       </div>
     </AnimatePresence>
-  );
-}
-
-function GroupInitiativeInput() {
-  const id = useEncounterId();
-  const [encounter, encounterQuery] = api.encounterById.useSuspenseQuery(id);
-
-  return (
-    <div className={"flex flex-col gap-2"}>
-      {encounter.participants
-        .sort(
-          (a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id)
-        )
-        .map((participant) => (
-          <div
-            key={participant.id}
-            className="flex gap-3 items-center justify-between"
-          >
-            <span>{participant.name}</span>
-            <InitiativeInput participant={participant} />
-          </div>
-        ))}
-    </div>
   );
 }
 
