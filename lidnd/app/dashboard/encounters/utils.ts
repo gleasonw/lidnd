@@ -80,8 +80,10 @@ export function updateTurnOrder<
         // we wrap back into surprise
         nextActiveIndex = -1;
         activeParticipants = sortedParticipants.filter((c) => c.has_surprise);
+        currentRound--;
+      } else if (encounter.current_round > 1) {
+        currentRound--;
       }
-      currentRound--;
     }
   } else {
     nextActiveIndex = (previousActiveIndex + 1) % activeParticipants.length;

@@ -232,6 +232,8 @@ export function BattleCard({
   isSelected,
   header,
 }: BattleCardProps) {
+  const id = useEncounterId();
+  const { data: encounter } = api.encounterById.useQuery(id);
   return (
     <div
       className={`relative flex-col gap-6 items-center w-40 justify-between flex`}
@@ -257,6 +259,8 @@ export function BattleCard({
             "transform h-60 translate-y-2 outline-4 mb-0 outline":
               creature.is_active,
             "border-gray-800 border": isSelected,
+            "opacity-40":
+              encounter?.current_round === 0 && !creature.has_surprise,
           }
         )}
       >
