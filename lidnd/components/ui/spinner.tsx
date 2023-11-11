@@ -1,6 +1,11 @@
-export function Spinner() {
+import clsx from "clsx";
+
+export function Spinner({ className }: { className?: string }) {
   return (
-    <svg className="animate-spin h-6 w-6 text-white" viewBox="0 0 24 24">
+    <svg
+      className={clsx("animate-spin h-6 w-6 text-white", className)}
+      viewBox="0 0 24 24"
+    >
       <circle
         className="opacity-25"
         cx="12"

@@ -32,6 +32,7 @@ import {
   useCreateCreatureInEncounter,
   useRemoveParticipantFromEncounter,
 } from "@/app/dashboard/encounters/[id]/hooks";
+import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 
 export function BattleUI() {
   const id = useEncounterId();
@@ -48,10 +49,17 @@ export function BattleUI() {
     },
   });
 
-  const displayedParticipants =
-    isTurnLoading && variables
-      ? updateTurnOrder(variables.to, encounterParticipants)
-      : encounterParticipants;
+  let displayedParticipants: EncounterCreature[] | undefined;
+  if (isTurnLoading && variables && encounterParticipants) {
+    const { updatedParticipants } = updateTurnOrder(
+      variables.to,
+      encounterParticipants,
+      encounter
+    );
+    displayedParticipants = updatedParticipants;
+  } else {
+    displayedParticipants = encounterParticipants;
+  }
 
   const activeParticipant = displayedParticipants?.find(
     (creature) => creature.is_active
@@ -66,14 +74,21 @@ export function BattleUI() {
     useRemoveParticipantFromEncounter();
 
   function handleChangeTurn(direction: "next" | "previous") {
-    const newParticipants = updateTurnOrder(direction, encounterParticipants);
-    setDmSelectedCreature(
-      newParticipants?.find((creature) => creature.is_active)?.id ?? null
-    );
-    changeActiveTo({
-      encounter_id: id,
-      to: direction,
-    });
+    // TODO: make encounter query suspense so always defined
+    if (encounterParticipants) {
+      const { updatedParticipants } = updateTurnOrder(
+        direction,
+        encounterParticipants,
+        encounter
+      );
+      setDmSelectedCreature(
+        updatedParticipants?.find((creature) => creature.is_active)?.id ?? null
+      );
+      changeActiveTo({
+        encounter_id: id,
+        to: direction,
+      });
+    }
   }
 
   const selectedParticipant = displayedParticipants?.find(
@@ -100,11 +115,18 @@ export function BattleUI() {
     }
   }, [activeParticipant?.id]);
 
+  const roundText =
+    encounter?.current_round === 0
+      ? "Surprise round"
+      : `Round ${encounter?.current_round}`;
+
+  console.log(displayedParticipants);
+
   return (
     <div className="flex flex-col gap-5 justify-center items-center">
       <div className={"flex gap-3 items-center w-full justify-between"}>
         <EncounterTime time={encounter?.started_at ?? undefined} />
-        <h1 className="text-xl">Round {encounter?.current_round}</h1>
+        <h1 className="text-xl">{roundText}</h1>
         {!addingCreature && (
           <Button onClick={() => setAddingCreature(true)}>
             <Plus /> Add creature
@@ -202,6 +224,7 @@ export type BattleCardProps = {
   children?: React.ReactNode;
   className?: string;
   isSelected?: boolean;
+  header?: React.ReactNode;
 };
 
 export function BattleCard({
@@ -209,17 +232,23 @@ export function BattleCard({
   children,
   className,
   isSelected,
+  header,
 }: BattleCardProps) {
   return (
     <div
       className={`relative flex-col gap-6 items-center w-40 justify-between flex`}
     >
-      <Swords
-        className={clsx({
-          "opacity-0": !creature.is_active,
-          "opacity-100": creature.is_active,
-        })}
-      />
+      <AnimatePresence>
+        <div className={"flex flex-row gap-2"}>
+          {creature.is_active && (
+            <FadePresenceItem>
+              <Swords />
+            </FadePresenceItem>
+          )}
+          {header}
+        </div>
+      </AnimatePresence>
+
       <Card
         key={creature.id}
         data-active={creature.is_active}

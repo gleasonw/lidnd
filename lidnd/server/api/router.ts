@@ -11,21 +11,18 @@ import { eq, and, sql, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
 import superjson from "superjson";
 import { ZodError, z } from "zod";
-import {
-  sortEncounterCreatures,
-  updateTurnOrder,
-} from "@/app/dashboard/encounters/utils";
-import { createInsertSchema } from "drizzle-zod";
+import { updateTurnOrder } from "@/app/dashboard/encounters/utils";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
   getEncounterParticipants,
   getEncounterParticipantsWithCreatureData,
   getIconAWSname,
   getStatBlockAWSname,
   getUserEncounter,
-  mergeEncounterCreature,
   postEncounterToUserChannel,
   setActiveParticipant,
 } from "@/server/api/utils";
+import { mergeEncounterCreature } from "@/app/dashboard/encounters/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const t = initTRPC.context<typeof createContext>().create({
@@ -70,9 +67,7 @@ export type EncounterWithParticipants = Encounter & {
   participants: EncounterCreature[];
 };
 
-export const insertParticipantSchema = createInsertSchema(
-  encounter_participant
-);
+export const participantSchema = createSelectSchema(encounter_participant);
 export const insertCreatureSchema = createInsertSchema(creatures);
 export const insertSettingsSchema = createInsertSchema(settings);
 
@@ -168,13 +163,7 @@ export const appRouter = t.router({
       );
       return acc;
     }, {});
-    const encounterWithParticipants = Object.values(response)[0];
-    return {
-      ...encounterWithParticipants,
-      participants: encounterWithParticipants.participants.sort(
-        sortEncounterCreatures
-      ),
-    };
+    return Object.values(response)[0];
   }),
 
   deleteEncounter: protectedProcedure
@@ -271,24 +260,14 @@ export const appRouter = t.router({
     }),
 
   updateEncounterParticipant: protectedProcedure
-    .input(
-      z.object({
-        participant_id: z.string(),
-        hp: z.number(),
-        initiative: z.number(),
-        encounter_id: z.string(),
-      })
-    )
+    .input(participantSchema)
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
         const [updatedParticipant, _] = await Promise.all([
           await tx
             .update(encounter_participant)
-            .set({
-              hp: opts.input.hp,
-              initiative: opts.input.initiative,
-            })
-            .where(eq(encounter_participant.id, opts.input.participant_id))
+            .set(opts.input)
+            .where(eq(encounter_participant.id, opts.input.id))
             .returning(),
           getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id, tx),
         ]);
@@ -311,10 +290,19 @@ export const appRouter = t.router({
           getUserEncounter(opts.ctx.user.userId, opts.input, tx),
           getEncounterParticipants(opts.input, tx),
         ]);
-        const sortedParticipants = encounterParticipants.sort(
-          sortEncounterCreatures
+
+        const surpriseRoundExists = encounterParticipants.some(
+          (p) => p.has_surprise
         );
-        const activeParticipant = sortedParticipants[0];
+
+        let activeParticipant: EncounterParticipant;
+        if (surpriseRoundExists) {
+          activeParticipant = encounterParticipants.find(
+            (p) => p.has_surprise
+          )!;
+        } else {
+          activeParticipant = encounterParticipants[0];
+        }
         await Promise.all([
           tx
             .update(encounter_participant)
@@ -331,6 +319,7 @@ export const appRouter = t.router({
             .update(encounters)
             .set({
               started_at: new Date(),
+              current_round: surpriseRoundExists ? 0 : 1,
             })
             .where(eq(encounters.id, opts.input)),
         ]);
@@ -362,39 +351,23 @@ export const appRouter = t.router({
             .from(channels)
             .where(eq(channels.discord_user_id, opts.ctx.user.discord_id)),
         ]);
-        const previousActiveIndex = encounterParticipants
-          .sort(sortEncounterCreatures)
-          .findIndex((c) => c.is_active);
-        const updatedOrder = updateTurnOrder(
-          opts.input.to,
-          encounterParticipants
-        );
-        const newActive = updatedOrder?.find((c) => c.is_active);
 
-        if (!newActive || !updatedOrder) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to update turn",
-          });
-        }
-        let currentRound = encounter.current_round;
-        const newActiveIndex = updatedOrder.findIndex((c) => c.is_active);
-
-        if (opts.input.to === "next" && newActiveIndex < previousActiveIndex) {
-          currentRound++;
-        } else if (
-          opts.input.to === "previous" &&
-          newActiveIndex > previousActiveIndex
-        ) {
-          currentRound--;
-        }
+        const {
+          updatedParticipants,
+          updatedRoundNumber,
+          newlyActiveParticipant,
+        } = updateTurnOrder(opts.input.to, encounterParticipants, encounter);
 
         await Promise.all([
-          setActiveParticipant(newActive.id, opts.input.encounter_id, tx),
+          setActiveParticipant(
+            newlyActiveParticipant.id,
+            opts.input.encounter_id,
+            tx
+          ),
           tx
             .update(encounters)
             .set({
-              current_round: currentRound,
+              current_round: updatedRoundNumber,
             })
             .where(eq(encounters.id, opts.input.encounter_id)),
         ]);
@@ -402,7 +375,7 @@ export const appRouter = t.router({
         if (channel.length > 0) {
           await postEncounterToUserChannel({
             ...encounter,
-            participants: updatedOrder,
+            participants: updatedParticipants,
           });
         }
         return encounter;
@@ -418,7 +391,7 @@ export const appRouter = t.router({
       })
     )
     .mutation(async (opts) => {
-      const [_, encounterParticipants] = await Promise.all([
+      const [encounter, encounterParticipants] = await Promise.all([
         getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id),
         getEncounterParticipantsWithCreatureData(opts.input.encounter_id),
       ]);
@@ -439,18 +412,16 @@ export const appRouter = t.router({
         });
       }
       if (result[0].is_active) {
-        const updatedOrder = updateTurnOrder("next", encounterParticipants);
-        const newActive = updatedOrder?.find((c) => c.is_active);
+        const { newlyActiveParticipant } = updateTurnOrder(
+          "next",
+          encounterParticipants,
+          encounter
+        );
 
-        if (!newActive) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message:
-              "Failed to update turn: could not set new active participant",
-          });
-        }
-
-        await setActiveParticipant(newActive.id, opts.input.encounter_id);
+        await setActiveParticipant(
+          newlyActiveParticipant.id,
+          opts.input.encounter_id
+        );
       }
       return result[0];
     }),

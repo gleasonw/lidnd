@@ -3,10 +3,10 @@ import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { getCreaturePostForm } from "@/app/dashboard/encounters/utils";
 import { rerouteUrl } from "@/app/login/page";
 import { EncounterCreature, EncounterParticipant } from "@/server/api/router";
+import { mergeEncounterCreature } from "../utils";
 import { api } from "@/trpc/react";
 import { useMutation } from "@tanstack/react-query";
 import { useId } from "react";
-
 
 export function useCreateCreatureInEncounter() {
   const { encounterById } = api.useUtils();
@@ -54,6 +54,7 @@ export function useCreateCreatureInEncounter() {
           is_active: false,
           created_at: new Date(),
           user_id: old.user_id,
+          has_surprise: false,
         };
         return {
           ...old,
@@ -106,28 +107,23 @@ export function useRemoveParticipantFromEncounter() {
   });
 }
 
-export function useUpdateEncounterParticipant(
-  participant: EncounterParticipant
-) {
+export function useUpdateEncounterParticipant() {
   const { encounterById } = api.useUtils();
+  const id = useEncounterId();
   return api.updateEncounterParticipant.useMutation({
     onSettled: async () => {
-      return await encounterById.invalidate(participant.encounter_id);
+      return await encounterById.invalidate(id);
     },
     onMutate: async (newParticipant) => {
-      await encounterById.cancel(participant.encounter_id);
-      const previousEncounter = encounterById.getData(participant.encounter_id);
-      encounterById.setData(participant.encounter_id, (old) => {
+      await encounterById.cancel(id);
+      const previousEncounter = encounterById.getData(id);
+      encounterById.setData(id, (old) => {
         if (!old) return old;
         return {
           ...old,
           participants: old.participants.map((p) => {
-            if (p.id === newParticipant.participant_id) {
-              return {
-                ...p,
-                initiative: newParticipant.initiative,
-                hp: newParticipant.hp,
-              };
+            if (p.id === newParticipant.id) {
+              return mergeEncounterCreature(newParticipant, p);
             }
             return p;
           }),

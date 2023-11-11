@@ -9,7 +9,6 @@ import { and, eq, sql, desc, asc } from "drizzle-orm";
 import { paths, components } from "@/app/schema";
 import createClient from "openapi-fetch";
 import {
-  Creature,
   EncounterCreature,
   EncounterParticipant,
   creatureUploadSchema,
@@ -21,17 +20,8 @@ import { cache } from "react";
 import { auth } from "@/server/api/auth/lucia";
 import * as context from "next/headers";
 import apiURL from "@/app/apiURL";
-
-export const toUint8Array = async (data: AsyncIterable<Uint8Array>) => {
-  const result = [];
-  for await (const chunk of data) {
-    for (const byte of chunk) {
-      result.push(byte);
-    }
-  }
-
-  return Uint8Array.from(result);
-};
+import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
+import { mergeEncounterCreature } from "@/app/dashboard/encounters/utils";
 
 export async function createCreature(
   user_id: string,
@@ -119,26 +109,6 @@ export const getPageSession = cache(() => {
   return authRequest.validate();
 });
 
-export function mergeEncounterCreature(
-  participant: EncounterParticipant,
-  creature: Creature
-): EncounterCreature {
-  return {
-    id: participant.id,
-    encounter_id: participant.encounter_id,
-    creature_id: participant.creature_id,
-    name: creature.name,
-    challenge_rating: creature.challenge_rating,
-    max_hp: creature.max_hp,
-    hp: participant.hp,
-    is_active: participant.is_active,
-    is_player: creature.is_player,
-    initiative: participant.initiative,
-    created_at: participant.created_at,
-    user_id: creature.user_id,
-  };
-}
-
 export async function setActiveParticipant(
   participant_id: string,
   encounter_id: string,
@@ -159,11 +129,12 @@ export async function setActiveParticipant(
 export async function getEncounterParticipants(
   encounter_id: string,
   dbObject = db
-) {
-  return await dbObject
+): Promise<EncounterParticipant[]> {
+  const participants = await dbObject
     .select()
     .from(encounter_participant)
     .where(eq(encounter_participant.encounter_id, encounter_id));
+  return participants.sort(sortEncounterCreatures);
 }
 
 export async function getEncounterParticipantsWithCreatureData(
@@ -174,14 +145,12 @@ export async function getEncounterParticipantsWithCreatureData(
     .select()
     .from(encounter_participant)
     .where(eq(encounter_participant.encounter_id, encounter_id))
-    .innerJoin(creatures, eq(encounter_participant.creature_id, creatures.id))
-    .orderBy(
-      desc(encounter_participant.initiative),
-      asc(creatures.created_at)
-    );
-  return encouterCreatures.map(({ creatures, encounter_participant }) =>
-    mergeEncounterCreature(encounter_participant, creatures)
-  );
+    .innerJoin(creatures, eq(encounter_participant.creature_id, creatures.id));
+  return encouterCreatures
+    .map(({ creatures, encounter_participant }) =>
+      mergeEncounterCreature(encounter_participant, creatures)
+    )
+    .sort(sortEncounterCreatures);
 }
 const { POST } = createClient<paths>({
   baseUrl: apiURL,

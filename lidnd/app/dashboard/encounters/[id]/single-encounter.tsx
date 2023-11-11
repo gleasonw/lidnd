@@ -1,22 +1,19 @@
 "use client";
 
-import {
-  CreaturePost,
-  ExistingCreature,
-} from "@/app/dashboard/encounters/[id]/creature-add-form";
+import { ExistingCreature } from "@/app/dashboard/encounters/[id]/creature-add-form";
 import {
   AnimationListItem,
   BattleCard,
 } from "@/app/dashboard/encounters/[id]/run/battle-ui";
 import { useEncounterId } from "@/app/dashboard/encounters/hooks";
 import { Button } from "@/components/ui/button";
-import { AnimatePresence } from "framer-motion";
-import { Clock, Play, Skull, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Clock, Play, Skull, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import React, { Suspense, useId } from "react";
+import React, { Suspense } from "react";
 import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
@@ -26,59 +23,58 @@ import { api } from "@/trpc/react";
 import {
   useCreateCreatureInEncounter,
   useRemoveParticipantFromEncounter,
+  useUpdateEncounterParticipant,
 } from "@/app/dashboard/encounters/[id]/hooks";
+import { Toggle } from "@/components/ui/toggle";
+import { Tip } from "@/components/ui/tip";
 
 export default function SingleEncounter() {
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
 
   return (
-    <div className={"flex flex-col items-center gap-10 relative"}>
-      <Suspense>
-        <EncounterDetailsEditor>
-          <EncounterStats />
-        </EncounterDetailsEditor>
-      </Suspense>
+    <AnimatePresence>
       <Suspense
         fallback={
-          <div className="flex flex-row gap-3">
-            {Array(5)
-              .fill(null)
-              .map((_, i) => (
-                <Card
-                  key={i}
-                  className="h-56 justify-evenly w-40 gap-0 items-center flex flex-col animate-pulse bg-gray-200"
-                />
-              ))}
+          <div className="w-screen p-20 flex items-center justify-center">
+            Loading encounter...
           </div>
         }
       >
-        <EncounterParticipantRow />
-      </Suspense>
-
-      <div className={"flex flex-col w-full gap-3"}>
-        <div
-          className={
-            "flex flex-wrap md:flex-nowrap w-full justify-center md:gap-5 lg:gap-14"
-          }
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: { duration: 0.1 } }}
+          className="w-full flex flex-col items-center gap-10"
         >
-          <Card className="max-w-[900px] w-full p-3">
-            <CardContent className={"flex flex-col gap-3"}>
-              <CardTitle className="py-3">Add new creature</CardTitle>
-              <FullCreatureAddForm
-                uploadCreature={(data) => addCreatureToEncounter(data)}
-              />
-            </CardContent>
-          </Card>
+          <EncounterDetailsEditor>
+            <EncounterStats />
+          </EncounterDetailsEditor>
+          <EncounterParticipantRow />
+          <div className={"flex flex-col w-full gap-3"}>
+            <div
+              className={
+                "flex flex-wrap md:flex-nowrap w-full justify-center md:gap-5 lg:gap-14"
+              }
+            >
+              <Card className="max-w-[900px] w-full p-3">
+                <CardContent className={"flex flex-col gap-3"}>
+                  <CardTitle className="py-3">Add new creature</CardTitle>
+                  <FullCreatureAddForm
+                    uploadCreature={(data) => addCreatureToEncounter(data)}
+                  />
+                </CardContent>
+              </Card>
 
-          <Card className={"max-w-[700px] w-full p-3"}>
-            <CardContent className={"flex flex-col gap-3"}>
-              <CardTitle className="py-3">Add existing creature</CardTitle>
-              <ExistingCreature />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
+              <Card className={"max-w-[700px] w-full p-3"}>
+                <CardContent className={"flex flex-col gap-3"}>
+                  <CardTitle className="py-3">Add existing creature</CardTitle>
+                  <ExistingCreature />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </motion.div>
+      </Suspense>
+    </AnimatePresence>
   );
 }
 
@@ -150,6 +146,9 @@ function EncounterParticipantRow() {
     useRemoveParticipantFromEncounter();
   const id = useEncounterId();
   const [encounter, encounterQuery] = api.encounterById.useSuspenseQuery(id);
+  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
+
+  const numCreatures = encounter?.participants?.length;
 
   return (
     <AnimatePresence>
@@ -161,10 +160,35 @@ function EncounterParticipantRow() {
         {encounter?.participants
           ?.slice()
           .sort(sortEncounterCreatures)
-          .map((participant) => (
+          .map((participant, index) => (
             <AnimationListItem key={participant.id}>
-              <BattleCard creature={participant}>
-                <InitiativeInput participant={participant} />
+              <BattleCard
+                creature={participant}
+                header={
+                  <Tip text="Creature has surprise?">
+                    <Toggle
+                      aria-label="Does creature benefit from surprise?"
+                      tabIndex={index + 1 + numCreatures}
+                      pressed={participant.has_surprise}
+                      className={clsx({
+                        "bg-gray-300": participant.has_surprise,
+                      })}
+                      onPressedChange={(has_surprise) =>
+                        updateParticipant({
+                          ...participant,
+                          has_surprise,
+                        })
+                      }
+                    >
+                      <Zap />
+                    </Toggle>
+                  </Tip>
+                }
+              >
+                <InitiativeInput
+                  participant={participant}
+                  tabIndex={index + 1 + 2 * numCreatures}
+                />
                 <Button
                   variant="ghost"
                   onClick={() =>
@@ -173,6 +197,7 @@ function EncounterParticipantRow() {
                       participant_id: participant.id,
                     })
                   }
+                  tabIndex={index + 1 + 3 * numCreatures}
                 >
                   <X />
                 </Button>

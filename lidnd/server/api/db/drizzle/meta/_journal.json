@@ -29,6 +29,13 @@
       "when": 1699649570637,
       "tag": "0003_hot_odin",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1699693185634,
+      "tag": "0004_previous_nomad",
+      "breakpoints": true
     }
   ]
 }

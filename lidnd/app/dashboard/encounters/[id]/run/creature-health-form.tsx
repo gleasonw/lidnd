@@ -13,13 +13,11 @@ export function ParticipantHealthForm({
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
   const { mutate: edit, isLoading } =
-    useUpdateEncounterParticipant(participant);
+    useUpdateEncounterParticipant();
 
   function handleHPChange(hp: number) {
     edit({
-      participant_id: participant.id,
-      encounter_id: participant.encounter_id,
-      initiative: participant.initiative,
+      ...participant,
       hp,
     });
   }

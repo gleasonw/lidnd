@@ -186,6 +186,7 @@ export function ExistingCreature({
             is_active: false,
             created_at: new Date(),
             user_id: old.user_id,
+            has_surprise: false,
           };
           return {
             ...old,
