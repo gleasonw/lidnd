@@ -27,13 +27,18 @@ export function GroupSurpriseInput() {
   });
   return (
     <AnimatePresence>
-      <FadePresenceItem>
-        <Link href={`run`} onClick={() => encounter && startEncounter(id)}>
-          <Button>
-            <Swords />
-            Commence the battle
-          </Button>
-        </Link>
+      <FadePresenceItem className="flex flex-col gap-10 items-center"> 
+        <div className="flex justify-between gap-10">
+          <Link href={`roll`}>
+            <Button variant="outline">Back to initiative</Button>
+          </Link>
+          <Link href={`run`} onClick={() => encounter && startEncounter(id)}>
+            <Button>
+              <Swords />
+              Commence the battle
+            </Button>
+          </Link>
+        </div>
         <PreBattleInputsList>
           {encounter.participants
             .sort(
@@ -49,6 +54,7 @@ export function GroupSurpriseInput() {
                       has_surprise: !participant.has_surprise,
                     })
                   }
+                  className="flex gap-5"
                 >
                   <Zap />
                   Has surprise

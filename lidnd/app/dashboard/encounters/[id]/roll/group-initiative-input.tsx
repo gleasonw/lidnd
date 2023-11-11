@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { EncounterCreature } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { AnimatePresence } from "framer-motion";
-import { Sword, Zap } from "lucide-react";
+import { Sword, Swords, Zap } from "lucide-react";
 import Link from "next/link";
 
 export function GroupInitiativeInput() {
@@ -23,16 +23,24 @@ export function GroupInitiativeInput() {
   });
   return (
     <AnimatePresence>
-      <FadePresenceItem>
-        <Link
-          href={`surprise`}
-          onClick={() => encounter && startEncounter(encounter.id)}
-        >
-          <Button>
-            <Zap />
-            Assign surprise
-          </Button>
-        </Link>
+      <FadePresenceItem className="flex flex-col gap-10 items-center">
+        <div className="flex justify-between gap-10">
+          <Link href={`/dashboard/encounters/${id}`}>
+            <Button variant="outline">Back to prep</Button>
+          </Link>
+          <Link href={`surprise`}>
+            <Button>
+              <Zap />
+              Assign surprise
+            </Button>
+          </Link>
+          <Link href={`run`} onClick={() => encounter && startEncounter(id)}>
+            <Button>
+              <Swords />
+              Commence the battle
+            </Button>
+          </Link>
+        </div>
         <PreBattleInputsList>
           {encounter.participants
             .sort(
@@ -54,9 +62,7 @@ export function PreBattleInputsList({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className={"flex flex-col gap-2 max-w-2xl mx-auto"}>{children}</div>
-  );
+  return <div className={"flex flex-col gap-2 max-w-2xl"}>{children}</div>;
 }
 
 export function PreBattleInput({
@@ -69,9 +75,9 @@ export function PreBattleInput({
   return (
     <div
       key={participant.id}
-      className="flex gap-3 items-center justify-between"
+      className="flex gap-20 items-center justify-between"
     >
-      <span className="flex gap-2">
+      <span className="flex gap-4 items-center">
         <CharacterIcon
           name={participant.name}
           id={participant.creature_id}
