@@ -26,9 +26,9 @@ export function GroupInitiativeInput() {
       <FadePresenceItem className="flex flex-col gap-10 items-center">
         <div className="flex justify-between gap-10">
           <Link href={`/dashboard/encounters/${id}`}>
-            <Button variant="outline">Back to prep</Button>
+            <Button variant="ghost">Back to prep</Button>
           </Link>
-          <Link href={`surprise`}>
+          <Link href={`surprise`} variant="outline">
             <Button>
               <Zap />
               Assign surprise
