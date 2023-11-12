@@ -2,7 +2,6 @@
 
 import { auth } from "@/server/api/auth/lucia";
 import { getPageSession } from "@/server/api/utils";
-import { getPackedSettings } from "http2";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 

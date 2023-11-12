@@ -97,7 +97,7 @@ export function getStatBlockAWSname(creature_id: string) {
 
 export async function fetchWhitelist() {
   const response = await fetch(
-    "https://raw.githubusercontent.com/gleasonw/dnd-init-tracker/main/whitelist.txt"
+    "https://raw.githubusercontent.com/gleasonw/lidnd/main/whitelist.txt"
   );
   const data = await response.text();
   const whitelist = new Set(data.split("\n"));
