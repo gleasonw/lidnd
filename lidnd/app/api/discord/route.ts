@@ -53,7 +53,7 @@ export const GET = async (request: NextRequest) => {
     return new Response(null, {
       status: 302,
       headers: {
-        Location: "/dashboard",
+        Location: "/encounters",
       },
     });
   } catch (e) {
