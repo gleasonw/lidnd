@@ -2,18 +2,15 @@
 
 import React, { Suspense, useId, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { useEncounterId } from "@/app/dashboard/encounters/hooks";
+import { useEncounterId } from "@/app/encounters/hooks";
 import { Button } from "@/components/ui/button";
-import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
+import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 import { Spinner } from "@/components/ui/spinner";
 import { UseMutateFunction } from "@tanstack/react-query";
 import * as z from "zod";
 import { Card, CardContent } from "@/components/ui/card";
 import clsx from "clsx";
-import {
-  EncounterCreature,
-  creatureUploadSchema,
-} from "@/server/api/router";
+import { EncounterCreature, creatureUploadSchema } from "@/server/api/router";
 import { api } from "@/trpc/react";
 
 export type CreaturePost = z.infer<typeof creatureUploadSchema>;
@@ -155,10 +152,9 @@ export function ExistingCreature({
   const id = useEncounterId();
   const { encounterById } = api.useUtils();
 
-  const { data: creatures } =
-    api.getUserCreatures.useQuery({
-      name,
-    });
+  const { data: creatures } = api.getUserCreatures.useQuery({
+    name,
+  });
   const { mutate: addCreature, isLoading: isAddingExistingCreature } =
     api.addExistingCreatureToEncounter.useMutation({
       onMutate: async ({ creature_id }) => {

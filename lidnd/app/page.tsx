@@ -13,5 +13,5 @@ export default async function Home() {
   if (!session) {
     return redirect("/login");
   }
-  redirect("/dashboard");
+  redirect("/encounters");
 }

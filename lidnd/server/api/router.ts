@@ -11,7 +11,7 @@ import { eq, and, sql, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
 import superjson from "superjson";
 import { ZodError, z } from "zod";
-import { updateTurnOrder } from "@/app/dashboard/encounters/utils";
+import { updateTurnOrder } from "@/app/encounters/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
   getEncounterParticipants,
@@ -22,7 +22,7 @@ import {
   postEncounterToUserChannel,
   setActiveParticipant,
 } from "@/server/api/utils";
-import { mergeEncounterCreature } from "@/app/dashboard/encounters/utils";
+import { mergeEncounterCreature } from "@/app/encounters/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const t = initTRPC.context<typeof createContext>().create({

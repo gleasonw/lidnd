@@ -1,6 +1,6 @@
 "use client";
 
-import { useUpdateEncounterParticipant } from "@/app/dashboard/encounters/[id]/hooks";
+import { useUpdateEncounterParticipant } from "@/app/encounters/[id]/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EncounterParticipant } from "@/server/api/router";
@@ -12,8 +12,7 @@ export function ParticipantHealthForm({
   participant: EncounterParticipant;
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
-  const { mutate: edit, isLoading } =
-    useUpdateEncounterParticipant();
+  const { mutate: edit, isLoading } = useUpdateEncounterParticipant();
 
   function handleHPChange(hp: number) {
     edit({

@@ -9,29 +9,29 @@ import {
   Swords,
   X,
 } from "lucide-react";
-import { StatBlock } from "@/app/dashboard/encounters/[id]/run/stat-block";
-import { ParticipantHealthForm } from "@/app/dashboard/encounters/[id]/run/creature-health-form";
-import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
+import { StatBlock } from "@/app/encounters/[id]/run/stat-block";
+import { ParticipantHealthForm } from "@/app/encounters/[id]/run/creature-health-form";
+import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 import {
   CustomCreature,
   ExistingCreature,
-} from "@/app/dashboard/encounters/[id]/creature-add-form";
-import InitiativeInput from "@/app/dashboard/encounters/[id]/InitiativeInput";
+} from "@/app/encounters/[id]/creature-add-form";
+import InitiativeInput from "@/app/encounters/[id]/InitiativeInput";
 import React from "react";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
-import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-time";
+import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
 import {
   updateTurnOrder,
   sortEncounterCreatures,
-} from "@/app/dashboard/encounters/utils";
+} from "@/app/encounters/utils";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
-import { useEncounterId } from "@/app/dashboard/encounters/hooks";
+import { useEncounterId } from "@/app/encounters/hooks";
 import { EncounterCreature } from "@/server/api/router";
 import {
   useCreateCreatureInEncounter,
   useRemoveParticipantFromEncounter,
-} from "@/app/dashboard/encounters/[id]/hooks";
+} from "@/app/encounters/[id]/hooks";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 
 export function BattleUI() {

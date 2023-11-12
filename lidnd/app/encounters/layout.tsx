@@ -1,4 +1,4 @@
-import Providers from "@/app/dashboard/providers";
+import Providers from "@/app/encounters/providers";
 import "@/app/globals.css";
 import { getPageSession } from "@/server/api/utils";
 import { TRPCReactProvider } from "@/trpc/react";

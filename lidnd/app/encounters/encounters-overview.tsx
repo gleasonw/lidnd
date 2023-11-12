@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
+import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 import { useRouter } from "next/navigation";
 import {
   Popover,
@@ -12,14 +12,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ExternalLink, MoreHorizontal, Plus } from "lucide-react";
-import { EncounterTime } from "@/app/dashboard/encounters/[id]/run/encounter-time";
+import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { api } from "@/trpc/react";
 import { Encounter } from "@/server/api/router";
 import { getQueryKey } from "@trpc/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 
-export default function Dashboard() {
+export default function EncountersOverview() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: encounters, isLoading } = api.encounters.useQuery();
@@ -40,7 +40,7 @@ export default function Dashboard() {
   const { mutate: createDefaultEncounter, isLoading: isCreatingEncounter } =
     api.createEncounter.useMutation({
       onSuccess: async (encounter) => {
-        router.push(`dashboard/encounters/${encounter.id}`);
+        router.push(`encounters/${encounter.id}`);
         return await queryClient.invalidateQueries(getQueryKey(api.encounters));
       },
     });
@@ -124,8 +124,8 @@ function EncounterCard({
       <Link
         href={
           encounter.started_at
-            ? `/dashboard/encounters/${encounter.id}/run`
-            : `/dashboard/encounters/${encounter.id}`
+            ? `encounters/${encounter.id}/run`
+            : `encounters/${encounter.id}`
         }
         className="flex hover:bg-gray-200 p-5 justify-center border-b relative group bg-gray-100 rounded-t-lg"
       >

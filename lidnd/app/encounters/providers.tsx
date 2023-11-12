@@ -5,9 +5,8 @@ import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { useUser } from "@/app/hooks";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { logOut } from "@/app/dashboard/actions";
+import { logOut } from "@/app/encounters/actions";
 
 export default function Providers({
   children,
@@ -16,11 +15,11 @@ export default function Providers({
   children: React.ReactNode;
   userAvatar: React.ReactNode;
 }) {
-  const routes = ["/dashboard", "/dashboard/creatures"] as const;
+  const routes = ["/encounters", "/encounters/creatures"] as const;
 
   const routeLabels = {
-    "/dashboard": "Encounters",
-    "/dashboard/creatures": "Creatures",
+    "/encounters": "Encounters",
+    "/encounters/creatures": "Creatures",
   } as const;
 
   const path = usePathname();
@@ -28,7 +27,7 @@ export default function Providers({
   return (
     <>
       <nav className="border-bottom border flex items-center gap-3 flex-col sm:flex-row sm:gap-5 mb-3">
-        <Link href="/dashboard" className={"text-2xl p-5"}>
+        <Link href="/encounters" className={"text-2xl p-5"}>
           LiDnD
         </Link>
         {routes.map((route) => (
@@ -50,11 +49,11 @@ export default function Providers({
           action={logOut}
         >
           <Link
-            href="/dashboard/settings"
+            href="/encounters/settings"
             className={clsx(
               "flex h-[48px] grow items-center justify-center gap-4 rounded-md p-3 hover:bg-gray-200 md:flex-none md:justify-start md:p-2 md:px-3",
               {
-                "bg-gray-200 font-bold": path === "/dashboard/settings",
+                "bg-gray-200 font-bold": path === "/encounters/settings",
               }
             )}
           >

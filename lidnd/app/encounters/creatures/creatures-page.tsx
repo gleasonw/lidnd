@@ -1,7 +1,7 @@
 "use client";
 
-import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
-import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
+import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
+import { FullCreatureAddForm } from "@/app/encounters/full-creature-add-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,8 +13,8 @@ import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { Creature } from "@/server/api/router";
 import { useMutation } from "@tanstack/react-query";
-import { getCreaturePostForm } from "@/app/dashboard/encounters/utils";
-import { CreaturePost } from "@/app/dashboard/encounters/[id]/creature-add-form";
+import { getCreaturePostForm } from "@/app/encounters/utils";
+import { CreaturePost } from "@/app/encounters/[id]/creature-add-form";
 import { rerouteUrl } from "@/app/login/page";
 
 export default function CreaturesPage() {

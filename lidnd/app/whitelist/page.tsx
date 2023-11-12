@@ -1,4 +1,4 @@
-import { logOut } from "@/app/dashboard/actions";
+import { logOut } from "@/app/encounters/actions";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import Link from "next/link";

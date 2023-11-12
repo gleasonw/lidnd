@@ -1,7 +1,7 @@
 import {
   CreaturePost,
   ImageUpload,
-} from "@/app/dashboard/encounters/[id]/creature-add-form";
+} from "@/app/encounters/[id]/creature-add-form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {

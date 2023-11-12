@@ -1,8 +1,6 @@
 import "@/app/globals.css";
-import { getPageSession } from "@/server/api/utils";
 
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "LiDnD",
