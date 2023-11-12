@@ -1,8 +1,8 @@
 "use client";
 
-import InitiativeInput from "@/app/dashboard/encounters/[id]/InitiativeInput";
-import { CharacterIcon } from "@/app/dashboard/encounters/[id]/character-icon";
-import { useEncounterId } from "@/app/dashboard/encounters/hooks";
+import InitiativeInput from "@/app/encounters/[id]/InitiativeInput";
+import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
+import { useEncounterId } from "@/app/encounters/hooks";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import { Button } from "@/components/ui/button";
 import { EncounterCreature } from "@/server/api/router";
@@ -25,7 +25,7 @@ export function GroupInitiativeInput() {
     <AnimatePresence>
       <FadePresenceItem className="flex flex-col gap-10 items-center">
         <div className="flex justify-between gap-10">
-          <Link href={`/dashboard/encounters/${id}`}>
+          <Link href={`/encounters/${id}`}>
             <Button variant="ghost">Back to prep</Button>
           </Link>
           <Link href={`surprise`}>

@@ -1,5 +1,5 @@
 import apiURL from "@/app/apiURL";
-import { SettingsForm } from "@/app/dashboard/settings/settings-form";
+import { SettingsForm } from "@/app/encounters/settings/settings-form";
 import { Button } from "@/components/ui/button";
 import { getPageSession } from "@/server/api/utils";
 import Link from "next/link";

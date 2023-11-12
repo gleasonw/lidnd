@@ -1,6 +1,6 @@
-import { CreaturePost } from "@/app/dashboard/encounters/[id]/creature-add-form";
-import { useEncounterId } from "@/app/dashboard/encounters/hooks";
-import { getCreaturePostForm } from "@/app/dashboard/encounters/utils";
+import { CreaturePost } from "@/app/encounters/[id]/creature-add-form";
+import { useEncounterId } from "@/app/encounters/hooks";
+import { getCreaturePostForm } from "@/app/encounters/utils";
 import { rerouteUrl } from "@/app/login/page";
 import { EncounterCreature, EncounterParticipant } from "@/server/api/router";
 import { mergeEncounterCreature } from "../utils";

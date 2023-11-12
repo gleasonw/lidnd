@@ -20,8 +20,8 @@ import { cache } from "react";
 import { auth } from "@/server/api/auth/lucia";
 import * as context from "next/headers";
 import apiURL from "@/app/apiURL";
-import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
-import { mergeEncounterCreature } from "@/app/dashboard/encounters/utils";
+import { sortEncounterCreatures } from "@/app/encounters/utils";
+import { mergeEncounterCreature } from "@/app/encounters/utils";
 
 export async function createCreature(
   user_id: string,

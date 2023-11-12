@@ -1,4 +1,4 @@
-import { CreaturePost } from "@/app/dashboard/encounters/[id]/creature-add-form";
+import { CreaturePost } from "@/app/encounters/[id]/creature-add-form";
 import {
   EncounterParticipant,
   Creature,

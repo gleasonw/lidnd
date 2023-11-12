@@ -1,6 +1,6 @@
 "use client";
 
-import { useEncounterId } from "@/app/dashboard/encounters/hooks";
+import { useEncounterId } from "@/app/encounters/hooks";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import { api } from "@/trpc/react";
 import { AnimatePresence } from "framer-motion";
@@ -8,10 +8,10 @@ import React from "react";
 import {
   PreBattleInput,
   PreBattleInputsList,
-} from "@/app/dashboard/encounters/[id]/roll/group-initiative-input";
+} from "@/app/encounters/[id]/roll/group-initiative-input";
 import { Button } from "@/components/ui/button";
 import { Swords, Zap } from "lucide-react";
-import { useUpdateEncounterParticipant } from "@/app/dashboard/encounters/[id]/hooks";
+import { useUpdateEncounterParticipant } from "@/app/encounters/[id]/hooks";
 import Link from "next/link";
 
 export function GroupSurpriseInput() {
@@ -27,7 +27,7 @@ export function GroupSurpriseInput() {
   });
   return (
     <AnimatePresence>
-      <FadePresenceItem className="flex flex-col gap-10 items-center"> 
+      <FadePresenceItem className="flex flex-col gap-10 items-center">
         <div className="flex justify-between gap-10">
           <Link href={`roll`}>
             <Button variant="ghost">Back to initiative</Button>

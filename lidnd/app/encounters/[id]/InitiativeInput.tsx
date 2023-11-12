@@ -1,6 +1,6 @@
 "use client";
 
-import { useUpdateEncounterParticipant } from "@/app/dashboard/encounters/[id]/hooks";
+import { useUpdateEncounterParticipant } from "@/app/encounters/[id]/hooks";
 import { Input } from "@/components/ui/input";
 import { EncounterParticipant } from "@/server/api/router";
 import React from "react";
@@ -9,7 +9,7 @@ import { useDebouncedCallback } from "use-debounce";
 export default function InitiativeInput({
   participant,
   className,
-  tabIndex
+  tabIndex,
 }: {
   participant: EncounterParticipant;
   className?: string;
@@ -18,8 +18,7 @@ export default function InitiativeInput({
   const [initiative, setInitiative] = React.useState<string | number>(
     participant.initiative
   );
-  const { mutate: updateParticipant } =
-    useUpdateEncounterParticipant();
+  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   const debouncedUpdate = useDebouncedCallback((initiative: number) => {
     updateParticipant({
       ...participant,

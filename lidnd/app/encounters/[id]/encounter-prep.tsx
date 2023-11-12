@@ -1,33 +1,30 @@
 "use client";
 
-import { ExistingCreature } from "@/app/dashboard/encounters/[id]/creature-add-form";
+import { ExistingCreature } from "@/app/encounters/[id]/creature-add-form";
 import {
   AnimationListItem,
   BattleCard,
-} from "@/app/dashboard/encounters/[id]/run/battle-ui";
-import { useEncounterId } from "@/app/dashboard/encounters/hooks";
+} from "@/app/encounters/[id]/run/battle-ui";
+import { useEncounterId } from "@/app/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 import { Clock, Dices, Play, Skull, X, Zap } from "lucide-react";
 import Link from "next/link";
-import { FullCreatureAddForm } from "@/app/dashboard/full-creature-add-form";
+import { FullCreatureAddForm } from "@/app/encounters/full-creature-add-form";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import React, { Suspense } from "react";
-import { sortEncounterCreatures } from "@/app/dashboard/encounters/utils";
+import { sortEncounterCreatures } from "@/app/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import clsx from "clsx";
-import { BasePopover } from "@/app/dashboard/base-popover";
+import { BasePopover } from "@/app/encounters/base-popover";
 import { api } from "@/trpc/react";
 import {
   useCreateCreatureInEncounter,
   useRemoveParticipantFromEncounter,
-  useUpdateEncounterParticipant,
-} from "@/app/dashboard/encounters/[id]/hooks";
-import { Toggle } from "@/components/ui/toggle";
-import { Tip } from "@/components/ui/tip";
+} from "@/app/encounters/[id]/hooks";
 
-export default function SingleEncounter() {
+export default function EncounterPrep() {
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
 
   return (
