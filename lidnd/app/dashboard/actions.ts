@@ -13,7 +13,7 @@ function token() {
 
 export async function logOut() {
   const session = await getPageSession();
-  if (!session) return;
+  if (!session) return redirect("/login");
   await auth.invalidateSession(session?.sessionId);
   redirect("/login");
 }
