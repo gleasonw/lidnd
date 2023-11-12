@@ -30,7 +30,7 @@ export function GroupSurpriseInput() {
       <FadePresenceItem className="flex flex-col gap-10 items-center"> 
         <div className="flex justify-between gap-10">
           <Link href={`roll`}>
-            <Button variant="outline">Back to initiative</Button>
+            <Button variant="ghost">Back to initiative</Button>
           </Link>
           <Link href={`run`} onClick={() => encounter && startEncounter(id)}>
             <Button>
