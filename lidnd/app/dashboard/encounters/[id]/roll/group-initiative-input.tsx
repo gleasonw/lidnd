@@ -28,8 +28,8 @@ export function GroupInitiativeInput() {
           <Link href={`/dashboard/encounters/${id}`}>
             <Button variant="ghost">Back to prep</Button>
           </Link>
-          <Link href={`surprise`} variant="outline">
-            <Button>
+          <Link href={`surprise`}>
+            <Button variant="outline">
               <Zap />
               Assign surprise
             </Button>
