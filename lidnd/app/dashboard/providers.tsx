@@ -52,20 +52,20 @@ export default function Providers({
           <Link
             href="/dashboard/settings"
             className={clsx(
-              "flex h-[48px] grow items-center justify-center gap-2 rounded-md p-3 hover:bg-gray-200 md:flex-none md:justify-start md:p-2 md:px-3",
+              "flex h-[48px] grow items-center justify-center gap-4 rounded-md p-3 hover:bg-gray-200 md:flex-none md:justify-start md:p-2 md:px-3",
               {
                 "bg-gray-200 font-bold": path === "/dashboard/settings",
               }
             )}
           >
             Settings
-          <Suspense
-            fallback={
-              <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
-            }
-          >
-            {userAvatar}
-          </Suspense>
+            <Suspense
+              fallback={
+                <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+              }
+            >
+              {userAvatar}
+            </Suspense>
           </Link>
           <button type="submit">
             <LogOut />
