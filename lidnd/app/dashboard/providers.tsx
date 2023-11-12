@@ -59,7 +59,6 @@ export default function Providers({
             )}
           >
             Settings
-          </Link>
           <Suspense
             fallback={
               <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
@@ -67,6 +66,7 @@ export default function Providers({
           >
             {userAvatar}
           </Suspense>
+          </Link>
           <button type="submit">
             <LogOut />
           </button>
