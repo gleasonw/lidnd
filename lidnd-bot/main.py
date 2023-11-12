@@ -108,7 +108,7 @@ class UserId(BaseModel):
 async def fetch_whitelist() -> Set[str]:
     async with aiohttp.ClientSession() as session:
         async with session.get(
-            "https://raw.githubusercontent.com/gleasonw/dnd-init-tracker/main/whitelist.txt"
+            "https://raw.githubusercontent.com/gleasonw/lidnd/main/whitelist.txt"
         ) as resp:
             whitelist = set((await resp.text()).splitlines())
             return whitelist
