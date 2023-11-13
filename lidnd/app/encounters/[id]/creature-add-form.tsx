@@ -42,6 +42,8 @@ export function CustomCreature({
   return (
     <>
       {mutation.isPending ? "Loading..." : null}
+      <label>
+        <span>Name</span>
       <Input
         placeholder="Name"
         type="text"
@@ -50,7 +52,10 @@ export function CustomCreature({
         }
         value={creatureData.name}
       />
-      <Input
+      </label>
+      <label>
+        <span>Max hp</span>
+            <Input
         placeholder="Max hp"
         type="number"
         onChange={(e) =>
@@ -61,6 +66,10 @@ export function CustomCreature({
         }
         value={creatureData.max_hp}
       />
+      </label>
+
+      <label>
+       <span>Icon</span> 
       <ImageUpload
         onUpload={(file) =>
           file ? setCreatureData({ ...creatureData, icon_image: file }) : null
@@ -70,8 +79,12 @@ export function CustomCreature({
           setCreatureData({ ...creatureData, icon_image: undefined })
         }
       />
+      </label>
+        
 
-      <ImageUpload
+      <label>
+        <span>Stat block</span>
+            <ImageUpload
         onUpload={(file) =>
           file
             ? setCreatureData({ ...creatureData, stat_block_image: file })
@@ -85,6 +98,8 @@ export function CustomCreature({
           })
         }
       />
+      </label>
+
 
       <div className={"flex gap-5"}>
         {children}
