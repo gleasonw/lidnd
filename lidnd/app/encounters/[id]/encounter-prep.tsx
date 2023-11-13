@@ -140,7 +140,7 @@ function EncounterParticipantRow() {
     <AnimatePresence>
       <div
         className={clsx(
-          "flex flex-row gap-10 px-10 max-w-full items-center overflow-auto pb-5"
+          "flex flex-row sm:gap-4 px-10 max-w-full items-center overflow-auto pb-5"
         )}
       >
         {encounter?.participants

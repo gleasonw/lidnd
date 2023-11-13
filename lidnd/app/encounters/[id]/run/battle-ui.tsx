@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChevronUp,
   Plus,
   Swords,
   X,
@@ -143,7 +144,7 @@ export function BattleUI() {
 
       <div
         className={clsx(
-          "flex flex-row gap-2 px-10 max-w-full items-center overflow-auto pb-10"
+          "flex flex-row sm:gap-4 px-10 max-w-full items-center overflow-auto pb-10"
         )}
         ref={scrollContainer}
       >
@@ -235,28 +236,17 @@ export function BattleCard({
   const { data: encounter } = api.encounterById.useQuery(id);
   return (
     <div
-      className={`relative flex-col gap-6 items-center w-40 justify-between flex`}
+      className={`relative flex-col gap-6 items-center justify-between flex`}
     >
-      <AnimatePresence>
-        <div className={"flex flex-row gap-2"}>
-          {creature.is_active && (
-            <FadePresenceItem>
-              <Swords />
-            </FadePresenceItem>
-          )}
-          {header}
-        </div>
-      </AnimatePresence>
-
       <Card
         key={creature.id}
         data-active={creature.is_active}
         className={clsx(
-          "shadow-inner outline outline-zinc-900 relative select-none h-56 mb-4 rounded-none justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col transition-all",
+          "shadow-lg border-2 relative select-none h-56 mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
           className,
           {
-            "transform h-60 translate-y-2 mb-0 outline-4": creature.is_active,
-            "outline-zinc-400": isSelected,
+            "h-64 mb-0": creature.is_active,
+            "border-zinc-900": isSelected || creature.is_active,
             "opacity-40":
               encounter?.current_round === 0 && !creature.has_surprise,
           }
@@ -274,9 +264,19 @@ export function BattleCard({
             name={creature.name}
             width={200}
             height={200}
+            className="h-32 object-cover"
           />
         )}
       </Card>
+      <AnimatePresence>
+        <div className={"flex absolute -bottom-8 flex-row gap-2"}>
+          {creature.is_active && (
+            <FadePresenceItem>
+              <ChevronUp />
+            </FadePresenceItem>
+          )}
+        </div>
+      </AnimatePresence>
       {children}
     </div>
   );
