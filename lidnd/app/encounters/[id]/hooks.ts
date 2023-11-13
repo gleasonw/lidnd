@@ -52,7 +52,7 @@ export function useCreateCreatureInEncounter() {
           encounter_id: old.id,
           creature_id: "pending",
           id: optimisticId,
-          initiative: 0,
+          initiative: -1,
           hp: data.max_hp,
           is_active: false,
           created_at: new Date(),

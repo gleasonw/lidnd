@@ -241,6 +241,8 @@ function EncounterStats() {
     encounterTime = `${Math.floor(estimatedEncounterDuration % 60)} minutes`;
   }
 
+  console.log(encounter?.participants)
+
   return (
     <div className={clsx("flex gap-2")}>
       <BasePopover
