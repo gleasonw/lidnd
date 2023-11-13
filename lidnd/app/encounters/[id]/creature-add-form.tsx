@@ -44,62 +44,61 @@ export function CustomCreature({
       {mutation.isPending ? "Loading..." : null}
       <label>
         <span>Name</span>
-      <Input
-        placeholder="Name"
-        type="text"
-        onChange={(e) =>
-          setCreatureData({ ...creatureData, name: e.target.value })
-        }
-        value={creatureData.name}
-      />
+        <Input
+          placeholder="Name"
+          type="text"
+          onChange={(e) =>
+            setCreatureData({ ...creatureData, name: e.target.value })
+          }
+          value={creatureData.name}
+        />
       </label>
       <label>
         <span>Max hp</span>
-            <Input
-        placeholder="Max hp"
-        type="number"
-        onChange={(e) =>
-          setCreatureData({
-            ...creatureData,
-            max_hp: parseInt(e.target.value),
-          })
-        }
-        value={creatureData.max_hp}
-      />
+        <Input
+          placeholder="Max hp"
+          type="number"
+          onChange={(e) =>
+            setCreatureData({
+              ...creatureData,
+              max_hp: parseInt(e.target.value),
+            })
+          }
+          value={creatureData.max_hp}
+        />
       </label>
 
       <label>
-       <span>Icon</span> 
-      <ImageUpload
-        onUpload={(file) =>
-          file ? setCreatureData({ ...creatureData, icon_image: file }) : null
-        }
-        image={creatureData.icon_image}
-        clearImage={() =>
-          setCreatureData({ ...creatureData, icon_image: undefined })
-        }
-      />
+        <span>Icon</span>
+        <ImageUpload
+          onUpload={(file) =>
+            file ? setCreatureData({ ...creatureData, icon_image: file }) : null
+          }
+          image={creatureData.icon_image}
+          clearImage={() =>
+            setCreatureData({ ...creatureData, icon_image: undefined })
+          }
+        />
       </label>
-        
 
       <label>
         <span>Stat block</span>
-            <ImageUpload
-        onUpload={(file) =>
-          file
-            ? setCreatureData({ ...creatureData, stat_block_image: file })
-            : null
-        }
-        image={creatureData.stat_block_image}
-        clearImage={() =>
-          setCreatureData({
-            ...creatureData,
-            stat_block_image: undefined,
-          })
-        }
-      />
+        <ImageUpload
+          onUpload={(file) =>
+            file
+              ? setCreatureData({ ...creatureData, stat_block_image: file })
+              : null
+          }
+          image={creatureData.stat_block_image}
+          clearImage={() =>
+            setCreatureData({
+              ...creatureData,
+              stat_block_image: undefined,
+            })
+          }
+          previewSize={600}
+        />
       </label>
-
 
       <div className={"flex gap-5"}>
         {children}

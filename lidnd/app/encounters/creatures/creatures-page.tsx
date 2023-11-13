@@ -109,24 +109,29 @@ export default function CreaturesPage() {
             </Button>
           )}
         </div>
-        {isAddingCreatures && (
-          <>
-            <Button variant="ghost" onClick={() => setIsAddingCreatures(false)}>
-              <X />
-            </Button>
-            <Card className="max-w-[900px] w-full mx-auto pt-5">
-              <CardContent>
-                <FullCreatureAddForm uploadCreature={createCreature} />
-              </CardContent>
-            </Card>
-          </>
-        )}
+
         <div className="flex flex-col gap-2">
           <span className={!name ? "opacity-100" : "opacity-0"}>
             {displayCreatures?.length} / 30
           </span>
 
           <div className="flex gap-10 flex-wrap ">
+            {isAddingCreatures && (
+              <>
+                <Card className="max-w-[900px] w-full mx-auto pt-5 relative">
+                  <Button
+                    variant="ghost"
+                    className="absolute top-3 right-3"
+                    onClick={() => setIsAddingCreatures(false)}
+                  >
+                    <X />
+                  </Button>
+                  <CardContent>
+                    <FullCreatureAddForm uploadCreature={createCreature} />
+                  </CardContent>
+                </Card>
+              </>
+            )}
             {isLoadingCreatures &&
               Array(5)
                 .fill(null)
@@ -141,12 +146,14 @@ export default function CreaturesPage() {
                 onClick={() => setSelectedId(creature.id)}
                 key={creature.id}
               >
-                <Card className={clsx(
-                  "relative select-none h-56 mb-4 rounded-none justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col transition-all hover:outline",
-                  {
-                    "outline": selectedCreature?.id === creature.id,
-                  }
-                )}>
+                <Card
+                  className={clsx(
+                    "relative select-none h-56 mb-4 rounded-none justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col transition-all hover:outline",
+                    {
+                      outline: selectedCreature?.id === creature.id,
+                    }
+                  )}
+                >
                   <CardHeader className="text-ellipsis max-w-full p-3">
                     <CardTitle>{creature.name}</CardTitle>
                   </CardHeader>
@@ -164,7 +171,7 @@ export default function CreaturesPage() {
       </div>
       <Card
         className={clsx(
-          "relative select-none p-3 justify-between overflow-hidden pt-3 gap-5 items-center mx-auto flex flex-col transition-all"
+          "relative select-none p-3 justify-between overflow-hidden pt-3 gap-5 items-center mx-auto mb-auto flex flex-col transition-all"
         )}
       >
         {selectedCreature && (
@@ -178,7 +185,10 @@ export default function CreaturesPage() {
               id={selectedCreature.id}
               name={selectedCreature.name}
             />
-            <CreatureUpdateForm creature={selectedCreature} key={selectedCreature.id} />
+            <CreatureUpdateForm
+              creature={selectedCreature}
+              key={selectedCreature.id}
+            />
             <Button
               variant="destructive"
               onClick={() => deleteCreature(selectedCreature.id)}

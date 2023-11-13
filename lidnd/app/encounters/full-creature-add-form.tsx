@@ -14,11 +14,38 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import React from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { Angry, User } from "lucide-react";
 
-const formSchema = z.object({
+type CreatureAddProps = {
+  uploadCreature: (data: CreaturePost) => void;
+};
+
+export function FullCreatureAddForm(props: CreatureAddProps) {
+  return (
+    <Tabs defaultValue="monster">
+      <TabsList>
+        <TabsTrigger value="monster" className="flex gap-3">
+          <Angry /> Monster 
+        </TabsTrigger>
+        <TabsTrigger value="player" className="flex gap-3">
+          <User /> Player 
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="monster">
+        <MonsterUploadForm {...props} />
+      </TabsContent>
+      <TabsContent value="player">
+        <PlayerUploadForm {...props} />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+const monsterFormSchema = z.object({
   id: z.string().optional(),
   name: z.string(),
   created_at: z.date().optional(),
@@ -29,17 +56,9 @@ const formSchema = z.object({
   stat_block_image: z.instanceof(File),
 });
 
-export function FullCreatureAddForm({
-  className,
-  children,
-  uploadCreature,
-}: {
-  className?: string;
-  children?: React.ReactNode;
-  uploadCreature: (data: CreaturePost) => void;
-}) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
+  const form = useForm<z.infer<typeof monsterFormSchema>>({
+    resolver: zodResolver(monsterFormSchema),
     defaultValues: {
       max_hp: 0,
       challenge_rating: 0,
@@ -49,7 +68,6 @@ export function FullCreatureAddForm({
     },
   });
   const [keyToResetFile, setKeyToResetFile] = React.useState(0);
-
   return (
     <Form {...form}>
       <form
@@ -107,7 +125,7 @@ export function FullCreatureAddForm({
                   clearImage={() =>
                     field.onChange({ target: { value: undefined } })
                   }
-                  previewSize={500}
+                  previewSize={700}
                 />
               </FormControl>
               <FormMessage />
@@ -142,21 +160,69 @@ export function FullCreatureAddForm({
             </CreatureFormItems>
           )}
         />
+        <div className="flex gap-5">
+          <Button type="submit">Submit</Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
 
+const playerFormSchema = monsterFormSchema.omit({ stat_block_image: true });
+
+function PlayerUploadForm({ uploadCreature }: CreatureAddProps) {
+  const form = useForm<z.infer<typeof playerFormSchema>>({
+    resolver: zodResolver(playerFormSchema),
+    defaultValues: {
+      max_hp: 0,
+      challenge_rating: 0,
+      icon_image: undefined,
+      is_player: true,
+    },
+  });
+  const [keyToResetFile, setKeyToResetFile] = React.useState(0);
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit((data) => {
+          uploadCreature(data);
+          form.reset();
+          setKeyToResetFile(keyToResetFile + 1);
+        })}
+        className="space-y-8"
+      >
         <FormField
           control={form.control}
-          name="is_player"
+          name="name"
           render={({ field }) => (
-            <CreatureFormItems name="Player">
-              <Checkbox
-                checked={field.value ?? false}
-                onCheckedChange={(checked) => field.onChange(checked)}
-              />
+            <CreatureFormItems name="Name">
+              <Input type="text" placeholder="Lan..." {...field} />
             </CreatureFormItems>
           )}
         />
+        <FormField
+          control={form.control}
+          name="icon_image"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-2">
+              <FormLabel>Icon</FormLabel>
+              <FormControl>
+                <ImageUpload
+                  onUpload={(file) =>
+                    field.onChange({ target: { value: file } })
+                  }
+                  key={keyToResetFile}
+                  image={field.value}
+                  clearImage={() =>
+                    field.onChange({ target: { value: undefined } })
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="flex gap-5">
-          {children}
           <Button type="submit">Submit</Button>
         </div>
       </form>

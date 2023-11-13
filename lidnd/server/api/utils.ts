@@ -5,7 +5,7 @@ import {
   encounters,
   settings,
 } from "@/server/api/db/schema";
-import { and, eq, sql, desc, asc } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { paths, components } from "@/app/schema";
 import createClient from "openapi-fetch";
 import {
@@ -53,16 +53,26 @@ export async function createCreature(
     Body: await creature.icon_image.arrayBuffer(),
   });
 
-  const statBlockUpload = new PutObjectCommand({
-    Bucket: process.env.AWS_BUCKET_NAME!,
-    Key: getStatBlockAWSname(newCreature[0].id),
-    Body: await creature.stat_block_image.arrayBuffer(),
-  });
+  if (
+    typeof creature.stat_block_image === "object" &&
+    creature.stat_block_image !== null &&
+    "arrayBuffer" in creature.stat_block_image
+  ) {
+    const statBlockUpload = new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: getStatBlockAWSname(newCreature[0].id),
+      Body: Buffer.from(
+        await (creature.stat_block_image as File).arrayBuffer()
+      ),
+    });
 
-  await Promise.all([
-    s3Client.send(iconUpload),
-    s3Client.send(statBlockUpload),
-  ]);
+    await Promise.all([
+      s3Client.send(iconUpload),
+      s3Client.send(statBlockUpload),
+    ]);
+  } else {
+    await s3Client.send(iconUpload);
+  }
 
   return newCreature[0];
 }

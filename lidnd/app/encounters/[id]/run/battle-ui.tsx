@@ -144,7 +144,7 @@ export function BattleUI() {
 
       <div
         className={clsx(
-          "flex flex-row sm:gap-4 px-10 max-w-full items-center overflow-auto pb-10"
+          "flex flex-row sm:gap-4 p-8 max-w-full items-center overflow-auto"
         )}
         ref={scrollContainer}
       >
@@ -185,21 +185,36 @@ export function BattleUI() {
       {selectedParticipant && (
         <>
           <div className="flex flex-col gap-5">
-            <span className={"text-center text-xl"}>
+            <span className={"text-center text-xl flex flex-col gap-3"}>
               {selectedParticipant.name}{" "}
+              {!selectedParticipant.is_player && (
+                <>
+                  <span>
+                    {selectedParticipant.hp} / {selectedParticipant.max_hp} HP
+                  </span>
+                  <ParticipantHealthForm participant={selectedParticipant} />
+                </>
+              )}
             </span>
-            <ParticipantHealthForm participant={selectedParticipant} />
+
             <InitiativeInput
               participant={selectedParticipant}
               className="flex gap-5"
               key={selectedParticipant.id}
             />
           </div>
-          <OriginalSizeImage
-            src={getAWSimageURL(selectedParticipant.creature_id, "stat_block")}
-            alt={"stat block for " + selectedParticipant.name}
-            key={selectedParticipant.creature_id}
-          />
+          {!selectedParticipant.is_player ? (
+            <OriginalSizeImage
+              src={getAWSimageURL(
+                selectedParticipant.creature_id,
+                "stat_block"
+              )}
+              alt={"stat block for " + selectedParticipant.name}
+              key={selectedParticipant.creature_id}
+            />
+          ) : (
+            <span className="text-2xl p-5">Player</span>
+          )}
           <Button
             variant="destructive"
             onClick={() =>
@@ -290,7 +305,7 @@ function HealthMeterOverlay({ creature }: { creature: EncounterCreature }) {
     <div
       style={{ height: `${creaturePercentDamage}%` }}
       className={clsx(
-        "absolute rounded bottom-0 left-0 w-full bg-opacity-50 transition-all",
+        "absolute rounded bottom-0 left-0 w-full bg-opacity-70 transition-all",
         {
           "bg-gray-500": creaturePercentDamage === 100,
           "bg-red-500": creaturePercentDamage !== 100,
