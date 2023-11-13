@@ -252,11 +252,11 @@ export function BattleCard({
         key={creature.id}
         data-active={creature.is_active}
         className={clsx(
-          "relative select-none h-56 mb-4 rounded-none justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col transition-all",
+          "shadow-inner outline outline-zinc-900 relative select-none h-56 mb-4 rounded-none justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col transition-all",
           className,
           {
-            "transform h-60 translate-y-2 mb-0": creature.is_active,
-            "outline-4 outline": isSelected,
+            "transform h-60 translate-y-2 mb-0 outline-4": creature.is_active,
+            "outline-zinc-400": isSelected,
             "opacity-40":
               encounter?.current_round === 0 && !creature.has_surprise,
           }
