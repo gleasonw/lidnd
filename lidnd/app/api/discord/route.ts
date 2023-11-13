@@ -44,7 +44,7 @@ export const GET = async (request: NextRequest) => {
     const user = await getUser();
     if(!whitelist.has(user.username)) {
       return new Response(null, {
-        status: 403,
+        status: 302,
         headers: {
           Location: "/whitelist",
         },
