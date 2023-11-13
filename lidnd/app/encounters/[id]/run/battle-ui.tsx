@@ -257,7 +257,7 @@ export function BattleCard({
         key={creature.id}
         data-active={creature.is_active}
         className={clsx(
-          "shadow-lg border-2 relative select-none h-56 mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
+          "lg:w-52 w-28 shadow-lg border-2 relative select-none h-56 mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
           className,
           {
             "h-64 mb-0": creature.is_active,
@@ -268,7 +268,7 @@ export function BattleCard({
         )}
       >
         <HealthMeterOverlay creature={creature} />
-        <CardHeader className="text-ellipsis max-w-full p-3">
+        <CardHeader className="p-3">
           <CardTitle>{creature.name}</CardTitle>
         </CardHeader>
         {creature.creature_id === "pending" ? (

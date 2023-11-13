@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
-import { Spinner } from "@/components/ui/spinner";
 import { UseMutateFunction } from "@tanstack/react-query";
 import * as z from "zod";
 import { Card, CardContent } from "@/components/ui/card";
