@@ -55,21 +55,6 @@ export function CustomCreature({
         />
       </label>
       <label>
-        <span>Max hp</span>
-        <Input
-          placeholder="Max hp"
-          type="number"
-          onChange={(e) =>
-            setCreatureData({
-              ...creatureData,
-              max_hp: parseInt(e.target.value),
-            })
-          }
-          value={creatureData.max_hp}
-        />
-      </label>
-
-      <label>
         <span>Icon</span>
         <ImageUpload
           onUpload={(file) =>
@@ -98,6 +83,20 @@ export function CustomCreature({
             })
           }
           previewSize={600}
+        />
+      </label>
+      <label>
+        <span>Max hp</span>
+        <Input
+          placeholder="Max hp"
+          type="number"
+          onChange={(e) =>
+            setCreatureData({
+              ...creatureData,
+              max_hp: parseInt(e.target.value),
+            })
+          }
+          value={creatureData.max_hp}
         />
       </label>
 
