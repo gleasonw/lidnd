@@ -254,9 +254,9 @@ export function BattleCard({
           "relative select-none h-56 mb-4 rounded-none justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col transition-all",
           className,
           {
-            "transform h-60 translate-y-2 outline-4 mb-0 outline":
+            "transform h-60 translate-y-2 mb-0":
               creature.is_active,
-            "border-gray-800 border": isSelected,
+              "outline-4 outline": isSelected,
             "opacity-40":
               encounter?.current_round === 0 && !creature.has_surprise,
           }
