@@ -178,7 +178,7 @@ export default function CreaturesPage() {
               id={selectedCreature.id}
               name={selectedCreature.name}
             />
-            <CreatureUpdateForm creature={selectedCreature} />
+            <CreatureUpdateForm creature={selectedCreature} key={selectedCreature.id} />
             <Button
               variant="destructive"
               onClick={() => deleteCreature(selectedCreature.id)}

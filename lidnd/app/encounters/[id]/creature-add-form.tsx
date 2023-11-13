@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useId, useState } from "react";
+import React, { Suspense, useId, useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useEncounterId } from "@/app/encounters/hooks";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import clsx from "clsx";
 import { EncounterCreature, creatureUploadSchema } from "@/server/api/router";
 import { api } from "@/trpc/react";
+import Image from "next/image";
+import { X } from "lucide-react";
 
 export type CreaturePost = z.infer<typeof creatureUploadSchema>;
 
@@ -28,11 +30,13 @@ export function CustomCreature({
   };
   formFields?: React.ReactNode;
 }) {
-  const [creatureData, setCreatureData] = useState({
+  const [creatureData, setCreatureData] = useState<
+    Pick<CreaturePost, "name" | "max_hp" | "icon_image" | "stat_block_image">
+  >({
     name: "",
-    max_hp: "",
-    icon: new File([], ""),
-    stat_block: new File([], ""),
+    max_hp: 0,
+    icon_image: undefined,
+    stat_block_image: undefined,
   });
 
   return (
@@ -48,24 +52,37 @@ export function CustomCreature({
       />
       <Input
         placeholder="Max hp"
-        type="text"
+        type="number"
         onChange={(e) =>
           setCreatureData({
             ...creatureData,
-            max_hp: !isNaN(parseInt(e.target.value)) ? e.target.value : "",
+            max_hp: parseInt(e.target.value),
           })
         }
         value={creatureData.max_hp}
       />
       <ImageUpload
         onUpload={(file) =>
-          file ? setCreatureData({ ...creatureData, icon: file }) : null
+          file ? setCreatureData({ ...creatureData, icon_image: file }) : null
+        }
+        image={creatureData.icon_image}
+        clearImage={() =>
+          setCreatureData({ ...creatureData, icon_image: undefined })
         }
       />
 
       <ImageUpload
         onUpload={(file) =>
-          file ? setCreatureData({ ...creatureData, stat_block: file }) : null
+          file
+            ? setCreatureData({ ...creatureData, stat_block_image: file })
+            : null
+        }
+        image={creatureData.stat_block_image}
+        clearImage={() =>
+          setCreatureData({
+            ...creatureData,
+            stat_block_image: undefined,
+          })
         }
       />
 
@@ -77,16 +94,16 @@ export function CustomCreature({
           onClick={(e) => {
             e.stopPropagation();
             if (
-              !isNaN(parseInt(creatureData.max_hp)) &&
+              creatureData.max_hp &&
               creatureData.name &&
-              creatureData.stat_block &&
-              creatureData.icon
+              creatureData.stat_block_image &&
+              creatureData.icon_image
             ) {
               mutation.onAddCreature({
                 name: creatureData.name,
-                icon_image: creatureData.icon,
-                max_hp: parseInt(creatureData.max_hp),
-                stat_block_image: creatureData.stat_block,
+                icon_image: creatureData.icon_image,
+                max_hp: creatureData.max_hp,
+                stat_block_image: creatureData.stat_block_image,
                 challenge_rating: 0,
                 is_player: false,
               });
@@ -102,15 +119,57 @@ export function CustomCreature({
   );
 }
 
-export function ImageUpload({ onUpload }: { onUpload: (file?: File) => void }) {
-  const [hasContent, setHasContent] = React.useState(false);
+export function ImageUpload({
+  onUpload,
+  image,
+  clearImage,
+  previewSize = 200,
+}: {
+  onUpload: (file?: File) => void;
+  image?: File;
+  clearImage: () => void;
+  previewSize?: number;
+}) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (image && image instanceof File) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(image);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [image]);
+
   return (
-    <span className="h-auto relative flex flex-col gap-5 items-center justify-center group">
-      <span className="flex flex-wrap gap-2 items-center relative rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+    <span className="h-auto relative flex flex-col gap-5 group">
+      {previewUrl && (
+        <div className="relative w-fit">
+          <Button
+            variant="outline"
+            onClick={(e) => {
+              e.preventDefault();
+              clearImage();
+            }}
+            className="absolute top-0 right-0"
+          >
+            <X />
+          </Button>
+          <Image
+            src={previewUrl}
+            alt={"preview image for " + image?.name}
+            width={previewSize}
+            height={previewSize}
+          />
+        </div>
+      )}
+      <span className="flex gap-3 items-center">
         <Input
           type={"file"}
-          disabled={hasContent}
-          className="max-w-sm"
+          className="max-w-xs"
           accept="image/png, image/jpeg, image/jpg"
           onChange={(e) => {
             if (e.target.files) {
@@ -118,9 +177,9 @@ export function ImageUpload({ onUpload }: { onUpload: (file?: File) => void }) {
             }
           }}
         />
-        <div
-          className={"w-full outline-none text-2xl"}
-          contentEditable
+        or
+        <Input
+          placeholder="Paste image"
           onPaste={(e) => {
             const clipboardData = e.clipboardData;
             const item = clipboardData.items[0];
@@ -130,10 +189,6 @@ export function ImageUpload({ onUpload }: { onUpload: (file?: File) => void }) {
               return;
             }
             onUpload(item.getAsFile() ?? undefined);
-            setHasContent(true);
-          }}
-          onKeyDown={(e) => {
-            setHasContent(e.currentTarget.textContent?.trim() !== "");
           }}
         />
       </span>
@@ -236,7 +291,7 @@ function ExistingCreatureOptions({
     name,
   });
   return (
-    <div className={"flex flex-col gap-2"}>
+    <div className={"flex flex-col gap-2 max-h-full overflow-auto"}>
       {creatures?.map((creature) => (
         <button
           key={creature.id}
@@ -250,7 +305,7 @@ function ExistingCreatureOptions({
         >
           <Card
             className={clsx(
-              "flex hover:bg-gray-100 transition-all items-center gap-10 overflow-hidden"
+              "flex hover:bg-gray-100 transition-all items-center gap-10 overflow-hidden h-20"
             )}
           >
             <CharacterIcon

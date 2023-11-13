@@ -2,7 +2,7 @@ import { CreaturePost } from "@/app/encounters/[id]/creature-add-form";
 import { useEncounterId } from "@/app/encounters/hooks";
 import { getCreaturePostForm } from "@/app/encounters/utils";
 import { rerouteUrl } from "@/app/login/page";
-import { EncounterCreature, EncounterParticipant } from "@/server/api/router";
+import { Creature, EncounterCreature } from "@/server/api/router";
 import { mergeEncounterCreature } from "../utils";
 import { api } from "@/trpc/react";
 import { useMutation } from "@tanstack/react-query";
@@ -30,7 +30,10 @@ export function useCreateCreatureInEncounter() {
           body: formData,
         }
       );
-      const data = await response.json();
+      const data = (await response.json()) as {
+        data: Creature;
+        detail: string;
+      };
       if (response.status !== 200) {
         console.log(data.detail);
         throw data;
@@ -69,8 +72,9 @@ export function useCreateCreatureInEncounter() {
         encounterById.setData(id, context.previousEncounterData);
       }
     },
-    onSettled: () => {
-      encounterById.invalidate(id);
+    onSettled: async () => {
+      console.log("settled");
+      return await encounterById.invalidate(id);
     },
   });
 }

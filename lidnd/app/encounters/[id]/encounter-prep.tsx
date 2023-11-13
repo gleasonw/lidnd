@@ -134,6 +134,7 @@ function EncounterParticipantRow() {
     useRemoveParticipantFromEncounter();
   const id = useEncounterId();
   const [encounter, encounterQuery] = api.encounterById.useSuspenseQuery(id);
+  console.log(encounter?.participants)
 
   return (
     <AnimatePresence>
@@ -145,7 +146,7 @@ function EncounterParticipantRow() {
         {encounter?.participants
           ?.slice()
           .sort(sortEncounterCreatures)
-          .map((participant, index) => (
+          .map((participant) => (
             <AnimationListItem key={participant.id}>
               <BattleCard creature={participant}>
                 <Button

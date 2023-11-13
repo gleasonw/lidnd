@@ -13,7 +13,6 @@ import {
   Form,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { creatureUploadSchema } from "@/server/api/router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -24,8 +23,8 @@ const formSchema = z.object({
   name: z.string(),
   created_at: z.date().optional(),
   max_hp: z.coerce.number(),
-  challenge_rating: z.coerce.number().optional(),
-  is_player: z.boolean().optional(),
+  challenge_rating: z.coerce.number(),
+  is_player: z.boolean(),
   icon_image: z.instanceof(File),
   stat_block_image: z.instanceof(File),
 });
@@ -39,7 +38,7 @@ export function FullCreatureAddForm({
   children?: React.ReactNode;
   uploadCreature: (data: CreaturePost) => void;
 }) {
-  const form = useForm<z.infer<typeof creatureUploadSchema>>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       max_hp: 0,
@@ -75,13 +74,17 @@ export function FullCreatureAddForm({
           name="icon_image"
           render={({ field }) => (
             <FormItem className="flex flex-col gap-2">
-              <FormLabel>Select or paste icon</FormLabel>
+              <FormLabel>Icon</FormLabel>
               <FormControl>
                 <ImageUpload
                   onUpload={(file) =>
                     field.onChange({ target: { value: file } })
                   }
                   key={keyToResetFile}
+                  image={field.value}
+                  clearImage={() =>
+                    field.onChange({ target: { value: undefined } })
+                  }
                 />
               </FormControl>
               <FormMessage />
@@ -93,13 +96,18 @@ export function FullCreatureAddForm({
           name="stat_block_image"
           render={({ field }) => (
             <FormItem className="flex flex-col gap-2">
-              <FormLabel>Select or paste stat block</FormLabel>
+              <FormLabel>Stat block</FormLabel>
               <FormControl>
                 <ImageUpload
                   onUpload={(file) =>
                     field.onChange({ target: { value: file } })
                   }
                   key={keyToResetFile}
+                  image={field.value}
+                  clearImage={() =>
+                    field.onChange({ target: { value: undefined } })
+                  }
+                  previewSize={500}
                 />
               </FormControl>
               <FormMessage />

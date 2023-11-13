@@ -19,12 +19,14 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json({ error: creature.error }, { status: 400 });
   }
   const newCreature = await createCreature(session.user.userId, creature.value);
-  await db
-    .insert(encounter_participant)
-    .values({
-      encounter_id: creature.value.encounter_id,
-      creature_id: newCreature.id,
-      hp: newCreature.max_hp,
-    });
-  return NextResponse.json({ Message: "Success", status: 201 });
+  await db.insert(encounter_participant).values({
+    encounter_id: creature.value.encounter_id,
+    creature_id: newCreature.id,
+    hp: newCreature.max_hp,
+  });
+  return NextResponse.json({
+    Message: "Success",
+    status: 201,
+    data: newCreature,
+  });
 };

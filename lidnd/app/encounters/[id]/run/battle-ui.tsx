@@ -9,7 +9,6 @@ import {
   Swords,
   X,
 } from "lucide-react";
-import { StatBlock } from "@/app/encounters/[id]/run/stat-block";
 import { ParticipantHealthForm } from "@/app/encounters/[id]/run/creature-health-form";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 import {
@@ -23,6 +22,7 @@ import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
 import {
   updateTurnOrder,
   sortEncounterCreatures,
+  getAWSimageURL,
 } from "@/app/encounters/utils";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
@@ -33,6 +33,7 @@ import {
   useRemoveParticipantFromEncounter,
 } from "@/app/encounters/[id]/hooks";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
+import { OriginalSizeImage } from "@/app/encounters/original-size-image";
 
 export function BattleUI() {
   const id = useEncounterId();
@@ -193,9 +194,9 @@ export function BattleUI() {
               key={selectedParticipant.id}
             />
           </div>
-          <StatBlock
-            id={selectedParticipant.creature_id}
-            name={selectedParticipant.name}
+          <OriginalSizeImage
+            src={getAWSimageURL(selectedParticipant.creature_id, "stat_block")}
+            alt={"stat block for " + selectedParticipant.name}
             key={selectedParticipant.creature_id}
           />
           <Button
@@ -254,9 +255,8 @@ export function BattleCard({
           "relative select-none h-56 mb-4 rounded-none justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col transition-all",
           className,
           {
-            "transform h-60 translate-y-2 mb-0":
-              creature.is_active,
-              "outline-4 outline": isSelected,
+            "transform h-60 translate-y-2 mb-0": creature.is_active,
+            "outline-4 outline": isSelected,
             "opacity-40":
               encounter?.current_round === 0 && !creature.has_surprise,
           }
@@ -336,8 +336,8 @@ function BattleAddCreatureForm({ children }: { children?: React.ReactNode }) {
             />
           </CardContent>
         </Card>
-        <Card className={"w-full max-w-[600px]"}>
-          <CardContent className={"flex flex-col gap-3 pt-5"}>
+        <Card className={"w-full max-w-[600px] h-96"}>
+          <CardContent className={"flex flex-col gap-3 pt-5 max-h-full"}>
             <CardTitle>Existing creature</CardTitle>
             <ExistingCreature />
           </CardContent>
