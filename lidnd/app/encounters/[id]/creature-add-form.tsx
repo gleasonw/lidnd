@@ -15,7 +15,9 @@ import { api } from "@/trpc/react";
 import Image from "next/image";
 import { X } from "lucide-react";
 
-export type CreaturePost = z.infer<typeof creatureUploadSchema>;
+export type CreaturePost = z.infer<typeof creatureUploadSchema> & {
+  stat_block_image?: File;
+}
 
 export function CustomCreature({
   children,
