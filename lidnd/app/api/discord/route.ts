@@ -2,6 +2,7 @@
 import { auth, discordAuth } from "@/server/api/auth/lucia";
 import { db } from "@/server/api/db";
 import { settings } from "@/server/api/db/schema";
+import { fetchWhitelist } from "@/server/api/utils";
 import { OAuthRequestError } from "@lucia-auth/oauth";
 import { cookies, headers } from "next/headers";
 
@@ -39,8 +40,16 @@ export const GET = async (request: NextRequest) => {
       // populate settings here
       return user;
     };
-
+    const whitelist = await fetchWhitelist();
     const user = await getUser();
+    if(!whitelist.has(user.username)) {
+      return new Response(null, {
+        status: 403,
+        headers: {
+          Location: "/whitelist",
+        },
+      });
+    }
     const session = await auth.createSession({
       userId: user.userId,
       attributes: {},
