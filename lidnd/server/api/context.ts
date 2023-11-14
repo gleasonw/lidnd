@@ -11,12 +11,6 @@ export async function createContext({
 }) {
   const session = await getPageSession();
   if (!session) return { user: null };
-  const whitelist = await fetchWhitelist();
-  if (!whitelist.has(session.user.username)) {
-    return {
-      user: null,
-    };
-  }
   return {
     user: session.user
   };
