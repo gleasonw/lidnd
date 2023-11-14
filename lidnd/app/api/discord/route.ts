@@ -22,15 +22,6 @@ export const GET = async (request: NextRequest) => {
   try {
     const { getExistingUser, discordUser, createUser } =
       await discordAuth.validateCallback(code);
-    const whitelist = await fetchWhitelist();
-    if(!whitelist.has(discordUser.username)) {
-      return new Response(null, {
-        status: 302,
-        headers: {
-          Location: "/whitelist",
-        },
-      });
-    }
     const getUser = async () => {
       const existingUser = await getExistingUser();
       if (existingUser) return existingUser;
