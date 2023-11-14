@@ -105,27 +105,11 @@ class UserId(BaseModel):
     id: int
 
 
-async def fetch_whitelist() -> Set[str]:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            "https://raw.githubusercontent.com/gleasonw/lidnd/main/whitelist.txt"
-        ) as resp:
-            whitelist = set((await resp.text()).splitlines())
-            return whitelist
-
-
-whitelist: Set[str] | None = None
-
 
 async def validate_auth(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
-    global whitelist
-    if not whitelist:
-        whitelist = await fetch_whitelist()
     async with pool.connection() as conn:
         session = await get_session(token, conn)
         user = await get_user(session.user_id, conn)
-        if user.username not in whitelist:
-            raise HTTPException(status_code=401, detail="User not whitelisted")
         utc_now = datetime.utcnow().replace(tzinfo=ZoneInfo("UTC"))
         if session.idle_expires < utc_now:
             raise HTTPException(status_code=401, detail="Session has expired")
