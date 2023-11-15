@@ -66,7 +66,7 @@ export function BattleUI() {
   const activeIndex = displayedParticipants?.findIndex(
     (creature) => creature.is_active
   );
-  const activeParticipant = displayedParticipants?.[activeIndex]
+  const activeParticipant = activeIndex ? displayedParticipants?.[activeIndex] : undefined
   
   const [dmSelectedCreature, setDmSelectedCreature] = React.useState(
     activeParticipant?.id ?? null
