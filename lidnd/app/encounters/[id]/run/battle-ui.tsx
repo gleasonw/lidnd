@@ -63,9 +63,11 @@ export function BattleUI() {
     displayedParticipants = encounterParticipants;
   }
 
-  const activeParticipant = displayedParticipants?.find(
+  const activeIndex = displayedParticipants?.findIndex(
     (creature) => creature.is_active
   );
+  const activeParticipant = displayedParticipants?.[activeIndex]
+  
   const [dmSelectedCreature, setDmSelectedCreature] = React.useState(
     activeParticipant?.id ?? null
   );
@@ -159,7 +161,7 @@ export function BattleUI() {
           {displayedParticipants
             ?.slice()
             .sort(sortEncounterCreatures)
-            .map((participant) => (
+            .map((participant, index) => (
               <AnimationListItem key={participant.id}>
                 <button
                   onClick={() => setDmSelectedCreature(participant.id)}
@@ -168,6 +170,7 @@ export function BattleUI() {
                   <BattleCard
                     creature={participant}
                     isSelected={participant.id === selectedId}
+                    className={index < activeIndex ? 'opacity-40' : ''}
                   />
                 </button>
               </AnimationListItem>
