@@ -147,7 +147,7 @@ export function BattleUI() {
 
       <div
         className={clsx(
-          "flex flex-row sm:gap-4 p-8 max-w-full items-center overflow-auto"
+          "flex flex-row sm:gap-4 px-8 pb-8 max-w-full items-center overflow-auto"
         )}
         ref={scrollContainer}
       >
@@ -159,24 +159,23 @@ export function BattleUI() {
           <ChevronLeftIcon />
         </Button>
         <AnimatePresence>
-          {displayedParticipants
-            ?.slice()
-            .map((participant, index) => (
-              <AnimationListItem key={participant.id}>
-                <button
-                  onClick={() => setDmSelectedCreature(participant.id)}
-                  className="w-full"
-                >
-                  <BattleCard
-                    creature={participant}
-                    isSelected={participant.id === selectedId}
-                    className={
-                      activeIndex && index < activeIndex ? "opacity-40" : ""
-                    }
-                  />
-                </button>
-              </AnimationListItem>
-            ))}
+          {displayedParticipants?.slice().map((participant, index) => (
+            <AnimationListItem key={participant.id}>
+              <button onClick={() => setDmSelectedCreature(participant.id)}>
+                <BattleCard
+                  creature={participant}
+                  isSelected={participant.id === selectedId}
+                  className={
+                    !(participant.id === selectedId) &&
+                    activeIndex &&
+                    index < activeIndex
+                      ? "opacity-40"
+                      : ""
+                  }
+                />
+              </button>
+            </AnimationListItem>
+          ))}
         </AnimatePresence>
         <Button
           className="absolute right-0 sm:right-10 z-10 h-20"
@@ -190,23 +189,27 @@ export function BattleUI() {
       {selectedParticipant && (
         <>
           <div className="flex flex-col gap-5">
-            <span className={"text-center text-xl flex flex-col gap-3"}>
-              {selectedParticipant.name}{" "}
+            <span
+              className={
+                "text-center text-lg flex flex-wrap sm:flex-nowrap gap-10 items-center"
+              }
+            >
               {!selectedParticipant.is_player && (
-                <>
-                  <span>
-                    {selectedParticipant.hp} / {selectedParticipant.max_hp} HP
+                <span className="flex gap-3 items-center shadow-md p-3 rounded-sm border">
+                  <span className="whitespace-nowrap">
+                    {selectedParticipant.hp} / {selectedParticipant.max_hp}
                   </span>
                   <ParticipantHealthForm participant={selectedParticipant} />
-                </>
+                </span>
               )}
+              <InitiativeInput
+                participant={selectedParticipant}
+                key={selectedParticipant.id}
+                className={
+                  "flex gap-2 items-center shadow-md p-3 rounded-sm border"
+                }
+              />
             </span>
-
-            <InitiativeInput
-              participant={selectedParticipant}
-              className="flex gap-5"
-              key={selectedParticipant.id}
-            />
           </div>
           {!selectedParticipant.is_player ? (
             <OriginalSizeImage
@@ -262,10 +265,10 @@ export function BattleCard({
         key={creature.id}
         data-active={creature.is_active}
         className={clsx(
-          "lg:w-52 w-28 shadow-lg border-2 relative select-none h-56 mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
+          "w-28 h-40 shadow-lg border-2 relative select-none mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
           className,
           {
-            "h-64 mb-0": creature.is_active,
+            "h-48 mb-0": creature.is_active,
             "border-zinc-900": isSelected || creature.is_active,
             "opacity-40":
               encounter?.current_round === 0 && !creature.has_surprise,
@@ -284,7 +287,7 @@ export function BattleCard({
             name={creature.name}
             width={200}
             height={200}
-            className="h-32 object-cover"
+            className="h-28 object-cover"
           />
         )}
       </Card>

@@ -27,12 +27,11 @@ export default function InitiativeInput({
   }, 1000);
 
   return (
-    <label>
+    <label className={className}>
       Initiative
       <Input
         type="number"
         value={initiative}
-        className={className}
         tabIndex={tabIndex}
         onChange={(e) => {
           setInitiative(!isNaN(parseInt(e.target.value)) ? e.target.value : "");

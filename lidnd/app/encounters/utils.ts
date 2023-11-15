@@ -3,9 +3,7 @@ import {
   EncounterParticipant,
   Creature,
   EncounterCreature,
-  Encounter,
 } from "@/server/api/router";
-import { Part } from "@aws-sdk/client-s3";
 
 export function getAWSimageURL(
   creature_id: string,
