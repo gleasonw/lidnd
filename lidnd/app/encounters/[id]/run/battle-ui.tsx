@@ -66,8 +66,10 @@ export function BattleUI() {
   const activeIndex = displayedParticipants?.findIndex(
     (creature) => creature.is_active
   );
-  const activeParticipant = activeIndex ? displayedParticipants?.[activeIndex] : undefined
-  
+  const activeParticipant = activeIndex
+    ? displayedParticipants?.[activeIndex]
+    : undefined;
+
   const [dmSelectedCreature, setDmSelectedCreature] = React.useState(
     activeParticipant?.id ?? null
   );
@@ -135,7 +137,6 @@ export function BattleUI() {
           </Button>
         )}
       </div>
-
       {addingCreature && (
         <BattleAddCreatureForm>
           <Button variant={"ghost"} onClick={() => setAddingCreature(false)}>
@@ -160,7 +161,6 @@ export function BattleUI() {
         <AnimatePresence>
           {displayedParticipants
             ?.slice()
-            .sort(sortEncounterCreatures)
             .map((participant, index) => (
               <AnimationListItem key={participant.id}>
                 <button
@@ -170,7 +170,9 @@ export function BattleUI() {
                   <BattleCard
                     creature={participant}
                     isSelected={participant.id === selectedId}
-                    className={activeIndex && index < activeIndex ? 'opacity-40' : ''}
+                    className={
+                      activeIndex && index < activeIndex ? "opacity-40" : ""
+                    }
                   />
                 </button>
               </AnimationListItem>

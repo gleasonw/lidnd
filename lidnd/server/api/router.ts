@@ -11,7 +11,10 @@ import { eq, and, sql, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
 import superjson from "superjson";
 import { ZodError, z } from "zod";
-import { updateTurnOrder } from "@/app/encounters/utils";
+import {
+  sortEncounterCreatures,
+  updateTurnOrder,
+} from "@/app/encounters/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
   getEncounterParticipants,
@@ -163,7 +166,13 @@ export const appRouter = t.router({
       );
       return acc;
     }, {});
-    return Object.values(response)[0];
+    const encounterWithParticipants = Object.values(response)[0];
+    return {
+      ...encounterWithParticipants,
+      participants: encounterWithParticipants.participants.sort(
+        sortEncounterCreatures
+      ),
+    };
   }),
 
   deleteEncounter: protectedProcedure
