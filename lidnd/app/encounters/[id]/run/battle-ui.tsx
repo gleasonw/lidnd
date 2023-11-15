@@ -170,7 +170,7 @@ export function BattleUI() {
                   <BattleCard
                     creature={participant}
                     isSelected={participant.id === selectedId}
-                    className={index < activeIndex ? 'opacity-40' : ''}
+                    className={activeIndex && index < activeIndex ? 'opacity-40' : ''}
                   />
                 </button>
               </AnimationListItem>
