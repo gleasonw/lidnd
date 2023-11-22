@@ -24,3 +24,8 @@ jobs:
         run: railway up --service dnd-init-tracker
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Deploy bot
+        run: railway up --service lidnd-bot
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
