@@ -20,7 +20,7 @@ jobs:
       - name: Install Railway
         run: npm i -g @railway/cli
 
-      - name: Deploy
-        run: railway up
+      - name: Deploy app
+        run: railway up --dnd-init-tracker
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
