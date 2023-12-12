@@ -352,13 +352,9 @@ export const appRouter = t.router({
     )
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
-        const [encounter, encounterParticipants, channel] = await Promise.all([
+        const [encounter, encounterParticipants] = await Promise.all([
           getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id, tx),
           getEncounterParticipantsWithCreatureData(opts.input.encounter_id, tx),
-          tx
-            .select()
-            .from(channels)
-            .where(eq(channels.discord_user_id, opts.ctx.user.discord_id)),
         ]);
 
         const {
@@ -380,13 +376,6 @@ export const appRouter = t.router({
             })
             .where(eq(encounters.id, opts.input.encounter_id)),
         ]);
-
-        if (channel.length > 0) {
-          await postEncounterToUserChannel({
-            ...encounter,
-            participants: updatedParticipants,
-          });
-        }
         return encounter;
       });
       return result;
