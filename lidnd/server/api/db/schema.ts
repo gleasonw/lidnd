@@ -52,6 +52,36 @@ export const creatures = pgTable(
   }
 );
 
+export const status_effects_5e = pgTable("status_effects_5e", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 256 }).notNull(),
+  description: text("description").notNull(),
+});
+
+export const participant_status_effects = pgTable(
+  "participant_status_effects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    encounter_participant_id: uuid("encounter_participant_id")
+      .references(() => encounter_participant.id, { onDelete: "cascade" })
+      .notNull(),
+    status_effect_id: uuid("status_effect_id")
+      .references(() => status_effects_5e.id, { onDelete: "cascade" })
+      .notNull(),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+    duration: integer("duration"),
+    save_ends: boolean("save_ends").default(false).notNull(),
+  },
+  (t) => {
+    return {
+      encounterParticipantIndex: index("encounter_participant_index").on(
+        t.encounter_participant_id
+      ),
+      statusEffectIndex: index("status_effect_index").on(t.status_effect_id),
+    };
+  }
+);
+
 export const encounter_participant = pgTable(
   "encounter_participant",
   {

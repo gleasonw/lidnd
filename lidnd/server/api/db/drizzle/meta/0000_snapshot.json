@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "9977d40e-41e2-443b-86df-03dc357eee8c",
+  "id": "123ac4ba-d153-4863-a7af-1d587a4ba8de",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "channels": {
@@ -167,6 +167,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "has_surprise": {
+          "name": "has_surprise",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {
@@ -229,13 +236,13 @@
         },
         "name": {
           "name": "name",
-          "type": "varchar(256)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "description": {
           "name": "description",
-          "type": "varchar(256)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -263,7 +270,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "default": 0
+          "default": 1
         },
         "ended_at": {
           "name": "ended_at",
@@ -330,6 +337,97 @@
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "participant_status_effects": {
+      "name": "participant_status_effects",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "encounter_participant_id": {
+          "name": "encounter_participant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status_effect_id": {
+          "name": "status_effect_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "duration": {
+          "name": "duration",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "save_ends": {
+          "name": "save_ends",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "encounter_participant_index": {
+          "name": "encounter_participant_index",
+          "columns": [
+            "encounter_participant_id"
+          ],
+          "isUnique": false
+        },
+        "status_effect_index": {
+          "name": "status_effect_index",
+          "columns": [
+            "status_effect_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "participant_status_effects_encounter_participant_id_encounter_participant_id_fk": {
+          "name": "participant_status_effects_encounter_participant_id_encounter_participant_id_fk",
+          "tableFrom": "participant_status_effects",
+          "tableTo": "encounter_participant",
+          "columnsFrom": [
+            "encounter_participant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "participant_status_effects_status_effect_id_status_effects_5e_id_fk": {
+          "name": "participant_status_effects_status_effect_id_status_effects_5e_id_fk",
+          "tableFrom": "participant_status_effects",
+          "tableTo": "status_effects_5e",
+          "columnsFrom": [
+            "status_effect_id"
           ],
           "columnsTo": [
             "id"
@@ -426,6 +524,35 @@
           "primaryKey": false,
           "notNull": true,
           "default": 1
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "status_effects_5e": {
+      "name": "status_effects_5e",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

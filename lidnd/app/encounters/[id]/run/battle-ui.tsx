@@ -6,6 +6,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronUp,
+  PersonStanding,
   Plus,
   Swords,
   X,
@@ -17,7 +18,7 @@ import {
   ExistingCreature,
 } from "@/app/encounters/[id]/creature-add-form";
 import InitiativeInput from "@/app/encounters/[id]/InitiativeInput";
-import React from "react";
+import React, { experimental_useEffectEvent } from "react";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
 import {
@@ -35,6 +36,11 @@ import {
 } from "@/app/encounters/[id]/hooks";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import { OriginalSizeImage } from "@/app/encounters/original-size-image";
+import { ButtonWithTooltip } from "@/components/ui/tip";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Combobox } from "@/app/encounters/[id]/resistance-selector";
+import { CommandItem } from "@/components/ui/command";
 
 export function BattleUI() {
   const id = useEncounterId();
@@ -209,6 +215,12 @@ export function BattleUI() {
                   "flex gap-2 items-center shadow-md p-3 rounded-sm border"
                 }
               />
+              <StatusInput
+                participant={selectedParticipant}
+                className={
+                  "flex gap-2 items-center shadow-md p-3 rounded-sm border"
+                }
+              />
             </span>
           </div>
           {!selectedParticipant.is_player ? (
@@ -261,6 +273,9 @@ export function BattleCard({
     <div
       className={`relative flex-col gap-6 items-center justify-between flex`}
     >
+      {creature.status_effects.map((effect) => (
+        <div key={effect.id}>{effect.name}</div>
+      ))}
       <Card
         key={creature.id}
         data-active={creature.is_active}
@@ -366,6 +381,62 @@ function BattleAddCreatureForm({ children }: { children?: React.ReactNode }) {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+export function StatusInput({
+  participant,
+  className,
+}: {
+  participant: EncounterCreature;
+  className?: string;
+}) {
+  const { mutate: updateStatus } = api.assignStatusEffect.useMutation();
+  const effects = api.statusEffects.useQuery().data;
+
+  const [duration, setDuration] = React.useState(1);
+  const [save_ends, setSaveEnds] = React.useState(false);
+
+  return (
+    <div className={className}>
+      <Combobox
+        triggerPlaceholder="Select status effect"
+        emptyResultText="No status effects"
+      >
+        {effects?.map((effect) => (
+          <CommandItem key={effect.id}>
+            <ButtonWithTooltip
+              text={effect.description}
+              onClick={() =>
+                updateStatus({
+                  encounter_participant_id: participant.id,
+                  status_effect_id: effect.id,
+                  duration,
+                  save_ends,
+                })
+              }
+            >
+              <Swords />
+              <span>{effect.name}</span>
+            </ButtonWithTooltip>
+          </CommandItem>
+        ))}
+      </Combobox>
+      <Input
+        placeholder="Duration"
+        type="number"
+        className="w-20"
+        value={duration}
+        onChange={(e) => setDuration(parseInt(e.target.value))}
+      />
+      <Checkbox
+        placeholder="Save ends"
+        checked={save_ends}
+        onCheckedChange={(checked) =>
+          checked !== "indeterminate" && setSaveEnds(checked)
+        }
+      />
     </div>
   );
 }
