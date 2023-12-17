@@ -259,6 +259,7 @@ export async function postEncounterToUserChannel(encounter: { id: string }) {
       Authorization: `Bearer ${session.sessionId}`,
     },
   });
+  console.log(response);
   if (response.error) {
     console.error(response.error);
     throw new TRPCError({
