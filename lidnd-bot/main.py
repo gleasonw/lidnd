@@ -187,6 +187,9 @@ async def setup(ctx: ApplicationContext):
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
+                "DELETE FROM channels WHERE discord_user_id = %s", (ctx.author.id,)
+            )
+            await cur.execute(
                 "INSERT INTO channels (channel_id, discord_user_id) VALUES (%s, %s)",
                 (ctx.channel_id, ctx.author.id),
             )
