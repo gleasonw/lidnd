@@ -139,9 +139,12 @@ async def post_encounter_to_user_channel(
     channel = await fetch_channel(user)
     if not channel:
         return
-    print(encounter)
     await channel.send(
-        f"Track the encounter here: https://lidnd.com/observe/{encounter.id}"
+        f"""
+#### {encounter.name or "Unnamed encounter"}
+
+https://lidnd.com/observe/{encounter.id}
+"""
     )
 
 
@@ -155,9 +158,8 @@ async def fetch_channel(user=Depends(validate_auth)) -> discord.TextChannel:
             ids = await cur.fetchone()
             if not ids:
                 raise HTTPException(status_code=404, detail="Discord channel not found")
-            channel_id, message_id = ids
+            channel_id, _ = ids
             channel = bot.get_channel(channel_id)
-            print(channel)
             assert isinstance(
                 channel, discord.TextChannel
             ), "Channel is not a text channel"
