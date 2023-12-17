@@ -141,7 +141,7 @@ async def post_encounter_to_user_channel(
         return
     await channel.send(
         f"""
-#### {encounter.name or "Unnamed encounter"}
+## {encounter.name or "Unnamed encounter"}
 
 https://lidnd.com/observe/{encounter.id}
 """
