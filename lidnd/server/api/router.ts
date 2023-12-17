@@ -333,6 +333,38 @@ export const appRouter = t.router({
       return result;
     }),
 
+  removeStatusEffect: protectedProcedure
+    .input(
+      z.object({
+        encounter_participant_id: z.string(),
+        status_effect_id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const result = await db
+        .delete(participant_status_effects)
+        .where(
+          and(
+            eq(
+              participant_status_effects.encounter_participant_id,
+              opts.input.encounter_participant_id
+            ),
+            eq(
+              participant_status_effects.status_effect_id,
+              opts.input.status_effect_id
+            )
+          )
+        )
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to remove status effect",
+        });
+      }
+      return result[0];
+    }),
+
   assignStatusEffect: protectedProcedure
     .input(
       z.object({
@@ -340,6 +372,8 @@ export const appRouter = t.router({
         status_effect_id: z.string(),
         duration: z.number().optional(),
         save_ends: z.boolean().optional(),
+        name: z.string().optional(),
+        description: z.string().optional(),
       })
     )
     .mutation(async (opts) => {
