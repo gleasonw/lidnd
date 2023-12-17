@@ -82,7 +82,7 @@ export function BattleUI() {
   const activeParticipant = displayedParticipants[activeIndex];
 
   const [dmSelectedCreature, setDmSelectedCreature] = React.useState(
-    activeParticipant.id
+    activeParticipant?.id ?? null
   );
 
   const selectedId = dmSelectedCreature ?? activeParticipant?.id ?? null;

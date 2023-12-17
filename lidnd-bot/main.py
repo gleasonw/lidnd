@@ -17,13 +17,10 @@ import asyncio
 import discord
 from discord import ApplicationContext
 from datetime import datetime
-from jinja2 import Environment, FileSystemLoader
 from zoneinfo import ZoneInfo
 
 load_dotenv()
 
-env = Environment(loader=FileSystemLoader("."))
-template = env.get_template("encounter.md")
 
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
