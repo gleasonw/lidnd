@@ -16,7 +16,7 @@ import { X } from "lucide-react";
 
 export type CreaturePost = z.infer<typeof creatureUploadSchema> & {
   stat_block_image?: File;
-}
+};
 
 export function CustomCreature({
   children,
@@ -252,6 +252,7 @@ export function ExistingCreature({
             created_at: new Date(),
             user_id: old.user_id,
             has_surprise: false,
+            status_effects: [],
           };
           return {
             ...old,

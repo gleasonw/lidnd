@@ -6,6 +6,8 @@ import {
   creatures,
   settings,
   channels,
+  participant_status_effects,
+  status_effects_5e,
 } from "@/server/api/db/schema";
 import { eq, and, sql, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
@@ -64,8 +66,17 @@ export type Encounter = typeof encounters.$inferSelect;
 export type Creature = typeof creatures.$inferSelect;
 export type EncounterParticipant = typeof encounter_participant.$inferSelect;
 export type Settings = typeof settings.$inferSelect;
+export type StatusEffect = typeof status_effects_5e.$inferSelect;
+export type ParticipantStatusEffect =
+  typeof participant_status_effects.$inferSelect & {
+    description: StatusEffect["description"];
+    name: StatusEffect["name"];
+  };
 
-export type EncounterCreature = EncounterParticipant & Creature;
+export type EncounterCreature = EncounterParticipant &
+  Creature & {
+    status_effects: ParticipantStatusEffect[];
+  };
 export type EncounterWithParticipants = Encounter & {
   participants: EncounterCreature[];
 };
@@ -132,6 +143,10 @@ export const appRouter = t.router({
     return Object.values(response);
   }),
 
+  statusEffects: publicProcedure.query(async () => {
+    return await db.select().from(status_effects_5e);
+  }),
+
   encounterById: protectedProcedure.input(z.string()).query(async (opts) => {
     const encounter = await db
       .select()
@@ -146,32 +161,59 @@ export const appRouter = t.router({
         encounter_participant,
         eq(encounters.id, encounter_participant.encounter_id)
       )
-      .leftJoin(creatures, eq(encounter_participant.creature_id, creatures.id));
-
-    const response = encounter.reduce<
-      Record<string, EncounterWithParticipants>
-    >((acc, row) => {
-      const encounter = row["encounters"];
-      const participant = row["encounter_participant"];
-      const creature = row["creatures"];
-      if (!acc[encounter.id]) {
-        acc[encounter.id] = {
-          ...encounter,
-          participants: [],
-        };
-      }
-      if (!participant || !creature) return acc;
-      acc[encounter.id].participants.push(
-        mergeEncounterCreature(participant, creature)
+      .leftJoin(creatures, eq(encounter_participant.creature_id, creatures.id))
+      .leftJoin(
+        participant_status_effects,
+        eq(
+          encounter_participant.id,
+          participant_status_effects.encounter_participant_id
+        )
+      )
+      .leftJoin(
+        status_effects_5e,
+        eq(participant_status_effects.status_effect_id, status_effects_5e.id)
       );
-      return acc;
-    }, {});
-    const encounterWithParticipants = Object.values(response)[0];
+    const response = encounter.reduce<Record<string, EncounterCreature>>(
+      (acc, row) => {
+        const participant = row["encounter_participant"];
+        const creature = row["creatures"];
+        const statusEffect = row["participant_status_effects"];
+        const statusEffectData = row["status_effects_5e"];
+        const finalStatusEffect = statusEffect
+          ? {
+              ...statusEffect,
+              description: statusEffectData?.description ?? "",
+              name: statusEffectData?.name ?? "",
+            }
+          : null;
+
+        if (!participant || !creature) return acc;
+        if (!acc[participant.id]) {
+          acc[participant.id] = {
+            ...mergeEncounterCreature(participant, creature),
+            status_effects: finalStatusEffect ? [finalStatusEffect] : [],
+          };
+        } else {
+          finalStatusEffect &&
+            acc[participant.id].status_effects.push(finalStatusEffect);
+        }
+        return acc;
+      },
+      {}
+    );
+    const participants = Object.values(response);
+
+    const encounterData = encounter.at(0)?.encounters;
+
+    if (!encounterData) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "No encounter found",
+      });
+    }
     return {
-      ...encounterWithParticipants,
-      participants: encounterWithParticipants.participants.sort(
-        sortEncounterCreatures
-      ),
+      ...encounterData,
+      participants: participants.sort(sortEncounterCreatures),
     };
   }),
 
@@ -289,6 +331,68 @@ export const appRouter = t.router({
         return updatedParticipant[0];
       });
       return result;
+    }),
+
+  removeStatusEffect: protectedProcedure
+    .input(
+      z.object({
+        encounter_participant_id: z.string(),
+        status_effect_id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const result = await db
+        .delete(participant_status_effects)
+        .where(
+          and(
+            eq(
+              participant_status_effects.encounter_participant_id,
+              opts.input.encounter_participant_id
+            ),
+            eq(
+              participant_status_effects.status_effect_id,
+              opts.input.status_effect_id
+            )
+          )
+        )
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to remove status effect",
+        });
+      }
+      return result[0];
+    }),
+
+  assignStatusEffect: protectedProcedure
+    .input(
+      z.object({
+        encounter_participant_id: z.string(),
+        status_effect_id: z.string(),
+        duration: z.number().optional(),
+        save_ends: z.boolean().optional(),
+        name: z.string().optional(),
+        description: z.string().optional(),
+      })
+    )
+    .mutation(async (opts) => {
+      const result = await db
+        .insert(participant_status_effects)
+        .values({
+          encounter_participant_id: opts.input.encounter_participant_id,
+          status_effect_id: opts.input.status_effect_id,
+          duration: opts.input.duration,
+          save_ends: opts.input.save_ends,
+        })
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to assign status effect",
+        });
+      }
+      return result[0];
     }),
 
   startEncounter: protectedProcedure

@@ -58,6 +58,7 @@ export function useCreateCreatureInEncounter() {
           created_at: new Date(),
           user_id: old.user_id,
           has_surprise: false,
+          status_effects: [],
         };
         return {
           ...old,

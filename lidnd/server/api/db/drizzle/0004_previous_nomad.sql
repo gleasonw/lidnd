@@ -1,1 +1,0 @@
-ALTER TABLE "encounter_participant" ADD COLUMN "has_surprise" boolean DEFAULT false NOT NULL;

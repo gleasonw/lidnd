@@ -7,7 +7,6 @@ import {
   ChevronRightIcon,
   ChevronUp,
   Plus,
-  Swords,
   X,
 } from "lucide-react";
 import { ParticipantHealthForm } from "@/app/encounters/[id]/run/creature-health-form";
@@ -17,14 +16,10 @@ import {
   ExistingCreature,
 } from "@/app/encounters/[id]/creature-add-form";
 import InitiativeInput from "@/app/encounters/[id]/InitiativeInput";
-import React from "react";
+import React, { Suspense, experimental_useEffectEvent } from "react";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
-import {
-  updateTurnOrder,
-  sortEncounterCreatures,
-  getAWSimageURL,
-} from "@/app/encounters/utils";
+import { updateTurnOrder, getAWSimageURL } from "@/app/encounters/utils";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { useEncounterId } from "@/app/encounters/hooks";
@@ -35,11 +30,29 @@ import {
 } from "@/app/encounters/[id]/hooks";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import { OriginalSizeImage } from "@/app/encounters/original-size-image";
+import { BasePopover } from "@/app/encounters/base-popover";
+import { StatusInput } from "./status-input";
+import { effectIconMap } from "./effectIconMap";
+
+export function BattleUILoader() {
+  return (
+    <AnimatePresence>
+      <Suspense fallback={<div>Loading...</div>}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: { duration: 0.1 } }}
+        >
+          <BattleUI />
+        </motion.div>
+      </Suspense>
+    </AnimatePresence>
+  );
+}
 
 export function BattleUI() {
   const id = useEncounterId();
-  const { data: encounter } = api.encounterById.useQuery(id);
-  const encounterParticipants = encounter?.participants;
+  const [encounter] = api.encounterById.useSuspenseQuery(id);
+  const encounterParticipants = encounter.participants;
   const { encounterById } = api.useUtils();
   const {
     mutate: changeActiveTo,
@@ -51,7 +64,7 @@ export function BattleUI() {
     },
   });
 
-  let displayedParticipants: EncounterCreature[] | undefined;
+  let displayedParticipants: EncounterCreature[];
   if (isTurnLoading && variables && encounterParticipants) {
     const { updatedParticipants } = updateTurnOrder(
       variables.to,
@@ -63,15 +76,13 @@ export function BattleUI() {
     displayedParticipants = encounterParticipants;
   }
 
-  const activeIndex = displayedParticipants?.findIndex(
+  const activeIndex = displayedParticipants.findIndex(
     (creature) => creature.is_active
   );
-  const activeParticipant = activeIndex
-    ? displayedParticipants?.[activeIndex]
-    : undefined;
+  const activeParticipant = displayedParticipants[activeIndex];
 
   const [dmSelectedCreature, setDmSelectedCreature] = React.useState(
-    activeParticipant?.id ?? null
+    activeParticipant.id
   );
 
   const selectedId = dmSelectedCreature ?? activeParticipant?.id ?? null;
@@ -80,19 +91,16 @@ export function BattleUI() {
     useRemoveParticipantFromEncounter();
 
   function handleChangeTurn(direction: "next" | "previous") {
-    // TODO: make encounter query suspense so always defined
-    if (encounterParticipants) {
-      const { newlyActiveParticipant } = updateTurnOrder(
-        direction,
-        encounterParticipants,
-        encounter
-      );
-      setDmSelectedCreature(newlyActiveParticipant.id);
-      changeActiveTo({
-        encounter_id: id,
-        to: direction,
-      });
-    }
+    const { newlyActiveParticipant } = updateTurnOrder(
+      direction,
+      encounterParticipants,
+      encounter
+    );
+    setDmSelectedCreature(newlyActiveParticipant.id);
+    changeActiveTo({
+      encounter_id: id,
+      to: direction,
+    });
   }
 
   const selectedParticipant = displayedParticipants?.find(
@@ -123,8 +131,6 @@ export function BattleUI() {
     encounter?.current_round === 0
       ? "Surprise round"
       : `Round ${encounter?.current_round}`;
-
-  console.log(displayedParticipants);
 
   return (
     <div className="flex flex-col gap-5 justify-center items-center">
@@ -209,6 +215,12 @@ export function BattleUI() {
                   "flex gap-2 items-center shadow-md p-3 rounded-sm border"
                 }
               />
+              <StatusInput
+                participant={selectedParticipant}
+                className={
+                  "flex gap-2 items-center shadow-md p-3 rounded-sm border"
+                }
+              />
             </span>
           </div>
           {!selectedParticipant.is_player ? (
@@ -257,10 +269,56 @@ export function BattleCard({
 }: BattleCardProps) {
   const id = useEncounterId();
   const { data: encounter } = api.encounterById.useQuery(id);
+  const { encounterById } = api.useUtils();
+  const { mutate: removeStatusEffect } = api.removeStatusEffect.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(creature.encounter_id);
+    },
+    onMutate: async (newStatusEffect) => {
+      await encounterById.cancel(creature.encounter_id);
+      const previousEncounter = encounterById.getData(creature.encounter_id);
+      encounterById.setData(creature.encounter_id, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          participants: old.participants.map((participant) => {
+            if (participant.id === newStatusEffect.encounter_participant_id) {
+              return {
+                ...participant,
+                status_effects: participant.status_effects.filter(
+                  (effect) => effect.id !== newStatusEffect.status_effect_id
+                ),
+              };
+            }
+            return participant;
+          }),
+        };
+      });
+      return previousEncounter;
+    },
+  });
   return (
     <div
       className={`relative flex-col gap-6 items-center justify-between flex`}
     >
+      <span className={"flex gap-1 flex-wrap w-32 items-center"}>
+        {creature.status_effects?.map((effect) => (
+          <BasePopover
+            key={effect.id}
+            trigger={
+              <Button variant="outline">
+                {effectIconMap[effect.name as keyof typeof effectIconMap]}
+              </Button>
+            }
+            className="flex flex-col gap-2 text-sm"
+          >
+            {effect.description}
+            <span>Save ends: {effect.save_ends ? "Yes" : "No"}</span>
+            <Button onClick={() => removeStatusEffect(effect)}>Remove</Button>
+          </BasePopover>
+        ))}
+      </span>
+
       <Card
         key={creature.id}
         data-active={creature.is_active}

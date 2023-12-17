@@ -152,5 +152,6 @@ export function mergeEncounterCreature(
     created_at: participant.created_at,
     user_id: creature.user_id,
     has_surprise: participant.has_surprise,
+    status_effects: [],
   };
 }
