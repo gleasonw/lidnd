@@ -149,7 +149,7 @@ export const appRouter = t.router({
   }),
 
   encounterById: protectedProcedure.input(z.string()).query(async (opts) => {
-    const encounter = getEncounterData(opts.input);
+    const encounter = await getEncounterData(opts.input);
     if (!encounter) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
