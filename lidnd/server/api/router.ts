@@ -19,6 +19,7 @@ import {
 } from "@/app/encounters/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
+  getEncounterData,
   getEncounterParticipants,
   getEncounterParticipantsWithCreatureData,
   getIconAWSname,
@@ -148,73 +149,14 @@ export const appRouter = t.router({
   }),
 
   encounterById: protectedProcedure.input(z.string()).query(async (opts) => {
-    const encounter = await db
-      .select()
-      .from(encounters)
-      .where(
-        and(
-          eq(encounters.user_id, opts.ctx.user.userId),
-          eq(encounters.id, opts.input)
-        )
-      )
-      .leftJoin(
-        encounter_participant,
-        eq(encounters.id, encounter_participant.encounter_id)
-      )
-      .leftJoin(creatures, eq(encounter_participant.creature_id, creatures.id))
-      .leftJoin(
-        participant_status_effects,
-        eq(
-          encounter_participant.id,
-          participant_status_effects.encounter_participant_id
-        )
-      )
-      .leftJoin(
-        status_effects_5e,
-        eq(participant_status_effects.status_effect_id, status_effects_5e.id)
-      );
-    const response = encounter.reduce<Record<string, EncounterCreature>>(
-      (acc, row) => {
-        const participant = row["encounter_participant"];
-        const creature = row["creatures"];
-        const statusEffect = row["participant_status_effects"];
-        const statusEffectData = row["status_effects_5e"];
-        const finalStatusEffect = statusEffect
-          ? {
-              ...statusEffect,
-              description: statusEffectData?.description ?? "",
-              name: statusEffectData?.name ?? "",
-            }
-          : null;
-
-        if (!participant || !creature) return acc;
-        if (!acc[participant.id]) {
-          acc[participant.id] = {
-            ...mergeEncounterCreature(participant, creature),
-            status_effects: finalStatusEffect ? [finalStatusEffect] : [],
-          };
-        } else {
-          finalStatusEffect &&
-            acc[participant.id].status_effects.push(finalStatusEffect);
-        }
-        return acc;
-      },
-      {}
-    );
-    const participants = Object.values(response);
-
-    const encounterData = encounter.at(0)?.encounters;
-
-    if (!encounterData) {
+    const encounter = await getEncounterData(opts.input);
+    if (!encounter) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "No encounter found",
       });
     }
-    return {
-      ...encounterData,
-      participants: participants.sort(sortEncounterCreatures),
-    };
+    return encounter;
   }),
 
   deleteEncounter: protectedProcedure
@@ -444,6 +386,7 @@ export const appRouter = t.router({
           message: "Failed to start encounter",
         });
       }
+      await postEncounterToUserChannel(result);
       return result;
     }),
 

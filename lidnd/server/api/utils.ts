@@ -3,7 +3,9 @@ import {
   creatures,
   encounter_participant,
   encounters,
+  participant_status_effects,
   settings,
+  status_effects_5e,
 } from "@/server/api/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { paths, components } from "@/app/schema";
@@ -75,6 +77,69 @@ export async function createCreature(
   }
 
   return newCreature[0];
+}
+
+export async function getEncounterData(id: string) {
+  const encounter = await db
+    .select()
+    .from(encounters)
+    .where(and(eq(encounters.id, id)))
+    .leftJoin(
+      encounter_participant,
+      eq(encounters.id, encounter_participant.encounter_id)
+    )
+    .leftJoin(creatures, eq(encounter_participant.creature_id, creatures.id))
+    .leftJoin(
+      participant_status_effects,
+      eq(
+        encounter_participant.id,
+        participant_status_effects.encounter_participant_id
+      )
+    )
+    .leftJoin(
+      status_effects_5e,
+      eq(participant_status_effects.status_effect_id, status_effects_5e.id)
+    );
+  const response = encounter.reduce<Record<string, EncounterCreature>>(
+    (acc, row) => {
+      const participant = row["encounter_participant"];
+      const creature = row["creatures"];
+      const statusEffect = row["participant_status_effects"];
+      const statusEffectData = row["status_effects_5e"];
+      const finalStatusEffect = statusEffect
+        ? {
+            ...statusEffect,
+            description: statusEffectData?.description ?? "",
+            name: statusEffectData?.name ?? "",
+          }
+        : null;
+
+      if (!participant || !creature) return acc;
+      if (!acc[participant.id]) {
+        acc[participant.id] = {
+          ...mergeEncounterCreature(participant, creature),
+          status_effects: finalStatusEffect ? [finalStatusEffect] : [],
+        };
+      } else {
+        finalStatusEffect &&
+          acc[participant.id].status_effects.push(finalStatusEffect);
+      }
+      return acc;
+    },
+    {}
+  );
+  const participants = Object.values(response);
+
+  const encounterData = encounter.at(0)?.encounters;
+
+  if (!encounterData) {
+    return null;
+  }
+
+  return {
+    ...encounterData,
+    participants: participants.sort(sortEncounterCreatures),
+  };
 }
 
 export async function getUserEncounter(
@@ -166,9 +231,7 @@ const { POST } = createClient<paths>({
   baseUrl: apiURL,
 });
 
-export async function postEncounterToUserChannel(
-  encounter: components["schemas"]["Encounter"]
-) {
+export async function postEncounterToUserChannel(encounter: { id: string }) {
   const session = await getPageSession();
   if (!session) {
     throw new TRPCError({
@@ -188,6 +251,7 @@ export async function postEncounterToUserChannel(
   }
   const response = await POST("/api/post_encounter_to_user_channel", {
     body: {
+      // @ts-ignore
       encounter,
       settings: userSettings[0],
     },
@@ -195,7 +259,6 @@ export async function postEncounterToUserChannel(
       Authorization: `Bearer ${session.sessionId}`,
     },
   });
-  console.log(response.response.url);
   if (response.error) {
     console.error(response.error);
     throw new TRPCError({

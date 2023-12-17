@@ -3,6 +3,7 @@
 *.pyc
 
 venv
+__pycache__
 
 # dependencies
 /node_modules
