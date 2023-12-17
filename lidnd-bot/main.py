@@ -160,6 +160,7 @@ async def get_discord_channel(user=Depends(validate_auth)) -> DiscordTextChannel
                 raise HTTPException(status_code=404, detail="Discord channel not found")
             channel_id, message_id = ids
             channel = bot.get_channel(channel_id)
+            print(channel)
             assert isinstance(
                 channel, discord.TextChannel
             ), "Channel is not a text channel"
