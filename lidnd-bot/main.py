@@ -136,15 +136,15 @@ async def get_user(id: str, conn) -> User:
 async def post_encounter_to_user_channel(
     encounter: Encounter, settings: Settings, user=Depends(validate_auth)
 ):
-    async with pool.connection() as conn:
-        channel_info = await get_discord_channel(user)
-        channel = bot.get_channel(channel_info.id)
-        if not channel:
-            return
-        assert isinstance(channel, discord.TextChannel), "Channel is not a text channel"
-        await channel.send(
-            f"Track the encounter here: https://lidnd.com/observe/{encounter.id}"
-        )
+    channel_info = await get_discord_channel(user)
+    channel = bot.get_channel(channel_info.id)
+    if not channel:
+        return
+    assert isinstance(channel, discord.TextChannel), "Channel is not a text channel"
+    print(encounter)
+    await channel.send(
+        f"Track the encounter here: https://lidnd.com/observe/{encounter.id}"
+    )
 
 
 @app.get("/api/discord-channel")
