@@ -3,7 +3,7 @@ let apiURL = "";
 if (process.env.NODE_ENV === "development") {
   apiURL = "http://localhost:8000";
 } else {
-  apiURL = "http://lidnd-bot.railway.internal";
+  apiURL = "https://lidnd-bot-production.up.railway.app";
 }
 
 export default apiURL;
