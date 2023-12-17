@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox } from "@/app/encounters/[id]/resistance-selector";
 import { CommandItem } from "@/components/ui/command";
 import React from "react";
+import { effectIconMap } from "@/app/encounters/[id]/run/effectIconMap";
 
 export function StatusInput({
   participant,
@@ -62,11 +63,13 @@ export function StatusInput({
       <Combobox
         triggerPlaceholder="Status effect"
         emptyResultText="No status effects"
+        className="max-h-80 overflow-auto"
       >
         {effects?.map((effect) => (
           <CommandItem key={effect.id}>
             <ButtonWithTooltip
               text={effect.description}
+              variant="ghost"
               onClick={() =>
                 updateStatus({
                   encounter_participant_id: participant.id,
@@ -78,7 +81,7 @@ export function StatusInput({
                 })
               }
             >
-              <Swords />
+              {effectIconMap[effect.name as keyof typeof effectIconMap]}
               <span>{effect.name}</span>
             </ButtonWithTooltip>
           </CommandItem>

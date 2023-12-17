@@ -112,6 +112,7 @@ export function Combobox({
   triggerPlaceholder,
   searchPlaceholder,
   emptyResultText,
+  className,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -128,7 +129,7 @@ export function Combobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
+      <PopoverContent className={className}>
         <Command className="w-full">
           <CommandInput placeholder={searchPlaceholder} />
           <CommandEmpty>{emptyResultText}</CommandEmpty>
