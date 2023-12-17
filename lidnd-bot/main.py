@@ -136,16 +136,16 @@ async def get_user(id: str, conn) -> User:
 async def post_encounter_to_user_channel(
     encounter: Encounter, settings: Settings, user=Depends(validate_auth)
 ):
-    channel = await get_discord_channel(user)
+    channel = await fetch_channel(user)
     if not channel:
         return
+    print(encounter)
     await channel.send(
         f"Track the encounter here: https://lidnd.com/observe/{encounter.id}"
     )
 
 
-@app.get("/api/discord-channel")
-async def get_discord_channel(user=Depends(validate_auth)) -> discord.TextChannel:
+async def fetch_channel(user=Depends(validate_auth)) -> discord.TextChannel:
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
@@ -162,6 +162,17 @@ async def get_discord_channel(user=Depends(validate_auth)) -> discord.TextChanne
                 channel, discord.TextChannel
             ), "Channel is not a text channel"
             return channel
+
+
+@app.get("/api/discord-channel")
+async def get_discord_channel(user=Depends(validate_auth)) -> DiscordTextChannel:
+    channel = await fetch_channel(user)
+    return DiscordTextChannel(
+        id=channel.id,
+        name=channel.name,
+        members=[member.name for member in channel.members],
+        guild=channel.guild.name,
+    )
 
 
 @bot.event
