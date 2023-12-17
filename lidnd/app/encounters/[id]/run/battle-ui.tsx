@@ -363,7 +363,11 @@ export function BattleCard({
   );
 }
 
-function HealthMeterOverlay({ creature }: { creature: EncounterCreature }) {
+export function HealthMeterOverlay({
+  creature,
+}: {
+  creature: EncounterCreature;
+}) {
   let missingHp = creature.max_hp - creature.hp;
   missingHp = Math.min(missingHp, creature.max_hp);
   const creaturePercentDamage = (missingHp / creature.max_hp) * 100;
