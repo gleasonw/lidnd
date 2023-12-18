@@ -26,12 +26,15 @@ async function EncounterObserverView({ id }: { id?: string }) {
   if (!encounter) {
     return <div>Encounter not found.</div>;
   }
+  const activeIndex = encounter.participants.findIndex(
+    (participant) => participant.is_active
+  );
   return (
     <section className="flex flex-col gap-20 w-screen h-screen items-center justify-center">
       <h1 className="text-xl">{encounter.name}</h1>
       <PageRefresher />
       <div className={"flex items-center justify-center gap-5"}>
-        {encounter.participants.map((participant) => {
+        {encounter.participants.map((participant, index) => {
           return (
             <div key={participant.id} className="flex flex-col items-center">
               <span className="flex flex-wrap h-12">
@@ -65,8 +68,9 @@ async function EncounterObserverView({ id }: { id?: string }) {
                   {
                     "h-48 mb-0": participant.is_active,
                     "opacity-40":
-                      encounter?.current_round === 0 &&
-                      !participant.has_surprise,
+                      (encounter?.current_round === 0 &&
+                        !participant.has_surprise) ||
+                      index < activeIndex,
                   }
                 )}
               >
