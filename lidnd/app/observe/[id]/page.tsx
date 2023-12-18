@@ -33,7 +33,7 @@ async function EncounterObserverView({ id }: { id?: string }) {
     <section className="flex flex-col gap-20 w-screen h-screen items-center justify-center">
       <h1 className="text-xl">{encounter.name}</h1>
       <PageRefresher />
-      <div className={"flex items-center gap-3 overflow-auto"}>
+      <div className={"flex margin-auto gap-3 overflow-auto max-w-full"}>
         {encounter.participants.map((participant, index) => {
           return (
             <div key={participant.id} className="flex flex-col items-center">
