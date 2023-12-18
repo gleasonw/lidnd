@@ -26,6 +26,7 @@ export function ParticipantHealthForm({
       <Input
         placeholder="Modify HP"
         type="number"
+        className="w-24"
         value={hpDiff}
         onChange={(e) => {
           if (!isNaN(parseInt(e.target.value))) {

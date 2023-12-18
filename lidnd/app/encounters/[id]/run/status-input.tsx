@@ -89,6 +89,7 @@ export function StatusInput({
       <Input
         type="number"
         value={save_ends_dc}
+        className="w-24"
         onChange={(e) => {
           setSaveEndsDC(e.target.value);
         }}
