@@ -134,7 +134,7 @@ function EncounterParticipantRow() {
     useRemoveParticipantFromEncounter();
   const id = useEncounterId();
   const [encounter, encounterQuery] = api.encounterById.useSuspenseQuery(id);
-  console.log(encounter?.participants)
+  console.log(encounter?.participants);
 
   return (
     <AnimatePresence>
@@ -240,8 +240,6 @@ function EncounterStats() {
   } else {
     encounterTime = `${Math.floor(estimatedEncounterDuration % 60)} minutes`;
   }
-
-  console.log(encounter?.participants)
 
   return (
     <div className={clsx("flex gap-2")}>

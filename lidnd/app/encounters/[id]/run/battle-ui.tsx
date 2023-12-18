@@ -111,6 +111,34 @@ export function BattleUI() {
 
   const scrollContainer = React.useRef<HTMLDivElement>(null);
 
+  const { mutate: removeStatusEffect } = api.removeStatusEffect.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(encounter.id);
+    },
+    onMutate: async (newStatusEffect) => {
+      await encounterById.cancel(encounter.id);
+      const previousEncounter = encounterById.getData(encounter.id);
+      encounterById.setData(encounter.id, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          participants: old.participants.map((participant) => {
+            if (participant.id === newStatusEffect.encounter_participant_id) {
+              return {
+                ...participant,
+                status_effects: participant.status_effects.filter(
+                  (effect) => effect.id !== newStatusEffect.status_effect_id
+                ),
+              };
+            }
+            return participant;
+          }),
+        };
+      });
+      return previousEncounter;
+    },
+  });
+
   React.useEffect(() => {
     if (scrollContainer.current) {
       const activeElement =
@@ -167,6 +195,31 @@ export function BattleUI() {
         <AnimatePresence>
           {displayedParticipants?.slice().map((participant, index) => (
             <AnimationListItem key={participant.id}>
+              <span className={"h-12 flex gap-1 flex-wrap items-center"}>
+                {participant.status_effects?.map((effect) => (
+                  <BasePopover
+                    key={effect.id}
+                    trigger={
+                      <Button variant="outline">
+                        {
+                          effectIconMap[
+                            effect.name as keyof typeof effectIconMap
+                          ]
+                        }
+                      </Button>
+                    }
+                    className="flex flex-col gap-2 text-sm"
+                  >
+                    {effect.description}
+                    {!!effect.save_ends_dc && (
+                      <span>Save ends ({effect.save_ends_dc})</span>
+                    )}
+                    <Button onClick={() => removeStatusEffect(effect)}>
+                      Remove
+                    </Button>
+                  </BasePopover>
+                ))}
+              </span>
               <button onClick={() => setDmSelectedCreature(participant.id)}>
                 <BattleCard
                   creature={participant}
@@ -270,57 +323,11 @@ export function BattleCard({
   const id = useEncounterId();
   const { data: encounter } = api.encounterById.useQuery(id);
   const { encounterById } = api.useUtils();
-  const { mutate: removeStatusEffect } = api.removeStatusEffect.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(creature.encounter_id);
-    },
-    onMutate: async (newStatusEffect) => {
-      await encounterById.cancel(creature.encounter_id);
-      const previousEncounter = encounterById.getData(creature.encounter_id);
-      encounterById.setData(creature.encounter_id, (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          participants: old.participants.map((participant) => {
-            if (participant.id === newStatusEffect.encounter_participant_id) {
-              return {
-                ...participant,
-                status_effects: participant.status_effects.filter(
-                  (effect) => effect.id !== newStatusEffect.status_effect_id
-                ),
-              };
-            }
-            return participant;
-          }),
-        };
-      });
-      return previousEncounter;
-    },
-  });
+
   return (
     <div
       className={`relative flex-col gap-6 items-center justify-between flex`}
     >
-      <span className={"h-5 flex gap-1 flex-wrap items-center"}>
-        {creature.status_effects?.map((effect) => (
-          <BasePopover
-            key={effect.id}
-            trigger={
-              <Button variant="outline">
-                {effectIconMap[effect.name as keyof typeof effectIconMap]}
-              </Button>
-            }
-            className="flex flex-col gap-2 text-sm"
-          >
-            {effect.description}
-            {!!effect.save_ends_dc && (
-              <span>Save ends ({effect.save_ends_dc})</span>
-            )}
-            <Button onClick={() => removeStatusEffect(effect)}>Remove</Button>
-          </BasePopover>
-        ))}
-      </span>
-
       <Card
         key={creature.id}
         data-active={creature.is_active}
