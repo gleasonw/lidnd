@@ -51,6 +51,7 @@ async function EncounterObserverView({ id }: { id?: string }) {
                           }
                         </Button>
                       }
+                      className="flex flex-col gap-2 text-sm"
                     >
                       <span>{effect.description}</span>
                       {!!effect.save_ends_dc && (
