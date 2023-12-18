@@ -87,7 +87,7 @@ export function StatusInput({
           </CommandItem>
         ))}
       </Combobox>
-      <label className="text-sm">
+      <label className="text-sm flex gap-2 items-center">
         Save ends
         <Checkbox
           placeholder="Save ends"

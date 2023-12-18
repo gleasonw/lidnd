@@ -335,7 +335,9 @@ export function BattleCard({
       >
         <HealthMeterOverlay creature={creature} />
         <CardHeader className="p-3">
-          <CardTitle>{creature.name}</CardTitle>
+          <CardTitle className="text-lg max-h-16 overflow-ellipsis">
+            {creature.name}
+          </CardTitle>
         </CardHeader>
         {creature.creature_id === "pending" ? (
           <span>Loading</span>

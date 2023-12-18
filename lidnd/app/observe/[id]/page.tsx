@@ -34,7 +34,7 @@ async function EncounterObserverView({ id }: { id?: string }) {
         {encounter.participants.map((participant) => {
           return (
             <div key={participant.id} className="flex flex-col items-center">
-              <span className="flex flex-wrap h-5">
+              <span className="flex flex-wrap h-12">
                 {participant.status_effects.map((effect) => {
                   return (
                     <BasePopover
