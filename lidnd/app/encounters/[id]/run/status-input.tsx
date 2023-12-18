@@ -86,17 +86,14 @@ export function StatusInput({
           </CommandItem>
         ))}
       </Combobox>
-      <label className="text-sm flex gap-2 items-center">
-        Save ends DC
-        <Input
-          type="number"
-          value={save_ends_dc}
-          onChange={(e) => {
-            setSaveEndsDC(e.target.value);
-          }}
-          placeholder="Initiative"
-        />
-      </label>
+      <Input
+        type="number"
+        value={save_ends_dc}
+        onChange={(e) => {
+          setSaveEndsDC(e.target.value);
+        }}
+        placeholder="Save ends DC"
+      />
     </div>
   );
 }
