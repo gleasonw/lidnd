@@ -33,7 +33,6 @@ pool = AsyncConnectionPool(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global bot
     await pool.open()
     token = os.getenv("BOT_TOKEN")
     assert token is not None, "BOT_TOKEN environment variable is not set"

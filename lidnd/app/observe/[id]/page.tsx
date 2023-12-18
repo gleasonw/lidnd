@@ -69,18 +69,15 @@ async function EncounterObserverView({ id }: { id?: string }) {
                 )}
               >
                 <HealthMeterOverlay creature={participant} />
-                <CardHeader className="p-3">
-                  <CardTitle>{participant.name}</CardTitle>
-                </CardHeader>
                 {participant.creature_id === "pending" ? (
                   <span>Loading</span>
                 ) : (
                   <CharacterIcon
                     id={participant.creature_id}
                     name={participant.name}
-                    width={200}
-                    height={200}
-                    className="h-28 object-cover"
+                    width={400}
+                    height={400}
+                    className="h-60 object-cover"
                   />
                 )}
               </Card>

@@ -334,8 +334,8 @@ export function BattleCard({
         )}
       >
         <HealthMeterOverlay creature={creature} />
-        <CardHeader className="p-3">
-          <CardTitle className="text-lg max-h-16 overflow-ellipsis">
+        <CardHeader className="p-2 w-full">
+          <CardTitle className="text-lg truncate max-w-full">
             {creature.name}
           </CardTitle>
         </CardHeader>
