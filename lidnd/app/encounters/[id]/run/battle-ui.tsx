@@ -301,7 +301,7 @@ export function BattleCard({
     <div
       className={`relative flex-col gap-6 items-center justify-between flex`}
     >
-      <span className={"flex gap-1 flex-wrap w-32 items-center"}>
+      <span className={"h-5 flex gap-1 flex-wrap items-center"}>
         {creature.status_effects?.map((effect) => (
           <BasePopover
             key={effect.id}

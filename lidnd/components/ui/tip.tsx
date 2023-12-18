@@ -17,7 +17,7 @@ export function Tip({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent className="w-32">{text}</TooltipContent>
+        <TooltipContent className="w-60">{text}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
