@@ -8,6 +8,7 @@ import { Combobox } from "@/app/encounters/[id]/resistance-selector";
 import { CommandItem } from "@/components/ui/command";
 import React from "react";
 import { effectIconMap } from "@/app/encounters/[id]/run/effectIconMap";
+import { Input } from "@/components/ui/input";
 
 export function StatusInput({
   participant,
@@ -39,7 +40,7 @@ export function StatusInput({
                     created_at: new Date(),
                     id: Math.random().toString(),
                     duration: newStatusEffect.duration ?? null,
-                    save_ends: newStatusEffect.save_ends ?? false,
+                    save_ends_dc: newStatusEffect.save_ends_dc ?? 0,
                     description: newStatusEffect.description ?? "",
                     name: newStatusEffect.name ?? "",
                   },
@@ -55,8 +56,7 @@ export function StatusInput({
   });
   const effects = api.statusEffects.useQuery().data;
 
-  const [duration, setDuration] = React.useState(1);
-  const [save_ends, setSaveEnds] = React.useState(false);
+  const [save_ends_dc, setSaveEndsDC] = React.useState(0);
 
   return (
     <div className={className}>
@@ -74,8 +74,7 @@ export function StatusInput({
                 updateStatus({
                   encounter_participant_id: participant.id,
                   status_effect_id: effect.id,
-                  duration,
-                  save_ends,
+                  save_ends_dc,
                   name: effect.name,
                   description: effect.description,
                 })
@@ -88,13 +87,16 @@ export function StatusInput({
         ))}
       </Combobox>
       <label className="text-sm flex gap-2 items-center">
-        Save ends
-        <Checkbox
-          placeholder="Save ends"
-          checked={save_ends}
-          onCheckedChange={(checked) =>
-            checked !== "indeterminate" && setSaveEnds(checked)
-          }
+        Save ends DC
+        <Input
+          type="number"
+          value={save_ends_dc}
+          onChange={(e) => {
+            setSaveEndsDC(
+              !isNaN(parseInt(e.target.value)) ? parseInt(e.target.value) : 0
+            );
+          }}
+          placeholder="Initiative"
         />
       </label>
     </div>

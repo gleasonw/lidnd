@@ -70,7 +70,7 @@ export const participant_status_effects = pgTable(
       .notNull(),
     created_at: timestamp("created_at").defaultNow().notNull(),
     duration: integer("duration"),
-    save_ends: boolean("save_ends").default(false).notNull(),
+    save_ends_dc: integer("save_ends_dc").default(0).notNull(),
   },
   (t) => {
     return {

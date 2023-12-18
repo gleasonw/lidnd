@@ -313,7 +313,9 @@ export function BattleCard({
             className="flex flex-col gap-2 text-sm"
           >
             {effect.description}
-            <span>Save ends: {effect.save_ends ? "Yes" : "No"}</span>
+            {effect.save_ends_dc && (
+              <span>Save ends ({effect.save_ends_dc})</span>
+            )}
             <Button onClick={() => removeStatusEffect(effect)}>Remove</Button>
           </BasePopover>
         ))}

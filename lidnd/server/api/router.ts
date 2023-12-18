@@ -313,7 +313,7 @@ export const appRouter = t.router({
         encounter_participant_id: z.string(),
         status_effect_id: z.string(),
         duration: z.number().optional(),
-        save_ends: z.boolean().optional(),
+        save_ends_dc: z.number().optional(),
         name: z.string().optional(),
         description: z.string().optional(),
       })
@@ -325,7 +325,7 @@ export const appRouter = t.router({
           encounter_participant_id: opts.input.encounter_participant_id,
           status_effect_id: opts.input.status_effect_id,
           duration: opts.input.duration,
-          save_ends: opts.input.save_ends,
+          save_ends_dc: opts.input.save_ends_dc,
         })
         .returning();
       if (result.length === 0) {

@@ -50,7 +50,9 @@ async function EncounterObserverView({ id }: { id?: string }) {
                       }
                     >
                       <span>{effect.description}</span>
-                      <span>Save ends: {effect.save_ends ? "yes" : "no"}</span>
+                      {effect.save_ends_dc && (
+                        <span>Save ends ({effect.save_ends_dc})</span>
+                      )}
                     </BasePopover>
                   );
                 })}
