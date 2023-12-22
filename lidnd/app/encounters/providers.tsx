@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { logOut } from "@/app/encounters/actions";
+import { SpellSearcher } from "@/app/encounters/[id]/run/battle-ui";
 
 export default function Providers({
   children,
@@ -26,6 +27,8 @@ export default function Providers({
 
   return (
     <>
+      <SpellSearcher />
+
       <nav className="border-bottom border flex items-center gap-3 flex-col sm:flex-row sm:gap-5 mb-3">
         <Link href="/encounters" className={"text-2xl p-5"}>
           LiDnD

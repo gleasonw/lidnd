@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS "participant_status_effects" (
 	"status_effect_id" uuid NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"duration" integer,
-	"save_ends" boolean DEFAULT false NOT NULL
+	"save_ends_dc" integer DEFAULT 0 NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "user_session" (
@@ -67,10 +67,31 @@ CREATE TABLE IF NOT EXISTS "settings" (
 	"default_player_level" integer DEFAULT 1 NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "spells" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" varchar(256) NOT NULL,
+	"source" varchar(256) NOT NULL,
+	"page" integer NOT NULL,
+	"srd" boolean NOT NULL,
+	"basicRules" boolean NOT NULL,
+	"level" integer NOT NULL,
+	"school" varchar(256) NOT NULL,
+	"time" text NOT NULL,
+	"range" text NOT NULL,
+	"components" text NOT NULL,
+	"duration" text NOT NULL,
+	"entries" text NOT NULL,
+	"scalingLevelDice" text NOT NULL,
+	"damageInflict" text NOT NULL,
+	"savingThrow" text NOT NULL,
+	"miscTags" text NOT NULL,
+	"areaTags" text NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "status_effects_5e" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(256) NOT NULL,
-	"description" text
+	"description" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "users" (

@@ -1,3 +1,4 @@
+import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import {
   bigint,
   boolean,
@@ -10,6 +11,29 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+
+export type DbSpell = InferInsertModel<typeof spells>;
+
+export const spells = pgTable("spells", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 256 }).notNull(),
+  source: varchar("source", { length: 256 }).notNull(),
+  page: integer("page").notNull(),
+  srd: boolean("srd"),
+  basicRules: boolean("basicRules"),
+  level: integer("level").notNull(),
+  school: varchar("school", { length: 256 }).notNull(),
+  time: text("time").notNull(),
+  range: text("range"),
+  components: text("components").notNull(),
+  duration: text("duration").notNull(),
+  entries: text("entries").notNull(),
+  scalingLevelDice: text("scalingLevelDice"),
+  damageInflict: text("damageInflict"),
+  savingThrow: text("savingThrow"),
+  miscTags: text("miscTags"),
+  areaTags: text("areaTags"),
+});
 
 export const encounters = pgTable(
   "encounters",

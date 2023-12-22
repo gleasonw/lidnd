@@ -1,0 +1,1 @@
+ALTER TABLE "spells" ALTER COLUMN "srd" DROP NOT NULL;

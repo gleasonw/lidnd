@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "006fd737-01f2-43e2-9d49-2190c0c3f142",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "23715589-4ba1-4223-a066-f36927576e83",
+  "prevId": "8dc9f80f-ca8d-4eac-9e7f-cef088c412c8",
   "tables": {
     "channels": {
       "name": "channels",
@@ -564,13 +564,13 @@
           "name": "srd",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "basicRules": {
           "name": "basicRules",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "level": {
           "name": "level",

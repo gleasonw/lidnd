@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "31be4070-fd8a-44b2-aeff-f521b2e075b3",
-  "prevId": "123ac4ba-d153-4863-a7af-1d587a4ba8de",
+  "id": "8dc9f80f-ca8d-4eac-9e7f-cef088c412c8",
+  "prevId": "006fd737-01f2-43e2-9d49-2190c0c3f142",
   "tables": {
     "channels": {
       "name": "channels",
@@ -531,6 +531,125 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
+    "spells": {
+      "name": "spells",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "page": {
+          "name": "page",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "srd": {
+          "name": "srd",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "basicRules": {
+          "name": "basicRules",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "level": {
+          "name": "level",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "school": {
+          "name": "school",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time": {
+          "name": "time",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "range": {
+          "name": "range",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "components": {
+          "name": "components",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration": {
+          "name": "duration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entries": {
+          "name": "entries",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scalingLevelDice": {
+          "name": "scalingLevelDice",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "damageInflict": {
+          "name": "damageInflict",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "savingThrow": {
+          "name": "savingThrow",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "miscTags": {
+          "name": "miscTags",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "areaTags": {
+          "name": "areaTags",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
     "status_effects_5e": {
       "name": "status_effects_5e",
       "schema": "",
@@ -600,8 +719,6 @@
   "_meta": {
     "schemas": {},
     "tables": {},
-    "columns": {
-      "\"participant_status_effects\".\"save_ends\"": "\"participant_status_effects\".\"save_ends_dc\""
-    }
+    "columns": {}
   }
 }

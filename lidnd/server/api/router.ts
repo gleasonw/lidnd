@@ -8,6 +8,7 @@ import {
   channels,
   participant_status_effects,
   status_effects_5e,
+  spells,
 } from "@/server/api/db/schema";
 import { eq, and, sql, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
@@ -142,6 +143,14 @@ export const appRouter = t.router({
       return acc;
     }, {});
     return Object.values(response);
+  }),
+
+  spells: publicProcedure.input(z.string()).query(async (opts) => {
+    return await db
+      .select()
+      .from(spells)
+      .where(ilike(spells.name, `%${opts.input}%`))
+      .limit(10);
   }),
 
   statusEffects: publicProcedure.query(async () => {

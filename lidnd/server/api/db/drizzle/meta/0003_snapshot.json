@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "006fd737-01f2-43e2-9d49-2190c0c3f142",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "81dcbf89-a290-406b-9081-0762a0a72439",
+  "prevId": "23715589-4ba1-4223-a066-f36927576e83",
   "tables": {
     "channels": {
       "name": "channels",
@@ -564,13 +564,13 @@
           "name": "srd",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "basicRules": {
           "name": "basicRules",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "level": {
           "name": "level",
@@ -618,7 +618,7 @@
           "name": "scalingLevelDice",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "damageInflict": {
           "name": "damageInflict",
@@ -630,19 +630,19 @@
           "name": "savingThrow",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "miscTags": {
           "name": "miscTags",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "areaTags": {
           "name": "areaTags",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         }
       },
       "indexes": {},

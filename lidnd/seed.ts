@@ -1,6 +1,51 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { status_effects_5e } from "@/server/api/db/schema";
+import { DbSpell, status_effects_5e, spells } from "@/server/api/db/schema";
+
+type Entry = {
+  type: string;
+  name?: string;
+  entries?: (string | Entry)[];
+};
+
+interface Spell {
+  name: string;
+  source: string;
+  page: number;
+  srd: boolean;
+  basicRules: boolean;
+  level: number;
+  school: string;
+  time: Array<{ number: number; unit: string }>;
+  range: {
+    type: string;
+    distance: {
+      type: string;
+      amount: number;
+    };
+  };
+  components: {
+    v: boolean;
+    s: boolean;
+    m?: boolean; // Assuming 'm' can be a component but is optional
+  };
+  duration: Array<{ type: string; duration?: number }>; // Assuming there might be a duration number
+  entries: (string | Entry)[];
+  scalingLevelDice: {
+    label: string;
+    scaling: {
+      [level: number]: string;
+    };
+  };
+  damageInflict: string[];
+  savingThrow: string[];
+  miscTags: string[];
+  areaTags: string[];
+}
+
+interface SpellBook {
+  spell: Spell[];
+}
 
 const db_url =
   process.env.NODE_ENV === "production"
@@ -9,9 +54,85 @@ const db_url =
 if (!db_url) {
   throw new Error("DATABASE_URL not set");
 }
-console.log(db_url);
 const sql = postgres(db_url, { max: 1 });
 const db = drizzle(sql);
+
+async function parseResponse(response: Response) {
+  const json = (await response.json()) as SpellBook;
+  return json.spell;
+}
+
+async function fetchPbSpells() {
+  const response = await fetch(
+    "https://raw.githubusercontent.com/5etools-mirror-1/5etools-mirror-1.github.io/master/data/spells/spells-phb.json"
+  );
+  return parseResponse(response);
+}
+
+async function fetchXgeSpells() {
+  const response = await fetch(
+    "https://raw.githubusercontent.com/5etools-mirror-1/5etools-mirror-1.github.io/master/data/spells/spells-xge.json"
+  );
+  return parseResponse(response);
+}
+
+async function fetchTceSpells() {
+  const response = await fetch(
+    "https://raw.githubusercontent.com/5etools-mirror-1/5etools-mirror-1.github.io/master/data/spells/spells-tce.json"
+  );
+  return parseResponse(response);
+}
+
+const spellResponses = await Promise.allSettled([
+  fetchPbSpells(),
+  fetchXgeSpells(),
+  fetchTceSpells(),
+]);
+
+function entriesToString(entries: (string | Entry)[]): string {
+  return entries
+    .map((entry) => {
+      if (typeof entry === "string") {
+        return entry;
+      }
+      return entry.entries ? entriesToString(entry.entries) : "";
+    })
+    .join("\n\n");
+}
+
+const parsedSpells = spellResponses.reduce((acc, response) => {
+  if (response.status === "fulfilled") {
+    return acc.concat(
+      response.value.map((spell) => ({
+        ...spell,
+        time: `${spell.time[0].number} ${spell.time[0].unit}`,
+        range:
+          spell.range.distance &&
+          `${spell.range.distance.amount} ${spell.range.distance.type} ${spell.range.type}`,
+        components: `${spell.components.v ? "V" : ""} ${
+          spell.components.s ? "S" : ""
+        } ${spell.components.m ? "M" : ""}`,
+        duration: `${spell.duration[0].duration} ${spell.duration[0].type}`,
+        entries: entriesToString(spell.entries),
+        scalingLevelDice:
+          spell.scalingLevelDice &&
+          spell.scalingLevelDice.scaling &&
+          `${spell.scalingLevelDice?.label} ${Object.entries(
+            spell.scalingLevelDice?.scaling
+          )
+            .map(([level, dice]) => `${level}: ${dice}`)
+            .join(", ")}`,
+        damageInflict: spell.damageInflict?.join(", "),
+        savingThrow: spell.savingThrow?.join(", "),
+        miscTags: spell.miscTags?.join(", "),
+        areaTags: spell.areaTags?.join(", "),
+      }))
+    );
+  }
+  return acc;
+}, [] as DbSpell[]);
+
+await db.insert(spells).values(parsedSpells).onConflictDoNothing();
 
 await db
   .insert(status_effects_5e)
