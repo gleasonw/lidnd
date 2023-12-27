@@ -1,6 +1,9 @@
 "use client";
 
-import { useUpdateEncounterParticipant } from "@/app/encounters/[id]/hooks";
+import {
+  useUpdateEncounterMinionParticipant,
+  useUpdateEncounterParticipant,
+} from "@/app/encounters/[id]/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EncounterParticipant } from "@/server/api/router";
@@ -14,7 +17,7 @@ export function ParticipantHealthForm({
   const [hpDiff, setHpDiff] = useState<string | number>("");
   const { mutate: edit, isLoading } = useUpdateEncounterParticipant();
 
-  if (participant.minion_count) {
+  if (isMinion(participant)) {
     return <MinionHealthForm participant={participant} />;
   }
 
@@ -75,22 +78,30 @@ export function ParticipantHealthForm({
   );
 }
 
+function isMinion(participant: EncounterParticipant): participant is Minion {
+  if (participant.minion_count) {
+    return true;
+  }
+  return false;
+}
+
+export type Minion = EncounterParticipant & { minion_count: number };
+
 export interface MinionHealthFormProps {
-  participant: EncounterParticipant;
+  participant: Minion;
 }
 
 export function MinionHealthForm({ participant }: MinionHealthFormProps) {
-  const [hpDiff, setHpDiff] = useState<string | number>("");
-  const { mutate: edit, isLoading } = useUpdateEncounterParticipant();
+  const [damage, setHpDiff] = useState<string | number>("");
+  const { mutate: edit, isLoading } = useUpdateEncounterMinionParticipant();
 
-  function handleHPChange(hp: number) {
+  function handleHPChange(incomingDamage: number) {
     edit({
       ...participant,
-      hp,
+      damage: incomingDamage,
+      minions_in_overkill_range: 5,
     });
   }
-
-  //TODO: overkill range, add minion overkill handling server-side
 
   return (
     <div className="flex gap-4">
@@ -101,9 +112,7 @@ export function MinionHealthForm({ participant }: MinionHealthFormProps) {
         onClick={(e) => {
           e.stopPropagation();
           handleHPChange(
-            typeof hpDiff === "number"
-              ? participant.hp - hpDiff
-              : participant.hp
+            typeof damage === "number" ? damage : parseInt(damage)
           );
         }}
       >
@@ -113,7 +122,7 @@ export function MinionHealthForm({ participant }: MinionHealthFormProps) {
         placeholder="HP"
         type="number"
         className="w-24"
-        value={hpDiff}
+        value={damage}
         onChange={(e) => {
           if (!isNaN(parseInt(e.target.value))) {
             setHpDiff(parseInt(e.target.value));

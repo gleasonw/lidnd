@@ -139,3 +139,32 @@ export function useUpdateEncounterParticipant() {
     },
   });
 }
+
+//TODO: perhaps, one day, we can abstract the mutation functions. For now, more trouble
+// than it's worth
+export function useUpdateEncounterMinionParticipant() {
+  const { encounterById } = api.useUtils();
+  const id = useEncounterId();
+  return api.updateEncounterMinionParticipant.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(id);
+    },
+    onMutate: async (newParticipant) => {
+      await encounterById.cancel(id);
+      const previousEncounter = encounterById.getData(id);
+      encounterById.setData(id, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          participants: old.participants.map((p) => {
+            if (p.id === newParticipant.id) {
+              return mergeEncounterCreature(newParticipant, p);
+            }
+            return p;
+          }),
+        };
+      });
+      return { previousEncounter };
+    },
+  });
+}

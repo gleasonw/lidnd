@@ -16,10 +16,12 @@ import superjson from "superjson";
 import { ZodError, z } from "zod";
 import {
   sortEncounterCreatures,
+  updateMinionCount,
   updateTurnOrder,
 } from "@/app/encounters/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
+  getEncounterCreature,
   getEncounterData,
   getEncounterParticipants,
   getEncounterParticipantsWithCreatureData,
@@ -259,6 +261,47 @@ export const appRouter = t.router({
         });
       }
       return result[0];
+    }),
+
+  updateEncounterMinionParticipant: protectedProcedure
+    .input(
+      participantSchema.merge(
+        z.object({
+          minion_count: z.number(),
+          minions_in_overkill_range: z.number(),
+          damage: z.number(),
+        })
+      )
+    )
+    .mutation(async (opts) => {
+      const result = await db.transaction(async (tx) => {
+        const participant = await getEncounterCreature(opts.input.id);
+        const updatedMinionCount = updateMinionCount(
+          participant,
+          opts.input.minions_in_overkill_range,
+          opts.input.damage
+        );
+        console.log(opts.input);
+        const [updatedParticipant, _] = await Promise.all([
+          await tx
+            .update(encounter_participant)
+            .set({
+              minion_count: updatedMinionCount,
+              hp: participant.max_hp,
+            })
+            .where(eq(encounter_participant.id, opts.input.id))
+            .returning(),
+          getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id, tx),
+        ]);
+        if (updatedParticipant.length === 0) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update encounter participant",
+          });
+        }
+        return updatedParticipant[0];
+      });
+      return result;
     }),
 
   updateEncounterParticipant: protectedProcedure

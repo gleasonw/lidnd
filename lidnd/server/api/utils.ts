@@ -79,6 +79,33 @@ export async function createCreature(
   return newCreature[0];
 }
 
+export async function getEncounterCreature(
+  id: string
+): Promise<EncounterCreature> {
+  const encounter = await db
+    .select()
+    .from(encounter_participant)
+    .where(eq(encounter_participant.id, id))
+    .leftJoin(creatures, eq(encounter_participant.creature_id, creatures.id));
+  if (encounter.length === 0) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "No encounter found",
+    });
+  }
+  const encounterData = encounter[0];
+  if (!encounterData.encounter_participant || !encounterData.creatures) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "No encounter found",
+    });
+  }
+  return mergeEncounterCreature(
+    encounterData.encounter_participant,
+    encounterData.creatures
+  );
+}
+
 export async function getEncounterData(id: string) {
   const encounter = await db
     .select()

@@ -28,6 +28,36 @@ export type UpdateTurnOrderReturn<T> = {
   newlyActiveParticipant: T;
 };
 
+function participantIsActivatable(p: {
+  hp: number;
+  is_active: boolean;
+  is_player: boolean;
+}) {
+  // if the active player is dead, we have to keep them in the order until the turn changes.
+  // a rare occurrence, but possible.
+  // Player characters are always active. Since their HP is default 0, we have to exempt them.
+  return p.hp > 0 || p.is_active || p.is_player;
+}
+
+export function updateMinionCount(
+  participant: Pick<EncounterCreature, "minion_count" | "max_hp">,
+  minions_in_overkill_range: number,
+  damage: number
+): number | undefined {
+  // assume input minions does not include the current minion
+  const slayableMinionCount = minions_in_overkill_range + 1;
+  if (!participant.minion_count) {
+    return undefined;
+  }
+  if (damage <= 0) {
+    return participant.minion_count;
+  }
+  const maximumSlainMinions = Math.ceil(damage / participant.max_hp);
+  const slainMinions = Math.min(slayableMinionCount, maximumSlainMinions);
+  const newMinionCount = participant.minion_count - slainMinions;
+  return Math.max(newMinionCount, 0);
+}
+
 export function updateTurnOrder<
   Participant extends {
     is_active: boolean;
@@ -52,13 +82,6 @@ export function updateTurnOrder<
     encounter?.current_round === 0 && encounterHasSurpriseRound;
 
   let activeParticipants;
-
-  function participantIsActivatable(p: Participant) {
-    // if the active player is dead, we have to keep them in the order until the turn changes.
-    // a rare occurrence, but possible.
-    // Player characters are always active. Since their HP is default 0, we have to exempt them.
-    return p.hp > 0 || p.is_active || p.is_player;
-  }
 
   if (isSurpriseRound) {
     activeParticipants = sortedParticipants.filter((c) => c.has_surprise);

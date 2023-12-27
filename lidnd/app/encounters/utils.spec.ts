@@ -1,5 +1,6 @@
 import { test, expect, describe } from "vitest";
-import { updateTurnOrder } from "./utils";
+import { updateMinionCount, updateTurnOrder } from "./utils";
+import exp from "constants";
 
 describe("Update turn order", () => {
   test("updates turn order to next participant", () => {
@@ -56,5 +57,19 @@ describe("Update turn order", () => {
     const result = updateTurnOrder("previous", participants, encounter);
     expect(result.newlyActiveParticipant.id).toBe("1");
     expect(result.updatedRoundNumber).toBe(0);
+  });
+});
+
+describe("Overkill minions", () => {
+  test("overkill damage kills the right number of minions", () => {
+    const participant = {
+      minion_count: 3,
+      max_hp: 6,
+    };
+    expect(updateMinionCount(participant, 2, 4)).toBe(2);
+    expect(updateMinionCount(participant, 2, 13)).toBe(0);
+    expect(updateMinionCount({ max_hp: 22, minion_count: 10 }, 5, 80)).toBe(6);
+    expect(updateMinionCount({ max_hp: 22, minion_count: 10 }, 5, 0)).toBe(10);
+    expect(updateMinionCount({ max_hp: 22, minion_count: 10 }, 0, 1)).toBe(9);
   });
 });
