@@ -59,6 +59,7 @@ export function useCreateCreatureInEncounter() {
           user_id: old.user_id,
           has_surprise: false,
           status_effects: [],
+          minion_count: 0,
         };
         return {
           ...old,

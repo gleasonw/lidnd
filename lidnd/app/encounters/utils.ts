@@ -122,16 +122,9 @@ export function updateTurnOrder<
 
 export function getCreaturePostForm(creature: CreaturePost): FormData {
   const formData = new FormData();
-  formData.append("name", creature.name);
-  formData.append("max_hp", creature.max_hp?.toString() || "");
-  formData.append("icon_image", creature.icon_image);
-  creature.stat_block_image &&
-    formData.append("stat_block_image", creature.stat_block_image);
-  formData.append(
-    "challenge_rating",
-    creature.challenge_rating?.toString() || ""
-  );
-  formData.append("is_player", creature.is_player?.toString() || "");
+  Object.keys(creature).forEach((key) => {
+    formData.append(key, creature[key as keyof CreaturePost]);
+  });
   return formData;
 }
 export function mergeEncounterCreature(
@@ -153,5 +146,6 @@ export function mergeEncounterCreature(
     user_id: creature.user_id,
     has_surprise: participant.has_surprise,
     status_effects: [],
+    minion_count: participant.minion_count,
   };
 }

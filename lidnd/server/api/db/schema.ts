@@ -121,6 +121,7 @@ export const encounter_participant = pgTable(
     hp: integer("hp").default(0).notNull(),
     is_active: boolean("is_active").default(false).notNull(),
     has_surprise: boolean("has_surprise").default(false).notNull(),
+    minion_count: integer("minion_count"),
   },
   (table) => {
     return {

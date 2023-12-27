@@ -485,6 +485,7 @@ export const appRouter = t.router({
       z.object({
         encounter_id: z.string(),
         creature_id: z.string(),
+        minion_count: z.number().optional(),
       })
     )
     .mutation(async (opts) => {
@@ -512,6 +513,7 @@ export const appRouter = t.router({
           encounter_id: opts.input.encounter_id,
           creature_id: opts.input.creature_id,
           hp: userCreature[0].max_hp,
+          minion_count: opts.input.minion_count,
         })
         .returning();
       if (encounterParticipant.length === 0) {

@@ -49,7 +49,7 @@ export default function EncounterPrep() {
           <div className={"flex flex-col w-full gap-3"}>
             <div
               className={
-                "flex flex-wrap md:flex-nowrap w-full justify-center md:gap-5 lg:gap-14"
+                "flex flex-wrap xl:flex-nowrap w-full justify-center gap-3 md:gap-5 lg:gap-14"
               }
             >
               <Card className="max-w-[900px] w-full p-3">
@@ -61,7 +61,7 @@ export default function EncounterPrep() {
                 </CardContent>
               </Card>
 
-              <Card className={"max-w-[700px] w-full p-3"}>
+              <Card className={"max-w-[900px] w-full p-3"}>
                 <CardContent className={"flex flex-col gap-3"}>
                   <CardTitle className="py-3">Add existing creature</CardTitle>
                   <ExistingCreature />

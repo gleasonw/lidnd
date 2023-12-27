@@ -16,6 +16,8 @@ import { useMutation } from "@tanstack/react-query";
 import { getCreaturePostForm } from "@/app/encounters/utils";
 import { CreaturePost } from "@/app/encounters/[id]/creature-add-form";
 import { rerouteUrl } from "@/app/login/page";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");
@@ -81,124 +83,115 @@ export default function CreaturesPage() {
     ? creatures?.filter((creature) => creature.id !== deletedId)
     : creatures;
 
-  const clickedCreature = displayCreatures?.find(
-    (creature) => creature.id === selectedId
-  );
-
-  const selectedCreature = clickedCreature ?? displayCreatures?.[0];
-
   return (
-    <div className="flex gap-2 justify-between flex-wrap items-center">
-      <div className="flex flex-col gap-10 mb-auto flex-shrink-0 sm:w-3/5 w-full">
-        <h1 className="text-3xl">Creatures</h1>
+    <div className="flex flex-col gap-3">
+      <h1 className="text-3xl">Creatures</h1>
 
-        <div className={"flex gap-5 relative"}>
-          <Input
-            placeholder="Search"
-            className={"max-w-lg"}
-            type="text"
-            onChange={(e) => setName(e.target.value)}
-            value={name}
-          />
-          {!isAddingCreatures && (
-            <Button
-              onClick={() => setIsAddingCreatures(true)}
-              className="flex gap-3"
-            >
-              <Plus />
-            </Button>
-          )}
-        </div>
+      <div className={"flex gap-5 relative"}>
+        <Input
+          placeholder="Search"
+          className={"max-w-lg"}
+          type="text"
+          onChange={(e) => setName(e.target.value)}
+          value={name}
+        />
+        {!isAddingCreatures && (
+          <Button
+            onClick={() => setIsAddingCreatures(true)}
+            className="flex gap-3"
+          >
+            <Plus />
+          </Button>
+        )}
+      </div>
 
-        <div className="flex flex-col gap-2">
-          <span className={!name ? "opacity-100" : "opacity-0"}>
-            {displayCreatures?.length} / 30
-          </span>
+      <div className="flex flex-col gap-2">
+        <span className={!name ? "opacity-100" : "opacity-0"}>
+          {displayCreatures?.length} / 30
+        </span>
 
-          <div className="flex gap-10 flex-wrap ">
-            {isAddingCreatures && (
-              <>
-                <Card className="max-w-[900px] w-full mx-auto pt-5 relative">
-                  <Button
-                    variant="ghost"
-                    className="absolute top-3 right-3"
-                    onClick={() => setIsAddingCreatures(false)}
-                  >
-                    <X />
-                  </Button>
-                  <CardContent>
-                    <FullCreatureAddForm uploadCreature={createCreature} />
-                  </CardContent>
-                </Card>
-              </>
-            )}
-            {isLoadingCreatures &&
-              Array(5)
-                .fill(null)
-                .map((_, i) => (
-                  <Card
-                    key={i}
-                    className={"animate-pulse w-20 h-40 bg-gray-200"}
-                  />
-                ))}
-            {displayCreatures?.map((creature) => (
-              <button
-                onClick={() => setSelectedId(creature.id)}
-                key={creature.id}
-              >
-                <Card
-                  className={clsx(
-                    "relative select-none h-56 mb-4 rounded-none justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col transition-all hover:outline",
-                    {
-                      outline: selectedCreature?.id === creature.id,
-                    }
-                  )}
+        <div className="flex gap-10 flex-wrap ">
+          {isAddingCreatures && (
+            <>
+              <Card className="max-w-[900px] w-full mx-auto pt-5 relative">
+                <Button
+                  variant="ghost"
+                  className="absolute top-3 right-3"
+                  onClick={() => setIsAddingCreatures(false)}
                 >
-                  <CardHeader className="text-ellipsis max-w-full p-3">
-                    <CardTitle>{creature.name}</CardTitle>
-                  </CardHeader>
-                  <CharacterIcon
-                    id={creature.id}
-                    name={creature.name}
-                    width={200}
-                    height={200}
-                  />
-                </Card>
-              </button>
-            ))}
-          </div>
+                  <X />
+                </Button>
+                <CardContent>
+                  <FullCreatureAddForm uploadCreature={createCreature} />
+                </CardContent>
+              </Card>
+            </>
+          )}
+          {isLoadingCreatures &&
+            Array(5)
+              .fill(null)
+              .map((_, i) => (
+                <Card
+                  key={i}
+                  className={"animate-pulse w-20 h-40 bg-gray-200"}
+                />
+              ))}
+          {displayCreatures?.map((creature) => (
+            <Card
+              className={clsx(
+                "relative select-none h-56 mb-4 rounded-none justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col"
+              )}
+              key={creature.id}
+            >
+              <CardHeader className="truncate max-w-full p-3">
+                <CardTitle>{creature.name}</CardTitle>
+              </CardHeader>
+              <CharacterIcon
+                id={creature.id}
+                name={creature.name}
+                width={200}
+                height={200}
+              />
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button>Edit</Button>
+                </DialogTrigger>
+                <CreatureUpdateDialog
+                  creature={creature}
+                  deleteCreature={deleteCreature}
+                />
+              </Dialog>
+            </Card>
+          ))}
         </div>
       </div>
-      <Card
-        className={clsx(
-          "relative select-none p-3 justify-between overflow-hidden pt-3 gap-5 items-center mx-auto mb-auto flex flex-col transition-all"
-        )}
-      >
-        {selectedCreature && (
-          <div className="flex flex-col gap-5 items-center justify-between">
-            <CardHeader className="text-ellipsis max-w-full p-3">
-              <CardTitle>{selectedCreature.name}</CardTitle>
-            </CardHeader>
-            <CharacterIcon
-              width={200}
-              height={200}
-              id={selectedCreature.id}
-              name={selectedCreature.name}
-            />
-            <CreatureUpdateForm
-              creature={selectedCreature}
-              key={selectedCreature.id}
-            />
-            <Button
-              variant="destructive"
-              onClick={() => deleteCreature(selectedCreature.id)}
-            >
-              Delete
-            </Button>
-          </div>
-        )}
-      </Card>
     </div>
+  );
+}
+
+function CreatureUpdateDialog({
+  creature,
+  deleteCreature,
+}: {
+  creature: Creature;
+  deleteCreature: (id: string) => void;
+}) {
+  return (
+    <DialogContent>
+      <DialogHeader className="text-ellipsis max-w-full p-3">
+        <DialogTitle>{creature.name}</DialogTitle>
+      </DialogHeader>
+      <CharacterIcon
+        width={200}
+        height={200}
+        id={creature.id}
+        name={creature.name}
+      />
+      <CreatureUpdateForm creature={creature} key={creature.id} />
+      <Button variant="destructive" onClick={() => deleteCreature(creature.id)}>
+        Delete
+      </Button>
+    </DialogContent>
   );
 }
 
