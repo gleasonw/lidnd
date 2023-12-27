@@ -234,13 +234,15 @@ export function BattleUI() {
                 onClick={() => setDmSelectedCreature(participant.id)}
                 creature={participant}
                 isSelected={participant.id === selectedId}
-                className={
-                  !(participant.id === selectedId) &&
-                  activeIndex &&
-                  index < activeIndex
-                    ? "opacity-40"
-                    : ""
-                }
+                className={clsx(
+                  {
+                    "opacity-40":
+                      !(participant.id === selectedId) &&
+                      activeIndex &&
+                      index < activeIndex,
+                  },
+                  "cursor-pointer"
+                )}
               />
             </AnimationListItem>
           ))}
