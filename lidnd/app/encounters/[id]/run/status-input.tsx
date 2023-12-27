@@ -59,7 +59,7 @@ export function StatusInput({
   const [save_ends_dc, setSaveEndsDC] = React.useState<string | undefined>();
 
   return (
-    <div className={className}>
+    <div className="flex gap-2">
       <Input
         type="number"
         value={save_ends_dc}

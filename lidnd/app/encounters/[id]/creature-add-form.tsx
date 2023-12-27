@@ -355,7 +355,7 @@ export function ListedCreature({
   addCreature,
 }: ListedCreatureProps) {
   const id = useEncounterId();
-  const [minionCount, setMinionCount] = useState(0);
+  const [minionCount, setMinionCount] = useState<number | undefined>();
   return (
     <div className="flex items-center flex-wrap space-x-2 justify-between">
       <div className="flex gap-4">
@@ -388,7 +388,7 @@ export function ListedCreature({
             addCreature({
               creature_id: creature.id,
               encounter_id: id,
-              minion_count: minionCount,
+              minion_count: minionCount ?? 0,
             });
           }}
         >

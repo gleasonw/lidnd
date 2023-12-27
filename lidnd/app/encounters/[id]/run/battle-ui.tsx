@@ -2,6 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -44,6 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { range } from "lodash";
+import { Label } from "@/components/ui/label";
 
 export function BattleUILoader() {
   return (
@@ -114,7 +117,7 @@ export function BattleUI() {
     });
   }
 
-  const selectedParticipant = displayedParticipants?.find(
+  const creature = displayedParticipants?.find(
     (participant) => participant.id === selectedId
   );
 
@@ -192,7 +195,7 @@ export function BattleUI() {
         ref={scrollContainer}
       >
         <Button
-          className="absolute left-0 sm:left-10 z-10 h-20"
+          className="absolute left-0 sm:left-10 z-10 h-10 rounded-full shadow-md"
           onClick={() => handleChangeTurn("previous")}
           variant="outline"
           disabled={isTurnLoading}
@@ -227,24 +230,23 @@ export function BattleUI() {
                   </BasePopover>
                 ))}
               </span>
-              <button onClick={() => setDmSelectedCreature(participant.id)}>
-                <BattleCard
-                  creature={participant}
-                  isSelected={participant.id === selectedId}
-                  className={
-                    !(participant.id === selectedId) &&
-                    activeIndex &&
-                    index < activeIndex
-                      ? "opacity-40"
-                      : ""
-                  }
-                />
-              </button>
+              <BattleCard
+                onClick={() => setDmSelectedCreature(participant.id)}
+                creature={participant}
+                isSelected={participant.id === selectedId}
+                className={
+                  !(participant.id === selectedId) &&
+                  activeIndex &&
+                  index < activeIndex
+                    ? "opacity-40"
+                    : ""
+                }
+              />
             </AnimationListItem>
           ))}
         </AnimatePresence>
         <Button
-          className="absolute right-0 sm:right-10 z-10 h-20"
+          className="absolute right-0 sm:right-10 z-10 h-10 rounded-full shadow-md"
           onClick={() => handleChangeTurn("next")}
           disabled={isTurnLoading}
           variant="outline"
@@ -253,41 +255,13 @@ export function BattleUI() {
         </Button>
       </div>
 
-      {selectedParticipant && (
+      {creature && (
         <>
-          <div className="flex flex-col gap-5">
-            <span
-              className={
-                "text-center text-lg flex flex-wrap sm:flex-nowrap gap-10 items-center"
-              }
-            >
-              {!selectedParticipant.is_player && (
-                <span className="flex gap-3 items-center">
-                  <span className="whitespace-nowrap font-bold">
-                    {selectedParticipant.hp} / {selectedParticipant.max_hp}
-                  </span>
-                  <ParticipantHealthForm participant={selectedParticipant} />
-                </span>
-              )}
-              <InitiativeInput
-                participant={selectedParticipant}
-                key={selectedParticipant.id}
-                className={"flex gap-2 items-center"}
-              />
-              <StatusInput
-                participant={selectedParticipant}
-                className={"flex gap-2 items-center"}
-              />
-            </span>
-          </div>
-          {!selectedParticipant.is_player ? (
+          {!creature.is_player ? (
             <OriginalSizeImage
-              src={getAWSimageURL(
-                selectedParticipant.creature_id,
-                "stat_block"
-              )}
-              alt={"stat block for " + selectedParticipant.name}
-              key={selectedParticipant.creature_id}
+              src={getAWSimageURL(creature.creature_id, "stat_block")}
+              alt={"stat block for " + creature.name}
+              key={creature.creature_id}
             />
           ) : (
             <span className="text-2xl p-5">Player</span>
@@ -297,7 +271,7 @@ export function BattleUI() {
             onClick={() =>
               removeCreatureFromEncounter({
                 encounter_id: id,
-                participant_id: selectedParticipant.id,
+                participant_id: creature.id,
               })
             }
           >
@@ -315,7 +289,7 @@ export type BattleCardProps = {
   className?: string;
   isSelected?: boolean;
   header?: React.ReactNode;
-};
+} & React.HTMLAttributes<HTMLDivElement>;
 
 export function BattleCard({
   creature,
@@ -323,6 +297,7 @@ export function BattleCard({
   className,
   isSelected,
   header,
+  ...props
 }: BattleCardProps) {
   const id = useEncounterId();
   const { data: encounter } = api.encounterById.useQuery(id);
@@ -331,41 +306,52 @@ export function BattleCard({
   return (
     <div
       className={`relative flex-col gap-6 items-center justify-between flex`}
+      {...props}
     >
-      {creature?.minion_count && creature.minion_count > 1 && (
+      {creature?.minion_count && creature.minion_count > 1 ? (
         <MinionCardStack minionCount={creature.minion_count} />
-      )}
+      ) : null}
       <Card
         key={creature.id}
         data-active={creature.is_active}
         className={clsx(
-          "w-28 h-40 shadow-lg border-2 relative select-none mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
+          " w-[450px] h-[300px] bg-white shadow-lg flex flex-col justify-between transition-all hover:rounded-xl group",
           className,
           {
-            "h-48 mb-0": creature.is_active,
-            "border-zinc-900": isSelected || creature.is_active,
+            "outline-zinc-900 outline": isSelected,
             "opacity-40":
               encounter?.current_round === 0 && !creature.has_surprise,
           }
         )}
       >
-        <HealthMeterOverlay creature={creature} />
-        <CardHeader className="p-2 w-full">
-          <CardTitle className="text-lg truncate max-w-full">
+        <CardHeader className="flex gap-2 justify-between items-center flex-row">
+          <CardTitle className="text-lg truncate max-w-full group-hover:opacity-50">
             {creature.name}
           </CardTitle>
+          <InitiativeInput participant={creature} key={creature.id} />
         </CardHeader>
-        {creature.creature_id === "pending" ? (
-          <span>Loading</span>
-        ) : (
-          <CharacterIcon
-            id={creature.creature_id}
-            name={creature.name}
-            width={200}
-            height={200}
-            className="h-28 object-cover"
-          />
-        )}
+        <CardContent className="flex gap-2">
+          {creature.creature_id === "pending" ? (
+            <span>Loading</span>
+          ) : (
+            <div className="relative">
+              <CharacterIcon
+                id={creature.creature_id}
+                name={creature.name}
+                width={200}
+                height={200}
+                className="object-cover w-32 h-32"
+              />
+              <HealthMeterOverlay creature={creature} />
+            </div>
+          )}
+          <div className="flex flex-col gap-5">
+            {!creature.is_player && (
+              <ParticipantHealthForm participant={creature} />
+            )}
+            <StatusInput participant={creature} />
+          </div>
+        </CardContent>
       </Card>
       <AnimatePresence>
         <div className={"flex absolute -bottom-8 flex-row gap-2"}>
@@ -382,16 +368,11 @@ export function BattleCard({
 }
 
 function MinionCardStack({ minionCount }: { minionCount: number }) {
-  return range(minionCount - 1).map((index) => (
-    <Card
-      key={index}
-      className="w-28 h-40 absolute"
-      style={{
-        top: `-${index * 10}px`,
-        zIndex: -index,
-      }}
-    />
-  ));
+  return (
+    <Badge className="absolute top-2 right-2 w-11 whitespace-nowrap">
+      x {minionCount}
+    </Badge>
+  );
 }
 
 export function HealthMeterOverlay({
