@@ -52,6 +52,7 @@
     "eslint-config-next": "14.0.0",
     "eslint-plugin-prettier": "^5.0.1",
     "framer-motion": "^10.16.16",
+    "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
     "lucia": "^2.7.5",
     "lucide-react": "^0.277.0",
@@ -73,6 +74,7 @@
     "zod": "3.21.4"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.202",
     "drizzle-kit": "^0.19.13",
     "openapi-typescript": "^6.7.3",
     "vitest": "^0.34.6"

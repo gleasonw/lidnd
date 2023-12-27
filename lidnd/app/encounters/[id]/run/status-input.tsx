@@ -56,10 +56,19 @@ export function StatusInput({
   });
   const effects = api.statusEffects.useQuery().data;
 
-  const [save_ends_dc, setSaveEndsDC] = React.useState("0");
+  const [save_ends_dc, setSaveEndsDC] = React.useState<string | undefined>();
 
   return (
-    <div className={className}>
+    <div className="flex gap-2">
+      <Input
+        type="number"
+        value={save_ends_dc}
+        className="w-24"
+        onChange={(e) => {
+          setSaveEndsDC(e.target.value ?? "");
+        }}
+        placeholder="DC"
+      />
       <Combobox
         triggerPlaceholder="Status effect"
         emptyResultText="No status effects"
@@ -74,7 +83,7 @@ export function StatusInput({
                 updateStatus({
                   encounter_participant_id: participant.id,
                   status_effect_id: effect.id,
-                  save_ends_dc: parseInt(save_ends_dc) || 0,
+                  save_ends_dc: (save_ends_dc && parseInt(save_ends_dc)) || 0,
                   name: effect.name,
                   description: effect.description,
                 })
@@ -86,15 +95,6 @@ export function StatusInput({
           </CommandItem>
         ))}
       </Combobox>
-      <Input
-        type="number"
-        value={save_ends_dc}
-        className="w-24"
-        onChange={(e) => {
-          setSaveEndsDC(e.target.value);
-        }}
-        placeholder="Save ends DC"
-      />
     </div>
   );
 }

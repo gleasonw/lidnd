@@ -18,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import React from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Angry, User } from "lucide-react";
+import { Angry, Plus, User } from "lucide-react";
 
 type CreatureAddProps = {
   uploadCreature: (data: CreaturePost) => void;
@@ -29,10 +29,10 @@ export function FullCreatureAddForm(props: CreatureAddProps) {
     <Tabs defaultValue="monster">
       <TabsList>
         <TabsTrigger value="monster" className="flex gap-3">
-          <Angry /> Monster 
+          <Angry /> Monster
         </TabsTrigger>
         <TabsTrigger value="player" className="flex gap-3">
-          <User /> Player 
+          <User /> Player
         </TabsTrigger>
       </TabsList>
       <TabsContent value="monster">
@@ -52,6 +52,7 @@ const monsterFormSchema = z.object({
   max_hp: z.coerce.number(),
   challenge_rating: z.coerce.number(),
   is_player: z.boolean(),
+  minion_count: z.coerce.number().optional(),
   icon_image: z.instanceof(File),
   stat_block_image: z.instanceof(File),
 });
@@ -65,6 +66,7 @@ function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
       icon_image: undefined,
       stat_block_image: undefined,
       is_player: false,
+      minion_count: 0,
     },
   });
   const [keyToResetFile, setKeyToResetFile] = React.useState(0);
@@ -160,15 +162,40 @@ function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
             </CreatureFormItems>
           )}
         />
-        <div className="flex gap-5">
-          <Button type="submit">Submit</Button>
+        <FormField
+          control={form.control}
+          name="minion_count"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>As minions</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  className="w-32"
+                  placeholder="0..."
+                  {...field}
+                  value={field.value}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="flex gap-2 items-center">
+          {" "}
+          <Button type="submit" className="w-full">
+            <Plus /> Add Creature
+          </Button>
         </div>
       </form>
     </Form>
   );
 }
 
-const playerFormSchema = monsterFormSchema.omit({ stat_block_image: true });
+const playerFormSchema = monsterFormSchema.omit({
+  stat_block_image: true,
+  minion_count: true,
+});
 
 function PlayerUploadForm({ uploadCreature }: CreatureAddProps) {
   const form = useForm<z.infer<typeof playerFormSchema>>({

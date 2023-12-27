@@ -7,15 +7,19 @@ import { Button } from "@/components/ui/button";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 import { UseMutateFunction } from "@tanstack/react-query";
 import * as z from "zod";
-import { Card, CardContent } from "@/components/ui/card";
-import clsx from "clsx";
-import { EncounterCreature, creatureUploadSchema } from "@/server/api/router";
+import { range } from "lodash";
+import {
+  Creature,
+  EncounterCreature,
+  creatureUploadSchema,
+} from "@/server/api/router";
 import { api } from "@/trpc/react";
 import Image from "next/image";
-import { X } from "lucide-react";
+import { Heart, Plus, Skull, X } from "lucide-react";
 
 export type CreaturePost = z.infer<typeof creatureUploadSchema> & {
   stat_block_image?: File;
+  minion_count?: number;
 };
 
 export function CustomCreature({
@@ -32,12 +36,16 @@ export function CustomCreature({
   formFields?: React.ReactNode;
 }) {
   const [creatureData, setCreatureData] = useState<
-    Pick<CreaturePost, "name" | "max_hp" | "icon_image" | "stat_block_image">
+    Pick<
+      CreaturePost,
+      "name" | "max_hp" | "icon_image" | "stat_block_image" | "minion_count"
+    >
   >({
     name: "",
     max_hp: 0,
     icon_image: undefined,
     stat_block_image: undefined,
+    minion_count: 0,
   });
 
   return (
@@ -103,8 +111,7 @@ export function CustomCreature({
       <div className={"flex gap-5"}>
         {children}
         <Button
-          className="p-5 border m-auto"
-          variant={"outline"}
+          className="w-full"
           onClick={(e) => {
             e.stopPropagation();
             if (
@@ -120,14 +127,27 @@ export function CustomCreature({
                 stat_block_image: creatureData.stat_block_image,
                 challenge_rating: 0,
                 is_player: false,
+                minion_count: creatureData.minion_count,
               });
             } else {
               alert("Please fill out all fields");
             }
           }}
         >
-          + Add creature
+          <Plus /> Add creature
         </Button>
+        <Input
+          type="number"
+          placeholder="# minions..."
+          className="w-32"
+          onChange={(e) =>
+            setCreatureData({
+              ...creatureData,
+              minion_count: parseInt(e.target.value),
+            })
+          }
+          value={creatureData.minion_count}
+        />
       </div>
     </>
   );
@@ -253,6 +273,7 @@ export function ExistingCreature({
             user_id: old.user_id,
             has_surprise: false,
             status_effects: [],
+            minion_count: 0,
           };
           return {
             ...old,
@@ -288,18 +309,22 @@ export function ExistingCreature({
   );
 }
 
+export type CreatureAddFunction = ({
+  creature_id,
+  encounter_id,
+  minion_count,
+}: {
+  creature_id: string;
+  encounter_id: string;
+  minion_count: number;
+}) => void;
+
 function ExistingCreatureOptions({
   name,
   addCreature,
 }: {
   name: string;
-  addCreature: ({
-    creature_id,
-    encounter_id,
-  }: {
-    creature_id: string;
-    encounter_id: string;
-  }) => void;
+  addCreature: CreatureAddFunction;
 }) {
   const id = useEncounterId();
   const [creatures, creaturesQuery] = api.getUserCreatures.useSuspenseQuery({
@@ -308,36 +333,75 @@ function ExistingCreatureOptions({
   return (
     <div className={"flex flex-col gap-2 max-h-full overflow-auto"}>
       {creatures?.map((creature) => (
-        <button
+        <ListedCreature
+          key={creature.id}
+          creature={creature}
+          addCreature={addCreature}
+        />
+      ))}
+    </div>
+  );
+}
+
+export interface ListedCreatureProps {
+  creature: Creature;
+  children?: React.ReactNode;
+  addCreature: CreatureAddFunction;
+}
+
+export function ListedCreature({
+  creature,
+  children,
+  addCreature,
+}: ListedCreatureProps) {
+  const id = useEncounterId();
+  const [minionCount, setMinionCount] = useState<number | undefined>();
+  return (
+    <div className="flex items-center flex-wrap space-x-2 justify-between">
+      <div className="flex gap-4">
+        <CharacterIcon
+          id={creature.id}
+          name={creature.name}
+          className={"rounded-full object-cover w-14 h-14"}
+        />
+        <div className="flex flex-col">
+          <span className="font-semibold">{creature.name}</span>
+          {creature.challenge_rating ? (
+            <span className="flex gap-10 flex-wrap">
+              <span className="flex gap-2 flex-wrap">
+                <Skull />
+                {creature.challenge_rating}
+              </span>
+              <span className="flex gap-2">
+                <Heart />
+                {creature.max_hp}
+              </span>
+            </span>
+          ) : null}
+        </div>
+      </div>
+      <div className="flex gap-3">
+        <Button
           key={creature.id}
           onClick={(e) => {
             e.stopPropagation();
             addCreature({
               creature_id: creature.id,
               encounter_id: id,
+              minion_count: minionCount ?? 0,
             });
           }}
         >
-          <Card
-            className={clsx(
-              "flex hover:bg-gray-100 transition-all items-center gap-10 overflow-hidden h-20"
-            )}
-          >
-            <CharacterIcon
-              id={creature.id}
-              name={creature.name}
-              className={"w-50 h-50"}
-            />
-            <section className="text-xl flex gap-3 flex-col w-full h-full justify-start">
-              <span>{creature.name}</span>
-              <section className="text-lg flex gap-3">
-                <span>CR: {creature.challenge_rating}</span>
-                <span>HP: {creature.max_hp}</span>
-              </section>
-            </section>
-          </Card>
-        </button>
-      ))}
+          <Plus /> Add
+        </Button>
+        <Input
+          type="number"
+          className="w-32"
+          placeholder="# minions..."
+          value={minionCount}
+          onChange={(e) => setMinionCount(parseInt(e.target.value))}
+        />
+      </div>
     </div>
   );
 }

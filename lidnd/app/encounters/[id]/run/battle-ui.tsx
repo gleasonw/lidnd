@@ -2,6 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -35,12 +37,16 @@ import { StatusInput } from "./status-input";
 import { effectIconMap } from "./effectIconMap";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { range } from "lodash";
+import { Label } from "@/components/ui/label";
 
 export function BattleUILoader() {
   return (
@@ -111,11 +117,9 @@ export function BattleUI() {
     });
   }
 
-  const selectedParticipant = displayedParticipants?.find(
+  const creature = displayedParticipants?.find(
     (participant) => participant.id === selectedId
   );
-
-  const [addingCreature, setAddingCreature] = React.useState(false);
 
   const scrollContainer = React.useRef<HTMLDivElement>(null);
 
@@ -173,20 +177,17 @@ export function BattleUI() {
       <div className={"flex gap-3 items-center w-full justify-between"}>
         <EncounterTime time={encounter?.started_at ?? undefined} />
         <h1 className="text-xl">{roundText}</h1>
-        {!addingCreature && (
-          <Button onClick={() => setAddingCreature(true)}>
-            <Plus /> Add creature
-          </Button>
-        )}
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus /> Add creature
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl overflow-auto max-h-screen">
+            <BattleAddCreatureForm />
+          </DialogContent>
+        </Dialog>
       </div>
-      {addingCreature && (
-        <BattleAddCreatureForm>
-          <Button variant={"ghost"} onClick={() => setAddingCreature(false)}>
-            <X /> Close
-          </Button>
-        </BattleAddCreatureForm>
-      )}
-
       <div
         className={clsx(
           "flex flex-row sm:gap-4 px-8 pb-8 max-w-full items-center overflow-auto"
@@ -194,8 +195,9 @@ export function BattleUI() {
         ref={scrollContainer}
       >
         <Button
-          className="absolute left-0 sm:left-10 z-10 h-20"
+          className="absolute left-0 sm:left-10 z-10 h-10 rounded-full shadow-md"
           onClick={() => handleChangeTurn("previous")}
+          variant="outline"
           disabled={isTurnLoading}
         >
           <ChevronLeftIcon />
@@ -228,70 +230,40 @@ export function BattleUI() {
                   </BasePopover>
                 ))}
               </span>
-              <button onClick={() => setDmSelectedCreature(participant.id)}>
-                <BattleCard
-                  creature={participant}
-                  isSelected={participant.id === selectedId}
-                  className={
-                    !(participant.id === selectedId) &&
-                    activeIndex &&
-                    index < activeIndex
-                      ? "opacity-40"
-                      : ""
-                  }
-                />
-              </button>
+              <BattleCard
+                onClick={() => setDmSelectedCreature(participant.id)}
+                creature={participant}
+                isSelected={participant.id === selectedId}
+                className={clsx(
+                  {
+                    "opacity-40":
+                      !(participant.id === selectedId) &&
+                      activeIndex &&
+                      index < activeIndex,
+                  },
+                  "cursor-pointer"
+                )}
+              />
             </AnimationListItem>
           ))}
         </AnimatePresence>
         <Button
-          className="absolute right-0 sm:right-10 z-10 h-20"
+          className="absolute right-0 sm:right-10 z-10 h-10 rounded-full shadow-md"
           onClick={() => handleChangeTurn("next")}
           disabled={isTurnLoading}
+          variant="outline"
         >
           <ChevronRightIcon />
         </Button>
       </div>
 
-      {selectedParticipant && (
+      {creature && (
         <>
-          <div className="flex flex-col gap-5">
-            <span
-              className={
-                "text-center text-lg flex flex-wrap sm:flex-nowrap gap-10 items-center"
-              }
-            >
-              {!selectedParticipant.is_player && (
-                <span className="flex gap-3 items-center shadow-md p-3 rounded-sm border">
-                  <span className="whitespace-nowrap">
-                    {selectedParticipant.hp} / {selectedParticipant.max_hp}
-                  </span>
-                  <ParticipantHealthForm participant={selectedParticipant} />
-                </span>
-              )}
-              <InitiativeInput
-                participant={selectedParticipant}
-                key={selectedParticipant.id}
-                className={
-                  "flex gap-2 items-center shadow-md p-3 rounded-sm border"
-                }
-              />
-              <StatusInput
-                participant={selectedParticipant}
-                className={
-                  "flex gap-2 items-center shadow-md p-3 rounded-sm border"
-                }
-              />
-            </span>
-          </div>
-          {!selectedParticipant.is_player ? (
+          {!creature.is_player ? (
             <OriginalSizeImage
-              src={getAWSimageURL(
-                selectedParticipant.creature_id,
-                "stat_block"
-              )}
-              alt={"stat block for " + selectedParticipant.name}
-              key={selectedParticipant.creature_id}
+              src={getAWSimageURL(creature.creature_id, "stat_block")}
+              alt={"stat block for " + creature.name}
+              key={creature.creature_id}
             />
           ) : (
             <span className="text-2xl p-5">Player</span>
@@ -301,7 +273,7 @@ export function BattleUI() {
             onClick={() =>
               removeCreatureFromEncounter({
                 encounter_id: id,
-                participant_id: selectedParticipant.id,
+                participant_id: creature.id,
               })
             }
           >
@@ -319,7 +291,7 @@ export type BattleCardProps = {
   className?: string;
   isSelected?: boolean;
   header?: React.ReactNode;
-};
+} & React.HTMLAttributes<HTMLDivElement>;
 
 export function BattleCard({
   creature,
@@ -327,6 +299,7 @@ export function BattleCard({
   className,
   isSelected,
   header,
+  ...props
 }: BattleCardProps) {
   const id = useEncounterId();
   const { data: encounter } = api.encounterById.useQuery(id);
@@ -335,38 +308,52 @@ export function BattleCard({
   return (
     <div
       className={`relative flex-col gap-6 items-center justify-between flex`}
+      {...props}
     >
+      {creature?.minion_count && creature.minion_count > 1 ? (
+        <MinionCardStack minionCount={creature.minion_count} />
+      ) : null}
       <Card
         key={creature.id}
         data-active={creature.is_active}
         className={clsx(
-          "w-28 h-40 shadow-lg border-2 relative select-none mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
+          " w-[450px] h-[300px] bg-white shadow-lg flex flex-col justify-between transition-all hover:rounded-xl group",
           className,
           {
-            "h-48 mb-0": creature.is_active,
-            "border-zinc-900": isSelected || creature.is_active,
+            "outline-zinc-900 outline": isSelected,
             "opacity-40":
               encounter?.current_round === 0 && !creature.has_surprise,
           }
         )}
       >
-        <HealthMeterOverlay creature={creature} />
-        <CardHeader className="p-2 w-full">
-          <CardTitle className="text-lg truncate max-w-full">
+        <CardHeader className="flex gap-2 justify-between items-center flex-row">
+          <CardTitle className="text-lg truncate max-w-full group-hover:opacity-50">
             {creature.name}
           </CardTitle>
+          <InitiativeInput participant={creature} key={creature.id} />
         </CardHeader>
-        {creature.creature_id === "pending" ? (
-          <span>Loading</span>
-        ) : (
-          <CharacterIcon
-            id={creature.creature_id}
-            name={creature.name}
-            width={200}
-            height={200}
-            className="h-28 object-cover"
-          />
-        )}
+        <CardContent className="flex gap-2">
+          {creature.creature_id === "pending" ? (
+            <span>Loading</span>
+          ) : (
+            <div className="relative">
+              <CharacterIcon
+                id={creature.creature_id}
+                name={creature.name}
+                width={200}
+                height={200}
+                className="object-cover w-32 h-32"
+              />
+              <HealthMeterOverlay creature={creature} />
+            </div>
+          )}
+          <div className="flex flex-col gap-5">
+            {!creature.is_player && (
+              <ParticipantHealthForm participant={creature} />
+            )}
+            <StatusInput participant={creature} />
+          </div>
+        </CardContent>
       </Card>
       <AnimatePresence>
         <div className={"flex absolute -bottom-8 flex-row gap-2"}>
@@ -379,6 +366,14 @@ export function BattleCard({
       </AnimatePresence>
       {children}
     </div>
+  );
+}
+
+function MinionCardStack({ minionCount }: { minionCount: number }) {
+  return (
+    <Badge className="absolute top-2 right-2 w-11 whitespace-nowrap">
+      x {minionCount}
+    </Badge>
   );
 }
 
@@ -426,27 +421,20 @@ function BattleAddCreatureForm({ children }: { children?: React.ReactNode }) {
   const { mutate: addCreature, isLoading: isPendingCreatureAdd } =
     useCreateCreatureInEncounter();
   return (
-    <div className={"flex flex-col w-full items-center gap-3"}>
-      {children}
-      <div className={"flex flex-wrap gap-3 w-full justify-center"}>
-        <Card className={"w-full max-w-[600px]"}>
-          <CardContent className={"flex flex-col gap-3 pt-5"}>
-            <CardTitle>New creature</CardTitle>
-            <CustomCreature
-              mutation={{
-                onAddCreature: (data) => addCreature(data),
-                isPending: isPendingCreatureAdd,
-              }}
-            />
-          </CardContent>
-        </Card>
-        <Card className={"w-full max-w-[600px] h-96"}>
-          <CardContent className={"flex flex-col gap-3 pt-5 max-h-full"}>
-            <CardTitle>Existing creature</CardTitle>
-            <ExistingCreature />
-          </CardContent>
-        </Card>
-      </div>
+    <div className={"flex gap-10 flex-wrap w-full justify-center"}>
+      <CardContent className={"flex flex-col gap-6 pt-5"}>
+        <CardTitle>New creature</CardTitle>
+        <CustomCreature
+          mutation={{
+            onAddCreature: (data) => addCreature(data),
+            isPending: isPendingCreatureAdd,
+          }}
+        />
+      </CardContent>
+      <CardContent className={"flex flex-col gap-3 pt-5 max-h-full"}>
+        <CardTitle>Existing creature</CardTitle>
+        <ExistingCreature />
+      </CardContent>
     </div>
   );
 }
