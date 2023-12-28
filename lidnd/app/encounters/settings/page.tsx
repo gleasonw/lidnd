@@ -22,6 +22,10 @@ export default async function DiscordPage() {
 }
 
 async function DiscordChannelInformation() {
+  const session = await getPageSession();
+  if (!session) {
+    return redirect("/login");
+  }
   const channelResponse = await fetch(`${apiURL}/api/discord-channel`, {
     method: "GET",
     headers: {
