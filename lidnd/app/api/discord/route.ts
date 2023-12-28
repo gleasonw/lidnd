@@ -50,10 +50,12 @@ export const GET = async (request: NextRequest) => {
       headers,
     });
     authRequest.setSession(session);
+    const redirectUrl = cookies().get("redirect")?.value;
+    const redirectLocation = redirectUrl ?? "/encounters";
     return new Response(null, {
       status: 302,
       headers: {
-        Location: "/encounters",
+        Location: redirectLocation,
       },
     });
   } catch (e) {

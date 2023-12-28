@@ -7,7 +7,11 @@ export const rerouteUrl =
     ? "http://localhost:3000"
     : "https://lidnd.com";
 
-export default function Login() {
+export default function Login({
+  searchParams,
+}: {
+  searchParams: { redirect: string };
+}) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="flex flex-col gap-20">
@@ -17,7 +21,7 @@ export default function Login() {
           className={
             "shadow p-5 rounded-md text-center text-white flex overflow-hidden border-2 hover:bg-gray-200 transition-all"
           }
-          href={`/login/discord`}
+          href={`/login/discord?redirect=${searchParams.redirect}`}
         >
           <DiscordIcon className="max-w-40" />
         </Link>

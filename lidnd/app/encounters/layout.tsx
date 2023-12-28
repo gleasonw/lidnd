@@ -4,7 +4,7 @@ import { getPageSession } from "@/server/api/utils";
 import { TRPCReactProvider } from "@/trpc/react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 
@@ -21,7 +21,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await getPageSession();
-  if (!session) redirect("/login");
+  if (!session) {
+    const headersList = headers();
+    return redirect(`/login?redirect=${headersList.get("x-pathname")}`);
+  }
   return (
     <html lang="en">
       <body className={inter.className}>
