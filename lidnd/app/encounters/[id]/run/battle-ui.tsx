@@ -45,8 +45,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { range } from "lodash";
-import { Label } from "@/components/ui/label";
 
 export function BattleUILoader() {
   return (
@@ -123,34 +121,6 @@ export function BattleUI() {
 
   const scrollContainer = React.useRef<HTMLDivElement>(null);
 
-  const { mutate: removeStatusEffect } = api.removeStatusEffect.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(encounter.id);
-    },
-    onMutate: async (newStatusEffect) => {
-      await encounterById.cancel(encounter.id);
-      const previousEncounter = encounterById.getData(encounter.id);
-      encounterById.setData(encounter.id, (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          participants: old.participants.map((participant) => {
-            if (participant.id === newStatusEffect.encounter_participant_id) {
-              return {
-                ...participant,
-                status_effects: participant.status_effects.filter(
-                  (effect) => effect.id !== newStatusEffect.status_effect_id
-                ),
-              };
-            }
-            return participant;
-          }),
-        };
-      });
-      return previousEncounter;
-    },
-  });
-
   React.useEffect(() => {
     if (scrollContainer.current) {
       const activeElement =
@@ -190,7 +160,7 @@ export function BattleUI() {
       </div>
       <div
         className={clsx(
-          "flex flex-row sm:gap-4 px-8 pb-8 max-w-full items-center overflow-auto"
+          "flex flex-row sm:gap-4 px-8 pt-2 pb-8 max-w-full items-center overflow-auto"
         )}
         ref={scrollContainer}
       >
@@ -205,31 +175,6 @@ export function BattleUI() {
         <AnimatePresence>
           {displayedParticipants?.slice().map((participant, index) => (
             <AnimationListItem key={participant.id}>
-              <span className={"h-12 flex gap-1 flex-wrap items-center"}>
-                {participant.status_effects?.map((effect) => (
-                  <BasePopover
-                    key={effect.id}
-                    trigger={
-                      <Button variant="outline">
-                        {
-                          effectIconMap[
-                            effect.name as keyof typeof effectIconMap
-                          ]
-                        }
-                      </Button>
-                    }
-                    className="flex flex-col gap-2 text-sm"
-                  >
-                    {effect.description}
-                    {!!effect.save_ends_dc && (
-                      <span>Save ends ({effect.save_ends_dc})</span>
-                    )}
-                    <Button onClick={() => removeStatusEffect(effect)}>
-                      Remove
-                    </Button>
-                  </BasePopover>
-                ))}
-              </span>
               <BattleCard
                 onClick={() => setDmSelectedCreature(participant.id)}
                 creature={participant}
@@ -302,8 +247,36 @@ export function BattleCard({
   ...props
 }: BattleCardProps) {
   const id = useEncounterId();
-  const { data: encounter } = api.encounterById.useQuery(id);
+  const [encounter] = api.encounterById.useSuspenseQuery(id);
   const { encounterById } = api.useUtils();
+
+  const { mutate: removeStatusEffect } = api.removeStatusEffect.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(encounter.id);
+    },
+    onMutate: async (newStatusEffect) => {
+      await encounterById.cancel(encounter.id);
+      const previousEncounter = encounterById.getData(encounter.id);
+      encounterById.setData(encounter.id, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          participants: old.participants.map((participant) => {
+            if (participant.id === newStatusEffect.encounter_participant_id) {
+              return {
+                ...participant,
+                status_effects: participant.status_effects.filter(
+                  (effect) => effect.id !== newStatusEffect.status_effect_id
+                ),
+              };
+            }
+            return participant;
+          }),
+        };
+      });
+      return previousEncounter;
+    },
+  });
 
   return (
     <div
@@ -317,7 +290,7 @@ export function BattleCard({
         key={creature.id}
         data-active={creature.is_active}
         className={clsx(
-          " w-[450px] h-[300px] bg-white shadow-lg flex flex-col justify-between transition-all hover:rounded-xl group",
+          " bg-white w-[300px] shadow-lg flex flex-col justify-between transition-all hover:rounded-xl group",
           className,
           {
             "outline-zinc-900 outline": isSelected,
@@ -326,27 +299,49 @@ export function BattleCard({
           }
         )}
       >
-        <CardHeader className="flex gap-2 justify-between items-center flex-row">
-          <CardTitle className="text-lg truncate max-w-full group-hover:opacity-50">
+        <span className={"h-12 flex gap-1 flex-wrap items-center"}>
+          {creature.status_effects?.map((effect) => (
+            <BasePopover
+              key={effect.id}
+              trigger={
+                <Button variant="outline">
+                  {effectIconMap[effect.name as keyof typeof effectIconMap]}
+                </Button>
+              }
+              className="flex flex-col gap-2 text-sm"
+            >
+              {effect.description}
+              {!!effect.save_ends_dc && (
+                <span>Save ends ({effect.save_ends_dc})</span>
+              )}
+              <Button onClick={() => removeStatusEffect(effect)}>Remove</Button>
+            </BasePopover>
+          ))}
+        </span>
+        <CardHeader className="flex pt-0 flex-col gap-2 justify-between items-center">
+          <CardTitle className="text-xl truncate max-w-full group-hover:opacity-50">
             {creature.name}
           </CardTitle>
-          <InitiativeInput participant={creature} key={creature.id} />
         </CardHeader>
-        <CardContent className="flex gap-2">
-          {creature.creature_id === "pending" ? (
-            <span>Loading</span>
-          ) : (
-            <div className="relative">
-              <CharacterIcon
-                id={creature.creature_id}
-                name={creature.name}
-                width={200}
-                height={200}
-                className="object-cover w-32 h-32"
-              />
-              <HealthMeterOverlay creature={creature} />
-            </div>
-          )}
+        <CardContent className="flex flex-col gap-2">
+          <span className="flex justify-between">
+            {creature.creature_id === "pending" ? (
+              <span>Loading</span>
+            ) : (
+              <div className="relative">
+                <CharacterIcon
+                  id={creature.creature_id}
+                  name={creature.name}
+                  width={200}
+                  height={200}
+                  className="object-cover w-32 h-32"
+                />
+                <HealthMeterOverlay creature={creature} />
+              </div>
+            )}
+            <InitiativeInput participant={creature} key={creature.id} />
+          </span>
+
           <div className="flex flex-col gap-5">
             {!creature.is_player && (
               <ParticipantHealthForm participant={creature} />

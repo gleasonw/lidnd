@@ -14,10 +14,16 @@ import {
   Skull,
   ToyBrick,
   XCircle,
+  GripHorizontal,
+  HeartPulse,
+  MessageCircle,
+  Sliders,
+  Timer,
+  Thermometer,
 } from "lucide-react";
 import React from "react";
 
-export const effectIconMap = {
+export const old_effectIconMap = {
   Blinded: <EyeOff className="text-gray-500" />,
   Charmed: <Heart className="text-pink-500" />,
   Deafened: <VolumeX className="text-blue-500" />,
@@ -34,3 +40,21 @@ export const effectIconMap = {
   Unconscious: <Moon className="text-slate-500" />,
   Exhaustion: <ThermometerSun className="text-amber-500" />,
 };
+
+export const effectIconMap = {
+  BLOODIED: <HeartPulse className="text-red-500" />,
+  DAZED: <ZapOff className="text-yellow-500" />,
+  FRIGHTENED: <AlertTriangle className="text-purple-500" />,
+  GRAPPLED: <GripHorizontal className="text-green-500" />,
+  ONGOING_DAMAGE: <Skull className="text-lime-500" />,
+  PRONE: <ArrowDownCircle className="text-orange-500" />,
+  RESTRAINED: <Lock className="text-teal-500" />,
+  SLOWED: <Timer className="text-blue-500" />,
+  SURPRISED: <EyeOff className="text-indigo-500" />,
+  TAUNTED: <MessageCircle className="text-pink-500" />,
+  UNBALANCED: <Sliders className="text-gray-500" />,
+  UNCONSCIOUS: <Moon className="text-slate-500" />,
+  WEAKENED: <Thermometer className="text-amber-500" />,
+};
+
+export default effectIconMap;
