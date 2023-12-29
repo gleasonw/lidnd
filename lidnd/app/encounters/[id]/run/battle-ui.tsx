@@ -47,6 +47,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { range } from "lodash";
 import { Label } from "@/components/ui/label";
+import { Tip } from "@/components/ui/tip";
 
 export function BattleUILoader() {
   return (
@@ -101,6 +102,10 @@ export function BattleUI() {
 
   const selectedId = dmSelectedCreature ?? activeParticipant?.id ?? null;
 
+  const selectedCreature = displayedParticipants?.find(
+    (participant) => participant.id === selectedId
+  );
+
   const { mutate: removeCreatureFromEncounter } =
     useRemoveParticipantFromEncounter();
 
@@ -122,34 +127,6 @@ export function BattleUI() {
   );
 
   const scrollContainer = React.useRef<HTMLDivElement>(null);
-
-  const { mutate: removeStatusEffect } = api.removeStatusEffect.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(encounter.id);
-    },
-    onMutate: async (newStatusEffect) => {
-      await encounterById.cancel(encounter.id);
-      const previousEncounter = encounterById.getData(encounter.id);
-      encounterById.setData(encounter.id, (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          participants: old.participants.map((participant) => {
-            if (participant.id === newStatusEffect.encounter_participant_id) {
-              return {
-                ...participant,
-                status_effects: participant.status_effects.filter(
-                  (effect) => effect.id !== newStatusEffect.status_effect_id
-                ),
-              };
-            }
-            return participant;
-          }),
-        };
-      });
-      return previousEncounter;
-    },
-  });
 
   React.useEffect(() => {
     if (scrollContainer.current) {
@@ -189,9 +166,7 @@ export function BattleUI() {
         </Dialog>
       </div>
       <div
-        className={clsx(
-          "flex flex-row sm:gap-4 px-8 pb-8 max-w-full items-center overflow-auto"
-        )}
+        className="flex margin-auto gap-1 sm:gap-3 px-2 pt-2 overflow-auto max-w-full"
         ref={scrollContainer}
       >
         <Button
@@ -205,45 +180,25 @@ export function BattleUI() {
         <AnimatePresence>
           {displayedParticipants?.slice().map((participant, index) => (
             <AnimationListItem key={participant.id}>
-              <span className={"h-12 flex gap-1 flex-wrap items-center"}>
-                {participant.status_effects?.map((effect) => (
-                  <BasePopover
-                    key={effect.id}
-                    trigger={
-                      <Button variant="outline">
-                        {
-                          effectIconMap[
-                            effect.name as keyof typeof effectIconMap
-                          ]
-                        }
-                      </Button>
-                    }
-                    className="flex flex-col gap-2 text-sm"
-                  >
-                    {effect.description}
-                    {!!effect.save_ends_dc && (
-                      <span>Save ends ({effect.save_ends_dc})</span>
+              <span className={"flex gap-1 flex-wrap items-center"}>
+                <button onClick={() => setDmSelectedCreature(participant.id)}>
+                  <SimpleIconBattleCard
+                    creature={participant}
+                    index={index}
+                    activeIndex={activeIndex}
+                    className={clsx(
+                      {
+                        "outline-zinc-900 outline":
+                          participant.id === selectedId,
+                      },
+                      "hover:opacity-100",
+                      {
+                        "opacity-100": participant.id === selectedId,
+                      }
                     )}
-                    <Button onClick={() => removeStatusEffect(effect)}>
-                      Remove
-                    </Button>
-                  </BasePopover>
-                ))}
+                  />
+                </button>
               </span>
-              <BattleCard
-                onClick={() => setDmSelectedCreature(participant.id)}
-                creature={participant}
-                isSelected={participant.id === selectedId}
-                className={clsx(
-                  {
-                    "opacity-40":
-                      !(participant.id === selectedId) &&
-                      activeIndex &&
-                      index < activeIndex,
-                  },
-                  "cursor-pointer"
-                )}
-              />
             </AnimationListItem>
           ))}
         </AnimatePresence>
@@ -256,7 +211,13 @@ export function BattleUI() {
           <ChevronRightIcon />
         </Button>
       </div>
-
+      {selectedCreature && (
+        <BattleCard
+          creature={selectedCreature}
+          isSelected={selectedCreature.id === selectedId}
+          className={clsx("cursor-pointer")}
+        />
+      )}
       {creature && (
         <>
           {!creature.is_player ? (
@@ -282,6 +243,107 @@ export function BattleUI() {
         </>
       )}
     </div>
+  );
+}
+
+export interface SimpleIconBattleCardProps {
+  children?: React.ReactNode;
+  creature: EncounterCreature;
+  className?: string;
+  index: number;
+  activeIndex: number;
+}
+
+export function SimpleIconBattleCard({
+  children,
+  creature,
+  className,
+  index,
+  activeIndex,
+}: SimpleIconBattleCardProps) {
+  const [encounter] = api.encounterById.useSuspenseQuery(useEncounterId());
+  const { encounterById } = api.useUtils();
+
+  const { mutate: removeStatusEffect } = api.removeStatusEffect.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(encounter.id);
+    },
+    onMutate: async (newStatusEffect) => {
+      await encounterById.cancel(encounter.id);
+      const previousEncounter = encounterById.getData(encounter.id);
+      encounterById.setData(encounter.id, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          participants: old.participants.map((participant) => {
+            if (participant.id === newStatusEffect.encounter_participant_id) {
+              return {
+                ...participant,
+                status_effects: participant.status_effects.filter(
+                  (effect) => effect.id !== newStatusEffect.status_effect_id
+                ),
+              };
+            }
+            return participant;
+          }),
+        };
+      });
+      return previousEncounter;
+    },
+  });
+  return (
+    <span className="flex flex-col gap-2">
+      {creature.status_effects?.map((effect) => (
+        <BasePopover
+          key={effect.id}
+          trigger={
+            <Button variant="outline" className="w-10 h-10">
+              {effectIconMap[effect.name as keyof typeof effectIconMap]}
+            </Button>
+          }
+          className="flex flex-col gap-2 text-sm f."
+        >
+          {effect.description}
+          {!!effect.save_ends_dc && (
+            <span>Save ends ({effect.save_ends_dc})</span>
+          )}
+          <Button onClick={() => removeStatusEffect(effect)}>Remove</Button>
+        </BasePopover>
+      ))}
+      <Tip text={creature.name}>
+        <Card
+          data-active={creature.is_active}
+          className={clsx(
+            "w-28 h-40 shadow-lg relative select-none mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
+            {
+              "h-48 mb-0": creature.is_active,
+              "opacity-40":
+                (encounter?.current_round === 0 && !creature.has_surprise) ||
+                index < activeIndex,
+            },
+            className
+          )}
+        >
+          <HealthMeterOverlay creature={creature} />
+          {creature.creature_id === "pending" ? (
+            <span>Loading</span>
+          ) : (
+            <CharacterIcon
+              id={creature.creature_id}
+              name={creature.name}
+              width={400}
+              height={400}
+              className="h-60 object-cover"
+            />
+          )}
+          {children}
+        </Card>
+      </Tip>
+
+      <div className={"flex justify-center "}>
+        {creature.is_active && <ChevronUp />}
+      </div>
+    </span>
   );
 }
 
@@ -318,12 +380,7 @@ export function BattleCard({
         data-active={creature.is_active}
         className={clsx(
           " w-[450px] h-[300px] bg-white shadow-lg flex flex-col justify-between transition-all hover:rounded-xl group",
-          className,
-          {
-            "outline-zinc-900 outline": isSelected,
-            "opacity-40":
-              encounter?.current_round === 0 && !creature.has_surprise,
-          }
+          className
         )}
       >
         <CardHeader className="flex gap-2 justify-between items-center flex-row">
@@ -336,16 +393,13 @@ export function BattleCard({
           {creature.creature_id === "pending" ? (
             <span>Loading</span>
           ) : (
-            <div className="relative">
-              <CharacterIcon
-                id={creature.creature_id}
-                name={creature.name}
-                width={200}
-                height={200}
-                className="object-cover w-32 h-32"
-              />
-              <HealthMeterOverlay creature={creature} />
-            </div>
+            <CharacterIcon
+              id={creature.creature_id}
+              name={creature.name}
+              width={200}
+              height={200}
+              className="object-cover w-32 h-32"
+            />
           )}
           <div className="flex flex-col gap-5">
             {!creature.is_player && (
@@ -355,15 +409,6 @@ export function BattleCard({
           </div>
         </CardContent>
       </Card>
-      <AnimatePresence>
-        <div className={"flex absolute -bottom-8 flex-row gap-2"}>
-          {creature.is_active && (
-            <FadePresenceItem>
-              <ChevronUp />
-            </FadePresenceItem>
-          )}
-        </div>
-      </AnimatePresence>
       {children}
     </div>
   );

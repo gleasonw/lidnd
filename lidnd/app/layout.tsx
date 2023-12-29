@@ -1,6 +1,8 @@
 import "@/app/globals.css";
+import { TRPCReactProvider } from "@/trpc/react";
 
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: "LiDnD",
@@ -12,10 +14,13 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <TRPCReactProvider cookies={cookies().toString()}>
+          {children}
+        </TRPCReactProvider>
+      </body>
     </html>
   );
 }

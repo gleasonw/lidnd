@@ -4,11 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
 import clsx from "clsx";
 import { ChevronUp } from "lucide-react";
-import { HealthMeterOverlay } from "@/app/encounters/[id]/run/battle-ui";
+import {
+  HealthMeterOverlay,
+  SimpleIconBattleCard,
+} from "@/app/encounters/[id]/run/battle-ui";
 import { PageRefresher } from "@/app/observe/[id]/page-refresher";
 import { effectIconMap } from "@/app/encounters/[id]/run/effectIconMap";
 import { BasePopover } from "@/app/encounters/base-popover";
 import { Button } from "@/components/ui/button";
+import Providers from "@/app/encounters/providers";
 
 export default function ObservePage({ params }: { params: { id: string } }) {
   return (
@@ -61,36 +65,11 @@ async function EncounterObserverView({ id }: { id?: string }) {
                   );
                 })}
               </span>
-              <Card
-                key={participant.id}
-                data-active={participant.is_active}
-                className={clsx(
-                  "w-28 h-40 shadow-lg border-2 relative select-none mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
-                  {
-                    "h-48 mb-0": participant.is_active,
-                    "opacity-40":
-                      (encounter?.current_round === 0 &&
-                        !participant.has_surprise) ||
-                      index < activeIndex,
-                  }
-                )}
-              >
-                <HealthMeterOverlay creature={participant} />
-                {participant.creature_id === "pending" ? (
-                  <span>Loading</span>
-                ) : (
-                  <CharacterIcon
-                    id={participant.creature_id}
-                    name={participant.name}
-                    width={400}
-                    height={400}
-                    className="h-60 object-cover"
-                  />
-                )}
-              </Card>
-              <div className={"flex justify-center p-5"}>
-                {participant.is_active && <ChevronUp />}
-              </div>
+              <SimpleIconBattleCard
+                creature={participant}
+                index={index}
+                activeIndex={activeIndex}
+              />
             </div>
           );
         })}

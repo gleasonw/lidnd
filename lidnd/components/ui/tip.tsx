@@ -9,15 +9,17 @@ import {
 export function Tip({
   children,
   text,
+  className,
 }: {
   children: React.ReactNode;
   text: string;
+  className?: string;
 }) {
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent className="w-60">{text}</TooltipContent>
+        <TooltipContent className={className}>{text}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
@@ -34,7 +36,7 @@ export function ButtonWithTooltip({
   className?: string;
 } & React.ComponentPropsWithoutRef<typeof Button>) {
   return (
-    <Tip text={text}>
+    <Tip text={text} className="w-60">
       <Button className={className} {...props}>
         {children}
       </Button>
