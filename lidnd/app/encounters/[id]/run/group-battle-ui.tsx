@@ -57,7 +57,6 @@ export function GroupBattleUI({ children }: GroupBattleUIProps) {
         players={players.map((player) => (
           <GroupBattleCard
             key={player.id}
-            onClick={() => setDmSelectedCreature(player.id)}
             creature={player}
             isSelected={player.id === dmSelectedCreature}
           />

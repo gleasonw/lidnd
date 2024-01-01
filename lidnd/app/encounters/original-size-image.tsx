@@ -15,7 +15,7 @@ export function OriginalSizeImage({
   alt,
   className,
 }: OriginalSizeImageProps) {
-  const imgRef = useRef(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
   const [width, setWidth] = React.useState<number | undefined>(undefined);
 
   const handleImageLoad = () => {

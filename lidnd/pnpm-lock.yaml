@@ -16,16 +16,16 @@ dependencies:
     version: 0.9.1(react@18.2.0)
   '@conform-to/zod':
     specifier: ^0.9.1
-    version: 0.9.1(@conform-to/dom@0.9.1)(zod@3.21.4)
+    version: 0.9.1(@conform-to/dom@0.9.1)(zod@3.22.4)
   '@hookform/resolvers':
     specifier: ^3.3.2
     version: 3.3.2(react-hook-form@7.49.2)
   '@lucia-auth/adapter-postgresql':
     specifier: ^2.0.2
-    version: 2.0.2(lucia@2.7.5)(postgres@3.4.3)
+    version: 2.0.2(lucia@2.7.6)(postgres@3.4.3)
   '@lucia-auth/oauth':
     specifier: ^3.5.0
-    version: 3.5.0(lucia@2.7.5)
+    version: 3.5.0(lucia@2.7.6)
   '@radix-ui/react-checkbox':
     specifier: ^1.0.4
     version: 1.0.4(@types/react-dom@18.2.7)(@types/react@18.2.21)(react-dom@18.2.0)(react@18.2.0)
@@ -115,7 +115,7 @@ dependencies:
     version: 0.29.2(@types/react@18.2.21)(expo-sqlite@13.2.0)(postgres@3.4.3)(react@18.2.0)
   drizzle-zod:
     specifier: ^0.5.1
-    version: 0.5.1(drizzle-orm@0.29.2)(zod@3.21.4)
+    version: 0.5.1(drizzle-orm@0.29.2)(zod@3.22.4)
   eslint:
     specifier: 8.48.0
     version: 8.48.0
@@ -135,8 +135,8 @@ dependencies:
     specifier: ^4.0.8
     version: 4.0.8
   lucia:
-    specifier: ^2.7.5
-    version: 2.7.5
+    specifier: ^2.7.6
+    version: 2.7.6
   lucide-react:
     specifier: ^0.277.0
     version: 0.277.0(react@18.2.0)
@@ -186,8 +186,8 @@ dependencies:
     specifier: ^9.0.4
     version: 9.0.4(react@18.2.0)
   zod:
-    specifier: 3.21.4
-    version: 3.21.4
+    specifier: 3.22.4
+    version: 3.22.4
 
 devDependencies:
   '@types/lodash':
@@ -2265,14 +2265,14 @@ packages:
       react: 18.2.0
     dev: false
 
-  /@conform-to/zod@0.9.1(@conform-to/dom@0.9.1)(zod@3.21.4):
+  /@conform-to/zod@0.9.1(@conform-to/dom@0.9.1)(zod@3.22.4):
     resolution: {integrity: sha512-4hWBGzRpSd4RrlBFRXjS6QQ2MWFpMZDbDwz8H/xiq38Xl5yaL1RSZMhOJ4pmsmy8CIKghs78qvaD8ltTFlrNvQ==}
     peerDependencies:
       '@conform-to/dom': 0.9.1
       zod: ^3.21.0
     dependencies:
       '@conform-to/dom': 0.9.1
-      zod: 3.21.4
+      zod: 3.22.4
     dev: false
 
   /@drizzle-team/studio@0.0.37:
@@ -3201,7 +3201,7 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: false
 
-  /@lucia-auth/adapter-postgresql@2.0.2(lucia@2.7.5)(postgres@3.4.3):
+  /@lucia-auth/adapter-postgresql@2.0.2(lucia@2.7.6)(postgres@3.4.3):
     resolution: {integrity: sha512-gQ7SlFu+gxQj2IX2J8ZVivcLBbdnf9SbNQOVWkJxZOdY1uaaIQGeNfEDld2Awy02VrXmA4sjHsbkJx1JPVw2+A==}
     peerDependencies:
       lucia: ^2.0.0
@@ -3213,16 +3213,16 @@ packages:
       postgres:
         optional: true
     dependencies:
-      lucia: 2.7.5
+      lucia: 2.7.6
       postgres: 3.4.3
     dev: false
 
-  /@lucia-auth/oauth@3.5.0(lucia@2.7.5):
+  /@lucia-auth/oauth@3.5.0(lucia@2.7.6):
     resolution: {integrity: sha512-JSwAMVwlDJtbvfcJV1nbkv41OD830pgICrx8zFT71SYd5I1MnEQ+GqMTXBGRyxzc5XlLatT8ZS1Jt0k81487xg==}
     peerDependencies:
       lucia: ^2.0.0
     dependencies:
-      lucia: 2.7.5
+      lucia: 2.7.6
     dev: false
 
   /@next/env@13.4.12:
@@ -6950,7 +6950,7 @@ packages:
       json-diff: 0.9.0
       minimatch: 7.4.6
       semver: 7.5.4
-      zod: 3.21.4
+      zod: 3.22.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -7026,14 +7026,14 @@ packages:
       react: 18.2.0
     dev: false
 
-  /drizzle-zod@0.5.1(drizzle-orm@0.29.2)(zod@3.21.4):
+  /drizzle-zod@0.5.1(drizzle-orm@0.29.2)(zod@3.22.4):
     resolution: {integrity: sha512-C/8bvzUH/zSnVfwdSibOgFjLhtDtbKYmkbPbUCq46QZyZCH6kODIMSOgZ8R7rVjoI+tCj3k06MRJMDqsIeoS4A==}
     peerDependencies:
       drizzle-orm: '>=0.23.13'
       zod: '*'
     dependencies:
       drizzle-orm: 0.29.2(@types/react@18.2.21)(expo-sqlite@13.2.0)(postgres@3.4.3)(react@18.2.0)
-      zod: 3.21.4
+      zod: 3.22.4
     dev: false
 
   /ee-first@1.1.1:
@@ -9034,8 +9034,8 @@ packages:
       es5-ext: 0.10.62
     dev: true
 
-  /lucia@2.7.5:
-    resolution: {integrity: sha512-2e/Oezb+b2qjQLyP28CraBlad2s9GAp22bfPLn05IsXi99FEX/oTo2TGMM4Gn9nJT7ow15kEFkwL3lBUpknopA==}
+  /lucia@2.7.6:
+    resolution: {integrity: sha512-xyRkNtevf0DUM4nGC6F2nCFFNphZ1qqBrfWwAgPa9zkpQsVJ/hN32I8zAY+pm+ZKWPPS/C/Sqqmo2LreSCzg7w==}
     dev: false
 
   /lucide-react@0.277.0(react@18.2.0):
@@ -11876,3 +11876,7 @@ packages:
 
   /zod@3.21.4:
     resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}
+    dev: false
+
+  /zod@3.22.4:
+    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
