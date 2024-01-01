@@ -332,7 +332,7 @@ function ExistingCreatureOptions({
     name,
   });
   return (
-    <div className={"flex flex-col gap-2 max-h-full overflow-auto"}>
+    <div className={"flex flex-col gap-2 h-96 overflow-auto"}>
       {creatures?.map((creature) => (
         <ListedCreature
           key={creature.id}
