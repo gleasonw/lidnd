@@ -46,7 +46,7 @@
     "clsx": "^2.0.0",
     "cmdk": "^0.2.0",
     "cookies-next": "^4.1.0",
-    "drizzle-orm": "^0.28.6",
+    "drizzle-orm": "^0.29.2",
     "drizzle-zod": "^0.5.1",
     "eslint": "8.48.0",
     "eslint-config-next": "14.0.0",
@@ -54,7 +54,7 @@
     "framer-motion": "^10.16.16",
     "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
-    "lucia": "^2.7.5",
+    "lucia": "^2.7.6",
     "lucide-react": "^0.277.0",
     "next": "13.4.12",
     "openapi-fetch": "^0.7.10",
@@ -71,11 +71,11 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "5.2.2",
     "use-debounce": "^9.0.4",
-    "zod": "3.21.4"
+    "zod": "3.22.4"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.202",
-    "drizzle-kit": "^0.19.13",
+    "drizzle-kit": "^0.20.9",
     "openapi-typescript": "^6.7.3",
     "vitest": "^0.34.6"
   }

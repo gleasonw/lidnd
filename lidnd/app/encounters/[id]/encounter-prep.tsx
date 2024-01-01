@@ -4,11 +4,12 @@ import { ExistingCreature } from "@/app/encounters/[id]/creature-add-form";
 import {
   AnimationListItem,
   BattleCard,
+  InitiativeTypeToggle,
 } from "@/app/encounters/[id]/run/battle-ui";
 import { useEncounterId } from "@/app/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, Dices, Play, Skull, X, Zap } from "lucide-react";
+import { Clock, Dices, Play, Skull, X, Swords } from "lucide-react";
 import Link from "next/link";
 import { FullCreatureAddForm } from "@/app/encounters/full-creature-add-form";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ import { api } from "@/trpc/react";
 import {
   useCreateCreatureInEncounter,
   useRemoveParticipantFromEncounter,
+  useStartEncounter,
 } from "@/app/encounters/[id]/hooks";
 
 export default function EncounterPrep() {
@@ -118,6 +120,30 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
           </Button>
         </Link>
       ) : (
+        <EncounterStartButton />
+      )}
+    </div>
+  );
+}
+
+export function EncounterStartButton() {
+  const id = useEncounterId();
+  const [encounter] = api.encounterById.useSuspenseQuery(id);
+  const { mutate: startEncounter } = useStartEncounter();
+  return (
+    <span className="flex gap-2 items-center">
+      <InitiativeTypeToggle />
+      {encounter.initiative_type === "group" ? (
+        <Link
+          href={`${id}/run`}
+          onClick={async () => encounter && (await startEncounter(id))}
+        >
+          <Button>
+            <Swords />
+            Commence the battle
+          </Button>
+        </Link>
+      ) : (
         <Link href={`${id}/roll`}>
           <Button>
             <Dices />
@@ -125,7 +151,7 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
           </Button>
         </Link>
       )}
-    </div>
+    </span>
   );
 }
 
@@ -133,8 +159,7 @@ function EncounterParticipantRow() {
   const { mutate: removeCreatureFromEncounter } =
     useRemoveParticipantFromEncounter();
   const id = useEncounterId();
-  const [encounter, encounterQuery] = api.encounterById.useSuspenseQuery(id);
-  console.log(encounter?.participants);
+  const [encounter] = api.encounterById.useSuspenseQuery(id);
 
   return (
     <AnimatePresence>

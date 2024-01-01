@@ -60,6 +60,7 @@ export function useCreateCreatureInEncounter() {
           has_surprise: false,
           status_effects: [],
           minion_count: 0,
+          has_played_this_round: false,
         };
         return {
           ...old,
@@ -165,6 +166,49 @@ export function useUpdateEncounterMinionParticipant() {
         };
       });
       return { previousEncounter };
+    },
+  });
+}
+
+export function useRemoveStatusEffect() {
+  const { encounterById } = api.useUtils();
+  const id = useEncounterId();
+  return api.removeStatusEffect.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(id);
+    },
+    onMutate: async (newStatusEffect) => {
+      await encounterById.cancel(id);
+      const previousEncounter = encounterById.getData(id);
+      encounterById.setData(id, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          participants: old.participants.map((participant) => {
+            if (participant.id === newStatusEffect.encounter_participant_id) {
+              return {
+                ...participant,
+                status_effects: participant.status_effects.filter(
+                  (effect) => effect.id !== newStatusEffect.status_effect_id
+                ),
+              };
+            }
+            return participant;
+          }),
+        };
+      });
+      return previousEncounter;
+    },
+  });
+}
+
+export function useStartEncounter() {
+  const { encounterById } = api.useUtils();
+  const id = useEncounterId();
+
+  return api.startEncounter.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(id);
     },
   });
 }

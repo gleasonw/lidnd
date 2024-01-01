@@ -1,7 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
-import { status_effects_5e } from "@/server/api/db/schema";
 
 console.log(process.env.NODE_ENV);
 
@@ -9,6 +8,7 @@ const db_url =
   process.env.NODE_ENV === "production"
     ? process.env.DATABASE_URL
     : "postgresql://will:password@localhost:5432/dnd";
+console.log(db_url);
 if (!db_url) {
   throw new Error("DATABASE_URL not set");
 }

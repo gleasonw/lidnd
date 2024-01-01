@@ -2,6 +2,7 @@
 
 import InitiativeInput from "@/app/encounters/[id]/InitiativeInput";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
+import { useStartEncounter } from "@/app/encounters/[id]/hooks";
 import { useEncounterId } from "@/app/encounters/hooks";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import { Button } from "@/components/ui/button";
@@ -16,11 +17,7 @@ export function GroupInitiativeInput() {
   const { encounterById } = api.useUtils();
 
   const [encounter, encounterQuery] = api.encounterById.useSuspenseQuery(id);
-  const { mutate: startEncounter } = api.startEncounter.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(id);
-    },
-  });
+  const { mutate: startEncounter } = useStartEncounter();
   return (
     <AnimatePresence>
       <FadePresenceItem className="flex flex-col gap-10 items-center">

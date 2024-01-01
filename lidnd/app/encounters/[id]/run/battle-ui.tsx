@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
   ChevronUp,
+  ColumnsIcon,
+  MoveHorizontal,
   Plus,
+  StretchHorizontal,
   X,
 } from "lucide-react";
 import { ParticipantHealthForm } from "@/app/encounters/[id]/run/creature-health-form";
@@ -20,122 +21,35 @@ import {
 import InitiativeInput from "@/app/encounters/[id]/InitiativeInput";
 import React, { Suspense, experimental_useEffectEvent } from "react";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
-import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
-import { updateTurnOrder, getAWSimageURL } from "@/app/encounters/utils";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { useEncounterId } from "@/app/encounters/hooks";
 import { EncounterCreature } from "@/server/api/router";
 import {
   useCreateCreatureInEncounter,
-  useRemoveParticipantFromEncounter,
+  useRemoveStatusEffect,
 } from "@/app/encounters/[id]/hooks";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
-import { OriginalSizeImage } from "@/app/encounters/original-size-image";
 import { BasePopover } from "@/app/encounters/base-popover";
 import { StatusInput } from "./status-input";
 import { effectIconMap } from "./effectIconMap";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ButtonWithTooltip } from "@/components/ui/tip";
+import { LinearBattleUI } from "./linear-battle-ui";
+import { GroupBattleUI } from "@/app/encounters/[id]/run/group-battle-ui";
+import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
 
 export function BattleUILoader() {
-  return (
-    <AnimatePresence>
-      <Suspense fallback={<div>Loading...</div>}>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.1 } }}
-        >
-          <BattleUI />
-        </motion.div>
-      </Suspense>
-    </AnimatePresence>
-  );
-}
-
-export function BattleUI() {
   const id = useEncounterId();
+
   const [encounter] = api.encounterById.useSuspenseQuery(id);
-  const encounterParticipants = encounter.participants;
-  const { encounterById } = api.useUtils();
-  const {
-    mutate: changeActiveTo,
-    isLoading: isTurnLoading,
-    variables,
-  } = api.updateTurn.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(id);
-    },
-  });
-
-  let displayedParticipants: EncounterCreature[];
-  if (isTurnLoading && variables && encounterParticipants) {
-    const { updatedParticipants } = updateTurnOrder(
-      variables.to,
-      encounterParticipants,
-      encounter
-    );
-    displayedParticipants = updatedParticipants;
-  } else {
-    displayedParticipants = encounterParticipants;
-  }
-
-  const activeIndex = displayedParticipants.findIndex(
-    (creature) => creature.is_active
-  );
-  const activeParticipant = displayedParticipants[activeIndex];
-
-  const [dmSelectedCreature, setDmSelectedCreature] = React.useState(
-    activeParticipant?.id ?? null
-  );
-
-  const selectedId = dmSelectedCreature ?? activeParticipant?.id ?? null;
-
-  const { mutate: removeCreatureFromEncounter } =
-    useRemoveParticipantFromEncounter();
-
-  function handleChangeTurn(direction: "next" | "previous") {
-    const { newlyActiveParticipant } = updateTurnOrder(
-      direction,
-      encounterParticipants,
-      encounter
-    );
-    setDmSelectedCreature(newlyActiveParticipant.id);
-    changeActiveTo({
-      encounter_id: id,
-      to: direction,
-    });
-  }
-
-  const creature = displayedParticipants?.find(
-    (participant) => participant.id === selectedId
-  );
-
-  const scrollContainer = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (scrollContainer.current) {
-      const activeElement =
-        scrollContainer.current.querySelector("[data-active=true]");
-      if (activeElement) {
-        scrollContainer.current.scrollTo({
-          left:
-            activeElement.getBoundingClientRect().left +
-            scrollContainer.current.scrollLeft -
-            scrollContainer.current.getBoundingClientRect().left,
-          behavior: "smooth",
-        });
-      }
-    }
-  }, [activeParticipant?.id]);
 
   const roundText =
     encounter?.current_round === 0
@@ -143,89 +57,73 @@ export function BattleUI() {
       : `Round ${encounter?.current_round}`;
 
   return (
-    <div className="flex flex-col gap-5 justify-center items-center">
-      <div className={"flex gap-3 items-center w-full justify-between"}>
-        <EncounterTime time={encounter?.started_at ?? undefined} />
-        <h1 className="text-xl">{roundText}</h1>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus /> Add creature
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl overflow-auto max-h-screen">
-            <BattleAddCreatureForm />
-          </DialogContent>
-        </Dialog>
-      </div>
-      <div
-        className={clsx(
-          "flex flex-row sm:gap-4 px-8 pt-2 pb-8 max-w-full items-center overflow-auto"
-        )}
-        ref={scrollContainer}
-      >
-        <Button
-          className="absolute left-0 sm:left-10 z-10 h-10 rounded-full shadow-md"
-          onClick={() => handleChangeTurn("previous")}
-          variant="outline"
-          disabled={isTurnLoading}
+    <AnimatePresence>
+      <Suspense fallback={<div>Loading...</div>}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: { duration: 0.1 } }}
         >
-          <ChevronLeftIcon />
-        </Button>
-        <AnimatePresence>
-          {displayedParticipants?.slice().map((participant, index) => (
-            <AnimationListItem key={participant.id}>
-              <BattleCard
-                onClick={() => setDmSelectedCreature(participant.id)}
-                creature={participant}
-                isSelected={participant.id === selectedId}
-                className={clsx(
-                  {
-                    "opacity-40":
-                      !(participant.id === selectedId) &&
-                      activeIndex &&
-                      index < activeIndex,
-                  },
-                  "cursor-pointer"
-                )}
-              />
-            </AnimationListItem>
-          ))}
-        </AnimatePresence>
-        <Button
-          className="absolute right-0 sm:right-10 z-10 h-10 rounded-full shadow-md"
-          onClick={() => handleChangeTurn("next")}
-          disabled={isTurnLoading}
-          variant="outline"
-        >
-          <ChevronRightIcon />
-        </Button>
-      </div>
-
-      {creature && (
-        <>
-          {!creature.is_player ? (
-            <OriginalSizeImage
-              src={getAWSimageURL(creature.creature_id, "stat_block")}
-              alt={"stat block for " + creature.name}
-              key={creature.creature_id}
-            />
-          ) : (
-            <span className="text-2xl p-5">Player</span>
-          )}
-          <Button
-            variant="destructive"
-            onClick={() =>
-              removeCreatureFromEncounter({
-                encounter_id: id,
-                participant_id: creature.id,
-              })
-            }
+          <div
+            className={"flex gap-3 items-center w-full justify-between pb-8"}
           >
-            Remove from encounter
-          </Button>
-        </>
-      )}
+            <div className="flex gap-2 items-center">
+              <EncounterTime time={encounter?.started_at ?? undefined} />
+              <InitiativeTypeToggle />
+            </div>
+            <h1 className="text-xl">{roundText}</h1>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus /> Add creature
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl overflow-auto max-h-screen">
+                <BattleAddCreatureForm />
+              </DialogContent>
+            </Dialog>
+          </div>
+          {encounter.initiative_type === "linear" ? (
+            <LinearBattleUI />
+          ) : (
+            <GroupBattleUI />
+          )}
+        </motion.div>
+      </Suspense>
+    </AnimatePresence>
+  );
+}
+
+export function InitiativeTypeToggle() {
+  const id = useEncounterId();
+  const { encounterById } = api.useUtils();
+  const [encounter] = api.encounterById.useSuspenseQuery(id);
+  const { mutate: toggleInitiativeType } =
+    api.updateEncounterInitiativeType.useMutation({
+      onSettled: async () => {
+        return await encounterById.invalidate(id);
+      },
+    });
+
+  return (
+    <div>
+      <ButtonWithTooltip
+        text="Linear initiative"
+        variant={encounter.initiative_type === "linear" ? "default" : "outline"}
+        onClick={() =>
+          toggleInitiativeType({ encounter_id: id, initiative_type: "linear" })
+        }
+      >
+        <MoveHorizontal />
+      </ButtonWithTooltip>
+      <ButtonWithTooltip
+        variant={encounter.initiative_type === "group" ? "default" : "outline"}
+        onClick={() =>
+          toggleInitiativeType({ encounter_id: id, initiative_type: "group" })
+        }
+        text="Group initiative"
+      >
+        <StretchHorizontal />
+      </ButtonWithTooltip>
     </div>
   );
 }
@@ -240,7 +138,6 @@ export type BattleCardProps = {
 
 export function BattleCard({
   creature,
-  children,
   className,
   isSelected,
   header,
@@ -248,35 +145,6 @@ export function BattleCard({
 }: BattleCardProps) {
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
-  const { encounterById } = api.useUtils();
-
-  const { mutate: removeStatusEffect } = api.removeStatusEffect.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(encounter.id);
-    },
-    onMutate: async (newStatusEffect) => {
-      await encounterById.cancel(encounter.id);
-      const previousEncounter = encounterById.getData(encounter.id);
-      encounterById.setData(encounter.id, (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          participants: old.participants.map((participant) => {
-            if (participant.id === newStatusEffect.encounter_participant_id) {
-              return {
-                ...participant,
-                status_effects: participant.status_effects.filter(
-                  (effect) => effect.id !== newStatusEffect.status_effect_id
-                ),
-              };
-            }
-            return participant;
-          }),
-        };
-      });
-      return previousEncounter;
-    },
-  });
 
   return (
     <div
@@ -286,70 +154,25 @@ export function BattleCard({
       {creature?.minion_count && creature.minion_count > 1 ? (
         <MinionCardStack minionCount={creature.minion_count} />
       ) : null}
-      <Card
+      <BattleCardLayout
         key={creature.id}
         data-active={creature.is_active}
-        className={clsx(
-          " bg-white w-[300px] shadow-lg flex flex-col justify-between transition-all hover:rounded-xl group",
-          className,
-          {
-            "outline-zinc-900 outline": isSelected,
-            "opacity-40":
-              encounter?.current_round === 0 && !creature.has_surprise,
-          }
-        )}
+        className={clsx(className, {
+          "outline-zinc-900 outline": isSelected,
+          "opacity-40":
+            encounter?.current_round === 0 && !creature.has_surprise,
+        })}
       >
-        <span className={"h-12 flex gap-1 flex-wrap items-center"}>
-          {creature.status_effects?.map((effect) => (
-            <BasePopover
-              key={effect.id}
-              trigger={
-                <Button variant="outline">
-                  {effectIconMap[effect.name as keyof typeof effectIconMap]}
-                </Button>
-              }
-              className="flex flex-col gap-2 text-sm"
-            >
-              {effect.description}
-              {!!effect.save_ends_dc && (
-                <span>Save ends ({effect.save_ends_dc})</span>
-              )}
-              <Button onClick={() => removeStatusEffect(effect)}>Remove</Button>
-            </BasePopover>
-          ))}
-        </span>
-        <CardHeader className="flex pt-0 flex-col gap-2 justify-between items-center">
-          <CardTitle className="text-xl truncate max-w-full group-hover:opacity-50">
-            {creature.name}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
+        <BattleCardStatusEffects creature={creature} />
+        <BattleCardCreatureName creature={creature} />
+        <BattleCardContent>
           <span className="flex justify-between">
-            {creature.creature_id === "pending" ? (
-              <span>Loading</span>
-            ) : (
-              <div className="relative">
-                <CharacterIcon
-                  id={creature.creature_id}
-                  name={creature.name}
-                  width={200}
-                  height={200}
-                  className="object-cover w-32 h-32"
-                />
-                <HealthMeterOverlay creature={creature} />
-              </div>
-            )}
+            <BattleCardCreatureIcon creature={creature} />
             <InitiativeInput participant={creature} key={creature.id} />
           </span>
-
-          <div className="flex flex-col gap-5">
-            {!creature.is_player && (
-              <ParticipantHealthForm participant={creature} />
-            )}
-            <StatusInput participant={creature} />
-          </div>
-        </CardContent>
-      </Card>
+          <BattleCardHealthAndStatus creature={creature} />
+        </BattleCardContent>
+      </BattleCardLayout>
       <AnimatePresence>
         <div className={"flex absolute -bottom-8 flex-row gap-2"}>
           {creature.is_active && (
@@ -359,12 +182,126 @@ export function BattleCard({
           )}
         </div>
       </AnimatePresence>
-      {children}
     </div>
   );
 }
 
-function MinionCardStack({ minionCount }: { minionCount: number }) {
+export function BattleCardLayout({
+  className,
+  children,
+  ...props
+}: {
+  className?: string;
+  children: React.ReactNode;
+} & React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <Card
+      className={clsx(
+        "bg-white w-[300px] shadow-lg flex flex-col justify-between transition-all hover:rounded-xl group",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </Card>
+  );
+}
+
+export function BattleCardContent({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <CardContent className={clsx("flex flex-col gap-2", className)}>
+      {children}
+    </CardContent>
+  );
+}
+
+export function BattleCardStatusEffects({
+  creature,
+}: {
+  creature: EncounterCreature;
+}) {
+  const { mutate: removeStatusEffect } = useRemoveStatusEffect();
+
+  return (
+    <span className={"h-12 flex gap-1 flex-wrap items-center"}>
+      {creature.status_effects?.map((effect) => (
+        <BasePopover
+          key={effect.id}
+          trigger={
+            <Button variant="outline">
+              {effectIconMap[effect.name as keyof typeof effectIconMap]}
+            </Button>
+          }
+          className="flex flex-col gap-2 text-sm"
+        >
+          {effect.description}
+          {!!effect.save_ends_dc && (
+            <span>Save ends ({effect.save_ends_dc})</span>
+          )}
+          <Button onClick={() => removeStatusEffect(effect)}>Remove</Button>
+        </BasePopover>
+      ))}
+    </span>
+  );
+}
+
+export function BattleCardCreatureName({
+  creature,
+}: {
+  creature: EncounterCreature;
+}) {
+  return (
+    <CardHeader className="flex pt-0 flex-col gap-2 justify-between items-center">
+      <CardTitle className="text-xl truncate max-w-full group-hover:opacity-50">
+        {creature.name}
+      </CardTitle>
+    </CardHeader>
+  );
+}
+
+export function BattleCardCreatureIcon({
+  creature,
+  className,
+}: {
+  creature: EncounterCreature;
+  className?: string;
+}) {
+  return creature.creature_id === "pending" ? (
+    <span>Loading</span>
+  ) : (
+    <div className={clsx("relative", className)}>
+      <CharacterIcon
+        id={creature.creature_id}
+        name={creature.name}
+        width={200}
+        height={200}
+        className="object-cover w-32 h-32"
+      />
+      <HealthMeterOverlay creature={creature} />
+    </div>
+  );
+}
+
+export function BattleCardHealthAndStatus({
+  creature,
+}: {
+  creature: EncounterCreature;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      {!creature.is_player && <ParticipantHealthForm participant={creature} />}
+      <StatusInput participant={creature} />
+    </div>
+  );
+}
+
+export function MinionCardStack({ minionCount }: { minionCount: number }) {
   return (
     <Badge className="absolute top-2 right-2 w-11 whitespace-nowrap">
       x {minionCount}
@@ -412,7 +349,11 @@ export const AnimationListItem = ({
   );
 };
 
-function BattleAddCreatureForm({ children }: { children?: React.ReactNode }) {
+export function BattleAddCreatureForm({
+  children,
+}: {
+  children?: React.ReactNode;
+}) {
   const { mutate: addCreature, isLoading: isPendingCreatureAdd } =
     useCreateCreatureInEncounter();
   return (

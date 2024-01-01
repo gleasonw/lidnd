@@ -10,6 +10,7 @@ import {
   timestamp,
   uuid,
   varchar,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 
 export type DbSpell = InferInsertModel<typeof spells>;
@@ -35,6 +36,8 @@ export const spells = pgTable("spells", {
   areaTags: text("areaTags"),
 });
 
+export const initiatve_enum = pgEnum("initiative_type", ["linear", "group"]);
+
 export const encounters = pgTable(
   "encounters",
   {
@@ -48,6 +51,7 @@ export const encounters = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     current_round: integer("current_round").default(1).notNull(),
     ended_at: timestamp("ended_at"),
+    initiative_type: initiatve_enum("initiative_type").default("linear"),
   },
   (t) => {
     return {
@@ -71,7 +75,7 @@ export const creatures = pgTable(
   },
   (t) => {
     return {
-      userIndex: index("user_index").on(t.user_id),
+      userIndex: index("user_index_creatures").on(t.user_id),
     };
   }
 );
@@ -122,6 +126,9 @@ export const encounter_participant = pgTable(
     is_active: boolean("is_active").default(false).notNull(),
     has_surprise: boolean("has_surprise").default(false).notNull(),
     minion_count: integer("minion_count"),
+    has_played_this_round: boolean("has_played_this_round")
+      .default(false)
+      .notNull(),
   },
   (table) => {
     return {
