@@ -47,15 +47,6 @@ import { GroupBattleUI } from "@/app/encounters/[id]/run/group-battle-ui";
 import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
 
 export function BattleUILoader() {
-  const id = useEncounterId();
-
-  const [encounter] = api.encounterById.useSuspenseQuery(id);
-
-  const roundText =
-    encounter?.current_round === 0
-      ? "Surprise round"
-      : `Round ${encounter?.current_round}`;
-
   return (
     <AnimatePresence>
       <Suspense fallback={<div>Loading...</div>}>
@@ -63,40 +54,54 @@ export function BattleUILoader() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, transition: { duration: 0.1 } }}
         >
-          <div
-            className={"flex gap-3 items-center w-full justify-between pb-8"}
-          >
-            <div className="flex gap-2 items-center">
-              <EncounterTime time={encounter?.started_at ?? undefined} />
-              <InitiativeTypeToggle />
-            </div>
-            <h1 className="text-xl">{roundText}</h1>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus /> Add creature
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl overflow-auto max-h-screen">
-                <BattleAddCreatureForm />
-              </DialogContent>
-            </Dialog>
-          </div>
-          {encounter.initiative_type === "linear" ? (
-            <LinearBattleUI />
-          ) : (
-            <GroupBattleUI />
-          )}
+          <BattleUIHeader />
         </motion.div>
       </Suspense>
     </AnimatePresence>
   );
 }
 
+export function BattleUIHeader() {
+  const id = useEncounterId();
+  const { data: encounter } = api.encounterById.useQuery(id);
+
+  const roundText =
+    encounter?.current_round === 0
+      ? "Surprise round"
+      : `Round ${encounter?.current_round}`;
+
+  return (
+    <>
+      <div className={"flex gap-3 items-center w-full justify-between pb-8"}>
+        <div className="flex gap-2 items-center">
+          <EncounterTime time={encounter?.started_at ?? undefined} />
+          <InitiativeTypeToggle />
+        </div>
+        <h1 className="text-xl">{roundText}</h1>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus /> Add creature
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl overflow-auto max-h-screen">
+            <BattleAddCreatureForm />
+          </DialogContent>
+        </Dialog>
+      </div>
+      {encounter?.initiative_type === "linear" ? (
+        <LinearBattleUI />
+      ) : (
+        <GroupBattleUI />
+      )}
+    </>
+  );
+}
+
 export function InitiativeTypeToggle() {
   const id = useEncounterId();
   const { encounterById } = api.useUtils();
-  const [encounter] = api.encounterById.useSuspenseQuery(id);
+  const { data: encounter } = api.encounterById.useQuery(id);
   const { mutate: toggleInitiativeType } =
     api.updateEncounterInitiativeType.useMutation({
       onSettled: async () => {
@@ -108,7 +113,9 @@ export function InitiativeTypeToggle() {
     <div>
       <ButtonWithTooltip
         text="Linear initiative"
-        variant={encounter.initiative_type === "linear" ? "default" : "outline"}
+        variant={
+          encounter?.initiative_type === "linear" ? "default" : "outline"
+        }
         onClick={() =>
           toggleInitiativeType({ encounter_id: id, initiative_type: "linear" })
         }
@@ -116,7 +123,7 @@ export function InitiativeTypeToggle() {
         <MoveHorizontal />
       </ButtonWithTooltip>
       <ButtonWithTooltip
-        variant={encounter.initiative_type === "group" ? "default" : "outline"}
+        variant={encounter?.initiative_type === "group" ? "default" : "outline"}
         onClick={() =>
           toggleInitiativeType({ encounter_id: id, initiative_type: "group" })
         }

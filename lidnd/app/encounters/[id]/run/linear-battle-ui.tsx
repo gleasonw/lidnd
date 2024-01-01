@@ -1,9 +1,8 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { ChevronLeftIcon, ChevronRightIcon, Plus } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import React from "react";
 import { AnimatePresence } from "framer-motion";
-import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
 import { updateTurnOrder, getAWSimageURL } from "@/app/encounters/utils";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
@@ -11,13 +10,7 @@ import { useEncounterId } from "@/app/encounters/hooks";
 import { EncounterCreature } from "@/server/api/router";
 import { useRemoveParticipantFromEncounter } from "@/app/encounters/[id]/hooks";
 import { OriginalSizeImage } from "@/app/encounters/original-size-image";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import {
-  InitiativeTypeToggle,
-  BattleAddCreatureForm,
-  AnimationListItem,
-  BattleCard,
-} from "./battle-ui";
+import { AnimationListItem, BattleCard } from "./battle-ui";
 
 export function LinearBattleUI() {
   const id = useEncounterId();

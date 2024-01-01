@@ -1,5 +1,5 @@
-import { BattleUILoader } from "@/app/encounters/[id]/run/battle-ui";
+import { BattleUIHeader } from "@/app/encounters/[id]/run/battle-ui";
 
 export default function BattlePage() {
-  return <BattleUILoader />;
+  return <BattleUIHeader />;
 }

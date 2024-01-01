@@ -29,16 +29,19 @@ export interface GroupBattleUIProps {
 
 export function GroupBattleUI({ children }: GroupBattleUIProps) {
   const id = useEncounterId();
-  const [encounter] = api.encounterById.useSuspenseQuery(id);
+  const { data: encounter } = api.encounterById.useQuery(id);
+
+  const [dmSelectedCreature, setDmSelectedCreature] = React.useState<
+    string | null
+  >(encounter?.participants.at(0)?.id ?? null);
+  if (!encounter) return null;
   const monsters = encounter.participants.filter(
     (participant) => !participant.is_player
   );
   const players = encounter.participants.filter(
     (participant) => participant.is_player
   );
-  const [dmSelectedCreature, setDmSelectedCreature] = React.useState<
-    string | null
-  >(encounter.participants.at(0)?.id ?? null);
+
   const selectedMonster = monsters.find(
     (monster) => monster.id === dmSelectedCreature
   );
