@@ -25,6 +25,7 @@ import {
   useRemoveParticipantFromEncounter,
   useStartEncounter,
 } from "@/app/encounters/[id]/hooks";
+import { GroupBattleCard } from "@/app/encounters/[id]/run/group-battle-ui";
 
 export default function EncounterPrep() {
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
@@ -173,7 +174,12 @@ function EncounterParticipantRow() {
           .sort(sortEncounterCreatures)
           .map((participant) => (
             <AnimationListItem key={participant.id}>
-              <BattleCard creature={participant}>
+              <div className="flex flex-col items-center gap-3">
+                {encounter?.initiative_type === "group" ? (
+                  <GroupBattleCard creature={participant} />
+                ) : (
+                  <BattleCard creature={participant} />
+                )}
                 <Button
                   variant="ghost"
                   onClick={() =>
@@ -185,7 +191,7 @@ function EncounterParticipantRow() {
                 >
                   <X />
                 </Button>
-              </BattleCard>
+              </div>
             </AnimationListItem>
           ))}
         {encounter?.participants?.length === 0 && (

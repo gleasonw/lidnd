@@ -32,7 +32,7 @@ export default async function RootLayout({
 
         <TRPCReactProvider cookies={cookies().toString()}>
           <Providers userAvatar={<UserAvatar />}>
-            <div className="md:px-5 pt-2 pb-10">{children}</div>
+            <div className="lg:px-5 pt-2 pb-10">{children}</div>
           </Providers>
         </TRPCReactProvider>
       </body>
