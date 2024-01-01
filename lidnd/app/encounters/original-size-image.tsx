@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 
@@ -15,5 +15,22 @@ export function OriginalSizeImage({
   alt,
   className,
 }: OriginalSizeImageProps) {
-  return <img src={src} alt={alt} />;
+  const imgRef = useRef(null);
+  const [width, setWidth] = React.useState<number | undefined>(undefined);
+
+  const handleImageLoad = () => {
+    const width = imgRef.current?.naturalWidth;
+    setWidth(width);
+  };
+
+  const widthClass = width ? `max-w-[${width}px]` : "";
+  return (
+    <img
+      src={src}
+      alt={alt}
+      style={{ maxWidth: width ? `${width}px` : "100%" }}
+      ref={imgRef}
+      onLoad={handleImageLoad}
+    />
+  );
 }

@@ -21,7 +21,6 @@ import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const { getUserCreatures } = api.useUtils();
   const { data: creatures, isLoading: isLoadingCreatures } =
     api.getUserCreatures.useQuery({
@@ -139,7 +138,7 @@ export default function CreaturesPage() {
           {displayCreatures?.map((creature) => (
             <Card
               className={clsx(
-                "relative select-none h-56 mb-4 rounded-none justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col"
+                "relative select-none h-64 mb-4 rounded-none justify-between overflow-hidden pt-3 w-40 gap-0 items-center flex flex-col"
               )}
               key={creature.id}
             >

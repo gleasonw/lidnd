@@ -170,5 +170,54 @@ export function mergeEncounterCreature(
     has_surprise: participant.has_surprise,
     status_effects: [],
     minion_count: participant.minion_count,
+    has_played_this_round: participant.has_played_this_round,
   };
+}
+
+export function updateGroupTurn<
+  Participant extends {
+    has_played_this_round: boolean;
+    id: string;
+  },
+>(
+  participant_id: string,
+  participant_has_played_this_round: boolean,
+  participants: Participant[],
+  encounter: { current_round: number }
+): UpdateTurnOrderReturn<Participant> {
+  const participantWhoPlayed = participants.find(
+    (p) => p.id === participant_id
+  );
+  if (!participantWhoPlayed) {
+    throw new Error("Participant not found");
+  }
+  const updatedParticipants = participants.map((p) => {
+    if (p.id === participant_id) {
+      return {
+        ...p,
+        has_played_this_round: participant_has_played_this_round,
+      };
+    } else {
+      return p;
+    }
+  });
+  const allHavePlayed = updatedParticipants.every(
+    (p) => p.has_played_this_round
+  );
+  if (allHavePlayed) {
+    return {
+      updatedParticipants: participants.map((p) => ({
+        ...p,
+        has_played_this_round: false,
+      })),
+      updatedRoundNumber: encounter.current_round + 1,
+      newlyActiveParticipant: participantWhoPlayed,
+    };
+  } else {
+    return {
+      updatedParticipants,
+      updatedRoundNumber: encounter.current_round,
+      newlyActiveParticipant: participantWhoPlayed,
+    };
+  }
 }
