@@ -1,0 +1,1 @@
+ALTER TABLE "encounter_participant" ALTER COLUMN "has_played_this_round" SET NOT NULL;

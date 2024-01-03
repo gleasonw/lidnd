@@ -30,9 +30,11 @@ export default async function RootLayout({
       <body className={inter.className}>
         {/* Include shared UI here e.g. a header or sidebar */}
 
-        <Providers userAvatar={<UserAvatar />}>
-          <div className="md:px-5 pt-2 pb-10">{children}</div>
-        </Providers>
+        <TRPCReactProvider cookies={cookies().toString()}>
+          <Providers userAvatar={<UserAvatar />}>
+            <div className="lg:px-5 pt-2 pb-10">{children}</div>
+          </Providers>
+        </TRPCReactProvider>
       </body>
     </html>
   );

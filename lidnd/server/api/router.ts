@@ -16,6 +16,7 @@ import superjson from "superjson";
 import { ZodError, z } from "zod";
 import {
   sortEncounterCreatures,
+  updateGroupTurn,
   updateMinionCount,
   updateTurnOrder,
 } from "@/app/encounters/utils";
@@ -30,6 +31,7 @@ import {
   getUserEncounter,
   postEncounterToUserChannel,
   setActiveParticipant,
+  updateParticipantHasPlayed,
 } from "@/server/api/utils";
 import { mergeEncounterCreature } from "@/app/encounters/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
@@ -478,6 +480,66 @@ export const appRouter = t.router({
         return encounter;
       });
       return result;
+    }),
+
+  updateGroupTurn: protectedProcedure
+    .input(
+      z.object({
+        encounter_id: z.string(),
+        participant_id: z.string(),
+        has_played_this_round: z.boolean(),
+      })
+    )
+    .mutation(async (opts) => {
+      const result = await db.transaction(async (tx) => {
+        const [encounter, encounterParticipants] = await Promise.all([
+          getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id, tx),
+          getEncounterParticipantsWithCreatureData(opts.input.encounter_id, tx),
+        ]);
+
+        const { updatedParticipants, updatedRoundNumber } = updateGroupTurn(
+          opts.input.participant_id,
+          opts.input.has_played_this_round,
+          encounterParticipants,
+          encounter
+        );
+
+        await Promise.all([
+          ...updatedParticipants.map((p) => updateParticipantHasPlayed(p, tx)),
+          tx
+            .update(encounters)
+            .set({
+              current_round: updatedRoundNumber,
+            })
+            .where(eq(encounters.id, opts.input.encounter_id)),
+        ]);
+        return encounter;
+      });
+      return result;
+    }),
+
+  updateEncounterInitiativeType: protectedProcedure
+    .input(
+      z.object({
+        encounter_id: z.string(),
+        initiative_type: z.literal("linear").or(z.literal("group")),
+      })
+    )
+    .mutation(async (opts) => {
+      const result = await db
+        .update(encounters)
+        .set({
+          initiative_type: opts.input.initiative_type,
+        })
+        .where(eq(encounters.id, opts.input.encounter_id))
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update encounter",
+        });
+      }
+      return result[0];
     }),
 
   removeParticipantFromEncounter: protectedProcedure

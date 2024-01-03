@@ -1,18 +1,6 @@
 import { getEncounterData } from "@/server/api/utils";
 import { Suspense } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
-import clsx from "clsx";
-import { ChevronUp } from "lucide-react";
-import {
-  HealthMeterOverlay,
-  SimpleIconBattleCard,
-} from "@/app/encounters/[id]/run/battle-ui";
 import { PageRefresher } from "@/app/observe/[id]/page-refresher";
-import { effectIconMap } from "@/app/encounters/[id]/run/effectIconMap";
-import { BasePopover } from "@/app/encounters/base-popover";
-import { Button } from "@/components/ui/button";
-import Providers from "@/app/encounters/providers";
 
 export default function ObservePage({ params }: { params: { id: string } }) {
   return (
@@ -40,40 +28,20 @@ async function EncounterObserverView({ id }: { id?: string }) {
       <div className={"flex margin-auto gap-3 overflow-auto max-w-full"}>
         {encounter.participants.map((participant, index) => {
           return (
-            <div key={participant.id} className="flex flex-col items-center">
-              <span className="flex flex-wrap h-12">
-                {participant.status_effects.map((effect) => {
-                  return (
-                    <BasePopover
-                      key={effect.id}
-                      trigger={
-                        <Button variant="outline">
-                          {
-                            effectIconMap[
-                              effect.name as keyof typeof effectIconMap
-                            ]
-                          }
-                        </Button>
-                      }
-                      className="flex flex-col gap-2 text-sm"
-                    >
-                      <span>{effect.description}</span>
-                      {!!effect.save_ends_dc && (
-                        <span>Save ends ({effect.save_ends_dc})</span>
-                      )}
-                    </BasePopover>
-                  );
-                })}
-              </span>
-              <SimpleIconBattleCard
-                creature={participant}
-                index={index}
-                activeIndex={activeIndex}
-              />
-            </div>
+            <SimpleBattleCard
+              key={participant.id}
+              participant={participant}
+              activeIndex={activeIndex}
+              encounter={encounter}
+              index={index}
+            />
           );
         })}
       </div>
     </section>
   );
 }
+
+import React from "react";
+import { Encounter, EncounterCreature } from "@/server/api/router";
+import { SimpleBattleCard } from "./SimpleBattleCard";

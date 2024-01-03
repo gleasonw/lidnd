@@ -1,3 +1,9 @@
+DO $$ BEGIN
+ CREATE TYPE "initiative_type" AS ENUM('linear', 'group');
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "channels" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"channel_id" bigint NOT NULL,
@@ -23,7 +29,8 @@ CREATE TABLE IF NOT EXISTS "encounter_participant" (
 	"initiative" integer DEFAULT 0 NOT NULL,
 	"hp" integer DEFAULT 0 NOT NULL,
 	"is_active" boolean DEFAULT false NOT NULL,
-	"has_surprise" boolean DEFAULT false NOT NULL
+	"has_surprise" boolean DEFAULT false NOT NULL,
+	"minion_count" integer
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "encounters" (
@@ -34,7 +41,8 @@ CREATE TABLE IF NOT EXISTS "encounters" (
 	"created_at" timestamp DEFAULT now(),
 	"user_id" text NOT NULL,
 	"current_round" integer DEFAULT 1 NOT NULL,
-	"ended_at" timestamp
+	"ended_at" timestamp,
+	"initiative_type" "initiative_type" DEFAULT 'linear'
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "user_key" (
@@ -72,20 +80,20 @@ CREATE TABLE IF NOT EXISTS "spells" (
 	"name" varchar(256) NOT NULL,
 	"source" varchar(256) NOT NULL,
 	"page" integer NOT NULL,
-	"srd" boolean NOT NULL,
-	"basicRules" boolean NOT NULL,
+	"srd" boolean,
+	"basicRules" boolean,
 	"level" integer NOT NULL,
 	"school" varchar(256) NOT NULL,
 	"time" text NOT NULL,
-	"range" text NOT NULL,
+	"range" text,
 	"components" text NOT NULL,
 	"duration" text NOT NULL,
 	"entries" text NOT NULL,
-	"scalingLevelDice" text NOT NULL,
-	"damageInflict" text NOT NULL,
-	"savingThrow" text NOT NULL,
-	"miscTags" text NOT NULL,
-	"areaTags" text NOT NULL
+	"scalingLevelDice" text,
+	"damageInflict" text,
+	"savingThrow" text,
+	"miscTags" text,
+	"areaTags" text
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "status_effects_5e" (
@@ -101,7 +109,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"discord_id" text NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX IF NOT EXISTS "user_index" ON "creatures" ("user_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "user_index_creatures" ON "creatures" ("user_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "encounter_index" ON "encounter_participant" ("encounter_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "creature_index" ON "encounter_participant" ("creature_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "user_index" ON "encounters" ("user_id");--> statement-breakpoint

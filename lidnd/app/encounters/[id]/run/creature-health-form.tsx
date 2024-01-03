@@ -31,7 +31,7 @@ export function ParticipantHealthForm({
 
   return (
     <div className="flex flex-col gap-3">
-      <span className="whitespace-nowrap font-bold">
+      <span className="whitespace-nowrap font-bold text-lg text-center">
         {participant.hp} / {participant.max_hp}
       </span>
       <div className="flex gap-4">
@@ -69,7 +69,6 @@ export function ParticipantHealthForm({
         <Input
           placeholder="HP"
           type="number"
-          className="w-24"
           value={hpDiff}
           onChange={(e) => {
             if (!isNaN(parseInt(e.target.value))) {
@@ -116,8 +115,8 @@ export function MinionHealthForm({ participant }: MinionHealthFormProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3 items-center">
-      <span className="whitespace-nowrap font-bold">
+    <div className="flex flex-col gap-3">
+      <span className="whitespace-nowrap font-bold text-lg text-center">
         {participant.hp} / {participant.max_hp}
       </span>
       <div className="flex gap-4">
@@ -162,7 +161,6 @@ export function MinionHealthForm({ participant }: MinionHealthFormProps) {
             <Input
               placeholder="HP"
               type="number"
-              className="w-24"
               value={damage}
               onChange={(e) => {
                 if (!isNaN(parseInt(e.target.value))) {

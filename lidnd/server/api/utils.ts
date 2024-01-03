@@ -296,3 +296,15 @@ export async function postEncounterToUserChannel(encounter: { id: string }) {
   }
   return response;
 }
+
+export async function updateParticipantHasPlayed(
+  participant: EncounterParticipant,
+  dbObject = db
+) {
+  return await dbObject
+    .update(encounter_participant)
+    .set({
+      has_played_this_round: participant.has_played_this_round,
+    })
+    .where(eq(encounter_participant.id, participant.id));
+}

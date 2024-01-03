@@ -1,8 +1,8 @@
 {
+  "id": "885be3e5-eefd-4d9e-88c4-ede70c568cfc",
+  "prevId": "b7b94d9f-b6fd-4af3-ba99-be720ed6e8e4",
   "version": "5",
   "dialect": "pg",
-  "id": "8dc9f80f-ca8d-4eac-9e7f-cef088c412c8",
-  "prevId": "006fd737-01f2-43e2-9d49-2190c0c3f142",
   "tables": {
     "channels": {
       "name": "channels",
@@ -91,8 +91,8 @@
         }
       },
       "indexes": {
-        "user_index": {
-          "name": "user_index",
+        "user_index_creatures": {
+          "name": "user_index_creatures",
           "columns": [
             "user_id"
           ],
@@ -173,6 +173,19 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
+          "default": false
+        },
+        "minion_count": {
+          "name": "minion_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "has_played_this_round": {
+          "name": "has_played_this_round",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
           "default": false
         }
       },
@@ -277,6 +290,13 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
+        },
+        "initiative_type": {
+          "name": "initiative_type",
+          "type": "initiative_type",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'linear'"
         }
       },
       "indexes": {
@@ -570,7 +590,7 @@
           "name": "basicRules",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "level": {
           "name": "level",
@@ -594,7 +614,7 @@
           "name": "range",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "components": {
           "name": "components",
@@ -618,31 +638,31 @@
           "name": "scalingLevelDice",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "damageInflict": {
           "name": "damageInflict",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "savingThrow": {
           "name": "savingThrow",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "miscTags": {
           "name": "miscTags",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "areaTags": {
           "name": "areaTags",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         }
       },
       "indexes": {},
@@ -714,11 +734,19 @@
       "uniqueConstraints": {}
     }
   },
-  "enums": {},
+  "enums": {
+    "initiative_type": {
+      "name": "initiative_type",
+      "values": {
+        "linear": "linear",
+        "group": "group"
+      }
+    }
+  },
   "schemas": {},
   "_meta": {
+    "columns": {},
     "schemas": {},
-    "tables": {},
-    "columns": {}
+    "tables": {}
   }
 }
