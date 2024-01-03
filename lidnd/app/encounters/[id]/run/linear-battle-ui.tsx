@@ -92,7 +92,7 @@ export function LinearBattleUI() {
     <div className="flex flex-col gap-5">
       <div
         className={clsx(
-          "flex flex-row sm:gap-4 px-8 pt-2 pb-8 max-w-full items-center overflow-auto"
+          "flex flex-row sm:gap-4 px-8 pt-2 pb-8 max-w-full items-center overflow-auto mx-auto"
         )}
         ref={scrollContainer}
       >

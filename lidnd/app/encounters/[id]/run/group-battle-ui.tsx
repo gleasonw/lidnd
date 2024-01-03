@@ -90,23 +90,13 @@ export function GroupBattleLayout({
 } & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className="flex flex-col justify-center" {...props}>
-      <div className="flex gap-4 flex-col ">
-        <CardHeader className="text-xl text-bold text-center">
-          <span className="flex">
-            Monsters <Skull />
-          </span>
-        </CardHeader>
-        <div className="flex overflow-auto max-w-full gap-4 pb-2">
+      <div className="flex gap-4 flex-col">
+        <div className="flex overflow-auto max-w-full gap-4 pb-2 px-2 mx-auto">
           {monsters}
         </div>
         {children}
         <Separator />
-        <CardHeader className="text-xl text-bold text-center">
-          <span className="flex">
-            Players <Sword />
-          </span>
-        </CardHeader>
-        <div className="flex overflow-auto max-w-full gap-4 pb-2">
+        <div className="flex overflow-auto max-w-full gap-4 pb-2 px-2 mx-auto">
           {players}
         </div>
       </div>

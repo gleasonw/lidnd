@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useRef } from "react";
-import Image from "next/image";
-import clsx from "clsx";
 
 export interface OriginalSizeImageProps {
   src: string;
@@ -23,14 +21,35 @@ export function OriginalSizeImage({
     setWidth(width);
   };
 
+  React.useEffect(() => {
+    const updateWidth = () => {
+      // If window size is smaller than image size, update width
+      if (imgRef.current && window.innerWidth < imgRef.current.naturalWidth) {
+        setWidth(window.innerWidth);
+      } else {
+        setWidth(imgRef.current?.naturalWidth);
+      }
+    };
+
+    window.addEventListener("resize", updateWidth);
+
+    updateWidth();
+
+    return () => {
+      window.removeEventListener("resize", updateWidth);
+    };
+  }, [imgRef]);
+
   const widthClass = width ? `max-w-[${width}px]` : "";
   return (
-    <img
-      src={src}
-      alt={alt}
-      style={{ maxWidth: width ? `${width}px` : "100%" }}
-      ref={imgRef}
-      onLoad={handleImageLoad}
-    />
+    <div className="flex justify-center items-center">
+      <img
+        src={src}
+        alt={alt}
+        style={{ maxWidth: width ? `${width}px` : "100%" }}
+        ref={imgRef}
+        onLoad={handleImageLoad}
+      />
+    </div>
   );
 }
