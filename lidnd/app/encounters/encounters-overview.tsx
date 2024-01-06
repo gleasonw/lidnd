@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
-import { useRouter } from "next/navigation";
 import {
   Popover,
   PopoverContent,
@@ -13,15 +12,14 @@ import {
 } from "@/components/ui/popover";
 import { ExternalLink, MoreHorizontal, Plus } from "lucide-react";
 import { EncounterTime } from "@/app/encounters/[id]/run/encounter-time";
-import { LoadingButton } from "@/components/ui/loading-button";
 import { api } from "@/trpc/react";
 import { Encounter } from "@/server/api/router";
-import { getQueryKey } from "@trpc/react-query";
+import { useEncounterId } from "@/app/encounters/hooks";
+import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 export default function EncountersOverview() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const { data: encounters, isLoading } = api.encounters.useQuery();
   const { encounters: encountersQuery } = api.useUtils();
   const { mutate: deleteEncounter } = api.deleteEncounter.useMutation({
@@ -36,17 +34,6 @@ export default function EncountersOverview() {
       });
       return { previous };
     },
-  });
-  const { mutate: createDefaultEncounter, isLoading: isCreatingEncounter } =
-    api.createEncounter.useMutation({
-      onSuccess: async (encounter) => {
-        router.push(`encounters/${encounter.id}`);
-        return await queryClient.invalidateQueries(getQueryKey(api.encounters));
-      },
-    });
-  const [encounter, setEncounter] = React.useState({
-    name: null,
-    description: null,
   });
 
   const displayedEncounters = encounters;
@@ -66,23 +53,9 @@ export default function EncountersOverview() {
 
   return (
     <div className="flex flex-col gap-14 mx-auto max-w-screen-xl">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          createDefaultEncounter(encounter);
-        }}
-      >
-        <LoadingButton
-          isLoading={isCreatingEncounter}
-          type={"submit"}
-          className={"flex gap-5 w-52"}
-        >
-          <Plus />
-          Create encounter
-        </LoadingButton>
-      </form>
+      <CreateEncounterButton />
       {encounterCategories.map(({ name, encounters }) => (
-        <section key={name} className={"flex flex-col gap-3"}>
+        <section key={name} className={"flex flex-col gap-8 pt-8"}>
           <h1 className={"text-2xl"}>{name}</h1>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {isLoading
@@ -90,8 +63,8 @@ export default function EncountersOverview() {
                   .fill(null)
                   .map((_, i) => <EncounterSkeleton key={i} />)
               : encounters?.length === 0
-              ? "No encounters"
-              : null}
+                ? "No encounters"
+                : null}
             {encounters?.map((encounter) => (
               <EncounterCard
                 encounter={encounter}
@@ -103,6 +76,41 @@ export default function EncountersOverview() {
         </section>
       ))}
     </div>
+  );
+}
+
+export function CreateEncounterButton({ className }: { className?: string }) {
+  const { encounters } = api.useUtils();
+  const id = useEncounterId();
+
+  const router = useRouter();
+  const { mutate: createDefaultEncounter, isLoading: isCreatingEncounter } =
+    api.createEncounter.useMutation({
+      onSuccess: async (encounter) => {
+        router.push(`encounters/${encounter.id}`);
+        return await encounters.invalidate();
+      },
+    });
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        createDefaultEncounter({
+          name: null,
+          description: null,
+        });
+      }}
+      className={className}
+    >
+      <LoadingButton
+        isLoading={isCreatingEncounter}
+        type={"submit"}
+        className={"flex gap-5 w-52"}
+      >
+        <Plus />
+        Create encounter
+      </LoadingButton>
+    </form>
   );
 }
 

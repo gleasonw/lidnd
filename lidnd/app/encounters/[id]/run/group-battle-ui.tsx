@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AnimationListItem,
   BattleCard,
   BattleCardContent,
   BattleCardCreatureIcon,
@@ -22,6 +23,7 @@ import { OriginalSizeImage } from "@/app/encounters/original-size-image";
 import { getAWSimageURL } from "@/app/encounters/utils";
 import { Skull, Sword } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { AnimatePresence } from "framer-motion";
 
 export interface GroupBattleUIProps {
   children?: React.ReactNode;
@@ -48,7 +50,6 @@ export function GroupBattleUI({ children }: GroupBattleUIProps) {
   return (
     <div>
       <GroupBattleLayout
-        encounter={encounter}
         monsters={monsters.map((monster) => (
           <GroupBattleCard
             key={monster.id}
@@ -79,26 +80,34 @@ export function GroupBattleUI({ children }: GroupBattleUIProps) {
 export function GroupBattleLayout({
   monsters,
   players,
-  encounter,
+  playerTitle,
+  monsterTitle,
   children,
   ...props
 }: {
-  monsters: React.ReactNode;
-  players: React.ReactNode;
-  encounter: Encounter;
+  monsters: React.ReactNode[];
+  players: React.ReactNode[];
+  playerTitle?: React.ReactNode;
+  monsterTitle?: React.ReactNode;
   children?: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className="flex flex-col justify-center" {...props}>
+    <div className="flex flex-col max-w-full" {...props}>
       <div className="flex gap-4 flex-col">
-        <div className="flex overflow-auto max-w-full gap-4 pb-2 px-2 mx-auto">
-          {monsters}
-        </div>
-        {children}
+        <AnimatePresence>
+          {playerTitle}
+          <div className="flex overflow-auto max-w-full gap-4 pb-2 px-2">
+            {players}
+          </div>
+        </AnimatePresence>
         <Separator />
-        <div className="flex overflow-auto max-w-full gap-4 pb-2 px-2 mx-auto">
-          {players}
-        </div>
+        <AnimatePresence>
+          {monsterTitle}
+          <div className="flex overflow-auto max-w-full gap-4 pb-2 px-2">
+            {monsters}
+          </div>
+        </AnimatePresence>
+        {children}
       </div>
     </div>
   );
@@ -130,18 +139,21 @@ export function GroupBattleCard({
 
   return (
     <div>
-      <Button
-        onClick={() =>
-          updateCreatureHasPlayedThisRound({
-            encounter_id: id,
-            participant_id: creature.id,
-            has_played_this_round: !creature.has_played_this_round,
-          })
-        }
-        variant={creature.has_played_this_round ? "default" : "outline"}
-      >
-        {creature.has_played_this_round ? "Played" : "Hasn't Played"}
-      </Button>
+      {encounter?.started_at ? (
+        <Button
+          onClick={() =>
+            updateCreatureHasPlayedThisRound({
+              encounter_id: id,
+              participant_id: creature.id,
+              has_played_this_round: !creature.has_played_this_round,
+            })
+          }
+          variant={creature.has_played_this_round ? "default" : "outline"}
+        >
+          {creature.has_played_this_round ? "Played" : "Hasn't Played"}
+        </Button>
+      ) : null}
+
       <BattleCardLayout
         {...props}
         className={clsx(

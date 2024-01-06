@@ -72,19 +72,11 @@ export function BattleUIHeader() {
       : `Round ${encounter?.current_round}`;
 
   return (
-    <>
-      <BasePopover
-        className="flex flex-col gap-3"
-        trigger={
-          <Button variant="outline" className="absolute top-1 right-1 ">
-            <h1 className="text-xl text-center w-full">{roundText}</h1>
-          </Button>
-        }
-      >
-        <div className="flex gap-2 items-center">
-          <EncounterTime time={encounter?.started_at ?? undefined} />
-          <InitiativeTypeToggle />
-        </div>
+    <div className="flex gap-3 flex-col">
+      <div className="flex gap-10 flex-wrap items-center justify-center">
+        <h1 className="text-xl text-center">{roundText}</h1>
+        <EncounterTime time={encounter?.started_at ?? undefined} />
+        <InitiativeTypeToggle />
         <Dialog>
           <DialogTrigger asChild>
             <Button>
@@ -95,14 +87,14 @@ export function BattleUIHeader() {
             <BattleAddCreatureForm />
           </DialogContent>
         </Dialog>
-      </BasePopover>
+      </div>
 
       {encounter?.initiative_type === "linear" ? (
         <LinearBattleUI />
       ) : (
         <GroupBattleUI />
       )}
-    </>
+    </div>
   );
 }
 

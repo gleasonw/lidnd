@@ -84,8 +84,6 @@ export default function CreaturesPage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <h1 className="text-3xl">Creatures</h1>
-
       <div className={"flex gap-5 relative"}>
         <Input
           placeholder="Search"

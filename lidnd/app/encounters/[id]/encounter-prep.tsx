@@ -9,7 +9,16 @@ import {
 import { useEncounterId } from "@/app/encounters/hooks";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, Dices, Play, Skull, X, Swords } from "lucide-react";
+import {
+  Clock,
+  Dices,
+  Play,
+  Skull,
+  X,
+  Swords,
+  Sword,
+  Angry,
+} from "lucide-react";
 import Link from "next/link";
 import { FullCreatureAddForm } from "@/app/encounters/full-creature-add-form";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -25,7 +34,11 @@ import {
   useRemoveParticipantFromEncounter,
   useStartEncounter,
 } from "@/app/encounters/[id]/hooks";
-import { GroupBattleCard } from "@/app/encounters/[id]/run/group-battle-ui";
+import {
+  GroupBattleCard,
+  GroupBattleLayout,
+} from "@/app/encounters/[id]/run/group-battle-ui";
+import { EncounterCreature } from "@/server/api/router";
 
 export default function EncounterPrep() {
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
@@ -81,7 +94,7 @@ export default function EncounterPrep() {
 function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
   const id = useEncounterId();
   const { encounterById } = api.useUtils();
-  const [encounter, encounterQuery] = api.encounterById.useSuspenseQuery(id);
+  const [encounter] = api.encounterById.useSuspenseQuery(id);
   const { mutate: updateEncounter } = api.updateEncounter.useMutation({
     onSettled: async () => {
       return await encounterById.invalidate(id);
@@ -101,8 +114,8 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
   }, 500);
 
   return (
-    <div className="flex gap-5 items-center w-full flex-col md:flex-row md:justify-between">
-      <span className="flex gap-3 items-center flex-col md:flex-row">
+    <div className="flex gap-5 items-center w-full flex-col md:flex-row justify-end pl-10">
+      <span className="flex gap-3 items-center flex-col md:flex-row mr-auto">
         <Input
           value={encounterName}
           placeholder={encounter?.name ?? "Unnamed encounter"}
@@ -111,8 +124,9 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
             debouncedNameUpdate(e.target.value);
           }}
         />
-        {children}
       </span>
+      {children}
+
       {encounter?.started_at ? (
         <Link href={`${id}/run`}>
           <Button>
@@ -157,52 +171,75 @@ export function EncounterStartButton() {
 }
 
 function EncounterParticipantRow() {
+  const id = useEncounterId();
+  const [encounter] = api.encounterById.useSuspenseQuery(id);
+
+  const monsters = encounter.participants
+    .filter((participant) => !participant.is_player)
+    .sort(sortEncounterCreatures);
+  const players = encounter.participants
+    .filter((participant) => participant.is_player)
+    .sort(sortEncounterCreatures);
+
+  return (
+    <>
+      <GroupBattleLayout
+        playerTitle={
+          <h1 className="flex gap-5 text-xl">
+            Players <Sword />
+          </h1>
+        }
+        monsterTitle={
+          <h1 className="flex gap-5 text-xl">
+            Monsters <Angry />
+          </h1>
+        }
+        monsters={monsters.map((participant) => (
+          <PrepParticipantCard key={participant.id} participant={participant} />
+        ))}
+        players={players.map((participant) => (
+          <PrepParticipantCard key={participant.id} participant={participant} />
+        ))}
+      />
+      {encounter?.participants?.length === 0 && (
+        <h1 className={"text-2xl text-center"}>
+          No creatures in this encounter
+        </h1>
+      )}
+    </>
+  );
+}
+
+function PrepParticipantCard({
+  participant,
+}: {
+  participant: EncounterCreature;
+}) {
   const { mutate: removeCreatureFromEncounter } =
     useRemoveParticipantFromEncounter();
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
-
   return (
-    <AnimatePresence>
-      <div
-        className={clsx(
-          "flex flex-row sm:gap-4 px-10 max-w-full items-center overflow-auto pb-5"
+    <AnimationListItem key={participant.id}>
+      <div className="flex flex-col items-center gap-3">
+        {encounter?.initiative_type === "group" ? (
+          <GroupBattleCard creature={participant} />
+        ) : (
+          <BattleCard creature={participant} />
         )}
-      >
-        {encounter?.participants
-          ?.slice()
-          .sort(sortEncounterCreatures)
-          .map((participant) => (
-            <AnimationListItem key={participant.id}>
-              <div className="flex flex-col items-center gap-3">
-                {encounter?.initiative_type === "group" ? (
-                  <GroupBattleCard creature={participant} />
-                ) : (
-                  <BattleCard creature={participant} />
-                )}
-                <Button
-                  variant="ghost"
-                  onClick={() =>
-                    removeCreatureFromEncounter({
-                      encounter_id: encounter.id,
-                      participant_id: participant.id,
-                    })
-                  }
-                >
-                  <X />
-                </Button>
-              </div>
-            </AnimationListItem>
-          ))}
-        {encounter?.participants?.length === 0 && (
-          <div className="h-56 justify-evenly w-40 gap-0 items-center flex flex-col">
-            <h1 className={"text-2xl text-center"}>
-              No creatures in this encounter
-            </h1>
-          </div>
-        )}
+        <Button
+          variant="ghost"
+          onClick={() =>
+            removeCreatureFromEncounter({
+              encounter_id: encounter.id,
+              participant_id: participant.id,
+            })
+          }
+        >
+          <X />
+        </Button>
       </div>
-    </AnimatePresence>
+    </AnimationListItem>
   );
 }
 
@@ -273,7 +310,7 @@ function EncounterStats() {
   }
 
   return (
-    <div className={clsx("flex gap-2")}>
+    <>
       <BasePopover
         trigger={
           <Button
@@ -340,7 +377,7 @@ function EncounterStats() {
           </label>
         </div>
       </BasePopover>
-    </div>
+    </>
   );
 }
 
