@@ -72,7 +72,7 @@ export function BattleUIHeader() {
       : `Round ${encounter?.current_round}`;
 
   return (
-    <div className="flex gap-3 flex-col">
+    <div className="flex gap-8 flex-col">
       <div className="flex gap-10 flex-wrap items-center justify-center">
         <h1 className="text-xl text-center">{roundText}</h1>
         <EncounterTime time={encounter?.started_at ?? undefined} />
