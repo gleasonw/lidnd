@@ -104,7 +104,7 @@ function SimpleGroupBattleCard({
       key={participant.id}
       data-active={participant.is_active}
       className={clsx(
-        "w-40 h-40 shadow-lg border-2 relative select-none mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
+        "w-40 shadow-lg border-2 relative select-none mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
         {
           "opacity-20": participant.has_played_this_round,
         }
