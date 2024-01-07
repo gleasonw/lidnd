@@ -99,9 +99,6 @@ export function GroupBattleLayout({
           <div className="flex overflow-auto max-w-full gap-4 pb-2 px-2">
             {players}
           </div>
-        </AnimatePresence>
-        <Separator />
-        <AnimatePresence>
           {monsterTitle}
           <div className="flex overflow-auto max-w-full gap-4 pb-2 px-2">
             {monsters}
