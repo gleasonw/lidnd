@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import React from "react";
 import { AnimatePresence } from "framer-motion";
-import { updateTurnOrder, getAWSimageURL } from "@/app/encounters/utils";
+import {
+  cycleNextTurn,
+  cyclePreviousTurn,
+  getAWSimageURL,
+} from "@/app/encounters/utils";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { useEncounterId } from "@/app/encounters/hooks";
@@ -29,23 +33,22 @@ export function LinearBattleUI() {
 
   let displayedParticipants: EncounterCreature[];
   if (isTurnLoading && variables && encounterParticipants) {
-    const { updatedParticipants } = updateTurnOrder(
-      variables.to,
-      encounterParticipants,
-      encounter
-    );
+    const { updatedParticipants } =
+      variables.to === "next"
+        ? cycleNextTurn(encounterParticipants, encounter)
+        : cyclePreviousTurn(encounterParticipants, encounter);
     displayedParticipants = updatedParticipants;
   } else {
     displayedParticipants = encounterParticipants;
   }
 
   const activeIndex = displayedParticipants.findIndex(
-    (creature) => creature.is_active
+    (creature) => creature.is_active,
   );
   const activeParticipant = displayedParticipants[activeIndex];
 
   const [dmSelectedCreature, setDmSelectedCreature] = React.useState(
-    activeParticipant?.id ?? null
+    activeParticipant?.id ?? null,
   );
 
   const selectedId = dmSelectedCreature ?? activeParticipant?.id ?? null;
@@ -53,21 +56,32 @@ export function LinearBattleUI() {
   const { mutate: removeCreatureFromEncounter } =
     useRemoveParticipantFromEncounter();
 
-  function handleChangeTurn(direction: "next" | "previous") {
-    const { newlyActiveParticipant } = updateTurnOrder(
-      direction,
+  function handleCycleNext() {
+    const { newlyActiveParticipant } = cycleNextTurn(
       encounterParticipants,
-      encounter
+      encounter,
     );
     setDmSelectedCreature(newlyActiveParticipant.id);
     changeActiveTo({
       encounter_id: id,
-      to: direction,
+      to: "next",
+    });
+  }
+
+  function handleCyclePrevious() {
+    const { newlyActiveParticipant } = cyclePreviousTurn(
+      encounterParticipants,
+      encounter,
+    );
+    setDmSelectedCreature(newlyActiveParticipant.id);
+    changeActiveTo({
+      encounter_id: id,
+      to: "previous",
     });
   }
 
   const creature = displayedParticipants?.find(
-    (participant) => participant.id === selectedId
+    (participant) => participant.id === selectedId,
   );
 
   const scrollContainer = React.useRef<HTMLDivElement>(null);
@@ -92,13 +106,13 @@ export function LinearBattleUI() {
     <div className="flex flex-col gap-5">
       <div
         className={clsx(
-          "flex flex-row sm:gap-4 px-8 pt-2 pb-8 max-w-full items-center overflow-auto mx-auto"
+          "flex flex-row sm:gap-4 px-8 pt-2 pb-8 max-w-full items-center overflow-auto mx-auto",
         )}
         ref={scrollContainer}
       >
         <Button
           className="absolute left-0 sm:left-10 z-10 h-10 rounded-full shadow-md"
-          onClick={() => handleChangeTurn("previous")}
+          onClick={handleCyclePrevious}
           variant="outline"
           disabled={isTurnLoading}
         >
@@ -118,7 +132,7 @@ export function LinearBattleUI() {
                       activeIndex &&
                       index < activeIndex,
                   },
-                  "cursor-pointer"
+                  "cursor-pointer",
                 )}
               />
             </AnimationListItem>
@@ -126,7 +140,7 @@ export function LinearBattleUI() {
         </AnimatePresence>
         <Button
           className="absolute right-0 sm:right-10 z-10 h-10 rounded-full shadow-md"
-          onClick={() => handleChangeTurn("next")}
+          onClick={handleCycleNext}
           disabled={isTurnLoading}
           variant="outline"
         >
