@@ -21,22 +21,34 @@ export function LinearBattleUI() {
   const [encounter] = api.encounterById.useSuspenseQuery(id);
   const encounterParticipants = encounter.participants;
   const { encounterById } = api.useUtils();
-  const {
-    mutate: changeActiveTo,
-    isLoading: isTurnLoading,
-    variables,
-  } = api.updateTurn.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(id);
-    },
-  });
+
+  const { mutate: cycleNextMutation, isLoading: isLoadingNextTurn } =
+    api.cycleNextTurn.useMutation({
+      onSettled: async () => {
+        return await encounterById.invalidate(id);
+      },
+    });
+
+  const { mutate: cyclePreviousMutation, isLoading: isLoadingPreviousTurn } =
+    api.cyclePreviousTurn.useMutation({
+      onSettled: async () => {
+        return await encounterById.invalidate(id);
+      },
+    });
 
   let displayedParticipants: EncounterCreature[];
-  if (isTurnLoading && variables && encounterParticipants) {
-    const { updatedParticipants } =
-      variables.to === "next"
-        ? cycleNextTurn(encounterParticipants, encounter)
-        : cyclePreviousTurn(encounterParticipants, encounter);
+
+  if (isLoadingNextTurn && encounterParticipants) {
+    const { updatedParticipants } = cycleNextTurn(
+      encounterParticipants,
+      encounter,
+    );
+    displayedParticipants = updatedParticipants;
+  } else if (isLoadingPreviousTurn && encounterParticipants) {
+    const { updatedParticipants } = cyclePreviousTurn(
+      encounterParticipants,
+      encounter,
+    );
     displayedParticipants = updatedParticipants;
   } else {
     displayedParticipants = encounterParticipants;

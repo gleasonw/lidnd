@@ -68,12 +68,10 @@ type TurnParticipant = {
   has_surprise: boolean;
 };
 
-type TurnCycler = (
-  participants: TurnParticipant[],
+export function cycleNextTurn<Participant extends TurnParticipant>(
+  participants: Participant[],
   encounter: { current_round: number },
-) => UpdateTurnOrderReturn<TurnParticipant>;
-
-export const cycleNextTurn: TurnCycler = (participants, encounter) => {
+): UpdateTurnOrderReturn<Participant> {
   return cycleTurn({
     updateActiveAndRoundNumber: (participants) => {
       const prev = participants.findIndex((p) => p.is_active);
@@ -104,9 +102,12 @@ export const cycleNextTurn: TurnCycler = (participants, encounter) => {
     participants,
     encounter,
   });
-};
+}
 
-export const cyclePreviousTurn: TurnCycler = (participants, encounter) => {
+export function cyclePreviousTurn<Participant extends TurnParticipant>(
+  participants: Participant[],
+  encounter: { current_round: number },
+): UpdateTurnOrderReturn<Participant> {
   return cycleTurn({
     updateActiveAndRoundNumber: (participants) => {
       const prev = participants.findIndex((p) => p.is_active);
@@ -145,31 +146,31 @@ export const cyclePreviousTurn: TurnCycler = (participants, encounter) => {
     encounter,
     participants,
   });
-};
+}
 
-type CycleTurnArgs = {
+type CycleTurnArgs<Participant extends TurnParticipant> = {
   updateActiveAndRoundNumber: (
-    participants: TurnParticipant[],
-  ) => Omit<UpdateTurnOrderReturn<TurnParticipant>, "updatedParticipants">;
-  participants: TurnParticipant[];
+    participants: Participant[],
+  ) => Omit<UpdateTurnOrderReturn<Participant>, "updatedParticipants">;
+  participants: Participant[];
   encounter: { current_round: number };
 };
 
-function cycleTurn({
+function cycleTurn<Participant extends TurnParticipant>({
   updateActiveAndRoundNumber,
   participants,
   encounter,
-}: CycleTurnArgs) {
+}: CycleTurnArgs<Participant>) {
   let sortedParticipants = participants.toSorted(sortEncounterCreatures);
+
   if (!sortedParticipants.some((p) => p.is_active)) {
     console.warn(
       "No active participant found, which is odd. Setting first participant active",
     );
     sortedParticipants[0].is_active = true;
   }
-  const encounterHasSurpriseRound = participants.some((p) => p.has_surprise);
 
-  if (encounterHasSurpriseRound) {
+  if (participants.some((p) => p.has_surprise)) {
     return cycleTurnWithSurpriseRound({
       updateActiveAndRoundNumber,
       participants: sortedParticipants,
@@ -197,11 +198,11 @@ function cycleTurn({
   };
 }
 
-function cycleTurnWithSurpriseRound({
+function cycleTurnWithSurpriseRound<Participant extends TurnParticipant>({
   updateActiveAndRoundNumber,
   participants,
   encounter,
-}: CycleTurnArgs) {
+}: CycleTurnArgs<Participant>) {
   const isSurpriseRound = encounter?.current_round === 0;
 
   const activeParticipants = isSurpriseRound
