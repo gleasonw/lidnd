@@ -23,7 +23,13 @@ export default async function RootLayout({
   const session = await getPageSession();
   if (!session) {
     const headersList = headers();
-    return redirect(`/login?redirect=${headersList.get("x-pathname")}`);
+    const previousLocation = headersList.get("x-pathname");
+
+    if (previousLocation) {
+      return redirect(`/login?redirect=${previousLocation}`);
+    }
+
+    return redirect(`/login`);
   }
   return (
     <html lang="en">
