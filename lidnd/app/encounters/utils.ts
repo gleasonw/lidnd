@@ -7,7 +7,7 @@ import {
 
 export function getAWSimageURL(
   creature_id: string,
-  type: "icon" | "stat_block"
+  type: "icon" | "stat_block",
 ): string {
   return `https://dnd-init-tracker-icons-stats.s3.us-west-1.amazonaws.com/${type}-${creature_id}.png`;
 }
@@ -42,7 +42,7 @@ function participantIsActivatable(p: {
 export function updateMinionCount(
   participant: Pick<EncounterCreature, "minion_count" | "max_hp">,
   minions_in_overkill_range: number,
-  damage: number
+  damage: number,
 ): number | undefined {
   // assume input minions does not include the current minion
   const slayableMinionCount = minions_in_overkill_range + 1;
@@ -58,88 +58,188 @@ export function updateMinionCount(
   return Math.max(newMinionCount, 0);
 }
 
-export function updateTurnOrder<
-  Participant extends {
-    is_active: boolean;
-    hp: number;
-    id: string;
-    initiative: number;
-    created_at: Date;
-    is_player: boolean;
-    has_surprise: boolean;
-  },
->(
-  to: "next" | "previous",
+type TurnParticipant = {
+  is_active: boolean;
+  hp: number;
+  id: string;
+  initiative: number;
+  created_at: Date;
+  is_player: boolean;
+  has_surprise: boolean;
+};
+
+export function cycleNextTurn<Participant extends TurnParticipant>(
   participants: Participant[],
-  encounter: { current_round: number }
+  encounter: { current_round: number },
 ): UpdateTurnOrderReturn<Participant> {
-  let sortedParticipants = participants.slice().sort(sortEncounterCreatures);
+  return cycleTurn({
+    updateActiveAndRoundNumber: (participants) => {
+      const prev = participants.findIndex((p) => p.is_active);
+      if (prev === participants.length - 1) {
+        const newlyActiveParticipant = participants[0];
+
+        if (!newlyActiveParticipant) {
+          throw new Error("cycleNext: newlyActiveParticipant not found");
+        }
+
+        return {
+          newlyActiveParticipant,
+          updatedRoundNumber: encounter.current_round + 1,
+        };
+      }
+
+      const newlyActiveParticipant = participants[prev + 1];
+
+      if (!newlyActiveParticipant) {
+        throw new Error("cycleNext: newlyActiveParticipant not found");
+      }
+
+      return {
+        newlyActiveParticipant,
+        updatedRoundNumber: encounter.current_round,
+      };
+    },
+    participants,
+    encounter,
+  });
+}
+
+export function cyclePreviousTurn<Participant extends TurnParticipant>(
+  participants: Participant[],
+  encounter: { current_round: number },
+): UpdateTurnOrderReturn<Participant> {
+  return cycleTurn({
+    updateActiveAndRoundNumber: (participants) => {
+      const prev = participants.findIndex((p) => p.is_active);
+      if (prev === 0 && encounter.current_round === 0) {
+        // don't allow negative round numbers, just noop
+        return {
+          newlyActiveParticipant: participants[prev],
+          updatedRoundNumber: 0,
+        };
+      }
+
+      if (prev === 0) {
+        const newlyActiveParticipant = participants[participants.length - 1];
+
+        if (!newlyActiveParticipant) {
+          throw new Error("cyclePrevious: newlyActiveParticipant not found");
+        }
+
+        return {
+          newlyActiveParticipant,
+          updatedRoundNumber: encounter.current_round - 1,
+        };
+      }
+
+      const newlyActiveParticipant = participants[prev - 1];
+
+      if (!newlyActiveParticipant) {
+        throw new Error("cyclePrevious: newlyActiveParticipant not found");
+      }
+
+      return {
+        newlyActiveParticipant,
+        updatedRoundNumber: encounter.current_round,
+      };
+    },
+    encounter,
+    participants,
+  });
+}
+
+type CycleTurnArgs<Participant extends TurnParticipant> = {
+  updateActiveAndRoundNumber: (
+    participants: Participant[],
+  ) => Omit<UpdateTurnOrderReturn<Participant>, "updatedParticipants">;
+  participants: Participant[];
+  encounter: { current_round: number };
+};
+
+function cycleTurn<Participant extends TurnParticipant>({
+  updateActiveAndRoundNumber,
+  participants,
+  encounter,
+}: CycleTurnArgs<Participant>) {
+  let sortedParticipants = participants.toSorted(sortEncounterCreatures);
+
   if (!sortedParticipants.some((p) => p.is_active)) {
+    console.warn(
+      "No active participant found, which is odd. Setting first participant active",
+    );
     sortedParticipants[0].is_active = true;
   }
-  const encounterHasSurpriseRound = participants.some((p) => p.has_surprise);
-  const isSurpriseRound =
-    encounter?.current_round === 0 && encounterHasSurpriseRound;
 
-  let activeParticipants;
+  if (participants.some((p) => p.has_surprise)) {
+    return cycleTurnWithSurpriseRound({
+      updateActiveAndRoundNumber,
+      participants: sortedParticipants,
+      encounter,
+    });
+  }
 
-  if (isSurpriseRound) {
-    activeParticipants = sortedParticipants.filter((c) => c.has_surprise);
-  } else {
-    activeParticipants = sortedParticipants.filter(participantIsActivatable);
-  }
-  let nextActiveIndex: number;
-  const previousActiveIndex = activeParticipants.findIndex((c) => c.is_active);
+  const candidates = sortedParticipants.filter(participantIsActivatable);
 
-  let currentRound = encounter.current_round;
-  if (to === "previous") {
-    nextActiveIndex =
-      (previousActiveIndex - 1 + activeParticipants.length) %
-      activeParticipants.length;
-    if (nextActiveIndex >= previousActiveIndex && currentRound > 0) {
-      if (encounter.current_round === 1 && encounterHasSurpriseRound) {
-        // we wrap back into surprise
-        nextActiveIndex = -1;
-        activeParticipants = sortedParticipants.filter((c) => c.has_surprise);
-        currentRound--;
-      } else if (encounter.current_round > 1) {
-        currentRound--;
-      }
-    }
-  } else {
-    nextActiveIndex = (previousActiveIndex + 1) % activeParticipants.length;
-    if (nextActiveIndex <= previousActiveIndex) {
-      if (isSurpriseRound) {
-        // we wrap back into normal
-        nextActiveIndex = 0;
-        activeParticipants = sortedParticipants.filter(
-          participantIsActivatable
-        );
-      }
-      currentRound++;
-    }
-  }
-  const activeParticipant = activeParticipants.at(nextActiveIndex);
-  if (!activeParticipant) {
-    throw new Error("No active participant found");
-  }
-  sortedParticipants = sortedParticipants.map((p) => {
-    if (p.id === activeParticipant?.id) {
-      return {
-        ...p,
-        is_active: true,
-      };
+  const { updatedRoundNumber, newlyActiveParticipant } =
+    updateActiveAndRoundNumber(candidates);
+
+  const updatedParticipants = sortedParticipants.map((p) => {
+    if (p.id === newlyActiveParticipant.id) {
+      return { ...p, is_active: true };
     } else {
-      return {
-        ...p,
-        is_active: false,
-      };
+      return { ...p, is_active: false };
     }
   });
+
   return {
-    updatedParticipants: sortedParticipants,
-    updatedRoundNumber: currentRound,
-    newlyActiveParticipant: activeParticipant,
+    updatedParticipants,
+    updatedRoundNumber,
+    newlyActiveParticipant,
+  };
+}
+
+function cycleTurnWithSurpriseRound<Participant extends TurnParticipant>({
+  updateActiveAndRoundNumber,
+  participants,
+  encounter,
+}: CycleTurnArgs<Participant>) {
+  const isSurpriseRound = encounter?.current_round === 0;
+
+  const activeParticipants = isSurpriseRound
+    ? participants.filter((p) => p.has_surprise)
+    : participants.filter(participantIsActivatable);
+
+  const { updatedRoundNumber, newlyActiveParticipant } =
+    updateActiveAndRoundNumber(activeParticipants);
+
+  if (updatedRoundNumber === 0 && encounter.current_round === 1) {
+    const lastSurpriseParticipant = participants
+      .filter((p) => p.has_surprise)
+      .pop();
+
+    if (!lastSurpriseParticipant) {
+      throw new Error(
+        "cycleTurnWithSurprise: lastSurpriseParticipant not found",
+      );
+    }
+
+    return {
+      updatedParticipants: participants.map((p) => ({
+        ...p,
+        is_active: p.id === lastSurpriseParticipant?.id,
+      })),
+      updatedRoundNumber,
+      newlyActiveParticipant: lastSurpriseParticipant,
+    };
+  }
+
+  return {
+    updatedParticipants: participants.map((p) => ({
+      ...p,
+      is_active: p.id === newlyActiveParticipant.id,
+    })),
+    updatedRoundNumber,
+    newlyActiveParticipant,
   };
 }
 
@@ -152,7 +252,7 @@ export function getCreaturePostForm(creature: CreaturePost): FormData {
 }
 export function mergeEncounterCreature(
   participant: EncounterParticipant,
-  creature: Creature
+  creature: Creature,
 ): EncounterCreature {
   return {
     id: participant.id,
@@ -183,10 +283,10 @@ export function updateGroupTurn<
   participant_id: string,
   participant_has_played_this_round: boolean,
   participants: Participant[],
-  encounter: { current_round: number }
+  encounter: { current_round: number },
 ): UpdateTurnOrderReturn<Participant> {
   const participantWhoPlayed = participants.find(
-    (p) => p.id === participant_id
+    (p) => p.id === participant_id,
   );
   if (!participantWhoPlayed) {
     throw new Error("Participant not found");
@@ -202,7 +302,7 @@ export function updateGroupTurn<
     }
   });
   const allHavePlayed = updatedParticipants.every(
-    (p) => p.has_played_this_round
+    (p) => p.has_played_this_round,
   );
   if (allHavePlayed) {
     return {
@@ -213,11 +313,10 @@ export function updateGroupTurn<
       updatedRoundNumber: encounter.current_round + 1,
       newlyActiveParticipant: participantWhoPlayed,
     };
-  } else {
-    return {
-      updatedParticipants,
-      updatedRoundNumber: encounter.current_round,
-      newlyActiveParticipant: participantWhoPlayed,
-    };
   }
+  return {
+    updatedParticipants,
+    updatedRoundNumber: encounter.current_round,
+    newlyActiveParticipant: participantWhoPlayed,
+  };
 }
