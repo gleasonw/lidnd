@@ -74,10 +74,6 @@ export function LinearBattleUI() {
       encounter,
     );
     setDmSelectedCreature(newlyActiveParticipant.id);
-    changeActiveTo({
-      encounter_id: id,
-      to: "next",
-    });
   }
 
   function handleCyclePrevious() {
@@ -86,10 +82,6 @@ export function LinearBattleUI() {
       encounter,
     );
     setDmSelectedCreature(newlyActiveParticipant.id);
-    changeActiveTo({
-      encounter_id: id,
-      to: "previous",
-    });
   }
 
   const creature = displayedParticipants?.find(
@@ -113,6 +105,8 @@ export function LinearBattleUI() {
       }
     }
   }, [activeParticipant?.id]);
+
+  const isTurnLoading = isLoadingNextTurn || isLoadingPreviousTurn;
 
   return (
     <div className="flex flex-col gap-5">
