@@ -5,20 +5,19 @@ import {
   encounter_participant,
   creatures,
   settings,
-  channels,
   participant_status_effects,
   status_effects_5e,
   spells,
 } from "@/server/api/db/schema";
-import { eq, and, sql, ilike } from "drizzle-orm";
+import { eq, and, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
 import superjson from "superjson";
 import { ZodError, z } from "zod";
 import {
-  sortEncounterCreatures,
   updateGroupTurn,
   updateMinionCount,
-  updateTurnOrder,
+  cycleNextTurn,
+  cyclePreviousTurn,
 } from "@/app/encounters/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
@@ -32,6 +31,7 @@ import {
   postEncounterToUserChannel,
   setActiveParticipant,
   updateParticipantHasPlayed,
+  updateTurnData,
 } from "@/server/api/utils";
 import { mergeEncounterCreature } from "@/app/encounters/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
@@ -444,10 +444,9 @@ export const appRouter = t.router({
       return result;
     }),
 
-  updateTurn: protectedProcedure
+  cycleNextTurn: protectedProcedure
     .input(
       z.object({
-        to: z.literal("next").or(z.literal("previous")),
         encounter_id: z.string(),
       })
     )
@@ -458,25 +457,44 @@ export const appRouter = t.router({
           getEncounterParticipantsWithCreatureData(opts.input.encounter_id, tx),
         ]);
 
-        const {
-          updatedParticipants,
-          updatedRoundNumber,
-          newlyActiveParticipant,
-        } = updateTurnOrder(opts.input.to, encounterParticipants, encounter);
+        const { newlyActiveParticipant, updatedRoundNumber } = cycleNextTurn(
+          encounterParticipants,
+          encounter
+        );
 
-        await Promise.all([
-          setActiveParticipant(
-            newlyActiveParticipant.id,
-            opts.input.encounter_id,
-            tx
-          ),
+        await updateTurnData(
+          opts.input.encounter_id,
+          updatedRoundNumber,
+          newlyActiveParticipant.id,
           tx
-            .update(encounters)
-            .set({
-              current_round: updatedRoundNumber,
-            })
-            .where(eq(encounters.id, opts.input.encounter_id)),
+        );
+        return encounter;
+      });
+      return result;
+    }),
+
+  cyclePreviousTurn: protectedProcedure
+    .input(
+      z.object({
+        encounter_id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const result = await db.transaction(async (tx) => {
+        const [encounter, encounterParticipants] = await Promise.all([
+          getUserEncounter(opts.ctx.user.userId, opts.input.encounter_id, tx),
+          getEncounterParticipantsWithCreatureData(opts.input.encounter_id, tx),
         ]);
+
+        const { newlyActiveParticipant, updatedRoundNumber } =
+          cyclePreviousTurn(encounterParticipants, encounter);
+
+        await updateTurnData(
+          opts.input.encounter_id,
+          updatedRoundNumber,
+          newlyActiveParticipant.id,
+          tx
+        );
         return encounter;
       });
       return result;
@@ -571,13 +589,12 @@ export const appRouter = t.router({
         });
       }
       if (result[0].is_active) {
-        const { newlyActiveParticipant } = updateTurnOrder(
-          "next",
+        const { newlyActiveParticipant } = cycleNextTurn(
           encounterParticipants,
           encounter
         );
 
-        await setActiveParticipant(
+        setActiveParticipant(
           newlyActiveParticipant.id,
           opts.input.encounter_id
         );

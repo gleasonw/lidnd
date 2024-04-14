@@ -169,6 +169,23 @@ export async function getEncounterData(id: string) {
   };
 }
 
+export async function updateTurnData(
+  encounter_id: string,
+  updatedRoundNumber: number,
+  updatedActiveParticipantId: string,
+  dbObject = db
+) {
+  return await Promise.all([
+    setActiveParticipant(updatedActiveParticipantId, encounter_id, dbObject),
+    dbObject
+      .update(encounters)
+      .set({
+        current_round: updatedRoundNumber,
+      })
+      .where(eq(encounters.id, encounter_id)),
+  ]);
+}
+
 export async function getUserEncounter(
   user_id: string,
   encounter_id: string,
@@ -216,7 +233,7 @@ export async function setActiveParticipant(
   encounter_id: string,
   dbObject = db
 ) {
-  await db.execute(
+  await dbObject.execute(
     sql`
     UPDATE encounter_participant
     SET is_active = CASE 
