@@ -51,7 +51,10 @@ export const GET = async (request: NextRequest) => {
     });
     authRequest.setSession(session);
     const redirectUrl = cookies().get("redirect")?.value;
-    const redirectLocation = redirectUrl ?? "/encounters";
+    // log type of redirectUrl
+    const redirectLocation =
+      redirectUrl && redirectUrl !== "undefined" ? redirectUrl : "/encounters";
+
     return new Response(null, {
       status: 302,
       headers: {

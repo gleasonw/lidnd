@@ -14,9 +14,11 @@ export const GET = async (request: NextRequest) => {
     maxAge: 60 * 60,
   });
   const redirectUrl = request.nextUrl.searchParams.get("redirect");
-  if (redirectUrl) {
+
+  if (redirectUrl && redirectUrl !== "undefined") {
     context.cookies().set("redirect", redirectUrl);
   }
+
   return new Response(null, {
     status: 302,
     headers: {
