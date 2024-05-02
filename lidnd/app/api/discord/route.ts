@@ -22,6 +22,7 @@ export const GET = async (request: NextRequest) => {
   try {
     const { getExistingUser, discordUser, createUser } =
       await discordAuth.validateCallback(code);
+
     const getUser = async () => {
       const existingUser = await getExistingUser();
       if (existingUser) return existingUser;
@@ -39,19 +40,21 @@ export const GET = async (request: NextRequest) => {
       // populate settings here
       return user;
     };
+
     const user = await getUser();
 
     const session = await auth.createSession({
       userId: user.userId,
       attributes: {},
     });
+
     const authRequest = auth.handleRequest(request.method, {
       cookies,
       headers,
     });
+
     authRequest.setSession(session);
     const redirectUrl = cookies().get("redirect")?.value;
-    // log type of redirectUrl
     const redirectLocation =
       redirectUrl && redirectUrl !== "undefined" ? redirectUrl : "/encounters";
 
