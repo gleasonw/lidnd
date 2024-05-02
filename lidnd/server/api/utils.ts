@@ -1,11 +1,13 @@
 import { db } from "@/server/api/db";
 import {
+  campaigns,
   creatures,
   encounter_participant,
   encounters,
   participant_status_effects,
   settings,
   status_effects_5e,
+  systems,
 } from "@/server/api/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { paths, components } from "@/app/schema";
@@ -22,8 +24,21 @@ import { cache } from "react";
 import { auth } from "@/server/api/auth/lucia";
 import * as context from "next/headers";
 import apiURL from "@/app/apiURL";
-import { sortEncounterCreatures } from "@/app/encounters/utils";
-import { mergeEncounterCreature } from "@/app/encounters/utils";
+import { sortEncounterCreatures } from "@/app/campaigns/[campaign]/encounters/utils";
+import { mergeEncounterCreature } from "@/app/campaigns/[campaign]/encounters/utils";
+
+export async function getUserCampaigns(user_id: string) {
+  return await db
+    .select()
+    .from(campaigns)
+    .where(eq(campaigns.user_id, user_id));
+}
+
+export async function getSystems(){
+  return await db
+    .select()
+    .from(systems);
+}
 
 export async function createCreature(
   user_id: string,

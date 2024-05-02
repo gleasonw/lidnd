@@ -1,4 +1,4 @@
-import { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { InferInsertModel } from "drizzle-orm";
 import {
   bigint,
   boolean,
@@ -36,7 +36,54 @@ export const spells = pgTable("spells", {
   areaTags: text("areaTags"),
 });
 
-export const initiatve_enum = pgEnum("initiative_type", ["linear", "group"]);
+export const initiative_enum = pgEnum("initiative_type", ["linear", "group"]);
+
+export const systems = pgTable("systems", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 256 }).notNull(),
+  initiative_type: initiative_enum("initiative_type").default("linear"),
+});
+
+export const campaigns = pgTable(
+  "campaigns",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    system_id: uuid("system_id")
+      .notNull()
+      .references(() => systems.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 256 }).notNull(),
+    description: text("description"),
+    started_at: timestamp("started_at"),
+    created_at: timestamp("created_at").defaultNow(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => {
+    return {
+      userIndex: index("user_index_campaigns").on(t.user_id),
+    };
+  }
+);
+
+export const campaignsToPlayers = pgTable(
+  "campaigns_to_players",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    campaign_id: uuid("campaign_id")
+      .notNull()
+      .references(() => campaigns.id, { onDelete: "cascade" }),
+    player_id: text("player_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => {
+    return {
+      campaignIndex: index("campaign_index").on(t.campaign_id),
+      playerIndex: index("player_index").on(t.player_id),
+    };
+  }
+);
 
 export const encounters = pgTable(
   "encounters",
@@ -46,12 +93,14 @@ export const encounters = pgTable(
     description: text("description"),
     started_at: timestamp("started_at"),
     created_at: timestamp("created_at").defaultNow(),
+    campaign_id: uuid("campaign_id")
+      .notNull()
+      .references(() => campaigns.id, { onDelete: "cascade" }),
     user_id: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     current_round: integer("current_round").default(1).notNull(),
     ended_at: timestamp("ended_at"),
-    initiative_type: initiatve_enum("initiative_type").default("linear"),
   },
   (t) => {
     return {

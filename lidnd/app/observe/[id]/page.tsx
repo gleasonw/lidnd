@@ -4,16 +4,15 @@ import { PageRefresher } from "@/app/observe/[id]/page-refresher";
 import React from "react";
 import { SimpleBattleCard } from "./SimpleBattleCard";
 import {
-  Encounter,
   EncounterCreature,
-  EncounterParticipant,
   EncounterWithParticipants,
 } from "@/server/api/router";
 import { Card } from "@/components/ui/card";
 import clsx from "clsx";
-import { HealthMeterOverlay } from "@/app/encounters/[id]/run/battle-ui";
-import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
-import { GroupBattleLayout } from "@/app/encounters/[id]/run/group-battle-ui";
+import { HealthMeterOverlay } from "@/app/campaigns/[campaign]/encounters/[id]/run/battle-ui";
+import { CharacterIcon } from "@/app/campaigns/[campaign]/encounters/[id]/character-icon";
+import { GroupBattleLayout } from "@/app/campaigns/[campaign]/encounters/[id]/run/group-battle-ui";
+import { useCampaign } from "@/app/campaigns/[campaign]/hooks";
 
 export default function ObservePage({ params }: { params: { id: string } }) {
   return (
@@ -28,6 +27,7 @@ async function EncounterObserverView({ id }: { id?: string }) {
     return <div>Provide an id in the url.</div>;
   }
   const encounter = await getEncounterData(id);
+  const campaign = useCampaign();
   if (!encounter) {
     return <div>Encounter not found.</div>;
   }
@@ -36,7 +36,7 @@ async function EncounterObserverView({ id }: { id?: string }) {
     <section className="flex flex-col gap-20 w-screen pt-10 items-center">
       <h1 className="text-xl">{encounter.name}</h1>
       <PageRefresher />
-      {encounter.initiative_type === "linear" ? (
+      {campaign.system?.initiative_type === "linear" ? (
         <LinearObserve encounter={encounter} />
       ) : (
         <GroupObserve encounter={encounter} />
@@ -51,7 +51,7 @@ async function LinearObserve({
   encounter: EncounterWithParticipants;
 }) {
   const activeIndex = encounter.participants.findIndex(
-    (participant) => participant.is_active
+    (participant) => participant.is_active,
   );
   return (
     <div className={"flex margin-auto gap-3 overflow-auto max-w-full"}>
@@ -76,10 +76,10 @@ async function GroupObserve({
   encounter: EncounterWithParticipants;
 }) {
   const monsters = encounter.participants.filter(
-    (participant) => !participant.is_player
+    (participant) => !participant.is_player,
   );
   const players = encounter.participants.filter(
-    (participant) => participant.is_player
+    (participant) => participant.is_player,
   );
 
   return (
@@ -107,7 +107,7 @@ function SimpleGroupBattleCard({
         "w-40 shadow-lg border-2 relative select-none mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
         {
           "opacity-20": participant.has_played_this_round,
-        }
+        },
       )}
     >
       <HealthMeterOverlay creature={participant} />

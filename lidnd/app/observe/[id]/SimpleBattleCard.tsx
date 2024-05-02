@@ -1,10 +1,10 @@
 import { Card } from "@/components/ui/card";
-import { CharacterIcon } from "@/app/encounters/[id]/character-icon";
+import { CharacterIcon } from "@/app/campaigns/[campaign]/encounters/[id]/character-icon";
 import clsx from "clsx";
 import { ChevronUp } from "lucide-react";
-import { HealthMeterOverlay } from "@/app/encounters/[id]/run/battle-ui";
-import { effectIconMap } from "@/app/encounters/[id]/run/effectIconMap";
-import { BasePopover } from "@/app/encounters/base-popover";
+import { HealthMeterOverlay } from "@/app/campaigns/[campaign]/encounters/[id]/run/battle-ui";
+import { effectIconMap } from "@/app/campaigns/[campaign]/encounters/[id]/run/effectIconMap";
+import { BasePopover } from "@/app/campaigns/[campaign]/encounters/base-popover";
 import { Button } from "@/components/ui/button";
 import React from "react";
 import { Encounter, EncounterCreature } from "@/server/api/router";
@@ -55,7 +55,7 @@ export function SimpleBattleCard({
             "opacity-40":
               (encounter?.current_round === 0 && !participant.has_surprise) ||
               index < activeIndex,
-          }
+          },
         )}
       >
         <HealthMeterOverlay creature={participant} />

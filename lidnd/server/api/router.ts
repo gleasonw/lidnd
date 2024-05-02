@@ -18,7 +18,7 @@ import {
   updateMinionCount,
   cycleNextTurn,
   cyclePreviousTurn,
-} from "@/app/encounters/utils";
+} from "@/app/campaigns/[campaign]/encounters/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
   getEncounterCreature,
@@ -33,8 +33,9 @@ import {
   updateParticipantHasPlayed,
   updateTurnData,
 } from "@/server/api/utils";
-import { mergeEncounterCreature } from "@/app/encounters/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { campaignEncounters } from "@/server/encounters";
+import { campaignById, userCampaigns } from "@/server/campaigns";
 
 const t = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -117,36 +118,11 @@ export const updateSettingsSchema = insertSettingsSchema
   );
 
 export const appRouter = t.router({
-  encounters: protectedProcedure.query(async (opts) => {
-    const encountersWithParticipants = await db
-      .select()
-      .from(encounters)
-      .where(eq(encounters.user_id, opts.ctx.user.userId))
-      .leftJoin(
-        encounter_participant,
-        eq(encounters.id, encounter_participant.encounter_id)
-      )
-      .leftJoin(creatures, eq(encounter_participant.creature_id, creatures.id));
+  encounters: protectedProcedure.input(z.string()).query(async (opts) => {
+    const userId = opts.ctx.user.userId;
+    const campaignId = opts.input;
 
-    const response = encountersWithParticipants.reduce<
-      Record<string, EncounterWithParticipants>
-    >((acc, row) => {
-      const encounter = row["encounters"];
-      const participant = row["encounter_participant"];
-      const creature = row["creatures"];
-      if (!acc[encounter.id]) {
-        acc[encounter.id] = {
-          ...encounter,
-          participants: [],
-        };
-      }
-      if (!participant || !creature) return acc;
-      acc[encounter.id].participants.push(
-        mergeEncounterCreature(participant, creature)
-      );
-      return acc;
-    }, {});
-    return Object.values(response);
+    return await campaignEncounters(userId, campaignId);
   }),
 
   spells: publicProcedure.input(z.string()).query(async (opts) => {
@@ -186,11 +162,28 @@ export const appRouter = t.router({
         .returning();
     }),
 
+  userCampaigns: protectedProcedure.query(async (opts) => {
+    const userId = opts.ctx.user.userId;
+    return await userCampaigns(userId);
+  }),
+
+  campaignById: protectedProcedure.input(z.string()).query(async (opts) => {
+    const campaign = await campaignById(opts.input, opts.ctx.user.userId);
+    if (!campaign) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "No campaign found",
+      });
+    }
+    return campaign;
+  }),
+
   createEncounter: protectedProcedure
     .input(
       z.object({
         name: z.string().nullable(),
         description: z.string().nullable(),
+        campaign_id: z.string(),
       })
     )
     .mutation(async (opts) => {
@@ -202,6 +195,7 @@ export const appRouter = t.router({
               name: opts.input.name,
               description: opts.input.description,
               user_id: opts.ctx.user.userId,
+              campaign_id: opts.input.campaign_id,
             })
             .returning(),
           tx
@@ -534,30 +528,6 @@ export const appRouter = t.router({
         return encounter;
       });
       return result;
-    }),
-
-  updateEncounterInitiativeType: protectedProcedure
-    .input(
-      z.object({
-        encounter_id: z.string(),
-        initiative_type: z.literal("linear").or(z.literal("group")),
-      })
-    )
-    .mutation(async (opts) => {
-      const result = await db
-        .update(encounters)
-        .set({
-          initiative_type: opts.input.initiative_type,
-        })
-        .where(eq(encounters.id, opts.input.encounter_id))
-        .returning();
-      if (result.length === 0) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update encounter",
-        });
-      }
-      return result[0];
     }),
 
   removeParticipantFromEncounter: protectedProcedure

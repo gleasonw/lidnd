@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getPageSession } from "@/server/api/utils";
 
 import type { Metadata } from "next";
+import { appRoutes } from "@/app/routes";
 
 export const metadata: Metadata = {
   title: "LiDnD",
@@ -13,5 +14,5 @@ export default async function Home() {
   if (!session) {
     return redirect("/login");
   }
-  redirect("/encounters");
+  redirect(appRoutes.campaigns);
 }
