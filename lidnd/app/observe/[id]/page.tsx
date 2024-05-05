@@ -12,7 +12,6 @@ import clsx from "clsx";
 import { HealthMeterOverlay } from "@/app/campaigns/[campaign]/encounters/[id]/run/battle-ui";
 import { CharacterIcon } from "@/app/campaigns/[campaign]/encounters/[id]/character-icon";
 import { GroupBattleLayout } from "@/app/campaigns/[campaign]/encounters/[id]/run/group-battle-ui";
-import { useCampaign } from "@/app/campaigns/[campaign]/hooks";
 
 export default function ObservePage({ params }: { params: { id: string } }) {
   return (
@@ -26,8 +25,10 @@ async function EncounterObserverView({ id }: { id?: string }) {
   if (!id) {
     return <div>Provide an id in the url.</div>;
   }
+
+  //TODO: we need to get the campaign data as well
   const encounter = await getEncounterData(id);
-  const campaign = useCampaign();
+
   if (!encounter) {
     return <div>Encounter not found.</div>;
   }
@@ -36,11 +37,7 @@ async function EncounterObserverView({ id }: { id?: string }) {
     <section className="flex flex-col gap-20 w-screen pt-10 items-center">
       <h1 className="text-xl">{encounter.name}</h1>
       <PageRefresher />
-      {campaign.system?.initiative_type === "linear" ? (
-        <LinearObserve encounter={encounter} />
-      ) : (
-        <GroupObserve encounter={encounter} />
-      )}
+      <LinearObserve encounter={encounter} />
     </section>
   );
 }

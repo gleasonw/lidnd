@@ -18,10 +18,6 @@ export async function logOut() {
   redirect("/login");
 }
 
-export async function updateSettings(form: FormData) {
-  console.log(form);
-}
-
 export async function createCampaign(formdata: FormData) {
   const campaign = parse(formdata, {
     schema: campaignInsertSchema.merge(

@@ -63,11 +63,11 @@ export default async function Page() {
   );
 }
 
-export interface CampaignCardProps {
+interface CampaignCardProps {
   campaign: Campaign;
 }
 
-export function CampaignCard(props: CampaignCardProps) {
+function CampaignCard(props: CampaignCardProps) {
   const { campaign } = props;
   return (
     <Card className="flex flex-col gap-5">
