@@ -5,6 +5,6 @@ export default {
   out: "./server/api/db/drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: "postgres://postgres:a2bg6AD44e1ebBc6GEbD1F4fcAdEFDe3@roundhouse.proxy.rlwy.net:22157/railway",
+    url: "postgresql://postgres:postgres@localhost:5432/dnd",
   },
 } satisfies Config;
