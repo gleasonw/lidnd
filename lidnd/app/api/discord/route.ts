@@ -1,4 +1,5 @@
 // app/login/github/callback/route.ts
+import { appRoutes } from "@/app/routes";
 import { auth, discordAuth } from "@/server/api/auth/lucia";
 import { db } from "@/server/api/db";
 import { settings } from "@/server/api/db/schema";
@@ -56,7 +57,9 @@ export const GET = async (request: NextRequest) => {
     authRequest.setSession(session);
     const redirectUrl = cookies().get("redirect")?.value;
     const redirectLocation =
-      redirectUrl && redirectUrl !== "undefined" ? redirectUrl : "/encounters";
+      redirectUrl && redirectUrl !== "undefined"
+        ? redirectUrl
+        : appRoutes.dashboard;
 
     return new Response(null, {
       status: 302,

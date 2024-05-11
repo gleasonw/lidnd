@@ -18,7 +18,7 @@ import {
   updateMinionCount,
   cycleNextTurn,
   cyclePreviousTurn,
-} from "@/app/campaigns/[campaign]/encounters/utils";
+} from "@/app/dashboard/campaigns/[campaign]/encounters/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
   getEncounterCreature,
@@ -35,7 +35,11 @@ import {
 } from "@/server/api/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { campaignEncounters } from "@/server/encounters";
-import { campaignById, userCampaigns } from "@/server/campaigns";
+import {
+  campaignById,
+  playersInCampaign,
+  userCampaigns,
+} from "@/server/campaigns";
 
 const t = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -188,7 +192,7 @@ export const appRouter = t.router({
     )
     .mutation(async (opts) => {
       return await db.transaction(async (tx) => {
-        const [encounter, userPlayers] = await Promise.all([
+        const [encounter, campaignPlayers] = await Promise.all([
           tx
             .insert(encounters)
             .values({
@@ -198,15 +202,7 @@ export const appRouter = t.router({
               campaign_id: opts.input.campaign_id,
             })
             .returning(),
-          tx
-            .select()
-            .from(creatures)
-            .where(
-              and(
-                eq(creatures.user_id, opts.ctx.user.userId),
-                eq(creatures.is_player, true)
-              )
-            ),
+          playersInCampaign(opts.input.campaign_id, opts.ctx.user.userId, tx),
         ]);
         if (encounter.length === 0) {
           throw new TRPCError({
@@ -214,12 +210,11 @@ export const appRouter = t.router({
             message: "Failed to create encounter",
           });
         }
-        if (userPlayers.length > 0) {
+        if (campaignPlayers.length > 0) {
           await tx.insert(encounter_participant).values(
-            userPlayers.map((player) => ({
+            campaignPlayers.map(({ player }) => ({
               encounter_id: encounter[0].id,
               creature_id: player.id,
-              hp: player.max_hp,
             }))
           );
         }

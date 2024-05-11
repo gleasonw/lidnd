@@ -24,8 +24,10 @@ import { cache } from "react";
 import { auth } from "@/server/api/auth/lucia";
 import * as context from "next/headers";
 import apiURL from "@/app/apiURL";
-import { sortEncounterCreatures } from "@/app/campaigns/[campaign]/encounters/utils";
-import { mergeEncounterCreature } from "@/app/campaigns/[campaign]/encounters/utils";
+import {
+  sortEncounterCreatures,
+  mergeEncounterCreature,
+} from "@/app/dashboard/campaigns/[campaign]/encounters/utils";
 
 export async function getUserCampaigns(user_id: string) {
   return await db
@@ -34,10 +36,8 @@ export async function getUserCampaigns(user_id: string) {
     .where(eq(campaigns.user_id, user_id));
 }
 
-export async function getSystems(){
-  return await db
-    .select()
-    .from(systems);
+export async function getSystems() {
+  return await db.select().from(systems);
 }
 
 export async function createCreature(

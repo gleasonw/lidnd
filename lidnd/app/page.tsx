@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function Home() {
   const session = await getPageSession();
   if (!session) {
-    return redirect("/login");
+    return redirect(appRoutes.login);
   }
-  redirect(appRoutes.campaigns);
+  redirect(appRoutes.dashboard);
 }

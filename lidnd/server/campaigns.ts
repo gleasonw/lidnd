@@ -1,5 +1,10 @@
 import { db } from "@/server/api/db";
-import { campaigns, systems } from "@/server/api/db/schema";
+import {
+  campaigns,
+  campaignsToPlayers,
+  creatures,
+  systems,
+} from "@/server/api/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 
 export async function userCampaigns(userId: string) {
@@ -25,4 +30,28 @@ export async function campaignById(campaignId: string, userId: string) {
     .where(and(eq(campaigns.id, campaignId), eq(campaigns.user_id, userId)))
     .leftJoin(systems, eq(campaigns.system_id, systems.id));
   return res.at(0);
+}
+
+export async function playersInCampaign(
+  campaignId: string,
+  userId: string,
+  dbObject = db
+) {
+  return await dbObject
+    .select({
+      campaign_id: campaignsToPlayers.campaign_id,
+      player: {
+        id: campaignsToPlayers.player_id,
+        name: creatures.name,
+      },
+    })
+    .from(campaignsToPlayers)
+    .where(eq(campaignsToPlayers.campaign_id, campaignId))
+    .leftJoin(
+      creatures,
+      and(
+        eq(campaignsToPlayers.player_id, creatures.id),
+        eq(creatures.user_id, userId)
+      )
+    );
 }

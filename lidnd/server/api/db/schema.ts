@@ -73,9 +73,9 @@ export const campaignsToPlayers = pgTable(
     campaign_id: uuid("campaign_id")
       .notNull()
       .references(() => campaigns.id, { onDelete: "cascade" }),
-    player_id: text("player_id")
+    player_id: uuid("player_id")
       .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+      .references(() => creatures.id, { onDelete: "cascade" }),
   },
   (t) => {
     return {

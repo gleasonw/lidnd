@@ -1,4 +1,4 @@
-import { mergeEncounterCreature } from "@/app/campaigns/[campaign]/encounters/utils";
+import { mergeEncounterCreature } from "@/app/dashboard/campaigns/[campaign]/encounters/utils";
 import { db } from "@/server/api/db";
 import {
   creatures,

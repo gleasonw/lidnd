@@ -1,13 +1,13 @@
 import { Card } from "@/components/ui/card";
-import { CharacterIcon } from "@/app/campaigns/[campaign]/encounters/[id]/character-icon";
 import clsx from "clsx";
 import { ChevronUp } from "lucide-react";
-import { HealthMeterOverlay } from "@/app/campaigns/[campaign]/encounters/[id]/run/battle-ui";
-import { effectIconMap } from "@/app/campaigns/[campaign]/encounters/[id]/run/effectIconMap";
-import { BasePopover } from "@/app/campaigns/[campaign]/encounters/base-popover";
 import { Button } from "@/components/ui/button";
 import React from "react";
 import { Encounter, EncounterCreature } from "@/server/api/router";
+import { CharacterIcon } from "@/encounters/[id]/character-icon";
+import { HealthMeterOverlay } from "@/encounters/[id]/run/battle-ui";
+import effectIconMap from "@/encounters/[id]/run/effectIconMap";
+import { BasePopover } from "@/encounters/base-popover";
 
 export interface SimpleBattleCardProps {
   children?: React.ReactNode;

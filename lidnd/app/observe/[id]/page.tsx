@@ -9,9 +9,9 @@ import {
 } from "@/server/api/router";
 import { Card } from "@/components/ui/card";
 import clsx from "clsx";
-import { HealthMeterOverlay } from "@/app/campaigns/[campaign]/encounters/[id]/run/battle-ui";
-import { CharacterIcon } from "@/app/campaigns/[campaign]/encounters/[id]/character-icon";
-import { GroupBattleLayout } from "@/app/campaigns/[campaign]/encounters/[id]/run/group-battle-ui";
+import { CharacterIcon } from "@/encounters/[id]/character-icon";
+import { HealthMeterOverlay } from "@/encounters/[id]/run/battle-ui";
+import { GroupBattleLayout } from "@/encounters/[id]/run/group-battle-ui";
 
 export default function ObservePage({ params }: { params: { id: string } }) {
   return (

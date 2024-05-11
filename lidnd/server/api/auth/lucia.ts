@@ -6,6 +6,7 @@ import { discord } from "@lucia-auth/oauth/providers";
 import { rerouteUrl } from "@/app/login/page";
 
 export const auth = lucia({
+  // @ts-ignore - i should upgrade lucia
   adapter: postgresAdapter(queryClient, {
     user: "users",
     key: "user_key",
