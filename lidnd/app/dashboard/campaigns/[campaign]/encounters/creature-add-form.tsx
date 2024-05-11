@@ -1,6 +1,12 @@
 "use client";
 
-import React, { Suspense, useId, useState, useEffect } from "react";
+import React, {
+  Suspense,
+  useId,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { Input } from "@/components/ui/input";
 import { useEncounterId } from "./[id]/hooks";
 import { Button } from "@/components/ui/button";
@@ -168,6 +174,18 @@ export function ImageUpload({
     }
   }, [image]);
 
+  const onImageInput = useCallback(
+    (dti: DataTransferItem) => {
+      if (!dti.type.startsWith("image")) {
+        console.error(`${dti.type} is not an image`);
+        return;
+      }
+
+      onUpload(dti.getAsFile() ?? undefined);
+    },
+    [onUpload],
+  );
+
   return (
     <span className="h-auto relative flex flex-col gap-5 group">
       {previewUrl && (
@@ -207,14 +225,19 @@ export function ImageUpload({
           onPaste={(e) => {
             const clipboardData = e.clipboardData;
             const item = clipboardData.items[0];
-
-            if (!item?.type.startsWith("image")) {
-              e.preventDefault();
-              return;
-            }
-            onUpload(item.getAsFile() ?? undefined);
+            onImageInput(item);
           }}
         />
+      </span>
+      <span
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          onImageInput(e.dataTransfer.items[0]);
+        }}
+        className="border-2 border-dashed border-gray-200 rounded-md p-2 flex flex-col gap-2 h-20 items-center justify-center"
+      >
+        Drop image here
       </span>
     </span>
   );

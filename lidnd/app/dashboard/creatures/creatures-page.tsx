@@ -14,12 +14,7 @@ import { useMutation } from "@tanstack/react-query";
 import { getCreaturePostForm } from "@/encounters/utils";
 import { CreaturePost } from "@/encounters/types";
 import { rerouteUrl } from "@/app/login/page";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogClose,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 import { DataTable } from "@/creatures/creatures-table";
 import { columns } from "@/creatures/columns";
@@ -87,35 +82,42 @@ export default function CreaturesPage() {
     : creatures;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className={"flex gap-5 relative"}>
-        <Input
-          placeholder="Search"
-          className={"max-w-lg"}
-          type="text"
-          onChange={(e) => setName(e.target.value)}
-          value={name}
-        />
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-[900px] w-full h-5/6">
-            <FullCreatureAddForm uploadCreature={createCreature} />
-          </DialogContent>
-        </Dialog>
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className={!name ? "opacity-100" : "opacity-0"}>
-          {displayCreatures?.length} / 30
-        </span>
-        <div className="flex gap-10 flex-wrap ">
-          {displayCreatures && (
-            <DataTable columns={columns} data={displayCreatures} />
-          )}
+    <div className="grid md:grid-cols-2">
+      <div className="flex flex-col gap-3">
+        <div className={"flex gap-5 relative"}>
+          <Input
+            placeholder="Search"
+            className={"max-w-lg"}
+            type="text"
+            onChange={(e) => setName(e.target.value)}
+            value={name}
+          />
+          <div className="md:hidden">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-[900px] w-full h-5/6">
+                <FullCreatureAddForm uploadCreature={createCreature} />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
+        <div className="flex flex-col gap-2">
+          <span className={!name ? "opacity-100" : "opacity-0"}>
+            {displayCreatures?.length} / 30
+          </span>
+          <div className="flex gap-10 flex-wrap ">
+            {displayCreatures && (
+              <DataTable columns={columns} data={displayCreatures} />
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="hidden md:block">
+        <FullCreatureAddForm uploadCreature={createCreature} />
       </div>
     </div>
   );

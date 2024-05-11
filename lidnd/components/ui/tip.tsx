@@ -36,7 +36,7 @@ export function ButtonWithTooltip({
   className?: string;
 } & React.ComponentPropsWithoutRef<typeof Button>) {
   return (
-    <Tip text={text} className="w-60">
+    <Tip text={text} className="bg-transparent bg-gray-800 text-white">
       <Button className={className} {...props}>
         {children}
       </Button>
