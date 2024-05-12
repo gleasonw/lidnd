@@ -8,11 +8,7 @@ export interface OriginalSizeImageProps {
   className?: string;
 }
 
-export function OriginalSizeImage({
-  src,
-  alt,
-  className,
-}: OriginalSizeImageProps) {
+export function OriginalSizeImage({ src, alt }: OriginalSizeImageProps) {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [width, setWidth] = React.useState<number | undefined>(undefined);
 
@@ -40,16 +36,14 @@ export function OriginalSizeImage({
     };
   }, [imgRef]);
 
-  const widthClass = width ? `max-w-[${width}px]` : "";
   return (
-    <div className="flex justify-center items-center">
-      <img
-        src={src}
-        alt={alt}
-        style={{ maxWidth: width ? `${width}px` : "100%" }}
-        ref={imgRef}
-        onLoad={handleImageLoad}
-      />
-    </div>
+    <img
+      src={src}
+      alt={alt}
+      className="w-full h-auto"
+      style={{ maxWidth: width ? `${width}px` : "100%" }}
+      ref={imgRef}
+      onLoad={handleImageLoad}
+    />
   );
 }

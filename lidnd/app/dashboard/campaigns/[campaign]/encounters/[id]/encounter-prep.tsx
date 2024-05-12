@@ -22,7 +22,7 @@ import { FullCreatureAddForm } from "@/encounters/full-creature-add-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import React, { Suspense } from "react";
-import { sortEncounterCreatures } from "@/encounters/utils";
+import { getAWSimageURL, sortEncounterCreatures } from "@/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
 import {
@@ -30,19 +30,25 @@ import {
   useRemoveParticipantFromEncounter,
   useStartEncounter,
 } from "@/encounters/[id]/hooks";
-import {
-  GroupBattleCard,
-  GroupBattleLayout,
-} from "@/encounters/[id]/run/group-battle-ui";
+import { GroupBattleLayout } from "@/encounters/[id]/run/group-battle-ui";
 import { EncounterCreature } from "@/server/api/router";
 import { useCampaign, useCampaignId } from "@/campaigns/hooks";
 import { BasePopover } from "@/encounters/base-popover";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
 import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { TabsList } from "@radix-ui/react-tabs";
+import { OriginalSizeImage } from "@/encounters/original-size-image";
 
-export default function EncounterPrep() {
+export interface EncounterPrepProps {
+  notesInput: React.ReactNode;
+}
+
+export default function EncounterPrep(props: EncounterPrepProps) {
+  const { notesInput } = props;
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
+  const [selectedParticipantId, setSelectedParticipantId] = React.useState<
+    string | null
+  >(null);
 
   return (
     <AnimatePresence>
@@ -56,14 +62,25 @@ export default function EncounterPrep() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, transition: { duration: 0.1 } }}
-          className="w-full flex flex-col items-center gap-10"
+          className="w-full flex flex-col gap-10"
         >
           <EncounterDetailsEditor>
             <EncounterStats />
           </EncounterDetailsEditor>
+          {notesInput}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
-            <EncounterParticipantRow />
+            <div>
+              <EncounterParticipantRow
+                onSelectParticipant={setSelectedParticipantId}
+              />
+              {selectedParticipantId && (
+                <OriginalSizeImage
+                  src={getAWSimageURL(selectedParticipantId, "stat_block")}
+                  alt={"monster stat block"}
+                />
+              )}
+            </div>
             <Card className="w-full grow">
               <Tabs defaultValue="new">
                 <TabsList>
@@ -76,7 +93,6 @@ export default function EncounterPrep() {
                 </TabsList>
                 <TabsContent value="new">
                   <CardContent className={"flex flex-col gap-3"}>
-                    <CardTitle className="py-3">Add new creature</CardTitle>
                     <FullCreatureAddForm
                       uploadCreature={(data) => addCreatureToEncounter(data)}
                     />
@@ -84,7 +100,6 @@ export default function EncounterPrep() {
                 </TabsContent>
                 <TabsContent value="existing">
                   <CardContent className={"flex flex-col gap-3"}>
-                    <CardTitle className="py-3">Existing creature</CardTitle>
                     <ExistingCreature />
                   </CardContent>
                 </TabsContent>
@@ -125,6 +140,7 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
         <Input
           value={encounterName}
           placeholder={encounter?.name ?? "Unnamed encounter"}
+          className="text-2xl"
           onChange={(e) => {
             setEncounterName(e.target.value);
             debouncedNameUpdate(e.target.value);
@@ -177,7 +193,10 @@ export function EncounterStartButton() {
   );
 }
 
-function EncounterParticipantRow() {
+function EncounterParticipantRow(props: {
+  onSelectParticipant: (id: string) => void;
+}) {
+  const { onSelectParticipant } = props;
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
 
@@ -202,7 +221,12 @@ function EncounterParticipantRow() {
           </h1>
         }
         monsters={monsters.map((participant) => (
-          <PrepParticipantCard key={participant.id} participant={participant} />
+          <button
+            onClick={() => onSelectParticipant(participant.creature_id)}
+            key={participant.id}
+          >
+            <PrepParticipantCard participant={participant} />
+          </button>
         ))}
         players={players.map((participant) => (
           <PrepParticipantCard key={participant.id} participant={participant} />

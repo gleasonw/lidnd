@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -78,6 +84,11 @@ export function BattleUIHeader() {
           </DialogContent>
         </Dialog>
       </div>
+      {encounter?.description && (
+        <CardDescription className="whitespace-pre-wrap">
+          {encounter.description}
+        </CardDescription>
+      )}
 
       {campaign.system?.initiative_type === "linear" ? (
         <LinearBattleUI />

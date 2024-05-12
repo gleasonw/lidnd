@@ -95,6 +95,7 @@ export type EncounterWithParticipants = Encounter & {
 export const participantSchema = createSelectSchema(encounter_participant);
 export const insertCreatureSchema = createInsertSchema(creatures);
 export const insertSettingsSchema = createInsertSchema(settings);
+export const updateEncounterSchema = createInsertSchema(encounters);
 
 const booleanSchema = z
   .union([z.boolean(), z.literal("true"), z.literal("false")])

@@ -27,9 +27,7 @@ import {
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { ButtonWithTooltip } from "@/components/ui/tip";
-import { Plus, UserPlus } from "lucide-react";
-import { PlayerUploadForm } from "@/encounters/full-creature-add-form";
+import { Plus } from "lucide-react";
 
 export default async function Page() {
   const session = await getPageSession();
@@ -46,7 +44,7 @@ export default async function Page() {
   ]);
 
   return (
-    <div className="flex w-full items-center flex-col">
+    <div className="flex w-full flex-col">
       <div className="flex flex-col gap-10 w-[700px]">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {userCampaigns.map((campaign, index) => (

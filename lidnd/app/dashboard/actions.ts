@@ -7,6 +7,7 @@ import {
   campaigns,
   campaignsToPlayers,
   creatures,
+  encounters,
 } from "@/server/api/db/schema";
 import { z } from "zod";
 import { db } from "@/server/api/db";
@@ -15,7 +16,10 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { campaignInsertSchema } from "@/app/dashboard/types";
 import { and, eq } from "drizzle-orm";
-import { creatureUploadSchema } from "@/server/api/router";
+import {
+  creatureUploadSchema,
+  updateEncounterSchema,
+} from "@/server/api/router";
 import { appRoutes } from "@/app/routes";
 
 export async function logOut() {
@@ -108,4 +112,37 @@ export async function createPlayerAndAddToCampaign(
   });
 
   revalidatePath(appRoutes.dashboard);
+}
+
+export async function updateEncounterDescription(
+  id: string,
+  formData: FormData,
+) {
+  const session = await getPageSession();
+
+  if (!session) {
+    console.log("user not logged in");
+    return NextResponse.json({ error: "No session found." }, { status: 400 });
+  }
+
+  const parsedForm = parse(formData, {
+    schema: z.object({ description: z.string().optional() }),
+  });
+
+  if (!parsedForm.value) {
+    return { message: parsedForm.error, status: 400 };
+  }
+
+  const { description: parsedDescription } = parsedForm.value;
+
+  console.log("parsed description", parsedDescription);
+
+  await db
+    .update(encounters)
+    .set({ description: parsedDescription ?? "" })
+    .where(
+      and(eq(encounters.id, id), eq(encounters.user_id, session.user.userId)),
+    );
+
+  revalidatePath(appRoutes.campaigns);
 }

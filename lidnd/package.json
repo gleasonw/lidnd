@@ -62,7 +62,7 @@
     "pg": "^8.11.5",
     "postcss": "8.4.29",
     "postgres": "^3.4.4",
-    "react": "18.2.0",
+    "react": "18.3.1",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.51.3",
     "react-query": "^3.39.3",
