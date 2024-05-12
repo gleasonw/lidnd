@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 export function SideNav({ userAvatar }: { userAvatar: React.ReactNode }) {
   return (
-    <nav className="flex-col flex gap-10 transition-all shadow-md h-screen w-10 lg:w-20 items-center">
+    <nav className="flex-col flex gap-10 transition-all shadow-md h-full w-10 lg:w-20 items-center sticky top-0">
       <AppLink route="dashboard">
         <Home />
       </AppLink>

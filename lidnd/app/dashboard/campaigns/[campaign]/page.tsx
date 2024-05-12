@@ -3,15 +3,38 @@ import CampaignEncountersOverview from "../[campaign]/encounters/encounters-over
 import { deleteCampaign } from "../../actions";
 import { Button } from "@/components/ui/button";
 import { getPageSession } from "@/server/api/utils";
-import { playersInCampaign } from "@/server/campaigns";
+import { campaignById, playersInCampaign } from "@/server/campaigns";
+import { appRoutes } from "@/app/routes";
+import { redirect } from "next/navigation";
+import { CardDescription } from "@/components/ui/card";
 
-export default function CampaignPage({
+export default async function CampaignPage({
   params,
 }: {
   params: { campaign: string };
 }) {
+  const campaign = params.campaign;
+  const session = await getPageSession();
+  if (!session) {
+    console.error("No session found, layout should have redirected");
+    return redirect(appRoutes.login);
+  }
+  const user = session.user;
+  const campaignData = await campaignById(campaign, user.userId);
+  if (!campaignData) {
+    console.error("No campaign found, layout should have redirected");
+    return <div>No campaign found... this is a bug</div>;
+  }
   return (
     <CampaignEncountersOverview
+      campaignHeader={
+        <div className="w-full flex flex-col gap-5">
+          <h1 className="text-2xl font-bold">{campaignData.name}</h1>
+          <CardDescription className="whitespace-pre-wrap">
+            {campaignData.description}
+          </CardDescription>
+        </div>
+      }
       deleteCampaignButton={
         <CampaignDeleteButton campaignId={params.campaign} />
       }
@@ -55,6 +78,10 @@ async function CampaignPlayers(props: { campaignId: string }) {
   const user = session.user;
 
   const players = await playersInCampaign(campaignId, user.userId);
+
+  if (!players.length) {
+    return <div>No player creatures yet</div>;
+  }
 
   return (
     <div className="flex gap-3">

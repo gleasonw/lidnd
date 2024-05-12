@@ -14,10 +14,12 @@ import {
   Swords,
   Sword,
   Angry,
+  Plus,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { FullCreatureAddForm } from "@/encounters/full-creature-add-form";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import React, { Suspense } from "react";
 import { sortEncounterCreatures } from "@/encounters/utils";
@@ -35,6 +37,9 @@ import {
 import { EncounterCreature } from "@/server/api/router";
 import { useCampaign, useCampaignId } from "@/campaigns/hooks";
 import { BasePopover } from "@/encounters/base-popover";
+import { CharacterIcon } from "@/encounters/[id]/character-icon";
+import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs";
+import { TabsList } from "@radix-ui/react-tabs";
 
 export default function EncounterPrep() {
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
@@ -56,30 +61,35 @@ export default function EncounterPrep() {
           <EncounterDetailsEditor>
             <EncounterStats />
           </EncounterDetailsEditor>
-          <EncounterParticipantRow />
 
-          <div className={"flex flex-col w-full gap-3"}>
-            <div
-              className={
-                "flex flex-wrap xl:flex-nowrap w-full justify-center gap-3 md:gap-5 lg:gap-14"
-              }
-            >
-              <Card className="max-w-[900px] w-full p-3">
-                <CardContent className={"flex flex-col gap-3"}>
-                  <CardTitle className="py-3">Add new creature</CardTitle>
-                  <FullCreatureAddForm
-                    uploadCreature={(data) => addCreatureToEncounter(data)}
-                  />
-                </CardContent>
-              </Card>
-
-              <Card className={"max-w-[900px] w-full p-3"}>
-                <CardContent className={"flex flex-col gap-3"}>
-                  <CardTitle className="py-3">Add existing creature</CardTitle>
-                  <ExistingCreature />
-                </CardContent>
-              </Card>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
+            <EncounterParticipantRow />
+            <Card className="w-full grow">
+              <Tabs defaultValue="new">
+                <TabsList>
+                  <TabsTrigger value="new">
+                    <Plus /> Add new creature
+                  </TabsTrigger>
+                  <TabsTrigger value="existing">
+                    <UserPlus /> Existing creatures
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="new">
+                  <CardContent className={"flex flex-col gap-3"}>
+                    <CardTitle className="py-3">Add new creature</CardTitle>
+                    <FullCreatureAddForm
+                      uploadCreature={(data) => addCreatureToEncounter(data)}
+                    />
+                  </CardContent>
+                </TabsContent>
+                <TabsContent value="existing">
+                  <CardContent className={"flex flex-col gap-3"}>
+                    <CardTitle className="py-3">Existing creature</CardTitle>
+                    <ExistingCreature />
+                  </CardContent>
+                </TabsContent>
+              </Tabs>
+            </Card>
           </div>
         </motion.div>
       </Suspense>
@@ -110,7 +120,7 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
   }, 500);
 
   return (
-    <div className="flex gap-5 items-center w-full flex-col md:flex-row justify-end pl-10">
+    <div className="flex gap-5 items-center w-full flex-col md:flex-row justify-end">
       <span className="flex gap-3 items-center flex-col md:flex-row mr-auto">
         <Input
           value={encounterName}
@@ -183,7 +193,7 @@ function EncounterParticipantRow() {
       <GroupBattleLayout
         playerTitle={
           <h1 className="flex gap-5 text-xl">
-            Players <Sword />
+            Allies <Sword />
           </h1>
         }
         monsterTitle={
@@ -220,11 +230,16 @@ function PrepParticipantCard({
   return (
     <AnimationListItem key={participant.id}>
       <div className="flex flex-col items-center gap-3">
-        {campaign.system?.initiative_type === "group" ? (
-          <GroupBattleCard creature={participant} />
-        ) : (
-          <BattleCard creature={participant} />
-        )}
+        <Card>
+          <CardHeader>
+            <CardTitle>{participant.name}</CardTitle>
+          </CardHeader>
+          <CharacterIcon
+            id={participant.creature_id}
+            name={participant.name}
+            className="h-20 object-cover"
+          />
+        </Card>
         <Button
           variant="ghost"
           onClick={() =>

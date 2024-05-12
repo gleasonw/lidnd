@@ -35,14 +35,14 @@ export async function createCampaign(formdata: FormData) {
   });
 
   if (!campaign.value) {
-    return NextResponse.json({ error: campaign.error }, { status: 400 });
+    return { message: campaign.error, status: 400 };
   }
 
   const session = await getPageSession();
 
   if (!session) {
     console.log("user not logged in");
-    return NextResponse.json({ error: "No session found." }, { status: 400 });
+    return { message: "No session found.", status: 400 };
   }
 
   const user = session.user;
@@ -65,8 +65,8 @@ export async function deleteCampaign(userId: string, id: string) {
     .where(and(eq(campaigns.id, id), eq(campaigns.user_id, userId)))
     .returning();
 
-  revalidatePath("/campaigns");
-  redirect("/campaigns");
+  revalidatePath(appRoutes.dashboard);
+  redirect(appRoutes.dashboard);
 }
 
 export async function createPlayerAndAddToCampaign(

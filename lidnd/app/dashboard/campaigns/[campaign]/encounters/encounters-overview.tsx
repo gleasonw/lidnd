@@ -26,16 +26,18 @@ import { PlayerUploadForm } from "@/encounters/full-creature-add-form";
 import { CreaturePost } from "@/encounters/types";
 import { getCreaturePostForm } from "@/encounters/utils";
 import { createPlayerAndAddToCampaign } from "@/app/dashboard/actions";
+import { Separator } from "@/components/ui/separator";
 
 export interface CampaignEncountersProps {
   deleteCampaignButton: React.ReactNode;
   playersDisplay: React.ReactNode;
+  campaignHeader: React.ReactNode;
 }
 
 export default function CampaignEncountersOverview(
   props: CampaignEncountersProps,
 ) {
-  const { deleteCampaignButton, playersDisplay } = props;
+  const { deleteCampaignButton, playersDisplay, campaignHeader } = props;
   const campaignId = useCampaignId();
   const { data: encounters, isLoading } = api.encounters.useQuery(campaignId);
   const { encounters: encountersQuery } = api.useUtils();
@@ -74,7 +76,8 @@ export default function CampaignEncountersOverview(
   }
 
   return (
-    <div className="flex flex-col gap-14 mx-auto max-w-screen-xl">
+    <div className="flex flex-col gap-10">
+      {campaignHeader}
       <span className="flex gap-5 items-center">
         {playersDisplay}
         <Dialog>
@@ -88,6 +91,7 @@ export default function CampaignEncountersOverview(
           </DialogContent>
         </Dialog>
       </span>
+      <Separator />
       <CreateEncounterButton />
       {encounterCategories.map(({ name, encounters }) => (
         <section key={name} className={"flex flex-col gap-8 pt-8"}>
