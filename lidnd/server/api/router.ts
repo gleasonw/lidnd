@@ -40,6 +40,7 @@ import {
   playersInCampaign,
   userCampaigns,
 } from "@/server/campaigns";
+import { booleanSchema } from "@/app/dashboard/utils";
 
 const t = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -96,10 +97,6 @@ export const participantSchema = createSelectSchema(encounter_participant);
 export const insertCreatureSchema = createInsertSchema(creatures);
 export const insertSettingsSchema = createInsertSchema(settings);
 export const updateEncounterSchema = createInsertSchema(encounters);
-
-const booleanSchema = z
-  .union([z.boolean(), z.literal("true"), z.literal("false")])
-  .transform((value) => value === true || value === "true");
 
 export const creatureUploadSchema = insertCreatureSchema
   .extend({

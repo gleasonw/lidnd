@@ -30,7 +30,7 @@ export function DescriptionTextArea(props: DescriptionTextProps) {
   }, 500);
 
   return (
-    <>
+    <div>
       <Textarea
         className="h-40"
         name="description"
@@ -42,7 +42,7 @@ export function DescriptionTextArea(props: DescriptionTextProps) {
           debouncedUpdate(e.target.value);
         }}
       />
-      <span className="h-6 relative">
+      <span className="h-5 relative flex">
         <div
           data-saving={status === "saving"}
           className={
@@ -58,6 +58,6 @@ export function DescriptionTextArea(props: DescriptionTextProps) {
           Saved
         </div>
       </span>
-    </>
+    </div>
   );
 }
