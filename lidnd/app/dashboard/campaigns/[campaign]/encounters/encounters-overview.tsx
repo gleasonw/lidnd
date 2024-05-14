@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import React from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader } from "@/components/ui/card";
 import { CharacterIcon } from "../encounters/[id]/character-icon";
 import {
   Popover,
@@ -76,8 +76,9 @@ export default function CampaignEncountersOverview(
   }
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-5">
       {campaignHeader}
+      <h1 className="text-xl">Players</h1>
       <span className="flex gap-5 items-center">
         {playersDisplay}
         <Dialog>

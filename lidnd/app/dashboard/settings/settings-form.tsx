@@ -5,17 +5,23 @@ import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/trpc/react";
 import z from "zod";
+import { booleanSchema } from "@/app/dashboard/utils";
 
 export function SettingsForm() {
   const [userSettings, userSettingsQuery] = api.settings.useSuspenseQuery();
-  const { mutate: updateSettings, isLoading } =
-    api.updateSettings.useMutation();
+  const { settings } = api.useUtils();
+  const { mutate: updateSettings, isLoading } = api.updateSettings.useMutation({
+    onSettled: async () => {
+      return await settings.invalidate();
+    },
+  });
 
   const updateSettingsSchema = z.object({
     show_health_in_discord: z.boolean(),
     show_icons_in_discord: z.boolean(),
     average_turn_seconds: z.coerce.number(),
     default_player_level: z.coerce.number(),
+    enable_minions: z.boolean(),
   });
 
   return (
@@ -29,6 +35,7 @@ export function SettingsForm() {
             ...settings,
             show_health_in_discord: settings.show_health_in_discord === "on",
             show_icons_in_discord: settings.show_icons_in_discord === "on",
+            enable_minions: settings.enable_minions === "on",
           };
           updateSettings(updateSettingsSchema.parse(settingsWithBooleans));
         }}
@@ -51,6 +58,15 @@ export function SettingsForm() {
               name="default_player_level"
               type="number"
               defaultValue={userSettings?.default_player_level ?? 1}
+            />
+          </label>
+        </div>
+        <div className={"flex gap-5 justify-between"}>
+          <label>
+            Enable minions
+            <Switch
+              name="enable_minions"
+              defaultChecked={userSettings?.enable_minions ?? false}
             />
           </label>
         </div>

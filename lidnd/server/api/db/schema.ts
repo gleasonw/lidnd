@@ -197,6 +197,7 @@ export const settings = pgTable("settings", {
     .notNull(),
   average_turn_seconds: integer("average_turn_seconds").default(180).notNull(),
   default_player_level: integer("default_player_level").default(1).notNull(),
+  enable_minions: boolean("enable_minions").default(false).notNull(),
 });
 
 export const users = pgTable("users", {
