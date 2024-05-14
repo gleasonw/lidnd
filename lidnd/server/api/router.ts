@@ -97,7 +97,7 @@ export const insertCreatureSchema = createInsertSchema(creatures);
 export const insertSettingsSchema = createInsertSchema(settings);
 export const updateEncounterSchema = createInsertSchema(encounters);
 
-const booleanSchema = z
+export const booleanSchema = z
   .union([z.boolean(), z.literal("true"), z.literal("false")])
   .transform((value) => value === true || value === "true");
 

@@ -319,6 +319,7 @@ export function MonsterParticipantActions(props: MinionizeButtonProps) {
   const { participant } = props;
 
   const { mutate: updateCreature } = useUpdateEncounterParticipant();
+  const { data: settings } = api.settings.useQuery();
 
   const [status, setStatus] = useState<"idle" | "input">("idle");
   const [minionCount, setMinionCount] = useState<number | null>(
@@ -349,9 +350,11 @@ export function MonsterParticipantActions(props: MinionizeButtonProps) {
   return (
     <span className="flex gap-3">
       <RemoveCreatureFromEncounterButton participant={participant} />
-      <Button variant="outline" onClick={() => setStatus("input")}>
-        <Users2 />
-      </Button>
+      {settings?.enable_minions && (
+        <Button variant="outline" onClick={() => setStatus("input")}>
+          <Users2 />
+        </Button>
+      )}
     </span>
   );
 }
