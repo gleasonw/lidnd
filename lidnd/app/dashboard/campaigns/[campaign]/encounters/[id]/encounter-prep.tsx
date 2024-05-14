@@ -43,7 +43,6 @@ import { CharacterIcon } from "@/encounters/[id]/character-icon";
 import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { TabsList } from "@radix-ui/react-tabs";
 import { OriginalSizeImage } from "@/encounters/original-size-image";
-import { set } from "lodash";
 
 export interface EncounterPrepProps {
   notesInput: React.ReactNode;
