@@ -65,6 +65,7 @@ export function LinearBattleUI() {
     useRemoveParticipantFromEncounter();
 
   function handleCycleNext() {
+    cycleNextMutation({ encounter_id: id });
     const { newlyActiveParticipant } = cycleNextTurn(
       encounterParticipants,
       encounter,
@@ -73,6 +74,7 @@ export function LinearBattleUI() {
   }
 
   function handleCyclePrevious() {
+    cyclePreviousMutation({ encounter_id: id });
     const { newlyActiveParticipant } = cyclePreviousTurn(
       encounterParticipants,
       encounter,

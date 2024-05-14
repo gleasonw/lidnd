@@ -61,7 +61,7 @@ export function BattleUILoader() {
 export function BattleUIHeader() {
   const id = useEncounterId();
   const { data: encounter } = api.encounterById.useQuery(id);
-  const campaign = useCampaign();
+  const { data: campaign } = useCampaign();
 
   const roundText =
     encounter?.current_round === 0
@@ -90,7 +90,7 @@ export function BattleUIHeader() {
         </CardDescription>
       )}
 
-      {campaign.system?.initiative_type === "linear" ? (
+      {campaign?.system?.initiative_type === "linear" ? (
         <LinearBattleUI />
       ) : (
         <GroupBattleUI />

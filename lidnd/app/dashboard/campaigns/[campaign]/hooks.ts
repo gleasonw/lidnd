@@ -15,6 +15,5 @@ export function useCampaignId() {
 
 export function useCampaign() {
   const campaignId = useCampaignId();
-  const [campaign] = api.campaignById.useSuspenseQuery(campaignId);
-  return campaign;
+  return api.campaignById.useQuery(campaignId);
 }

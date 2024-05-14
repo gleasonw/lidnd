@@ -30,7 +30,7 @@ export default async function CampaignsLayout({
       <ClientOverlays>
         <div className="flex">
           <SideNav userAvatar={<UserAvatar />} />
-          <div className="sm:px-5 pt-2 pb-10 grow">{children}</div>
+          <div className="sm:px-5 pt-2 pb-10 w-full">{children}</div>
         </div>
       </ClientOverlays>
     </TRPCReactProvider>
