@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  Suspense,
-  useId,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { Suspense, useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { useEncounterId } from "./[id]/hooks";
 import { Button } from "@/components/ui/button";
@@ -20,11 +14,9 @@ import { CreaturePost } from "./types";
 
 export function CustomCreature({
   children,
-  onSuccess,
   mutation,
 }: {
   children?: React.ReactNode;
-  onSuccess?: () => void;
   mutation: {
     onAddCreature: UseMutateFunction<any, unknown, CreaturePost, unknown>;
     isPending: boolean;
@@ -326,11 +318,9 @@ export function ExistingCreature({
 export type CreatureAddFunction = ({
   creature_id,
   encounter_id,
-  minion_count,
 }: {
   creature_id: string;
   encounter_id: string;
-  minion_count: number;
 }) => void;
 
 function ExistingCreatureOptions({
@@ -340,7 +330,6 @@ function ExistingCreatureOptions({
   name: string;
   addCreature: CreatureAddFunction;
 }) {
-  const id = useEncounterId();
   const [creatures, creaturesQuery] = api.getUserCreatures.useSuspenseQuery({
     name,
   });
@@ -359,19 +348,13 @@ function ExistingCreatureOptions({
 
 export interface ListedCreatureProps {
   creature: Creature;
-  children?: React.ReactNode;
   addCreature: CreatureAddFunction;
 }
 
-export function ListedCreature({
-  creature,
-  children,
-  addCreature,
-}: ListedCreatureProps) {
+export function ListedCreature({ creature, addCreature }: ListedCreatureProps) {
   const id = useEncounterId();
-  const [minionCount, setMinionCount] = useState<number | undefined>();
   return (
-    <div className="flex items-center flex-wrap space-x-2 justify-between">
+    <div className="flex items-center space-x-2 justify-between">
       <div className="flex gap-4">
         <CharacterIcon
           id={creature.id}
@@ -402,19 +385,11 @@ export function ListedCreature({
             addCreature({
               creature_id: creature.id,
               encounter_id: id,
-              minion_count: minionCount ?? 0,
             });
           }}
         >
           <Plus /> Add
         </Button>
-        <Input
-          type="number"
-          className="w-32"
-          placeholder="# minions..."
-          value={minionCount}
-          onChange={(e) => setMinionCount(parseInt(e.target.value))}
-        />
       </div>
     </div>
   );

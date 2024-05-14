@@ -2,7 +2,10 @@
 
 import { ExistingCreature } from "@/encounters/creature-add-form";
 import { AnimationListItem, BattleCard } from "@/encounters/[id]/run/battle-ui";
-import { useEncounterId } from "@/encounters/[id]/hooks";
+import {
+  useEncounterId,
+  useUpdateEncounterParticipant,
+} from "@/encounters/[id]/hooks";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -16,12 +19,14 @@ import {
   Angry,
   Plus,
   UserPlus,
+  Users2,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 import { FullCreatureAddForm } from "@/encounters/full-creature-add-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import React, { Suspense } from "react";
+import React, { Suspense, useState } from "react";
 import { getAWSimageURL, sortEncounterCreatures } from "@/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
@@ -38,6 +43,7 @@ import { CharacterIcon } from "@/encounters/[id]/character-icon";
 import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { TabsList } from "@radix-ui/react-tabs";
 import { OriginalSizeImage } from "@/encounters/original-size-image";
+import { set } from "lodash";
 
 export interface EncounterPrepProps {
   notesInput: React.ReactNode;
@@ -62,7 +68,7 @@ export default function EncounterPrep(props: EncounterPrepProps) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, transition: { duration: 0.1 } }}
-          className="w-full flex flex-col gap-10"
+          className="w-full flex flex-col gap-5"
         >
           <EncounterDetailsEditor>
             <EncounterStats />
@@ -246,11 +252,6 @@ function PrepParticipantCard({
 }: {
   participant: EncounterCreature;
 }) {
-  const { mutate: removeCreatureFromEncounter } =
-    useRemoveParticipantFromEncounter();
-  const id = useEncounterId();
-  const [encounter] = api.encounterById.useSuspenseQuery(id);
-  const campaign = useCampaign();
   return (
     <AnimationListItem key={participant.id}>
       <div className="flex flex-col items-center gap-3">
@@ -264,19 +265,94 @@ function PrepParticipantCard({
             className="h-20 object-cover"
           />
         </Card>
-        <Button
-          variant="ghost"
-          onClick={() =>
-            removeCreatureFromEncounter({
-              encounter_id: encounter.id,
-              participant_id: participant.id,
-            })
-          }
-        >
-          <X />
-        </Button>
+        <ParticipantActions participant={participant} />
       </div>
     </AnimationListItem>
+  );
+}
+
+function ParticipantActions({
+  participant,
+}: {
+  participant: EncounterCreature;
+}) {
+  if (participant.is_player) {
+    return <RemoveCreatureFromEncounterButton participant={participant} />;
+  }
+
+  return <MonsterParticipantActions participant={participant} />;
+}
+
+export interface RemoveCreatureFromEncounterButtonProps {
+  participant: EncounterCreature;
+}
+
+export function RemoveCreatureFromEncounterButton(
+  props: RemoveCreatureFromEncounterButtonProps,
+) {
+  const { participant } = props;
+
+  const { mutate: removeCreatureFromEncounter } =
+    useRemoveParticipantFromEncounter();
+  const id = useEncounterId();
+  const [encounter] = api.encounterById.useSuspenseQuery(id);
+  return (
+    <Button
+      variant="ghost"
+      onClick={() =>
+        removeCreatureFromEncounter({
+          encounter_id: encounter.id,
+          participant_id: participant.id,
+        })
+      }
+    >
+      <X />
+    </Button>
+  );
+}
+
+export interface MinionizeButtonProps {
+  participant: EncounterCreature;
+}
+
+export function MonsterParticipantActions(props: MinionizeButtonProps) {
+  const { participant } = props;
+
+  const { mutate: updateCreature } = useUpdateEncounterParticipant();
+
+  const [status, setStatus] = useState<"idle" | "input">("idle");
+  const [minionCount, setMinionCount] = useState<number | null>(
+    participant.minion_count,
+  );
+
+  if (status === "input") {
+    return (
+      <span className="flex items-center gap-2">
+        <Input
+          type="number"
+          className="w-32"
+          value={minionCount ?? ""}
+          onChange={(e) => setMinionCount(parseInt(e.target.value))}
+        />
+        <Button
+          onClick={() => {
+            updateCreature({ ...participant, minion_count: minionCount });
+            setStatus("idle");
+          }}
+        >
+          <Check />
+        </Button>
+      </span>
+    );
+  }
+
+  return (
+    <span className="flex gap-3">
+      <RemoveCreatureFromEncounterButton participant={participant} />
+      <Button variant="outline" onClick={() => setStatus("input")}>
+        <Users2 />
+      </Button>
+    </span>
   );
 }
 
