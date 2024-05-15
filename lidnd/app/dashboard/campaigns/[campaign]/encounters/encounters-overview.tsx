@@ -215,20 +215,20 @@ function EncounterCard({
             </Button>
           </PopoverContent>
         </Popover>
-        <CharacterIconRow id={encounter.id} />
+        <MonstersInEncounter id={encounter.id} />
         <EncounterTime time={encounter?.started_at ?? undefined} />
       </div>
     </Card>
   );
 }
 
-function CharacterIconRow({ id }: { id: string }) {
+function MonstersInEncounter({ id }: { id: string }) {
   const campaignId = useCampaignId();
   const { data: encounters } = api.encounters.useQuery(campaignId);
 
   const creatures = encounters
-    ?.filter((encounter) => encounter.id === id)
-    ?.at(0)?.participants;
+    ?.find((encounter) => encounter.id === id)
+    ?.participants.filter((creature) => !creature.is_player);
 
   return (
     <div className={"flex gap-3 flex-wrap"}>
