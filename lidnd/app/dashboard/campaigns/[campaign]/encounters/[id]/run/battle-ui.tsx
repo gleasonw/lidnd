@@ -78,7 +78,11 @@ export function BattleUIHeader() {
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl overflow-auto max-h-screen">
-            <BattleAddCreatureForm />
+            <div
+              className={"flex gap-10 flex-wrap w-full justify-center h-full"}
+            >
+              <ParticipantUpload />
+            </div>
           </DialogContent>
         </Dialog>
       </div>
@@ -418,17 +422,6 @@ export const AnimationListItem = ({
     </motion.div>
   );
 };
-
-export function BattleAddCreatureForm() {
-  const [participantState, setParticipantState] =
-    React.useState<ParticipantPost["participant"]>();
-
-  return (
-    <div className={"flex gap-10 flex-wrap w-full justify-center h-full"}>
-      <ParticipantUpload />
-    </div>
-  );
-}
 
 export function SpellSearcher() {
   const [showSearch, setShowSearch] = React.useState(false);

@@ -40,21 +40,6 @@ export default function CampaignEncountersOverview(
   const { deleteCampaignButton, playersDisplay, campaignHeader } = props;
   const campaignId = useCampaignId();
   const { data: encounters, isLoading } = api.encounters.useQuery(campaignId);
-  const { encounters: encountersQuery } = api.useUtils();
-  const { mutate: deleteEncounter } = api.deleteEncounter.useMutation({
-    onSettled: async () => {
-      await encountersQuery.invalidate();
-    },
-    onMutate: async (id) => {
-      await encountersQuery.cancel();
-      const previous = encountersQuery.getData();
-      encountersQuery.setData(campaignId, (old) => {
-        return old?.filter((encounter) => encounter.id !== id);
-      });
-      return { previous };
-    },
-  });
-
   const displayedEncounters = encounters;
 
   const startedEncounters = displayedEncounters?.filter(
@@ -64,11 +49,6 @@ export default function CampaignEncountersOverview(
   const pendingEncounters = displayedEncounters?.filter(
     (encounter) => encounter.started_at === null,
   );
-
-  const encounterCategories = [
-    { name: "Started", encounters: startedEncounters },
-    { name: "Pending", encounters: pendingEncounters },
-  ];
 
   function onPlayerUpload(data: CreaturePost) {
     const dataAsForm = getCreaturePostForm(data);
@@ -94,27 +74,8 @@ export default function CampaignEncountersOverview(
       </span>
       <Separator />
       <CreateEncounterButton />
-      {encounterCategories.map(({ name, encounters }) => (
-        <section key={name} className={"flex flex-col gap-8 pt-8"}>
-          <h1 className={"text-2xl"}>{name}</h1>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {isLoading ? (
-              Array(3)
-                .fill(null)
-                .map((_, i) => <EncounterSkeleton key={i} />)
-            ) : encounters?.length === 0 ? (
-              <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
-            ) : null}
-            {encounters?.map((encounter) => (
-              <EncounterCard
-                encounter={encounter}
-                deleteEncounter={deleteEncounter}
-                key={encounter.id}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+      <EncounterSection name="Started" encounters={startedEncounters} />
+      <EncounterSection name="Pending" encounters={pendingEncounters} />
       <VerifySlider
         initial={
           <Button variant="destructive" size="sm" className="w-40">
@@ -124,6 +85,42 @@ export default function CampaignEncountersOverview(
         verified={deleteCampaignButton}
       />
     </div>
+  );
+}
+
+function EncounterSection(props: { name: string; encounters?: Encounter[] }) {
+  const campaignId = useCampaignId();
+  const { encounters: encountersQuery } = api.useUtils();
+  const { mutate: deleteEncounter } = api.deleteEncounter.useMutation({
+    onSettled: async () => {
+      await encountersQuery.invalidate();
+    },
+    onMutate: async (id) => {
+      await encountersQuery.cancel();
+      const previous = encountersQuery.getData();
+      encountersQuery.setData(campaignId, (old) => {
+        return old?.filter((encounter) => encounter.id !== id);
+      });
+      return { previous };
+    },
+  });
+
+  return (
+    <section key={props.name} className={"flex flex-col gap-8 pt-8"}>
+      <h1 className={"text-2xl"}>{props.name}</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {props.encounters?.length === 0 ? (
+          <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
+        ) : null}
+        {props.encounters?.map((encounter) => (
+          <EncounterCard
+            encounter={encounter}
+            deleteEncounter={deleteEncounter}
+            key={encounter.id}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -172,9 +169,9 @@ function EncounterSkeleton({
 }) {
   if (unmoving) {
     return (
-      <Card className="flex flex-col transition-all w-full h-44">
+      <div className="flex flex-col transition-all w-full h-44 items-center justify-center">
         {children}
-      </Card>
+      </div>
     );
   }
   return (
