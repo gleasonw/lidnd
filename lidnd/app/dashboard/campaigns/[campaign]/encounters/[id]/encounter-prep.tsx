@@ -1,7 +1,6 @@
 "use client";
 
-import { ExistingCreature } from "@/encounters/creature-add-form";
-import { AnimationListItem, BattleCard } from "@/encounters/[id]/run/battle-ui";
+import { AnimationListItem } from "@/encounters/[id]/run/battle-ui";
 import {
   useEncounterId,
   useUpdateEncounterParticipant,
@@ -17,31 +16,26 @@ import {
   Swords,
   Sword,
   Angry,
-  Plus,
-  UserPlus,
   Users2,
   Check,
 } from "lucide-react";
 import Link from "next/link";
-import { FullCreatureAddForm } from "@/encounters/full-creature-add-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import React, { Suspense, useState } from "react";
 import { getAWSimageURL, sortEncounterCreatures } from "@/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
 import {
-  useCreateCreatureInEncounter,
   useRemoveParticipantFromEncounter,
   useStartEncounter,
 } from "@/encounters/[id]/hooks";
 import { GroupBattleLayout } from "@/encounters/[id]/run/group-battle-ui";
 import { EncounterCreature } from "@/server/api/router";
-import { useCampaign, useCampaignId } from "@/campaigns/hooks";
+import { useCampaignId } from "@/campaigns/hooks";
 import { BasePopover } from "@/encounters/base-popover";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
-import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs";
-import { TabsList } from "@radix-ui/react-tabs";
+import { ParticipantUpload } from "@/encounters/[id]/run/participant-add-form";
 import { OriginalSizeImage } from "@/encounters/original-size-image";
 
 export interface EncounterPrepProps {
@@ -50,7 +44,6 @@ export interface EncounterPrepProps {
 
 export default function EncounterPrep(props: EncounterPrepProps) {
   const { notesInput } = props;
-  const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
   const [selectedParticipantId, setSelectedParticipantId] = React.useState<
     string | null
   >(null);
@@ -87,28 +80,7 @@ export default function EncounterPrep(props: EncounterPrepProps) {
               )}
             </div>
             <Card className="w-full grow">
-              <Tabs defaultValue="new">
-                <TabsList>
-                  <TabsTrigger value="new">
-                    <Plus /> Add new creature
-                  </TabsTrigger>
-                  <TabsTrigger value="existing">
-                    <UserPlus /> Existing creatures
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="new">
-                  <CardContent className={"flex flex-col gap-3"}>
-                    <FullCreatureAddForm
-                      uploadCreature={(data) => addCreatureToEncounter(data)}
-                    />
-                  </CardContent>
-                </TabsContent>
-                <TabsContent value="existing">
-                  <CardContent className={"flex flex-col gap-3"}>
-                    <ExistingCreature />
-                  </CardContent>
-                </TabsContent>
-              </Tabs>
+              <ParticipantUpload />
             </Card>
           </div>
         </motion.div>
@@ -206,10 +178,10 @@ function EncounterParticipantRow(props: {
   const [encounter] = api.encounterById.useSuspenseQuery(id);
 
   const monsters = encounter.participants
-    .filter((participant) => !participant.is_player)
+    .filter((participant) => !participant.is_player && !participant.is_ally)
     .sort(sortEncounterCreatures);
   const players = encounter.participants
-    .filter((participant) => participant.is_player)
+    .filter((participant) => participant.is_player || participant.is_ally)
     .sort(sortEncounterCreatures);
 
   return (
@@ -225,16 +197,19 @@ function EncounterParticipantRow(props: {
             Monsters <Angry />
           </h1>
         }
-        monsters={monsters.map((participant) => (
-          <button
+        monsters={monsters.map((participant, index) => (
+          <div
             onClick={() => onSelectParticipant(participant.creature_id)}
-            key={participant.id}
+            key={participant.id + index}
           >
             <PrepParticipantCard participant={participant} />
-          </button>
+          </div>
         ))}
-        players={players.map((participant) => (
-          <PrepParticipantCard key={participant.id} participant={participant} />
+        players={players.map((participant, index) => (
+          <PrepParticipantCard
+            key={participant.id + index}
+            participant={participant}
+          />
         ))}
       />
       {encounter?.participants?.length === 0 && (
@@ -253,15 +228,15 @@ function PrepParticipantCard({
 }) {
   return (
     <AnimationListItem key={participant.id}>
-      <div className="flex flex-col items-center gap-3">
-        <Card>
+      <div className="flex flex-col items-center gap-3 w-32">
+        <Card className="flex flex-col justify-center">
           <CardHeader>
             <CardTitle>{participant.name}</CardTitle>
           </CardHeader>
           <CharacterIcon
             id={participant.creature_id}
             name={participant.name}
-            className="h-20 object-cover"
+            className="object-cover w-32 h-32"
           />
         </Card>
         <ParticipantActions participant={participant} />
@@ -390,6 +365,7 @@ function EncounterStats() {
 
   const totalCr =
     encounter?.participants?.reduce((acc, creature) => {
+      if (creature.is_ally) return acc;
       return acc + creature.challenge_rating;
     }, 0) ?? 0;
 
@@ -397,9 +373,21 @@ function EncounterStats() {
     (cr) => cr.level === finalPlayerLevel,
   );
 
-  const easyTier = (crBudget?.easy ?? 0) * finalNumPlayers;
-  const standardTier = (crBudget?.standard ?? 0) * finalNumPlayers;
-  const hardTier = (crBudget?.hard ?? 0) * finalNumPlayers;
+  const alliesWeighted =
+    encounter?.participants?.reduce((acc, participant) => {
+      if (!participant.is_ally) {
+        return acc;
+      }
+
+      // rough approximation from monster cr to player level
+      return acc + participant.challenge_rating * 4;
+    }, 0) ?? 0;
+
+  const playersAndAllies = finalNumPlayers + alliesWeighted;
+
+  const easyTier = (crBudget?.easy ?? 0) * playersAndAllies;
+  const standardTier = (crBudget?.standard ?? 0) * playersAndAllies;
+  const hardTier = (crBudget?.hard ?? 0) * playersAndAllies;
 
   let difficulty = "";
   if (totalCr <= easyTier) {

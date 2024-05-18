@@ -1,12 +1,12 @@
-import { CreaturePost } from "../types";
-import { getCreaturePostForm } from "../utils";
-import { rerouteUrl } from "@/app/login/page";
+import { CreaturePost, ParticipantPost } from "../types";
+import { defaultParticipant, getCreaturePostForm } from "../utils";
 import { Creature, EncounterCreature } from "@/server/api/router";
 import { mergeEncounterCreature } from "../utils";
 import { api } from "@/trpc/react";
 import { useMutation } from "@tanstack/react-query";
 import { useId } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { createCreatureInEncounter } from "@/app/dashboard/actions";
 
 export function useEncounterId() {
   const pathname = usePathname();
@@ -28,44 +28,45 @@ export function useCreateCreatureInEncounter() {
   const { data: encounter } = api.encounterById.useQuery(id);
 
   return useMutation({
-    mutationFn: async (rawData: CreaturePost) => {
+    mutationFn: async (rawData: ParticipantPost) => {
       if (!encounter) {
         throw new Error("No encounter");
       }
-      const formData = getCreaturePostForm(rawData);
+      const formData = getCreaturePostForm(rawData.creature);
       formData.append("encounter_id", encounter.id);
-
-      const response = await fetch(
-        `${rerouteUrl}/api/creature/create-and-add-to-encounter`,
-        {
-          method: "POST",
-          body: formData,
-        },
+      formData.append(
+        "is_ally",
+        rawData.participant?.is_ally ? "true" : "false",
       );
-      const data = (await response.json()) as {
-        data: Creature;
-        detail: string;
-      };
-      if (response.status !== 200) {
-        console.log(data.detail);
-        throw data;
+
+      const response = await createCreatureInEncounter(formData);
+
+      if (response.error) {
+        console.error(response.error);
+        throw new Error("error parsing response");
       }
-      return data;
+
+      if (!response.data) {
+        throw new Error("no data in response");
+      }
+
+      return response.data;
     },
     onMutate: async (data) => {
       await encounterById.cancel(id);
       const previousEncounterData = encounterById.getData(id);
+      const creature = data.creature;
       encounterById.setData(id, (old) => {
         if (!old) {
           return;
         }
         const newParticipant: EncounterCreature = {
-          ...data,
+          ...creature,
           encounter_id: old.id,
           creature_id: "pending",
           id: optimisticId,
           initiative: -1,
-          hp: data.max_hp,
+          hp: creature.max_hp,
           is_active: false,
           created_at: new Date(),
           user_id: old.user_id,
@@ -89,7 +90,6 @@ export function useCreateCreatureInEncounter() {
       }
     },
     onSettled: async () => {
-      console.log("settled");
       return await encounterById.invalidate(id);
     },
   });
@@ -211,6 +211,49 @@ export function useRemoveStatusEffect() {
         };
       });
       return previousEncounter;
+    },
+  });
+}
+
+export function useAddExistingCreatureToEncounter() {
+  const id = useEncounterId();
+  const { encounterById } = api.useUtils();
+  const { data: creatures } = api.getUserCreatures.useQuery({ name: "" });
+  return api.addExistingCreatureToEncounter.useMutation({
+    onMutate: async ({ creature_id }) => {
+      await encounterById.cancel(id);
+      const previousEncounterData = encounterById.getData(id);
+      const optimisticId = Math.random().toString();
+      encounterById.setData(id, (old) => {
+        if (!old) {
+          return;
+        }
+        const selectedCreature = creatures?.find(
+          (creature) => creature.id === creature_id,
+        );
+        if (!selectedCreature) return;
+        const optimisticP = mergeEncounterCreature(
+          defaultParticipant({
+            id: optimisticId,
+            encounter_id: id,
+            creature_id: creature_id,
+          }),
+          selectedCreature,
+        );
+        return {
+          ...old,
+          participants: [...old.participants, optimisticP],
+        };
+      });
+      return { previousEncounterData };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousEncounterData) {
+        encounterById.setData(id, context.previousEncounterData);
+      }
+    },
+    onSettled: () => {
+      encounterById.invalidate(id);
     },
   });
 }

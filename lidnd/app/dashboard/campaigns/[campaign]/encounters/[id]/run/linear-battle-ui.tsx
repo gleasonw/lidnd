@@ -107,7 +107,7 @@ export function LinearBattleUI() {
   const isTurnLoading = isLoadingNextTurn || isLoadingPreviousTurn;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 relative">
       <div
         className={clsx(
           "flex flex-row sm:gap-4 px-8 pt-2 pb-8 max-w-full items-center overflow-auto mx-auto",
@@ -117,7 +117,6 @@ export function LinearBattleUI() {
         <Button
           className="absolute left-0 sm:left-10 z-10 h-10 rounded-full shadow-md"
           onClick={handleCyclePrevious}
-          variant="outline"
           disabled={isTurnLoading}
         >
           <ChevronLeftIcon />
@@ -146,7 +145,6 @@ export function LinearBattleUI() {
           className="absolute right-0 sm:right-10 z-10 h-10 rounded-full shadow-md"
           onClick={handleCycleNext}
           disabled={isTurnLoading}
-          variant="outline"
         >
           <ChevronRightIcon />
         </Button>
