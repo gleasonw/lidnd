@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import {
   campaigns,
   campaignsToPlayers,
+  encounter_participant,
   encounters,
 } from "@/server/api/db/schema";
 import { z } from "zod";
@@ -17,6 +18,7 @@ import { campaignInsertSchema } from "@/app/dashboard/types";
 import { and, eq } from "drizzle-orm";
 import { creatureUploadSchema } from "@/server/api/router";
 import { appRoutes, routeToCampaign } from "@/app/routes";
+import { CreaturePostData } from "@/encounters/utils";
 
 export async function logOut() {
   const session = await getPageSession();
@@ -148,4 +150,38 @@ export async function updateEncounterDescription(
     );
 
   revalidatePath(appRoutes.campaigns);
+}
+
+export async function createCreatureInEncounter(formData: CreaturePostData) {
+  const session = await getPageSession();
+
+  if (!session) {
+    return { error: "No session found." };
+  }
+
+  const creature = parse(formData, {
+    schema: creatureUploadSchema.merge(
+      z.object({
+        encounter_id: z.string(),
+      }),
+    ),
+  });
+
+  if (!creature.value) {
+    return { error: creature.error };
+  }
+
+  const newCreature = await createCreature(session.user.userId, creature.value);
+
+  await db.insert(encounter_participant).values({
+    encounter_id: creature.value.encounter_id,
+    creature_id: newCreature.id,
+    hp: newCreature.max_hp,
+  });
+
+  return {
+    message: "Success",
+    status: 201,
+    data: newCreature,
+  };
 }

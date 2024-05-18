@@ -1,4 +1,4 @@
-import { CreaturePost } from "./types";
+import { CreaturePost, ParticipantPost } from "./types";
 import {
   EncounterParticipant,
   Creature,
@@ -243,13 +243,41 @@ function cycleTurnWithSurpriseRound<Participant extends TurnParticipant>({
   };
 }
 
-export function getCreaturePostForm(creature: CreaturePost): FormData {
+declare const __brand: unique symbol;
+
+type Brand<B> = { [__brand]: B };
+export type Branded<T, B> = T & Brand<B>;
+
+export type CreaturePostData = Branded<FormData, "CreaturePostData">;
+
+export function getCreaturePostForm(creature: CreaturePost): CreaturePostData {
   const formData = new FormData();
   Object.keys(creature).forEach((key) => {
     formData.append(key, creature[key as keyof CreaturePost]);
   });
-  return formData;
+  return formData as CreaturePostData;
 }
+
+export function defaultParticipant(
+  p: Partial<EncounterParticipant> & {
+    id: string;
+    encounter_id: string;
+    creature_id: string;
+  },
+): EncounterParticipant {
+  return {
+    is_active: false,
+    has_surprise: false,
+    minion_count: 0,
+    has_played_this_round: false,
+    is_ally: false,
+    initiative: 0,
+    hp: 0,
+    created_at: new Date(),
+    ...p,
+  };
+}
+
 export function mergeEncounterCreature(
   participant: EncounterParticipant,
   creature: Creature,

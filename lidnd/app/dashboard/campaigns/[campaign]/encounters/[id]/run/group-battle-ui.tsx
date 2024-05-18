@@ -19,11 +19,7 @@ import { OriginalSizeImage } from "../../original-size-image";
 import { getAWSimageURL } from "../../utils";
 import { AnimatePresence } from "framer-motion";
 
-export interface GroupBattleUIProps {
-  children?: React.ReactNode;
-}
-
-export function GroupBattleUI({ children }: GroupBattleUIProps) {
+export function GroupBattleUI() {
   const id = useEncounterId();
   const { data: encounter } = api.encounterById.useQuery(id);
 
@@ -32,10 +28,10 @@ export function GroupBattleUI({ children }: GroupBattleUIProps) {
   >(encounter?.participants.at(0)?.id ?? null);
   if (!encounter) return null;
   const monsters = encounter.participants.filter(
-    (participant) => !participant.is_player,
+    (participant) => !participant.is_player && !participant.is_ally,
   );
   const players = encounter.participants.filter(
-    (participant) => participant.is_player,
+    (participant) => participant.is_player || participant.is_ally,
   );
 
   const selectedMonster = monsters.find(
@@ -44,17 +40,17 @@ export function GroupBattleUI({ children }: GroupBattleUIProps) {
   return (
     <div>
       <GroupBattleLayout
-        monsters={monsters.map((monster) => (
+        monsters={monsters.map((monster, index) => (
           <GroupBattleCard
-            key={monster.id}
+            key={monster.id + index}
             onClick={() => setDmSelectedCreature(monster.id)}
             creature={monster}
             isSelected={monster.id === dmSelectedCreature}
           />
         ))}
-        players={players.map((player) => (
+        players={players.map((player, index) => (
           <GroupBattleCard
-            key={player.id}
+            key={player.id + index}
             creature={player}
             isSelected={player.id === dmSelectedCreature}
           />

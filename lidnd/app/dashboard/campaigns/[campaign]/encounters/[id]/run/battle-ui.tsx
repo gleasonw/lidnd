@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronUp, Plus } from "lucide-react";
 import { ParticipantHealthForm } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/run/creature-health-form";
 import { CharacterIcon } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/character-icon";
-import { CustomCreature, ExistingCreature } from "../../creature-add-form";
 import InitiativeInput from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/InitiativeInput";
 import React, { Suspense } from "react";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
@@ -21,10 +20,7 @@ import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { useEncounterId } from "../hooks";
 import { EncounterCreature } from "@/server/api/router";
-import {
-  useCreateCreatureInEncounter,
-  useRemoveStatusEffect,
-} from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/hooks";
+import { useRemoveStatusEffect } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/hooks";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import { BasePopover } from "@/app/dashboard/campaigns/[campaign]/encounters/base-popover";
 import { StatusInput } from "./status-input";
@@ -42,6 +38,8 @@ import { LinearBattleUI } from "./linear-battle-ui";
 import { GroupBattleUI } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/run/group-battle-ui";
 import { EncounterTime } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/run/encounter-time";
 import { useCampaign } from "@/app/dashboard/campaigns/[campaign]/hooks";
+import { ParticipantPost } from "@/encounters/types";
+import { ParticipantUpload } from "@/encounters/[id]/run/participant-add-form";
 
 export function BattleUILoader() {
   return (
@@ -421,28 +419,13 @@ export const AnimationListItem = ({
   );
 };
 
-export function BattleAddCreatureForm({
-  children,
-}: {
-  children?: React.ReactNode;
-}) {
-  const { mutate: addCreature, isLoading: isPendingCreatureAdd } =
-    useCreateCreatureInEncounter();
+export function BattleAddCreatureForm() {
+  const [participantState, setParticipantState] =
+    React.useState<ParticipantPost["participant"]>();
+
   return (
-    <div className={"flex gap-10 flex-wrap w-full justify-center"}>
-      <CardContent className={"flex flex-col gap-6 pt-5"}>
-        <CardTitle>New creature</CardTitle>
-        <CustomCreature
-          mutation={{
-            onAddCreature: (data) => addCreature(data),
-            isPending: isPendingCreatureAdd,
-          }}
-        />
-      </CardContent>
-      <CardContent className={"flex flex-col gap-3 pt-5 max-h-full"}>
-        <CardTitle>Existing creature</CardTitle>
-        <ExistingCreature />
-      </CardContent>
+    <div className={"flex gap-10 flex-wrap w-full justify-center h-full"}>
+      <ParticipantUpload />
     </div>
   );
 }

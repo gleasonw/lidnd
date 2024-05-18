@@ -98,13 +98,13 @@ export default function CampaignEncountersOverview(
         <section key={name} className={"flex flex-col gap-8 pt-8"}>
           <h1 className={"text-2xl"}>{name}</h1>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {isLoading
-              ? Array(3)
-                  .fill(null)
-                  .map((_, i) => <EncounterSkeleton key={i} />)
-              : encounters?.length === 0
-                ? "No encounters"
-                : null}
+            {isLoading ? (
+              Array(3)
+                .fill(null)
+                .map((_, i) => <EncounterSkeleton key={i} />)
+            ) : encounters?.length === 0 ? (
+              <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
+            ) : null}
             {encounters?.map((encounter) => (
               <EncounterCard
                 encounter={encounter}
@@ -163,7 +163,20 @@ export function CreateEncounterButton({ className }: { className?: string }) {
   );
 }
 
-function EncounterSkeleton() {
+function EncounterSkeleton({
+  unmoving = false,
+  children,
+}: {
+  unmoving?: boolean;
+  children?: React.ReactNode;
+}) {
+  if (unmoving) {
+    return (
+      <Card className="flex flex-col transition-all w-full h-44">
+        {children}
+      </Card>
+    );
+  }
   return (
     <Card className="flex flex-col transition-all w-full h-44 animate-pulse bg-gray-200" />
   );
