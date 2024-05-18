@@ -271,6 +271,7 @@ export function mergeEncounterCreature(
     status_effects: [],
     minion_count: participant.minion_count,
     has_played_this_round: participant.has_played_this_round,
+    is_ally: participant.is_ally,
   };
 }
 

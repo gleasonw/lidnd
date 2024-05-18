@@ -28,6 +28,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
+import { CreateCampaignButton } from "@/app/dashboard/create-campaign-button";
 
 export default async function Page() {
   const session = await getPageSession();
@@ -43,6 +44,11 @@ export default async function Page() {
     getSystems(),
   ]);
 
+  if (userCampaigns && userCampaigns.length === 1) {
+    // might as well redirect to the first campaign
+    return redirect(routeToCampaign(userCampaigns[0].id));
+  }
+
   return (
     <div className="flex w-full flex-col">
       <div className="flex flex-col gap-10 w-[700px]">
@@ -50,8 +56,8 @@ export default async function Page() {
           {userCampaigns.map((campaign, index) => (
             <CampaignCard key={campaign.id} campaign={campaign} />
           ))}
-          <Dialog>
-            <DialogTrigger asChild>
+          <CreateCampaignButton
+            trigger={
               <Card>
                 <Button
                   variant="ghost"
@@ -61,39 +67,8 @@ export default async function Page() {
                   <Plus />
                 </Button>
               </Card>
-            </DialogTrigger>
-            <DialogContent>
-              <form
-                action={createCampaign}
-                className="flex flex-col gap-5 w-full"
-              >
-                <div className="flex gap-2 flex-col">
-                  <label>
-                    <span>Name</span>
-
-                    <Input type="text" name="name" />
-                  </label>
-                  <label>
-                    <span>Description</span>
-                    <Textarea name="description" />
-                  </label>
-                  <Select name="system_id">
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select a system" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {systems.map((system) => (
-                        <SelectItem key={system.id} value={system.id}>
-                          {system.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button type="submit">Create a new campaign</Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+            }
+          />
         </div>
       </div>
     </div>

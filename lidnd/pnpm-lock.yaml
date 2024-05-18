@@ -143,6 +143,12 @@ dependencies:
   lucide-react:
     specifier: ^0.277.0
     version: 0.277.0(react@18.3.1)
+  mobx:
+    specifier: ^6.12.3
+    version: 6.12.3
+  mobx-react-lite:
+    specifier: ^4.0.7
+    version: 4.0.7(mobx@6.12.3)(react-dom@18.2.0)(react@18.3.1)
   next:
     specifier: 14.0.0
     version: 14.0.0(react-dom@18.2.0)(react@18.3.1)
@@ -6713,6 +6719,29 @@ packages:
       pathe: 1.1.2
       pkg-types: 1.0.3
       ufo: 1.5.3
+    dev: false
+
+  /mobx-react-lite@4.0.7(mobx@6.12.3)(react-dom@18.2.0)(react@18.3.1):
+    resolution: {integrity: sha512-RjwdseshK9Mg8On5tyJZHtGD+J78ZnCnRaxeQDSiciKVQDUbfZcXhmld0VMxAwvcTnPEHZySGGewm467Fcpreg==}
+    peerDependencies:
+      mobx: ^6.9.0
+      react: ^16.8.0 || ^17 || ^18
+      react-dom: '*'
+      react-native: '*'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+      react-native:
+        optional: true
+    dependencies:
+      mobx: 6.12.3
+      react: 18.3.1
+      react-dom: 18.2.0(react@18.3.1)
+      use-sync-external-store: 1.2.0(react@18.3.1)
+    dev: false
+
+  /mobx@6.12.3:
+    resolution: {integrity: sha512-c8NKkO4R2lShkSXZ2Ongj1ycjugjzFFo/UswHBnS62y07DMcTc9Rvo03/3nRyszIvwPNljlkd4S828zIBv/piw==}
     dev: false
 
   /ms@2.1.2:

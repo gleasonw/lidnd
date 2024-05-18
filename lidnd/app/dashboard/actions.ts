@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import {
   campaigns,
   campaignsToPlayers,
-  creatures,
   encounters,
 } from "@/server/api/db/schema";
 import { z } from "zod";
@@ -16,11 +15,8 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { campaignInsertSchema } from "@/app/dashboard/types";
 import { and, eq } from "drizzle-orm";
-import {
-  creatureUploadSchema,
-  updateEncounterSchema,
-} from "@/server/api/router";
-import { appRoutes } from "@/app/routes";
+import { creatureUploadSchema } from "@/server/api/router";
+import { appRoutes, routeToCampaign } from "@/app/routes";
 
 export async function logOut() {
   const session = await getPageSession();
@@ -51,7 +47,7 @@ export async function createCampaign(formdata: FormData) {
 
   const user = session.user;
 
-  await db
+  const createdCampaign = await db
     .insert(campaigns)
     .values({
       ...campaign.value,
@@ -59,7 +55,14 @@ export async function createCampaign(formdata: FormData) {
     })
     .returning();
 
+  if (createdCampaign.length === 0) {
+    return { message: "Failed to create campaign", status: 400 };
+  }
+
+  const createdCampaignId = createdCampaign[0].id;
+
   revalidatePath("/campaigns");
+  redirect(routeToCampaign(createdCampaignId));
 }
 
 export async function deleteCampaign(userId: string, id: string) {

@@ -21,15 +21,17 @@ export default async function CampaignPage({
   }
   const user = session.user;
   const campaignData = await campaignById(campaign, user.userId);
+
   if (!campaignData) {
     console.error("No campaign found, layout should have redirected");
     return <div>No campaign found... this is a bug</div>;
   }
+
   return (
     <CampaignEncountersOverview
       campaignHeader={
         <div className="w-full flex flex-col gap-5">
-          <h1 className="text-2xl font-bold">{campaignData.name}</h1>
+          <h1 className="text-2xl font-bold flex">{campaignData.name}</h1>
           <CardDescription className="whitespace-pre-wrap">
             {campaignData.description}
           </CardDescription>

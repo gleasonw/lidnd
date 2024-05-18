@@ -280,6 +280,7 @@ export function ExistingCreature({
             status_effects: [],
             minion_count: 0,
             has_played_this_round: false,
+            is_ally: false,
           };
           return {
             ...old,

@@ -2,20 +2,67 @@
 
 import React, { Suspense } from "react";
 import Link from "next/link";
-import { Home, LogOut, Rabbit, Settings } from "lucide-react";
+import {
+  ChevronLeft,
+  Home,
+  LogOut,
+  PanelLeft,
+  Plus,
+  Rabbit,
+  Settings,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { logOut } from "./actions";
 import { appRoutes, routeLabels } from "@/app/routes";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { Button } from "@/components/ui/button";
+import { useUIStore } from "@/app/dashboard/UIStore";
+import { observer } from "mobx-react-lite";
+import styles from "./side-nav.module.css";
+import { CreateCampaignButton } from "@/app/dashboard/create-campaign-button";
 
-export function SideNav({ userAvatar }: { userAvatar: React.ReactNode }) {
+export interface SideNavProps {
+  userAvatar: React.ReactNode;
+  createCampaignButton: React.ReactNode;
+}
+
+export const SmallSideNav = observer(function SmallSideNav(
+  props: SideNavProps,
+) {
+  const { isSideNavOpen, toggleSideNav } = useUIStore();
   return (
-    <nav className="flex-col flex gap-10 transition-all shadow-md h-full w-10 lg:w-20 items-center sticky top-0">
+    <div className="flex lg:hidden relative">
+      <Button variant="ghost" onClick={toggleSideNav} className="z-20">
+        <PanelLeft />
+      </Button>
+      <div
+        className={`${styles.mobileNavContainer} ${isSideNavOpen ? styles.open : ""} shadow-md z-10`}
+      >
+        <SideNavBody {...props} />
+      </div>
+    </div>
+  );
+});
+
+export function SideNav(props: SideNavProps) {
+  return (
+    <nav className="flex-col gap-10 shadow-md h-screen hidden w-64 lg:flex items-center ">
+      <SideNavBody {...props} />
+    </nav>
+  );
+}
+
+export function SideNavBody({
+  userAvatar,
+  createCampaignButton,
+}: SideNavProps) {
+  return (
+    <>
       <AppLink route="dashboard">
         <Home />
       </AppLink>
+      {createCampaignButton}
       <AppLink route="creatures">
         <Rabbit />
       </AppLink>
@@ -23,7 +70,7 @@ export function SideNav({ userAvatar }: { userAvatar: React.ReactNode }) {
         <Settings />
       </AppLink>
       <User userAvatar={userAvatar} />
-    </nav>
+    </>
   );
 }
 
@@ -39,13 +86,14 @@ export function AppLink(props: AppLinkProps) {
     <Link
       key={route}
       href={appRoutes[route]}
-      className={clsx({
+      className={clsx("w-full p-2", {
         "bg-gray-200 font-bold": path === route,
       })}
     >
-      <ButtonWithTooltip text={routeLabels[route]} variant="ghost">
+      <Button variant="ghost" className="items-center gap-3 flex p-3 w-full">
         {children}
-      </ButtonWithTooltip>
+        {routeLabels[route]}
+      </Button>
     </Link>
   );
 }

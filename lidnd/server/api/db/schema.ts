@@ -170,6 +170,7 @@ export const encounter_participant = pgTable(
       .references(() => creatures.id, { onDelete: "cascade" })
       .notNull(),
     created_at: timestamp("created_at").defaultNow().notNull(),
+    is_ally: boolean("is_ally").default(false).notNull(),
     initiative: integer("initiative").default(0).notNull(),
     hp: integer("hp").default(0).notNull(),
     is_active: boolean("is_active").default(false).notNull(),

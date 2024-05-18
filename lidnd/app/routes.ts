@@ -9,7 +9,7 @@ export const appRoutes = {
 export const routeLabels: {
   [route in keyof typeof appRoutes]: string;
 } = {
-  dashboard: "Dashboard",
+  dashboard: "Campaigns",
   campaigns: "Campaigns",
   creatures: "Creatures",
   settings: "Settings",
