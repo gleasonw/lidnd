@@ -1,4 +1,4 @@
-import { ImageUpload } from "./creature-add-form";
+import { ImageUpload } from "./image-upload";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,

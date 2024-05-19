@@ -86,7 +86,7 @@ async function CampaignPlayers(props: { campaignId: string }) {
   }
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3 flex-wrap">
       {players.map(
         ({ player }) =>
           player.name && (

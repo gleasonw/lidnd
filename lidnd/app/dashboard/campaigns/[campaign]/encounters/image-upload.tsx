@@ -1,17 +1,10 @@
 "use client";
 
-import React, { Suspense, useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
-import {
-  useAddExistingCreatureToEncounter,
-  useEncounterId,
-} from "./[id]/hooks";
 import { Button } from "@/components/ui/button";
-import { CharacterIcon } from "./[id]/character-icon";
-import { Creature } from "@/server/api/router";
-import { api } from "@/trpc/react";
 import Image from "next/image";
-import { Heart, Plus, Skull, X } from "lucide-react";
+import { X } from "lucide-react";
 
 export function ImageUpload({
   onUpload,

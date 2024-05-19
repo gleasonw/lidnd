@@ -236,17 +236,17 @@ function MonstersInEncounter({ id }: { id: string }) {
   const campaignId = useCampaignId();
   const { data: encounters } = api.encounters.useQuery(campaignId);
 
-  const creatures = encounters
+  const participants = encounters
     ?.find((encounter) => encounter.id === id)
     ?.participants.filter((creature) => !creature.is_player);
 
   return (
     <div className={"flex gap-3 flex-wrap"}>
-      {creatures?.map((creature) => (
+      {participants?.map((p) => (
         <CharacterIcon
-          id={creature.creature_id}
-          name={creature.name}
-          key={creature.creature_id}
+          id={p.creature_id}
+          name={p.name}
+          key={p.id}
           className={"rounded-full object-cover w-10 h-10"}
           width={100}
           height={100}

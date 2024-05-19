@@ -220,7 +220,7 @@ export function useAddExistingCreatureToEncounter() {
   const { encounterById } = api.useUtils();
   const { data: creatures } = api.getUserCreatures.useQuery({ name: "" });
   return api.addExistingCreatureToEncounter.useMutation({
-    onMutate: async ({ creature_id }) => {
+    onMutate: async ({ creature_id, is_ally }) => {
       await encounterById.cancel(id);
       const previousEncounterData = encounterById.getData(id);
       const optimisticId = Math.random().toString();
@@ -237,6 +237,7 @@ export function useAddExistingCreatureToEncounter() {
             id: optimisticId,
             encounter_id: id,
             creature_id: creature_id,
+            is_ally: Boolean(is_ally),
           }),
           selectedCreature,
         );
