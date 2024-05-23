@@ -1,9 +1,11 @@
+import { Reminder } from "@/encounters/[id]/page";
 import { CreaturePost, ParticipantPost } from "./types";
 import {
-  EncounterParticipant,
+  Participant,
   Creature,
-  EncounterCreature,
+  ParticipantCreature,
 } from "@/server/api/router";
+import { systems } from "@/server/api/db/schema";
 
 export function getAWSimageURL(
   creature_id: string,
@@ -31,16 +33,18 @@ export type UpdateTurnOrderReturn<T> = {
 function participantIsActivatable(p: {
   hp: number;
   is_active: boolean;
-  is_player: boolean;
+  creature: {
+    is_player: boolean;
+  };
 }) {
   // if the active player is dead, we have to keep them in the order until the turn changes.
   // a rare occurrence, but possible.
   // Player characters are always active. Since their HP is default 0, we have to exempt them.
-  return p.hp > 0 || p.is_active || p.is_player;
+  return p.hp > 0 || p.is_active || p.creature.is_player;
 }
 
 export function updateMinionCount(
-  participant: Pick<EncounterCreature, "minion_count" | "max_hp">,
+  participant: Pick<ParticipantCreature, "minion_count" | "max_hp">,
   minions_in_overkill_range: number,
   damage: number,
 ): number | undefined {
@@ -64,14 +68,16 @@ type TurnParticipant = {
   id: string;
   initiative: number;
   created_at: Date;
-  is_player: boolean;
+  creature: {
+    is_player: boolean;
+  };
   has_surprise: boolean;
 };
 
-export function cycleNextTurn<Participant extends TurnParticipant>(
-  participants: Participant[],
-  encounter: { current_round: number },
-): UpdateTurnOrderReturn<Participant> {
+export function cycleNextTurn<Participant extends TurnParticipant>(encounter: {
+  current_round: number;
+  participants: Participant[];
+}): UpdateTurnOrderReturn<Participant> {
   return cycleTurn({
     updateActiveAndRoundNumber: (participants) => {
       const prev = participants.findIndex((p) => p.is_active);
@@ -99,15 +105,16 @@ export function cycleNextTurn<Participant extends TurnParticipant>(
         updatedRoundNumber: encounter.current_round,
       };
     },
-    participants,
     encounter,
   });
 }
 
-export function cyclePreviousTurn<Participant extends TurnParticipant>(
-  participants: Participant[],
-  encounter: { current_round: number },
-): UpdateTurnOrderReturn<Participant> {
+export function cyclePreviousTurn<
+  Participant extends TurnParticipant,
+>(encounter: {
+  current_round: number;
+  participants: Participant[];
+}): UpdateTurnOrderReturn<Participant> {
   return cycleTurn({
     updateActiveAndRoundNumber: (participants) => {
       const prev = participants.findIndex((p) => p.is_active);
@@ -144,7 +151,6 @@ export function cyclePreviousTurn<Participant extends TurnParticipant>(
       };
     },
     encounter,
-    participants,
   });
 }
 
@@ -152,15 +158,14 @@ type CycleTurnArgs<Participant extends TurnParticipant> = {
   updateActiveAndRoundNumber: (
     participants: Participant[],
   ) => Omit<UpdateTurnOrderReturn<Participant>, "updatedParticipants">;
-  participants: Participant[];
-  encounter: { current_round: number };
+  encounter: { current_round: number; participants: Participant[] };
 };
 
 function cycleTurn<Participant extends TurnParticipant>({
   updateActiveAndRoundNumber,
-  participants,
   encounter,
 }: CycleTurnArgs<Participant>) {
+  const participants = encounter.participants;
   let sortedParticipants = participants.toSorted(sortEncounterCreatures);
 
   if (!sortedParticipants.some((p) => p.is_active)) {
@@ -173,7 +178,6 @@ function cycleTurn<Participant extends TurnParticipant>({
   if (participants.some((p) => p.has_surprise)) {
     return cycleTurnWithSurpriseRound({
       updateActiveAndRoundNumber,
-      participants: sortedParticipants,
       encounter,
     });
   }
@@ -200,9 +204,9 @@ function cycleTurn<Participant extends TurnParticipant>({
 
 function cycleTurnWithSurpriseRound<Participant extends TurnParticipant>({
   updateActiveAndRoundNumber,
-  participants,
   encounter,
 }: CycleTurnArgs<Participant>) {
+  const participants = encounter.participants;
   const isSurpriseRound = encounter?.current_round === 0;
 
   const activeParticipants = isSurpriseRound
@@ -259,12 +263,12 @@ export function getCreaturePostForm(creature: CreaturePost): CreaturePostData {
 }
 
 export function defaultParticipant(
-  p: Partial<EncounterParticipant> & {
+  p: Partial<Participant> & {
     id: string;
     encounter_id: string;
     creature_id: string;
   },
-): EncounterParticipant {
+): Participant {
   return {
     is_active: false,
     has_surprise: false,
@@ -279,9 +283,9 @@ export function defaultParticipant(
 }
 
 export function mergeEncounterCreature(
-  participant: EncounterParticipant,
+  participant: Participant,
   creature: Creature,
-): EncounterCreature {
+): ParticipantCreature {
   return {
     id: participant.id,
     encounter_id: participant.encounter_id,
@@ -348,4 +352,25 @@ export function updateGroupTurn<
     updatedRoundNumber: encounter.current_round,
     newlyActiveParticipant: participantWhoPlayed,
   };
+}
+
+export function activeReminders({
+  previousRound,
+  currentRound,
+  reminders,
+}: {
+  previousRound: number;
+  currentRound: number;
+  reminders: Reminder[];
+}) {
+  if (currentRound === previousRound || currentRound < previousRound) {
+    return;
+  }
+
+  // 0 means alert every round
+  return reminders.filter(
+    (reminder) =>
+      reminder.alert_after_round === currentRound ||
+      reminder.alert_after_round === 0,
+  );
 }

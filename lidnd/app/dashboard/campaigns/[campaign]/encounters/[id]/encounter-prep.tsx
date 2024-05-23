@@ -31,7 +31,7 @@ import {
   useStartEncounter,
 } from "@/encounters/[id]/hooks";
 import { GroupBattleLayout } from "@/encounters/[id]/run/group-battle-ui";
-import { EncounterCreature } from "@/server/api/router";
+import { ParticipantCreature } from "@/server/api/router";
 import { useCampaignId } from "@/campaigns/hooks";
 import { BasePopover } from "@/encounters/base-popover";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
@@ -40,10 +40,11 @@ import { OriginalSizeImage } from "@/encounters/original-size-image";
 
 export interface EncounterPrepProps {
   notesInput: React.ReactNode;
+  reminderInput: React.ReactNode;
 }
 
 export default function EncounterPrep(props: EncounterPrepProps) {
-  const { notesInput } = props;
+  const { notesInput, reminderInput } = props;
   const [selectedParticipantId, setSelectedParticipantId] = React.useState<
     string | null
   >(null);
@@ -66,7 +67,6 @@ export default function EncounterPrep(props: EncounterPrepProps) {
             <EncounterStats />
           </EncounterDetailsEditor>
           {notesInput}
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
             <div>
               <EncounterParticipantRow
@@ -82,6 +82,7 @@ export default function EncounterPrep(props: EncounterPrepProps) {
             <Card className="w-full grow">
               <ParticipantUpload />
             </Card>
+            {reminderInput}
           </div>
         </motion.div>
       </Suspense>
@@ -224,12 +225,12 @@ function EncounterParticipantRow(props: {
 function PrepParticipantCard({
   participant,
 }: {
-  participant: EncounterCreature;
+  participant: ParticipantCreature;
 }) {
   return (
     <AnimationListItem key={participant.id}>
-      <div className="flex flex-col items-center gap-3 w-32">
-        <Card className="flex flex-col justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <Card className="flex flex-col justify-center w-32">
           <CardHeader>
             <CardTitle>{participant.name}</CardTitle>
           </CardHeader>
@@ -248,7 +249,7 @@ function PrepParticipantCard({
 function ParticipantActions({
   participant,
 }: {
-  participant: EncounterCreature;
+  participant: ParticipantCreature;
 }) {
   if (participant.is_player) {
     return <RemoveCreatureFromEncounterButton participant={participant} />;
@@ -258,7 +259,7 @@ function ParticipantActions({
 }
 
 export interface RemoveCreatureFromEncounterButtonProps {
-  participant: EncounterCreature;
+  participant: ParticipantCreature;
 }
 
 export function RemoveCreatureFromEncounterButton(
@@ -286,7 +287,7 @@ export function RemoveCreatureFromEncounterButton(
 }
 
 export interface MinionizeButtonProps {
-  participant: EncounterCreature;
+  participant: ParticipantCreature;
 }
 
 export function MonsterParticipantActions(props: MinionizeButtonProps) {
@@ -417,7 +418,7 @@ function EncounterStats() {
       <BasePopover
         trigger={
           <Button
-            className="flex text-xl items-center gap-5 w-44"
+            className="flex text-xl items-center gap-2 w-44"
             variant="ghost"
           >
             <Skull />

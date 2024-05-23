@@ -6,14 +6,14 @@ import {
 } from "../hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { EncounterCreature, EncounterParticipant } from "@/server/api/router";
+import { ParticipantCreature, Participant } from "@/server/api/router";
 import { useState } from "react";
 import { toNumber } from "lodash";
 
 export function ParticipantHealthForm({
   participant,
 }: {
-  participant: EncounterCreature;
+  participant: ParticipantCreature;
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
   const { mutate: edit, isLoading } = useUpdateEncounterParticipant();
@@ -83,14 +83,14 @@ export function ParticipantHealthForm({
   );
 }
 
-function isMinion(participant: EncounterParticipant): participant is Minion {
+function isMinion(participant: Participant): participant is Minion {
   if (participant.minion_count) {
     return true;
   }
   return false;
 }
 
-export type Minion = EncounterCreature & { minion_count: number };
+export type Minion = ParticipantCreature & { minion_count: number };
 
 export interface MinionHealthFormProps {
   participant: Minion;

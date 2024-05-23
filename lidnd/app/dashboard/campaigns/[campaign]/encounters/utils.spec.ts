@@ -37,8 +37,10 @@ describe("Participant turn order tests", () => {
       createParticipant({ id: "2", is_active: false, initiative: 2 }),
     ];
     participants = participants.sort((a, b) => b.initiative - a.initiative);
-    const encounter = { current_round: 1 };
-    const result = cycleNextTurn(participants, encounter);
+    const result = cycleNextTurn({
+      current_round: 1,
+      participants,
+    });
     expect(result.newlyActiveParticipant.id).toBe("2");
     expect(result.updatedRoundNumber).toBe(2);
   });
@@ -49,9 +51,11 @@ describe("Participant turn order tests", () => {
       createParticipant({ id: "2", is_active: true, initiative: 2 }),
     ];
     participants = participants.sort((a, b) => b.initiative - a.initiative);
-    const encounter = { current_round: 1 };
 
-    const result = cyclePreviousTurn(participants, encounter);
+    const result = cyclePreviousTurn({
+      current_round: 1,
+      participants,
+    });
     expect(result.newlyActiveParticipant.id).toBe("1");
     expect(result.updatedRoundNumber).toBe(0);
   });
@@ -68,9 +72,11 @@ describe("Participant turn order tests", () => {
       createParticipant({ id: "3", is_active: true, initiative: 3 }),
     ];
     participants = participants.sort((a, b) => b.initiative - a.initiative);
-    const encounter = { current_round: 1 };
 
-    const result = cyclePreviousTurn(participants, encounter);
+    const result = cyclePreviousTurn({
+      current_round: 1,
+      participants,
+    });
     expect(result.newlyActiveParticipant.id).toBe("2");
     expect(result.updatedRoundNumber).toBe(0);
   });
@@ -82,9 +88,11 @@ describe("Participant turn order tests", () => {
       createParticipant({ id: "3", is_active: true, initiative: 3 }),
     ];
     participants = participants.sort((a, b) => b.initiative - a.initiative);
-    const encounter = { current_round: 1 };
 
-    const result = cyclePreviousTurn(participants, encounter);
+    const result = cyclePreviousTurn({
+      current_round: 1,
+      participants,
+    });
     expect(result.newlyActiveParticipant.id).toBe("1");
     expect(result.updatedRoundNumber).toBe(0);
   });
@@ -96,9 +104,11 @@ describe("Participant turn order tests", () => {
       createParticipant({ id: "3", is_active: false, initiative: 3 }),
     ];
     participants = participants.sort((a, b) => b.initiative - a.initiative);
-    const encounter = { current_round: 1 };
 
-    const result = cycleNextTurn(participants, encounter);
+    const result = cycleNextTurn({
+      current_round: 1,
+      participants,
+    });
     expect(result.newlyActiveParticipant.id).toBe("3");
     expect(result.updatedRoundNumber).toBe(2);
   });
@@ -110,9 +120,11 @@ describe("Participant turn order tests", () => {
       createParticipant({ id: "3", is_active: true, initiative: 3 }),
     ];
     participants = participants.sort((a, b) => b.initiative - a.initiative);
-    const encounter = { current_round: 0 };
 
-    const result = cyclePreviousTurn(participants, encounter);
+    const result = cyclePreviousTurn({
+      current_round: 0,
+      participants,
+    });
     expect(result.newlyActiveParticipant.id).toBe("3");
     expect(result.updatedRoundNumber).toBe(0);
   });
@@ -142,14 +154,16 @@ test("skip non-surprise participants when cycling next on surprise round", () =>
     }),
   ];
 
-  const result = cycleNextTurn(participants, {
+  const result = cycleNextTurn({
     current_round: 0,
+    participants,
   });
 
   expect(result.updatedRoundNumber).toBe(0);
   expect(result.newlyActiveParticipant.id).toBe("4");
-  const result2 = cyclePreviousTurn(result.updatedParticipants, {
+  const result2 = cyclePreviousTurn({
     current_round: 0,
+    participants,
   });
 
   expect(result2.updatedRoundNumber).toBe(0);

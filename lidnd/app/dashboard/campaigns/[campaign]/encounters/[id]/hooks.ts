@@ -1,6 +1,6 @@
 import { CreaturePost, ParticipantPost } from "../types";
 import { defaultParticipant, getCreaturePostForm } from "../utils";
-import { Creature, EncounterCreature } from "@/server/api/router";
+import { Creature, ParticipantCreature } from "@/server/api/router";
 import { mergeEncounterCreature } from "../utils";
 import { api } from "@/trpc/react";
 import { useMutation } from "@tanstack/react-query";
@@ -60,7 +60,7 @@ export function useCreateCreatureInEncounter() {
         if (!old) {
           return;
         }
-        const newParticipant: EncounterCreature = {
+        const newParticipant: ParticipantCreature = {
           ...creature,
           encounter_id: old.id,
           creature_id: "pending",

@@ -2,19 +2,20 @@ import { db } from "@/server/api/db";
 import {
   campaigns,
   creatures,
-  encounter_participant,
+  participants,
+  reminder,
   encounters,
-  participant_status_effects,
-  settings,
-  status_effects_5e,
+  participant_to_effect,
+  setting,
+  status_effects,
   systems,
 } from "@/server/api/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { paths, components } from "@/app/schema";
 import createClient from "openapi-fetch";
 import {
-  EncounterCreature,
-  EncounterParticipant,
+  ParticipantCreature,
+  Participant,
   creatureUploadSchema,
 } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
@@ -28,6 +29,7 @@ import {
   sortEncounterCreatures,
   mergeEncounterCreature,
 } from "@/app/dashboard/campaigns/[campaign]/encounters/utils";
+import { Reminder } from "@/encounters/[id]/page";
 
 export async function getUserCampaigns(user_id: string) {
   return await db
@@ -46,7 +48,7 @@ export async function createCreature(
   dbObject = db
 ) {
   const newCreature = await dbObject
-    .insert(creatures)
+    .insert(creature)
     .values({ ...creature, user_id })
     .returning();
   if (newCreature.length === 0) {
@@ -96,12 +98,12 @@ export async function createCreature(
 
 export async function getEncounterCreature(
   id: string
-): Promise<EncounterCreature> {
+): Promise<ParticipantCreature> {
   const encounter = await db
     .select()
-    .from(encounter_participant)
-    .where(eq(encounter_participant.id, id))
-    .leftJoin(creatures, eq(encounter_participant.creature_id, creatures.id));
+    .from(participants)
+    .where(eq(participants.id, id))
+    .leftJoin(creatures, eq(participants.creature_id, creatures.id));
   if (encounter.length === 0) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
@@ -121,69 +123,6 @@ export async function getEncounterCreature(
   );
 }
 
-export async function getEncounterData(id: string) {
-  const encounter = await db
-    .select()
-    .from(encounters)
-    .where(and(eq(encounters.id, id)))
-    .leftJoin(
-      encounter_participant,
-      eq(encounters.id, encounter_participant.encounter_id)
-    )
-    .leftJoin(creatures, eq(encounter_participant.creature_id, creatures.id))
-    .leftJoin(
-      participant_status_effects,
-      eq(
-        encounter_participant.id,
-        participant_status_effects.encounter_participant_id
-      )
-    )
-    .leftJoin(
-      status_effects_5e,
-      eq(participant_status_effects.status_effect_id, status_effects_5e.id)
-    );
-  const response = encounter.reduce<Record<string, EncounterCreature>>(
-    (acc, row) => {
-      const participant = row["encounter_participant"];
-      const creature = row["creatures"];
-      const statusEffect = row["participant_status_effects"];
-      const statusEffectData = row["status_effects_5e"];
-      const finalStatusEffect = statusEffect
-        ? {
-            ...statusEffect,
-            description: statusEffectData?.description ?? "",
-            name: statusEffectData?.name ?? "",
-          }
-        : null;
-
-      if (!participant || !creature) return acc;
-      if (!acc[participant.id]) {
-        acc[participant.id] = {
-          ...mergeEncounterCreature(participant, creature),
-          status_effects: finalStatusEffect ? [finalStatusEffect] : [],
-        };
-      } else {
-        finalStatusEffect &&
-          acc[participant.id].status_effects.push(finalStatusEffect);
-      }
-      return acc;
-    },
-    {}
-  );
-  const participants = Object.values(response);
-
-  const encounterData = encounter.at(0)?.encounters;
-
-  if (!encounterData) {
-    return null;
-  }
-
-  return {
-    ...encounterData,
-    participants: participants.sort(sortEncounterCreatures),
-  };
-}
-
 export async function updateTurnData(
   encounter_id: string,
   updatedRoundNumber: number,
@@ -199,26 +138,6 @@ export async function updateTurnData(
       })
       .where(eq(encounters.id, encounter_id)),
   ]);
-}
-
-export async function getUserEncounter(
-  user_id: string,
-  encounter_id: string,
-  dbObject = db
-) {
-  const encounter = await dbObject
-    .select()
-    .from(encounters)
-    .where(
-      and(eq(encounters.id, encounter_id), eq(encounters.user_id, user_id))
-    );
-  if (encounter.length === 0) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "No encounter found",
-    });
-  }
-  return encounter[0];
 }
 
 export function getIconAWSname(creature_id: string) {
@@ -263,23 +182,23 @@ export async function setActiveParticipant(
 export async function getEncounterParticipants(
   encounter_id: string,
   dbObject = db
-): Promise<EncounterParticipant[]> {
+): Promise<Participant[]> {
   const participants = await dbObject
     .select()
-    .from(encounter_participant)
-    .where(eq(encounter_participant.encounter_id, encounter_id));
+    .from(participants)
+    .where(eq(participants.encounter_id, encounter_id));
   return participants.sort(sortEncounterCreatures);
 }
 
 export async function getEncounterParticipantsWithCreatureData(
   encounter_id: string,
   dbObject = db
-): Promise<EncounterCreature[]> {
+): Promise<ParticipantCreature[]> {
   const encouterCreatures = await dbObject
     .select()
-    .from(encounter_participant)
-    .where(eq(encounter_participant.encounter_id, encounter_id))
-    .innerJoin(creatures, eq(encounter_participant.creature_id, creatures.id));
+    .from(participants)
+    .where(eq(participants.encounter_id, encounter_id))
+    .innerJoin(creatures, eq(participants.creature_id, creatures.id));
   return encouterCreatures
     .map(({ creatures, encounter_participant }) =>
       mergeEncounterCreature(encounter_participant, creatures)
@@ -300,8 +219,8 @@ export async function postEncounterToUserChannel(encounter: { id: string }) {
   }
   const userSettings = await db
     .select()
-    .from(settings)
-    .where(eq(settings.user_id, session.user.userId));
+    .from(setting)
+    .where(eq(setting.user_id, session.user.userId));
   if (userSettings.length === 0) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
@@ -330,13 +249,13 @@ export async function postEncounterToUserChannel(encounter: { id: string }) {
 }
 
 export async function updateParticipantHasPlayed(
-  participant: EncounterParticipant,
+  participant: Participant,
   dbObject = db
 ) {
   return await dbObject
-    .update(encounter_participant)
+    .update(participant)
     .set({
       has_played_this_round: participant.has_played_this_round,
     })
-    .where(eq(encounter_participant.id, participant.id));
+    .where(eq(participant.id, participant.id));
 }

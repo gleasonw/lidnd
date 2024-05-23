@@ -1,6 +1,6 @@
 "use client";
 import { api } from "@/trpc/react";
-import { EncounterCreature } from "@/server/api/router";
+import { ParticipantCreature } from "@/server/api/router";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { Combobox } from "../resistance-selector";
 import { CommandItem } from "@/components/ui/command";
@@ -12,7 +12,7 @@ export function StatusInput({
   participant,
   className,
 }: {
-  participant: EncounterCreature;
+  participant: ParticipantCreature;
   className?: string;
 }) {
   const { encounterById } = api.useUtils();

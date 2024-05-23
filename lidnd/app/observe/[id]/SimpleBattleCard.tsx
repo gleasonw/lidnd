@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React from "react";
-import { Encounter, EncounterCreature } from "@/server/api/router";
+import { Encounter, ParticipantCreature } from "@/server/api/router";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
 import { HealthMeterOverlay } from "@/encounters/[id]/run/battle-ui";
 import effectIconMap from "@/encounters/[id]/run/effectIconMap";
@@ -11,7 +11,7 @@ import { BasePopover } from "@/encounters/base-popover";
 
 export interface SimpleBattleCardProps {
   children?: React.ReactNode;
-  participant: EncounterCreature;
+  participant: ParticipantCreature;
   activeIndex: number;
   encounter: Encounter;
   index: number;

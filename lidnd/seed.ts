@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { DbSpell, status_effects_5e, spells } from "@/server/api/db/schema";
+import { DbSpell, status_effects, spells } from "@/server/api/db/schema";
 
 type Entry = {
   type: string;
@@ -135,7 +135,7 @@ const parsedSpells = spellResponses.reduce((acc, response) => {
 await db.insert(spells).values(parsedSpells).onConflictDoNothing();
 
 await db
-  .insert(status_effects_5e)
+  .insert(status_effects)
   .values([
     {
       name: "Blinded",

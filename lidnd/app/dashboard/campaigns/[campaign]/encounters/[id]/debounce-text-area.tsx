@@ -31,17 +31,6 @@ export function DescriptionTextArea(props: DescriptionTextProps) {
 
   return (
     <div>
-      <Textarea
-        className="h-40"
-        name="description"
-        value={description}
-        placeholder="Flow, terrain, monster strategy, etc..."
-        onChange={(e) => {
-          setStatus("saving");
-          setDescription(e.target.value);
-          debouncedUpdate(e.target.value);
-        }}
-      />
       <span className="h-5 relative flex">
         <div
           data-saving={status === "saving"}
@@ -58,6 +47,17 @@ export function DescriptionTextArea(props: DescriptionTextProps) {
           Saved
         </div>
       </span>
+      <Textarea
+        className="h-40"
+        name="description"
+        value={description}
+        placeholder="Flow, terrain, monster strategy, etc..."
+        onChange={(e) => {
+          setStatus("saving");
+          setDescription(e.target.value);
+          debouncedUpdate(e.target.value);
+        }}
+      />
     </div>
   );
 }

@@ -8,10 +8,11 @@ import {
   BattleCardLayout,
   BattleCardStatusEffects,
   MinionCardStack,
+  useBattleUIStore,
 } from "./battle-ui";
 import { useEncounterId } from "../hooks";
 import { Button } from "@/components/ui/button";
-import { EncounterCreature } from "@/server/api/router";
+import { ParticipantCreature } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import clsx from "clsx";
 import React from "react";
@@ -102,7 +103,7 @@ export function GroupBattleLayout({
 
 export type GroupBattleCardProps = {
   children?: React.ReactNode;
-  creature: EncounterCreature;
+  creature: ParticipantCreature;
   className?: string;
   isSelected?: boolean;
 } & React.HTMLAttributes<HTMLDivElement>;
@@ -117,9 +118,15 @@ export function GroupBattleCard({
   const id = useEncounterId();
   const { encounterById } = api.useUtils();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
+  const [reminders] = api.encounterReminders.useSuspenseQuery(id);
+
+  const { displayReminders } = useBattleUIStore();
+
   const { mutate: updateCreatureHasPlayedThisRound } =
     api.updateGroupTurn.useMutation({
       onSettled: async () => {
+        displayReminders(encounter, reminders);
+
         return await encounterById.invalidate(id);
       },
     });
@@ -158,8 +165,8 @@ export function GroupBattleCard({
         ) : null}
         <BattleCardStatusEffects creature={creature} />
         <BattleCardContent className="items-center">
-          <BattleCardCreatureName creature={creature} />
-          <BattleCardCreatureIcon className="w-32" creature={creature} />
+          <BattleCardCreatureName participant={creature} />
+          <BattleCardCreatureIcon className="w-32" participant={creature} />
           <BattleCardHealthAndStatus creature={creature} />
         </BattleCardContent>
       </BattleCardLayout>

@@ -5,8 +5,9 @@ import { createCreature, getPageSession } from "@/server/api/utils";
 import { redirect } from "next/navigation";
 import {
   campaigns,
-  campaignsToPlayers,
-  encounter_participant,
+  campaignToPlayer,
+  participants,
+  reminders,
   encounters,
 } from "@/server/api/db/schema";
 import { z } from "zod";
@@ -17,8 +18,10 @@ import { revalidatePath } from "next/cache";
 import { campaignInsertSchema } from "@/app/dashboard/types";
 import { and, eq } from "drizzle-orm";
 import { creatureUploadSchema } from "@/server/api/router";
-import { appRoutes, routeToCampaign } from "@/app/routes";
+import { appRoutes, routeToCampaign, routeToEncounter } from "@/app/routes";
 import { CreaturePostData } from "@/encounters/utils";
+import { createInsertSchema } from "drizzle-zod";
+import { encounterById } from "@/server/encounters";
 
 export async function logOut() {
   const session = await getPageSession();
@@ -50,7 +53,7 @@ export async function createCampaign(formdata: FormData) {
   const user = session.user;
 
   const createdCampaign = await db
-    .insert(campaigns)
+    .insert(campaign)
     .values({
       ...campaign.value,
       user_id: user.userId,
@@ -110,7 +113,7 @@ export async function createPlayerAndAddToCampaign(
       tx,
     );
 
-    await tx.insert(campaignsToPlayers).values({
+    await tx.insert(campaignToPlayer).values({
       campaign_id: campaignId,
       player_id: newCreature.id,
     });
@@ -173,7 +176,7 @@ export async function createCreatureInEncounter(formData: CreaturePostData) {
 
   const newCreature = await createCreature(session.user.userId, creature.value);
 
-  await db.insert(encounter_participant).values({
+  await db.insert(participants).values({
     encounter_id: creature.value.encounter_id,
     creature_id: newCreature.id,
     hp: newCreature.max_hp,
@@ -184,4 +187,46 @@ export async function createCreatureInEncounter(formData: CreaturePostData) {
     status: 201,
     data: newCreature,
   };
+}
+
+const reminderSchema = createInsertSchema(reminders);
+
+export async function upsertEncounterReminder(
+  encounterId: string,
+  formData: FormData,
+) {
+  const session = await getPageSession();
+
+  if (!session) {
+    return { error: "No session found." };
+  }
+
+  const reminder = parse(formData, {
+    schema: reminderSchema.merge(
+      z.object({ encounter_id: z.string().optional() }),
+    ),
+  });
+
+  if (!reminder.value) {
+    return { error: reminder.error };
+  }
+
+  const encounter = await encounterById(session.user.userId, encounterId);
+
+  if (encounter.user_id !== session.user.userId) {
+    return { error: "You do not have access to this encounter." };
+  }
+
+  await db
+    .insert(reminder)
+    .values({
+      ...reminder.value,
+      encounter_id: encounterId,
+    })
+    .onConflictDoUpdate({
+      target: reminder.id,
+      set: reminder.value,
+    });
+
+  revalidatePath(routeToEncounter(encounter.campaign_id, encounter.id));
 }

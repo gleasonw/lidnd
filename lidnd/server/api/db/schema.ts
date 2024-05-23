@@ -1,4 +1,4 @@
-import { InferInsertModel } from "drizzle-orm";
+import { InferInsertModel, relations } from "drizzle-orm";
 import {
   bigint,
   boolean,
@@ -36,12 +36,34 @@ export const spells = pgTable("spells", {
   areaTags: text("areaTags"),
 });
 
+export const reminders = pgTable("reminders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  encounter_id: uuid("encounter_id")
+    .references(() => encounters.id, { onDelete: "cascade" })
+    .notNull(),
+  reminder: text("reminder"),
+  alert_after_round: integer("alert_after_round").notNull(),
+});
+
+//TODO: relations are weird. I wish drizzle could infer from the keys. relation names have to be identical
+// Follow this issue for changes: https://github.com/drizzle-team/drizzle-orm/issues/2026
+// oddly enough, seems to be working without explicit relationNames now? well, studio is broken
+
+export const reminderRelations = relations(reminders, ({ one }) => ({
+  encounter: one(encounters, {
+    fields: [reminders.encounter_id],
+    references: [encounters.id],
+  }),
+}));
+
 export const initiative_enum = pgEnum("initiative_type", ["linear", "group"]);
 
 export const systems = pgTable("systems", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 256 }).notNull(),
-  initiative_type: initiative_enum("initiative_type").default("linear"),
+  initiative_type: initiative_enum("initiative_type")
+    .default("linear")
+    .notNull(),
 });
 
 export const campaigns = pgTable(
@@ -66,8 +88,16 @@ export const campaigns = pgTable(
   }
 );
 
-export const campaignsToPlayers = pgTable(
-  "campaigns_to_players",
+export const campaignRelations = relations(campaigns, ({ one, many }) => ({
+  system: one(systems, {
+    fields: [campaigns.system_id],
+    references: [systems.id],
+  }),
+  encounters: many(encounters),
+}));
+
+export const campaignToPlayer = pgTable(
+  "campaign_to_player",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     campaign_id: uuid("campaign_id")
@@ -109,58 +139,17 @@ export const encounters = pgTable(
   }
 );
 
-export const creatures = pgTable(
-  "creatures",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    name: varchar("name", { length: 256 }).notNull(),
-    created_at: timestamp("created_at").defaultNow().notNull(),
-    max_hp: integer("max_hp").notNull(),
-    challenge_rating: real("challenge_rating").default(0).notNull(),
-    is_player: boolean("is_player").default(false).notNull(),
-    user_id: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-  },
-  (t) => {
-    return {
-      userIndex: index("user_index_creatures").on(t.user_id),
-    };
-  }
-);
+export const encountersRelations = relations(encounters, ({ many, one }) => ({
+  participants: many(participants),
+  reminders: many(reminders),
+  campaigns: one(campaigns, {
+    fields: [encounters.campaign_id],
+    references: [campaigns.id],
+  }),
+}));
 
-export const status_effects_5e = pgTable("status_effects_5e", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name", { length: 256 }).notNull(),
-  description: text("description").notNull(),
-});
-
-export const participant_status_effects = pgTable(
-  "participant_status_effects",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    encounter_participant_id: uuid("encounter_participant_id")
-      .references(() => encounter_participant.id, { onDelete: "cascade" })
-      .notNull(),
-    status_effect_id: uuid("status_effect_id")
-      .references(() => status_effects_5e.id, { onDelete: "cascade" })
-      .notNull(),
-    created_at: timestamp("created_at").defaultNow().notNull(),
-    duration: integer("duration"),
-    save_ends_dc: integer("save_ends_dc").default(0).notNull(),
-  },
-  (t) => {
-    return {
-      encounterParticipantIndex: index("encounter_participant_index").on(
-        t.encounter_participant_id
-      ),
-      statusEffectIndex: index("status_effect_index").on(t.status_effect_id),
-    };
-  }
-);
-
-export const encounter_participant = pgTable(
-  "encounter_participant",
+export const participants = pgTable(
+  "participants",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     encounter_id: uuid("encounter_id")
@@ -186,6 +175,93 @@ export const encounter_participant = pgTable(
       creatureIndex: index("creature_index").on(table.creature_id),
     };
   }
+);
+
+export const participantRelations = relations(
+  participants,
+  ({ one, many }) => ({
+    encounter: one(encounters, {
+      fields: [participants.encounter_id],
+      references: [encounters.id],
+    }),
+    creature: one(creatures, {
+      fields: [participants.creature_id],
+      references: [creatures.id],
+    }),
+    status_effects: many(participant_status_effects),
+  })
+);
+
+export const creatures = pgTable(
+  "creatures",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: varchar("name", { length: 256 }).notNull(),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+    max_hp: integer("max_hp").notNull(),
+    challenge_rating: real("challenge_rating").default(0).notNull(),
+    is_player: boolean("is_player").default(false).notNull(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (t) => {
+    return {
+      userIndex: index("user_index_creatures").on(t.user_id),
+    };
+  }
+);
+
+export const creatureRelations = relations(creatures, ({ many }) => ({
+  participants: many(participants),
+}));
+
+export const status_effects = pgTable("status_effects", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 256 }).notNull(),
+  description: text("description").notNull(),
+});
+
+export const statusEffectRelations = relations(status_effects, ({ many }) => ({
+  participantEffects: many(participant_status_effects),
+}));
+
+export const participant_status_effects = pgTable(
+  "participant_status_effects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    encounter_participant_id: uuid("encounter_participant_id")
+      .references(() => participants.id, { onDelete: "cascade" })
+      .notNull(),
+    status_effect_id: uuid("status_effect_id")
+      .references(() => status_effects.id, { onDelete: "cascade" })
+      .notNull(),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+    duration: integer("duration"),
+    save_ends_dc: integer("save_ends_dc").default(0).notNull(),
+  },
+  (t) => {
+    return {
+      encounterParticipantIndex: index("encounter_participant_index").on(
+        t.encounter_participant_id
+      ),
+      statusEffectIndex: index("status_effect_index").on(t.status_effect_id),
+    };
+  }
+);
+
+export const participantEffectsRelations = relations(
+  participant_status_effects,
+  ({ one }) => ({
+    effect: one(status_effects, {
+      fields: [participant_status_effects.status_effect_id],
+      references: [status_effects.id],
+    }),
+    participant: one(participants, {
+      fields: [participant_status_effects.encounter_participant_id],
+      references: [participants.id],
+    }),
+  })
 );
 
 export const settings = pgTable("settings", {
