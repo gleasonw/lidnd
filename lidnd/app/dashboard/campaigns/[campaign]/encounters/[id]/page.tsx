@@ -53,6 +53,10 @@ async function EncounterDescriptionInput(props: { id: string }) {
 
   const encounter = await encounterById(user.userId, id);
 
+  if (!encounter) {
+    return <div>Encounter not found.</div>;
+  }
+
   return (
     <form action={doUpdate}>
       <DescriptionTextArea encounter={encounter} />
@@ -112,7 +116,7 @@ async function EncounterReminderInput(props: { id: string }) {
   );
 }
 
-export type Reminder = typeof reminder.$inferSelect;
+export type Reminder = typeof reminders.$inferSelect;
 
 export interface ReminderEditorProps {
   reminder: Reminder;
@@ -130,7 +134,7 @@ export function ReminderRow(props: ReminderEditorProps) {
           action={async () => {
             "use server";
 
-            await db.delete(reminder).where(eq(reminder.id, reminder.id));
+            await db.delete(reminders).where(eq(reminders.id, reminder.id));
 
             revalidatePath(appRoutes.campaigns);
           }}

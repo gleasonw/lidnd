@@ -2,8 +2,7 @@
 import { appRoutes } from "@/app/routes";
 import { auth, discordAuth } from "@/server/api/auth/lucia";
 import { db } from "@/server/api/db";
-import { setting } from "@/server/api/db/schema";
-import { fetchWhitelist } from "@/server/api/utils";
+import { settings } from "@/server/api/db/schema";
 import { OAuthRequestError } from "@lucia-auth/oauth";
 import { cookies, headers } from "next/headers";
 
@@ -35,7 +34,7 @@ export const GET = async (request: NextRequest) => {
           discord_id: parseInt(discordUser.id),
         },
       });
-      await db.insert(setting).values({
+      await db.insert(settings).values({
         user_id: user.userId,
       });
       // populate settings here

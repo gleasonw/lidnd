@@ -21,7 +21,6 @@ import { api } from "@/trpc/react";
 import { useEncounterId } from "../hooks";
 import {
   ParticipantCreature,
-  Participant,
   EncounterWithParticipants,
 } from "@/server/api/router";
 import { useRemoveStatusEffect } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/hooks";
@@ -40,9 +39,10 @@ import { Reminder } from "@/encounters/[id]/page";
 import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { ReminderDialog } from "@/encounters/[id]/run/reminder-dialog";
-import { activeReminders, cycleNextTurn } from "@/encounters/utils";
+import { activeReminders } from "@/encounters/utils";
 import { ParticipantUtils } from "@/utils/participants";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
+import { EncounterUtils } from "@/utils/encounters";
 
 export function BattleUILoader() {
   return (
@@ -61,7 +61,7 @@ export function BattleUILoader() {
 
 /**
  * Manages ui state like dialogs, etc. I'm curious to see how this scales. A bit spooky to
- * be responsible for server state like reminders in the client.
+ * persist reminders outside react query.
  */
 class BattleUIStore {
   remindersToDisplay: Reminder[] = [];
@@ -74,7 +74,7 @@ class BattleUIStore {
     encounter: EncounterWithParticipants,
     reminders: Reminder[],
   ) => {
-    const { updatedRoundNumber } = cycleNextTurn(encounter);
+    const { updatedRoundNumber } = EncounterUtils.cycleNextTurn(encounter);
 
     const remindersToTrigger = activeReminders({
       previousRound: encounter.current_round,

@@ -53,14 +53,14 @@ export async function createCampaign(formdata: FormData) {
   const user = session.user;
 
   const createdCampaign = await db
-    .insert(campaign)
+    .insert(campaigns)
     .values({
       ...campaign.value,
       user_id: user.userId,
     })
     .returning();
 
-  if (createdCampaign.length === 0) {
+  if (createdCampaign.length === 0 || !createdCampaign[0]) {
     return { message: "Failed to create campaign", status: 400 };
   }
 
@@ -213,18 +213,18 @@ export async function upsertEncounterReminder(
 
   const encounter = await encounterById(session.user.userId, encounterId);
 
-  if (encounter.user_id !== session.user.userId) {
+  if (encounter?.user_id !== session.user.userId) {
     return { error: "You do not have access to this encounter." };
   }
 
   await db
-    .insert(reminder)
+    .insert(reminders)
     .values({
       ...reminder.value,
       encounter_id: encounterId,
     })
     .onConflictDoUpdate({
-      target: reminder.id,
+      target: reminders.id,
       set: reminder.value,
     });
 

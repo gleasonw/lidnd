@@ -3,8 +3,6 @@
 import { updateEncounterDescription } from "@/app/dashboard/actions";
 import { Textarea, TextareaProps } from "@/components/ui/textarea";
 import { Encounter } from "@/server/api/router";
-import { set } from "lodash";
-import { Check } from "lucide-react";
 import React from "react";
 import { useDebouncedCallback } from "use-debounce";
 

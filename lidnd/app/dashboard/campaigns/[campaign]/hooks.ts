@@ -6,7 +6,7 @@ export function useCampaignId() {
 
   const campaignId = pathName.split("/")[3];
 
-  if (campaignId === "undefined") {
+  if (campaignId === undefined) {
     throw new Error("Attempted to use campaign id but not found");
   }
 

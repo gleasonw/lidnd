@@ -13,17 +13,9 @@ import { eq, and, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
 import superjson from "superjson";
 import { ZodError, z } from "zod";
-import {
-  updateGroupTurn,
-  updateMinionCount,
-  cycleNextTurn,
-  cyclePreviousTurn,
-} from "@/app/dashboard/campaigns/[campaign]/encounters/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
   getEncounterCreature,
-  getEncounterParticipants,
-  getEncounterParticipantsWithCreatureData,
   getIconAWSname,
   getStatBlockAWSname,
   postEncounterToUserChannel,
@@ -44,6 +36,8 @@ import {
   userCampaigns,
 } from "@/server/campaigns";
 import { booleanSchema } from "@/app/dashboard/utils";
+import { ParticipantUtils } from "@/utils/participants";
+import { EncounterUtils } from "@/utils/encounters";
 
 const t = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -193,7 +187,7 @@ export const appRouter = t.router({
       return await db.transaction(async (tx) => {
         const [encounter, campaignPlayers] = await Promise.all([
           tx
-            .insert(encounter)
+            .insert(encounters)
             .values({
               name: opts.input.name,
               description: opts.input.description,
@@ -203,7 +197,8 @@ export const appRouter = t.router({
             .returning(),
           playersInCampaign(opts.input.campaign_id, opts.ctx.user.userId, tx),
         ]);
-        if (encounter.length === 0) {
+        const encounterResult = encounter[0];
+        if (encounterResult === undefined) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Failed to create encounter",
@@ -212,7 +207,7 @@ export const appRouter = t.router({
         if (campaignPlayers.length > 0) {
           await tx.insert(participants).values(
             campaignPlayers.map(({ player }) => ({
-              encounter_id: encounter[0].id,
+              encounter_id: encounterResult.id,
               creature_id: player.id,
             }))
           );
@@ -266,20 +261,25 @@ export const appRouter = t.router({
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
         const participant = await getEncounterCreature(opts.input.id);
-        const updatedMinionCount = updateMinionCount(
+        if (!ParticipantUtils.isMinion(participant)) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Participant is not a minion; minion_count is not set",
+          });
+        }
+        const updatedMinionCount = ParticipantUtils.updateMinionCount(
           participant,
           opts.input.minions_in_overkill_range,
           opts.input.damage
         );
-        console.log(opts.input);
         const [updatedParticipant, _] = await Promise.all([
           await tx
-            .update(participant)
+            .update(participants)
             .set({
               minion_count: updatedMinionCount,
-              hp: participant.max_hp,
+              hp: ParticipantUtils.maxHp(participant),
             })
-            .where(eq(participant.id, opts.input.id))
+            .where(eq(participants.id, opts.input.id))
             .returning(),
           encounterById(opts.ctx.user.userId, opts.input.encounter_id, tx),
         ]);
@@ -298,7 +298,7 @@ export const appRouter = t.router({
     .input(participantSchema)
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
-        const [updatedParticipant, _] = await Promise.all([
+        const [update, _] = await Promise.all([
           await tx
             .update(participants)
             .set(opts.input)
@@ -306,13 +306,16 @@ export const appRouter = t.router({
             .returning(),
           encounterById(opts.ctx.user.userId, opts.input.encounter_id, tx),
         ]);
-        if (updatedParticipant.length === 0) {
+        const updatedParticipant = update[0];
+
+        if (!updatedParticipant) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Failed to update encounter participant",
           });
         }
-        return updatedParticipant[0];
+
+        return updatedParticipant;
       });
       return result;
     }),
@@ -326,15 +329,15 @@ export const appRouter = t.router({
     )
     .mutation(async (opts) => {
       const result = await db
-        .delete(participant_to_effect)
+        .delete(participant_status_effects)
         .where(
           and(
             eq(
-              participant_to_effect.encounter_participant_id,
+              participant_status_effects.encounter_participant_id,
               opts.input.encounter_participant_id
             ),
             eq(
-              participant_to_effect.status_effect_id,
+              participant_status_effects.status_effect_id,
               opts.input.status_effect_id
             )
           )
@@ -362,7 +365,7 @@ export const appRouter = t.router({
     )
     .mutation(async (opts) => {
       const result = await db
-        .insert(participant_to_effect)
+        .insert(participant_status_effects)
         .values({
           encounter_participant_id: opts.input.encounter_participant_id,
           status_effect_id: opts.input.status_effect_id,
@@ -383,23 +386,35 @@ export const appRouter = t.router({
     .input(z.string())
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
-        const [encounter, encounterParticipants] = await Promise.all([
-          encounterById(opts.ctx.user.userId, opts.input, tx),
-          getEncounterParticipants(opts.input, tx),
-        ]);
-
-        const surpriseRoundExists = encounterParticipants.some(
-          (p) => p.has_surprise
+        const encounter = await encounterById(
+          opts.ctx.user.userId,
+          opts.input,
+          tx
         );
 
-        let activeParticipant: Participant;
-        if (surpriseRoundExists) {
-          activeParticipant = encounterParticipants.find(
-            (p) => p.has_surprise
-          )!;
-        } else {
-          activeParticipant = encounterParticipants[0];
+        if (!encounter) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "No encounter found",
+          });
         }
+
+        const p = EncounterUtils.participants(encounter);
+
+        const surpriseRoundExists = p.some((p) => p.has_surprise);
+
+        const activeParticipant = surpriseRoundExists
+          ? p.find((p) => p.has_surprise)
+          : p[0];
+
+        if (!activeParticipant) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message:
+              "No active participant was able to be set... participants list empty?",
+          });
+        }
+
         await Promise.all([
           tx
             .update(participants)
@@ -413,12 +428,12 @@ export const appRouter = t.router({
               )
             ),
           tx
-            .update(encounter)
+            .update(encounters)
             .set({
               started_at: new Date(),
               current_round: surpriseRoundExists ? 0 : 1,
             })
-            .where(eq(encounter.id, opts.input)),
+            .where(eq(encounters.id, opts.input)),
         ]);
         return encounter;
       });
@@ -453,7 +468,7 @@ export const appRouter = t.router({
         }
 
         const { newlyActiveParticipant, updatedRoundNumber } =
-          cycleNextTurn(encounter);
+          EncounterUtils.cycleNextTurn(encounter);
 
         await updateTurnData(
           opts.input.encounter_id,
@@ -487,7 +502,7 @@ export const appRouter = t.router({
         }
 
         const { newlyActiveParticipant, updatedRoundNumber } =
-          cyclePreviousTurn(encounter);
+          EncounterUtils.cyclePreviousTurn(encounter);
 
         await updateTurnData(
           opts.input.encounter_id,
@@ -510,26 +525,34 @@ export const appRouter = t.router({
     )
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
-        const [encounter, encounterParticipants] = await Promise.all([
-          encounterById(opts.ctx.user.userId, opts.input.encounter_id, tx),
-          getEncounterParticipantsWithCreatureData(opts.input.encounter_id, tx),
-        ]);
-
-        const { updatedParticipants, updatedRoundNumber } = updateGroupTurn(
-          opts.input.participant_id,
-          opts.input.has_played_this_round,
-          encounterParticipants,
-          encounter
+        const encounter = await encounterById(
+          opts.ctx.user.userId,
+          opts.input.encounter_id,
+          tx
         );
+
+        if (!encounter) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `No encounter found for ${opts.input.encounter_id}`,
+          });
+        }
+
+        const { updatedParticipants, updatedRoundNumber } =
+          EncounterUtils.updateGroupTurn(
+            opts.input.participant_id,
+            opts.input.has_played_this_round,
+            encounter
+          );
 
         await Promise.all([
           ...updatedParticipants.map((p) => updateParticipantHasPlayed(p, tx)),
           tx
-            .update(encounter)
+            .update(encounters)
             .set({
               current_round: updatedRoundNumber,
             })
-            .where(eq(encounter.id, opts.input.encounter_id)),
+            .where(eq(encounters.id, opts.input.encounter_id)),
         ]);
         return encounter;
       });
@@ -573,8 +596,9 @@ export const appRouter = t.router({
         });
       }
 
-      if (result[0].is_active) {
-        const { newlyActiveParticipant } = cycleNextTurn(encounter);
+      if (result[0]?.is_active) {
+        const { newlyActiveParticipant } =
+          EncounterUtils.cycleNextTurn(encounter);
 
         setActiveParticipant(
           newlyActiveParticipant.id,
@@ -605,7 +629,7 @@ export const appRouter = t.router({
           ),
         encounterById(opts.ctx.user.userId, opts.input.encounter_id),
       ]);
-      if (userCreature.length === 0) {
+      if (userCreature.length === 0 || !userCreature[0]) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "No creature found",
@@ -683,17 +707,26 @@ export const appRouter = t.router({
         },
       });
       try {
+        const dc = deletedCreature[0];
+
+        if (!dc) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to delete creature",
+          });
+        }
+
         await Promise.all([
           s3Client.send(
             new DeleteObjectCommand({
               Bucket: process.env.AWS_BUCKET_NAME!,
-              Key: getIconAWSname(deletedCreature[0].id),
+              Key: getIconAWSname(dc.id),
             })
           ),
           s3Client.send(
             new DeleteObjectCommand({
               Bucket: process.env.AWS_BUCKET_NAME!,
-              Key: getStatBlockAWSname(deletedCreature[0].id),
+              Key: getStatBlockAWSname(dc.id),
             })
           ),
         ]);

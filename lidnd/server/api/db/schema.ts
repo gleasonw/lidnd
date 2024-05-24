@@ -148,6 +148,7 @@ export const encountersRelations = relations(encounters, ({ many, one }) => ({
   }),
 }));
 
+//todo: there are system-specific fields in here...
 export const participants = pgTable(
   "participants",
   {

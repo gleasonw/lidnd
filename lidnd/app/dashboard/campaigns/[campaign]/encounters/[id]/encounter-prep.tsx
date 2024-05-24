@@ -23,7 +23,7 @@ import Link from "next/link";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import React, { Suspense, useState } from "react";
-import { getAWSimageURL, sortEncounterCreatures } from "@/encounters/utils";
+import { getAWSimageURL } from "@/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
 import {
@@ -37,6 +37,8 @@ import { BasePopover } from "@/encounters/base-popover";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
 import { ParticipantUpload } from "@/encounters/[id]/run/participant-add-form";
 import { OriginalSizeImage } from "@/encounters/original-size-image";
+import { EncounterUtils } from "@/utils/encounters";
+import { ParticipantUtils } from "@/utils/participants";
 
 export interface EncounterPrepProps {
   notesInput: React.ReactNode;
@@ -178,12 +180,8 @@ function EncounterParticipantRow(props: {
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
 
-  const monsters = encounter.participants
-    .filter((participant) => !participant.is_player && !participant.is_ally)
-    .sort(sortEncounterCreatures);
-  const players = encounter.participants
-    .filter((participant) => participant.is_player || participant.is_ally)
-    .sort(sortEncounterCreatures);
+  const monsters = EncounterUtils.monsters(encounter);
+  const players = EncounterUtils.allies(encounter);
 
   return (
     <>
@@ -222,21 +220,21 @@ function EncounterParticipantRow(props: {
   );
 }
 
-function PrepParticipantCard({
-  participant,
-}: {
+export interface ParticipantCreatureProps {
   participant: ParticipantCreature;
-}) {
+}
+
+function PrepParticipantCard({ participant }: ParticipantCreatureProps) {
   return (
     <AnimationListItem key={participant.id}>
       <div className="flex flex-col items-center gap-3">
         <Card className="flex flex-col justify-center w-32">
           <CardHeader>
-            <CardTitle>{participant.name}</CardTitle>
+            <CardTitle>{ParticipantUtils.name(participant)}</CardTitle>
           </CardHeader>
           <CharacterIcon
             id={participant.creature_id}
-            name={participant.name}
+            name={ParticipantUtils.name(participant)}
             className="object-cover w-32 h-32"
           />
         </Card>
@@ -251,7 +249,7 @@ function ParticipantActions({
 }: {
   participant: ParticipantCreature;
 }) {
-  if (participant.is_player) {
+  if (ParticipantUtils.isPlayer(participant)) {
     return <RemoveCreatureFromEncounterButton participant={participant} />;
   }
 
@@ -286,11 +284,7 @@ export function RemoveCreatureFromEncounterButton(
   );
 }
 
-export interface MinionizeButtonProps {
-  participant: ParticipantCreature;
-}
-
-export function MonsterParticipantActions(props: MinionizeButtonProps) {
+export function MonsterParticipantActions(props: ParticipantCreatureProps) {
   const { participant } = props;
 
   const { mutate: updateCreature } = useUpdateEncounterParticipant();
@@ -355,7 +349,8 @@ function EncounterStats() {
   const finalPlayerLevel = playerLevel ?? settings?.default_player_level ?? 1;
   const finalNumPlayers =
     localNumPlayers ??
-    encounter?.participants?.filter((p) => p.is_player)?.length ??
+    encounter?.participants?.filter((p) => ParticipantUtils.isPlayer(p))
+      ?.length ??
     4;
   const finalEstimatedRounds = estimatedRounds ?? 3;
 
@@ -365,9 +360,9 @@ function EncounterStats() {
     (numParticipants * finalEstimatedRounds * finalTurnSeconds) / 60;
 
   const totalCr =
-    encounter?.participants?.reduce((acc, creature) => {
-      if (creature.is_ally) return acc;
-      return acc + creature.challenge_rating;
+    encounter?.participants?.reduce((acc, p) => {
+      if (p.is_ally) return acc;
+      return acc + ParticipantUtils.challengeRating(p);
     }, 0) ?? 0;
 
   const crBudget = encounterCRPerCharacter.find(
@@ -381,7 +376,7 @@ function EncounterStats() {
       }
 
       // rough approximation from monster cr to player level
-      return acc + participant.challenge_rating * 4;
+      return acc + ParticipantUtils.challengeRating(participant) * 4;
     }, 0) ?? 0;
 
   const playersAndAllies = finalNumPlayers + alliesWeighted;

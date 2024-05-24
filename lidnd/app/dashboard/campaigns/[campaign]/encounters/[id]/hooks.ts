@@ -1,16 +1,19 @@
-import { CreaturePost, ParticipantPost } from "../types";
+import { ParticipantPost } from "../types";
 import { defaultParticipant, getCreaturePostForm } from "../utils";
-import { Creature, ParticipantCreature } from "@/server/api/router";
-import { mergeEncounterCreature } from "../utils";
+import { ParticipantCreature } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { useMutation } from "@tanstack/react-query";
 import { useId } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { createCreatureInEncounter } from "@/app/dashboard/actions";
+import { EncounterUtils } from "@/utils/encounters";
 
 export function useEncounterId() {
   const pathname = usePathname();
   const id = pathname.split("/")[5];
+  if (!id) {
+    throw new Error("No encounter id found in url path");
+  }
   return id;
 }
 
@@ -143,7 +146,11 @@ export function useUpdateEncounterParticipant() {
           ...old,
           participants: old.participants.map((p) => {
             if (p.id === newParticipant.id) {
-              return mergeEncounterCreature(newParticipant, p);
+              return {
+                ...newParticipant,
+                creature: p.creature,
+                status_effects: p.status_effects,
+              };
             }
             return p;
           }),
@@ -154,8 +161,6 @@ export function useUpdateEncounterParticipant() {
   });
 }
 
-//TODO: perhaps, one day, we can abstract the mutation functions. For now, more trouble
-// than it's worth
 export function useUpdateEncounterMinionParticipant() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
@@ -172,7 +177,11 @@ export function useUpdateEncounterMinionParticipant() {
           ...old,
           participants: old.participants.map((p) => {
             if (p.id === newParticipant.id) {
-              return mergeEncounterCreature(newParticipant, p);
+              return {
+                ...newParticipant,
+                creature: p.creature,
+                status_effects: p.status_effects,
+              };
             }
             return p;
           }),
