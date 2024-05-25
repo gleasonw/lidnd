@@ -31,7 +31,7 @@ import {
   useStartEncounter,
 } from "@/encounters/[id]/hooks";
 import { GroupBattleLayout } from "@/encounters/[id]/run/group-battle-ui";
-import { ParticipantCreature } from "@/server/api/router";
+import { ParticipantWithData } from "@/server/api/router";
 import { useCampaignId } from "@/campaigns/hooks";
 import { BasePopover } from "@/encounters/base-popover";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
@@ -221,7 +221,7 @@ function EncounterParticipantRow(props: {
 }
 
 export interface ParticipantCreatureProps {
-  participant: ParticipantCreature;
+  participant: ParticipantWithData;
 }
 
 function PrepParticipantCard({ participant }: ParticipantCreatureProps) {
@@ -247,7 +247,7 @@ function PrepParticipantCard({ participant }: ParticipantCreatureProps) {
 function ParticipantActions({
   participant,
 }: {
-  participant: ParticipantCreature;
+  participant: ParticipantWithData;
 }) {
   if (ParticipantUtils.isPlayer(participant)) {
     return <RemoveCreatureFromEncounterButton participant={participant} />;
@@ -257,7 +257,7 @@ function ParticipantActions({
 }
 
 export interface RemoveCreatureFromEncounterButtonProps {
-  participant: ParticipantCreature;
+  participant: ParticipantWithData;
 }
 
 export function RemoveCreatureFromEncounterButton(

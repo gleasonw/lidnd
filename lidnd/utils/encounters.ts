@@ -2,8 +2,9 @@ import { UpdateTurnOrderReturn } from "@/encounters/utils";
 import {
   Encounter,
   Participant,
-  ParticipantCreature,
+  ParticipantWithData,
 } from "@/server/api/router";
+import { EncounterWithData } from "@/server/encounters";
 import { System } from "@/types";
 import { ParticipantUtils } from "@/utils/participants";
 
@@ -12,46 +13,71 @@ type EncounterWithParticipants<T extends Participant = Participant> =
     participants: T[];
   };
 
+type Cyclable = {
+  participants: ParticipantWithData[];
+  current_round: number;
+};
+
 export const EncounterUtils = {
-  initiativeType(encounter: { campaign: { system: System } }) {
-    return encounter.campaign.system.initiative_type;
+  initiativeType(encounter: { campaigns: { system: System } }) {
+    return encounter.campaigns.system.initiative_type;
   },
 
   participants<T extends Participant>(encounter: EncounterWithParticipants<T>) {
     return encounter.participants;
   },
 
-  monsters(encounter: EncounterWithParticipants<ParticipantCreature>) {
+  monsters(encounter: EncounterWithParticipants<ParticipantWithData>) {
     return this.participants(encounter)
       .filter((p) => !ParticipantUtils.isPlayer(p) && !p.is_ally)
       .toSorted(ParticipantUtils.sortLinearly);
   },
 
-  allies(encounter: EncounterWithParticipants<ParticipantCreature>) {
+  allies(encounter: EncounterWithParticipants<ParticipantWithData>) {
     return this.participants(encounter)
       .filter((p) => ParticipantUtils.isPlayer(p) || p.is_ally)
       .toSorted(ParticipantUtils.sortLinearly);
   },
 
-  findCreatureForParticipant(
-    id: string,
-    encounter: EncounterWithParticipants<ParticipantCreature>
+  updateParticipant(newParticipant: Participant, encounter: EncounterWithData) {
+    return {
+      ...encounter,
+      participants: encounter.participants.map((p) => {
+        if (p.id === newParticipant.id) {
+          return {
+            ...newParticipant,
+            creature: p.creature,
+            status_effects: p.status_effects,
+          };
+        }
+        return p;
+      }),
+    };
+  },
+
+  removeParticipant(participantId: string, encounter: EncounterWithData) {
+    return {
+      ...encounter,
+      participants: encounter.participants.filter(
+        (p) => p.id !== participantId
+      ),
+    };
+  },
+
+  addParticipant(
+    newParticipant: ParticipantWithData,
+    encounter: EncounterWithData
   ) {
-    const creature = encounter.participants.find((p) => p.id === id)?.creature;
-
-    if (!creature) {
-      throw new Error(
-        `No creature found for participant ${id}. This should never happen!`
-      );
-    }
-
-    return creature;
+    return {
+      ...encounter,
+      participants: [...encounter.participants, newParticipant],
+    };
   },
 
   updateGroupTurn(
     participant_id: string,
     participant_has_played_this_round: boolean,
-    encounter: EncounterWithParticipants
+    encounter: EncounterWithData
   ): UpdateTurnOrderReturn {
     const participants = this.participants(encounter);
     const participantWhoPlayed = participants.find(
@@ -90,9 +116,7 @@ export const EncounterUtils = {
     };
   },
 
-  cycleNextTurn(
-    encounter: EncounterWithParticipants<ParticipantCreature>
-  ): UpdateTurnOrderReturn {
+  cycleNextTurn(encounter: Cyclable): UpdateTurnOrderReturn {
     return this.cycleTurn({
       updateActiveAndRoundNumber: (participants) => {
         const prev = participants.findIndex((p) => p.is_active);
@@ -124,12 +148,11 @@ export const EncounterUtils = {
     });
   },
 
-  cyclePreviousTurn(
-    encounter: EncounterWithParticipants<ParticipantCreature>
-  ): UpdateTurnOrderReturn {
+  cyclePreviousTurn(encounter: Cyclable): UpdateTurnOrderReturn {
     return this.cycleTurn({
       updateActiveAndRoundNumber: (participants) => {
         const prev = participants.findIndex((p) => p.is_active);
+        console.log(participants, prev);
         if (prev === 0 && encounter.current_round === 0) {
           // don't allow negative round numbers, just noop
           const newlyActiveParticipant = participants[prev];
@@ -171,7 +194,7 @@ export const EncounterUtils = {
   },
 
   cycleTurn({ updateActiveAndRoundNumber, encounter }: CycleTurnArgs) {
-    const participants = EncounterUtils.participants(encounter);
+    const participants = encounter.participants;
     let sortedParticipants = participants.toSorted(
       ParticipantUtils.sortLinearly
     );
@@ -189,7 +212,10 @@ export const EncounterUtils = {
     if (participants.some((p) => p.has_surprise)) {
       return this.cycleTurnWithSurpriseRound({
         updateActiveAndRoundNumber,
-        encounter,
+        encounter: {
+          ...encounter,
+          participants: sortedParticipants,
+        },
       });
     }
 
@@ -263,7 +289,7 @@ export const EncounterUtils = {
 
 type CycleTurnArgs = {
   updateActiveAndRoundNumber: (
-    participants: Participant[]
+    participants: Cyclable["participants"]
   ) => Omit<UpdateTurnOrderReturn, "updatedParticipants">;
-  encounter: EncounterWithParticipants<ParticipantCreature>;
+  encounter: Cyclable;
 };

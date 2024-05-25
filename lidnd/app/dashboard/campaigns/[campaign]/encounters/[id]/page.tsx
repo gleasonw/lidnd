@@ -26,9 +26,6 @@ export default async function EncounterPage({
     return <div>No session found</div>;
   }
 
-  const user = session.user;
-  const test = await encounterById(user.userId, params.id);
-  console.log(test?.participants.at(0));
   return (
     <EncounterPrep
       notesInput={<EncounterDescriptionInput id={params.id} />}

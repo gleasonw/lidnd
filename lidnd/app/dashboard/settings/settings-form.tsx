@@ -5,10 +5,9 @@ import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/trpc/react";
 import z from "zod";
-import { booleanSchema } from "@/app/dashboard/utils";
 
 export function SettingsForm() {
-  const [userSettings, userSettingsQuery] = api.settings.useSuspenseQuery();
+  const [userSettings] = api.settings.useSuspenseQuery();
   const { settings } = api.useUtils();
   const { mutate: updateSettings, isLoading } = api.updateSettings.useMutation({
     onSettled: async () => {

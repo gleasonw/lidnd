@@ -1,21 +1,24 @@
 "use client";
 import { api } from "@/trpc/react";
-import { ParticipantCreature } from "@/server/api/router";
+import { ParticipantWithData } from "@/server/api/router";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { Combobox } from "../resistance-selector";
 import { CommandItem } from "@/components/ui/command";
 import React from "react";
 import { effectIconMap } from "./effectIconMap";
 import { Input } from "@/components/ui/input";
+import { EncounterUtils } from "@/utils/encounters";
+import { ParticipantUtils } from "@/utils/participants";
 
 export function StatusInput({
   participant,
   className,
 }: {
-  participant: ParticipantCreature;
+  participant: ParticipantWithData;
   className?: string;
 }) {
   const { encounterById } = api.useUtils();
+  const effects = api.statusEffects.useQuery().data;
   const { mutate: updateStatus } = api.assignStatusEffect.useMutation({
     onSettled: async () => {
       return await encounterById.invalidate(participant.encounter_id);
@@ -25,34 +28,31 @@ export function StatusInput({
       const previousEncounter = encounterById.getData(participant.encounter_id);
       encounterById.setData(participant.encounter_id, (old) => {
         if (!old) return old;
-        return {
-          ...old,
-          participants: old.participants.map((participant) => {
-            if (participant.id === newStatusEffect.encounter_participant_id) {
-              return {
-                ...participant,
-                status_effects: [
-                  ...participant.status_effects,
-                  {
-                    ...newStatusEffect,
-                    created_at: new Date(),
-                    id: Math.random().toString(),
-                    duration: newStatusEffect.duration ?? null,
-                    save_ends_dc: newStatusEffect.save_ends_dc ?? 0,
-                    description: newStatusEffect.description ?? "",
-                    name: newStatusEffect.name ?? "",
-                  },
-                ],
-              };
-            }
-            return participant;
+        const effectToAdd = effects?.find(
+          (effect) => effect.id === newStatusEffect.status_effect_id,
+        );
+
+        if (!previousEncounter) {
+          throw new Error("No previous encounter found");
+        }
+
+        if (!effectToAdd) {
+          throw new Error("No effect found");
+        }
+        return EncounterUtils.updateParticipant(
+          ParticipantUtils.addStatusEffect(participant, {
+            ...newStatusEffect,
+            created_at: new Date(),
+            id: Math.random().toString(),
+            duration: newStatusEffect.duration ?? null,
+            save_ends_dc: newStatusEffect.save_ends_dc ?? 0,
+            effect: effectToAdd,
           }),
-        };
+          previousEncounter,
+        );
       });
-      return previousEncounter;
     },
   });
-  const effects = api.statusEffects.useQuery().data;
 
   const [save_ends_dc, setSaveEndsDC] = React.useState<string | undefined>();
 
@@ -82,8 +82,6 @@ export function StatusInput({
                   encounter_participant_id: participant.id,
                   status_effect_id: effect.id,
                   save_ends_dc: (save_ends_dc && parseInt(save_ends_dc)) || 0,
-                  name: effect.name,
-                  description: effect.description,
                 })
               }
             >

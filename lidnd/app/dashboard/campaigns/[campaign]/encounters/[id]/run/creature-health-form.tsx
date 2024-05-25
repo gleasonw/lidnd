@@ -6,14 +6,15 @@ import {
 } from "../hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ParticipantCreature, Participant } from "@/server/api/router";
+import { ParticipantWithData, Participant } from "@/server/api/router";
 import { useState } from "react";
 import { toNumber } from "lodash";
+import { ParticipantUtils } from "@/utils/participants";
 
 export function ParticipantHealthForm({
   participant,
 }: {
-  participant: ParticipantCreature;
+  participant: ParticipantWithData;
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
   const { mutate: edit, isLoading } = useUpdateEncounterParticipant();
@@ -32,7 +33,7 @@ export function ParticipantHealthForm({
   return (
     <div className="flex flex-col gap-3">
       <span className="whitespace-nowrap font-bold text-lg text-center">
-        {participant.hp} / {participant.max_hp}
+        {participant.hp} / {ParticipantUtils.maxHp(participant)}
       </span>
       <div className="flex gap-4">
         <Button
@@ -90,7 +91,7 @@ function isMinion(participant: Participant): participant is Minion {
   return false;
 }
 
-export type Minion = ParticipantCreature & { minion_count: number };
+export type Minion = ParticipantWithData & { minion_count: number };
 
 export interface MinionHealthFormProps {
   participant: Minion;
@@ -117,7 +118,7 @@ export function MinionHealthForm({ participant }: MinionHealthFormProps) {
   return (
     <div className="flex flex-col gap-3">
       <span className="whitespace-nowrap font-bold text-lg text-center">
-        {participant.hp} / {participant.max_hp}
+        {participant.hp} / {ParticipantUtils.maxHp(participant)}
       </span>
       <div className="flex gap-4">
         {isDoingDamage ? (

@@ -19,10 +19,7 @@ import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { useEncounterId } from "../hooks";
-import {
-  ParticipantCreature,
-  EncounterWithParticipants,
-} from "@/server/api/router";
+import { ParticipantWithData } from "@/server/api/router";
 import { useRemoveStatusEffect } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/hooks";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import { BasePopover } from "@/app/dashboard/campaigns/[campaign]/encounters/base-popover";
@@ -43,6 +40,7 @@ import { activeReminders } from "@/encounters/utils";
 import { ParticipantUtils } from "@/utils/participants";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import { EncounterUtils } from "@/utils/encounters";
+import { EncounterWithData } from "@/server/encounters";
 
 export function BattleUILoader() {
   return (
@@ -70,10 +68,7 @@ class BattleUIStore {
     makeAutoObservable(this);
   }
 
-  displayReminders = (
-    encounter: EncounterWithParticipants,
-    reminders: Reminder[],
-  ) => {
+  displayReminders = (encounter: EncounterWithData, reminders: Reminder[]) => {
     const { updatedRoundNumber } = EncounterUtils.cycleNextTurn(encounter);
 
     const remindersToTrigger = activeReminders({
@@ -160,7 +155,7 @@ export const BattleUI = observer(function BattleUI() {
 
 export interface SimpleIconBattleCardProps {
   children?: React.ReactNode;
-  participant: ParticipantCreature;
+  participant: ParticipantWithData;
   className?: string;
   index: number;
   activeIndex: number;
@@ -258,7 +253,7 @@ export function SimpleIconBattleCard({
 }
 
 export type BattleCardProps = {
-  participant: ParticipantCreature;
+  participant: ParticipantWithData;
   children?: React.ReactNode;
   className?: string;
   isSelected?: boolean;
@@ -351,7 +346,7 @@ export function BattleCardContent({
 }
 
 type BattleCardParticipantProps = {
-  participant: ParticipantCreature;
+  participant: ParticipantWithData;
 };
 
 export function BattleCardStatusEffects({

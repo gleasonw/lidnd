@@ -25,7 +25,7 @@ import {
 } from "@/server/api/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import {
-  campaignEncounters,
+  encountersInCampaign,
   encounterById,
   encounterReminders,
   EncounterWithData,
@@ -77,14 +77,11 @@ export type Participant = typeof participants.$inferSelect;
 export type Settings = typeof settings.$inferSelect;
 export type StatusEffect = typeof status_effects.$inferSelect;
 export type ParticipantStatusEffect =
-  typeof participant_status_effects.$inferSelect & {
-    description: StatusEffect["description"];
-    name: StatusEffect["name"];
-  };
+  typeof participant_status_effects.$inferSelect;
 
-export type ParticipantCreature = EncounterWithData["participants"][number];
+export type ParticipantWithData = EncounterWithData["participants"][number];
 export type EncounterWithParticipants = Encounter & {
-  participants: ParticipantCreature[];
+  participants: ParticipantWithData[];
 };
 
 export const participantSchema = createSelectSchema(participants);
@@ -119,7 +116,7 @@ export const appRouter = t.router({
     const userId = opts.ctx.user.userId;
     const campaignId = opts.input;
 
-    return await campaignEncounters(userId, campaignId);
+    return await encountersInCampaign(userId, campaignId);
   }),
 
   spells: publicProcedure.input(z.string()).query(async (opts) => {
@@ -213,7 +210,16 @@ export const appRouter = t.router({
           );
         }
 
-        return encounter[0];
+        const result = encounter[0];
+
+        if (result === undefined) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create encounter",
+          });
+        }
+
+        return result;
       });
     }),
 
@@ -359,8 +365,6 @@ export const appRouter = t.router({
         status_effect_id: z.string(),
         duration: z.number().optional(),
         save_ends_dc: z.number().optional(),
-        name: z.string().optional(),
-        description: z.string().optional(),
       })
     )
     .mutation(async (opts) => {

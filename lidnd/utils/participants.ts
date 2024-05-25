@@ -1,4 +1,10 @@
-import { Creature, Participant } from "@/server/api/router";
+import { defaultParticipant } from "@/encounters/utils";
+import {
+  Creature,
+  Participant,
+  ParticipantWithData,
+} from "@/server/api/router";
+import { AddCreature, AddParticipant } from "@/types";
 
 type ParticipantWithCreature = Participant & { creature: Creature };
 type MinionParticipant = ParticipantWithCreature & { minion_count: number };
@@ -24,6 +30,37 @@ export const ParticipantUtils = {
 
   challengeRating(participant: ParticipantWithCreature) {
     return participant.creature.challenge_rating;
+  },
+
+  placeholderParticipantWithData(
+    participant: AddParticipant,
+    creature: AddCreature
+  ): ParticipantWithData {
+    const randomId = Math.random().toString();
+    return {
+      ...defaultParticipant({
+        ...participant,
+        id: participant.id ?? randomId,
+      }),
+      creature: {
+        ...creature,
+        id: creature.id ?? randomId,
+        created_at: new Date(),
+        challenge_rating: creature.challenge_rating ?? 0,
+        is_player: creature.is_player ?? false,
+      },
+      status_effects: [],
+    };
+  },
+
+  addStatusEffect(
+    participant: ParticipantWithData,
+    participantEffect: ParticipantWithData["status_effects"][number]
+  ): ParticipantWithData {
+    return {
+      ...participant,
+      status_effects: [...participant.status_effects, participantEffect],
+    };
   },
 
   updateMinionCount(

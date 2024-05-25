@@ -2,7 +2,10 @@ import { db } from "@/server/api/db";
 import { reminders, encounters } from "@/server/api/db/schema";
 import { eq, and } from "drizzle-orm";
 
-export async function campaignEncounters(user_id: string, campaign_id: string) {
+export async function encountersInCampaign(
+  user_id: string,
+  campaign_id: string
+) {
   return await db.query.encounters.findMany({
     where: (encounter, { eq, and }) =>
       and(
@@ -69,4 +72,36 @@ export async function encounterReminders(
       and(eq(encounters.id, encounter_id), eq(encounters.user_id, user_id))
     )
     .rightJoin(reminders, eq(encounters.id, reminders.encounter_id));
+}
+
+export type ObserveEncounter = NonNullable<
+  Awaited<ReturnType<typeof encounterWithCampaign>>
+>;
+
+/**
+ *
+ * This route is for players observing a campaign. Should probably be protected in some way.
+ * But view-only.
+ */
+export async function encounterWithCampaign(encounter_id: string) {
+  return await db.query.encounters.findFirst({
+    where: (encounters, { eq }) => eq(encounters.id, encounter_id),
+    with: {
+      participants: {
+        with: {
+          creature: true,
+          status_effects: {
+            with: {
+              effect: true,
+            },
+          },
+        },
+      },
+      campaigns: {
+        with: {
+          system: true,
+        },
+      },
+    },
+  });
 }

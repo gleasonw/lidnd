@@ -12,13 +12,15 @@ import {
 } from "./battle-ui";
 import { useEncounterId } from "../hooks";
 import { Button } from "@/components/ui/button";
-import { ParticipantCreature } from "@/server/api/router";
+import { ParticipantWithData } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import clsx from "clsx";
 import React from "react";
 import { OriginalSizeImage } from "../../original-size-image";
 import { getAWSimageURL } from "../../utils";
 import { AnimatePresence } from "framer-motion";
+import { EncounterUtils } from "@/utils/encounters";
+import { ParticipantUtils } from "@/utils/participants";
 
 export function GroupBattleUI() {
   const id = useEncounterId();
@@ -28,16 +30,14 @@ export function GroupBattleUI() {
     string | null
   >(encounter?.participants.at(0)?.id ?? null);
   if (!encounter) return null;
-  const monsters = encounter.participants.filter(
-    (participant) => !participant.is_player && !participant.is_ally,
-  );
-  const players = encounter.participants.filter(
-    (participant) => participant.is_player || participant.is_ally,
-  );
+
+  const monsters = EncounterUtils.monsters(encounter);
+  const players = EncounterUtils.allies(encounter);
 
   const selectedMonster = monsters.find(
     (monster) => monster.id === dmSelectedCreature,
   );
+
   return (
     <div>
       <GroupBattleLayout
@@ -45,14 +45,14 @@ export function GroupBattleUI() {
           <GroupBattleCard
             key={monster.id + index}
             onClick={() => setDmSelectedCreature(monster.id)}
-            creature={monster}
+            participant={monster}
             isSelected={monster.id === dmSelectedCreature}
           />
         ))}
         players={players.map((player, index) => (
           <GroupBattleCard
             key={player.id + index}
-            creature={player}
+            participant={player}
             isSelected={player.id === dmSelectedCreature}
           />
         ))}
@@ -60,7 +60,7 @@ export function GroupBattleUI() {
         {selectedMonster && (
           <OriginalSizeImage
             src={getAWSimageURL(selectedMonster.creature_id, "stat_block")}
-            alt={"stat block for " + selectedMonster.name}
+            alt={"stat block for " + ParticipantUtils.name(selectedMonster)}
           />
         )}
       </GroupBattleLayout>
@@ -103,13 +103,13 @@ export function GroupBattleLayout({
 
 export type GroupBattleCardProps = {
   children?: React.ReactNode;
-  creature: ParticipantCreature;
+  participant: ParticipantWithData;
   className?: string;
   isSelected?: boolean;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export function GroupBattleCard({
-  creature,
+  participant,
   children,
   className,
   isSelected,
@@ -138,13 +138,13 @@ export function GroupBattleCard({
           onClick={() =>
             updateCreatureHasPlayedThisRound({
               encounter_id: id,
-              participant_id: creature.id,
-              has_played_this_round: !creature.has_played_this_round,
+              participant_id: participant.id,
+              has_played_this_round: !participant.has_played_this_round,
             })
           }
-          variant={creature.has_played_this_round ? "default" : "outline"}
+          variant={participant.has_played_this_round ? "default" : "outline"}
         >
-          {creature.has_played_this_round ? "Played" : "Hasn't Played"}
+          {participant.has_played_this_round ? "Played" : "Hasn't Played"}
         </Button>
       ) : null}
 
@@ -153,21 +153,21 @@ export function GroupBattleCard({
         className={clsx(
           {
             "opacity-40":
-              !(encounter?.current_round === 0 && creature.has_surprise) &&
-              creature.has_played_this_round,
+              !(encounter?.current_round === 0 && participant.has_surprise) &&
+              participant.has_played_this_round,
             "outline-zinc-900 outline": isSelected,
           },
           "cursor-pointer relative",
         )}
       >
-        {creature?.minion_count && creature.minion_count > 1 ? (
-          <MinionCardStack minionCount={creature.minion_count} />
+        {participant?.minion_count && participant.minion_count > 1 ? (
+          <MinionCardStack minionCount={participant.minion_count} />
         ) : null}
-        <BattleCardStatusEffects creature={creature} />
+        <BattleCardStatusEffects participant={participant} />
         <BattleCardContent className="items-center">
-          <BattleCardCreatureName participant={creature} />
-          <BattleCardCreatureIcon className="w-32" participant={creature} />
-          <BattleCardHealthAndStatus creature={creature} />
+          <BattleCardCreatureName participant={participant} />
+          <BattleCardCreatureIcon className="w-32" participant={participant} />
+          <BattleCardHealthAndStatus participant={participant} />
         </BattleCardContent>
       </BattleCardLayout>
     </div>

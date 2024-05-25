@@ -1,12 +1,11 @@
 import { ParticipantPost } from "../types";
-import { defaultParticipant, getCreaturePostForm } from "../utils";
-import { ParticipantCreature } from "@/server/api/router";
+import { getCreaturePostForm } from "../utils";
 import { api } from "@/trpc/react";
 import { useMutation } from "@tanstack/react-query";
-import { useId } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { createCreatureInEncounter } from "@/app/dashboard/actions";
 import { EncounterUtils } from "@/utils/encounters";
+import { ParticipantUtils } from "@/utils/participants";
 
 export function useEncounterId() {
   const pathname = usePathname();
@@ -26,7 +25,6 @@ export function useSelectedCreature() {
 export function useCreateCreatureInEncounter() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
-  const optimisticId = useId();
 
   const { data: encounter } = api.encounterById.useQuery(id);
 
@@ -58,31 +56,25 @@ export function useCreateCreatureInEncounter() {
     onMutate: async (data) => {
       await encounterById.cancel(id);
       const previousEncounterData = encounterById.getData(id);
-      const creature = data.creature;
       encounterById.setData(id, (old) => {
-        if (!old) {
+        if (!old || !data.participant || !data.creature) {
+          console.error(`data missing in createCreatureInEncounter`);
           return;
         }
-        const newParticipant: ParticipantCreature = {
-          ...creature,
-          encounter_id: old.id,
-          creature_id: "pending",
-          id: optimisticId,
-          initiative: -1,
-          hp: creature.max_hp,
-          is_active: false,
-          created_at: new Date(),
-          user_id: old.user_id,
-          has_surprise: false,
-          status_effects: [],
-          minion_count: 0,
-          has_played_this_round: false,
-          is_ally: false,
-        };
-        return {
-          ...old,
-          participants: [...old.participants, newParticipant],
-        };
+        return EncounterUtils.addParticipant(
+          ParticipantUtils.placeholderParticipantWithData(
+            {
+              ...data.participant,
+              encounter_id: id,
+              creature_id: "pending",
+            },
+            {
+              ...data.creature,
+              user_id: "pending",
+            },
+          ),
+          old,
+        );
       });
       return { previousEncounterData };
     },
@@ -110,12 +102,7 @@ export function useRemoveParticipantFromEncounter() {
         if (!old) {
           return;
         }
-        return {
-          ...old,
-          participants: old.participants.filter(
-            (p) => p.id !== data.participant_id,
-          ),
-        };
+        return EncounterUtils.removeParticipant(data.participant_id, old);
       });
       return { previousEncounterData };
     },
@@ -141,20 +128,10 @@ export function useUpdateEncounterParticipant() {
       await encounterById.cancel(id);
       const previousEncounter = encounterById.getData(id);
       encounterById.setData(id, (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          participants: old.participants.map((p) => {
-            if (p.id === newParticipant.id) {
-              return {
-                ...newParticipant,
-                creature: p.creature,
-                status_effects: p.status_effects,
-              };
-            }
-            return p;
-          }),
-        };
+        if (!old) {
+          return;
+        }
+        return EncounterUtils.updateParticipant(newParticipant, old);
       });
       return { previousEncounter };
     },
@@ -172,20 +149,10 @@ export function useUpdateEncounterMinionParticipant() {
       await encounterById.cancel(id);
       const previousEncounter = encounterById.getData(id);
       encounterById.setData(id, (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          participants: old.participants.map((p) => {
-            if (p.id === newParticipant.id) {
-              return {
-                ...newParticipant,
-                creature: p.creature,
-                status_effects: p.status_effects,
-              };
-            }
-            return p;
-          }),
-        };
+        if (!old) {
+          return;
+        }
+        return EncounterUtils.updateParticipant(newParticipant, old);
       });
       return { previousEncounter };
     },
@@ -232,7 +199,6 @@ export function useAddExistingCreatureToEncounter() {
     onMutate: async ({ creature_id, is_ally }) => {
       await encounterById.cancel(id);
       const previousEncounterData = encounterById.getData(id);
-      const optimisticId = Math.random().toString();
       encounterById.setData(id, (old) => {
         if (!old) {
           return;
@@ -241,19 +207,20 @@ export function useAddExistingCreatureToEncounter() {
           (creature) => creature.id === creature_id,
         );
         if (!selectedCreature) return;
-        const optimisticP = mergeEncounterCreature(
-          defaultParticipant({
-            id: optimisticId,
-            encounter_id: id,
-            creature_id: creature_id,
-            is_ally: Boolean(is_ally),
-          }),
-          selectedCreature,
+
+        return EncounterUtils.addParticipant(
+          ParticipantUtils.placeholderParticipantWithData(
+            {
+              encounter_id: id,
+              creature_id: selectedCreature.id,
+            },
+            {
+              ...selectedCreature,
+              user_id: "pending",
+            },
+          ),
+          old,
         );
-        return {
-          ...old,
-          participants: [...old.participants, optimisticP],
-        };
       });
       return { previousEncounterData };
     },

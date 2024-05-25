@@ -1,5 +1,3 @@
-import { desc } from "drizzle-orm";
-
 export const ParticipantEffectUtils = {
   name(effect: { effect: { name: string } }) {
     return effect.effect.name;

@@ -18,7 +18,7 @@ import { cache } from "react";
 import { auth } from "@/server/api/auth/lucia";
 import * as context from "next/headers";
 import apiURL from "@/app/apiURL";
-import { sortEncounterCreatures } from "@/app/dashboard/campaigns/[campaign]/encounters/utils";
+import { ParticipantUtils } from "@/utils/participants";
 
 export async function getUserCampaigns(user_id: string) {
   return await db
@@ -149,7 +149,7 @@ export async function setActiveParticipant(
 ) {
   await dbObject.execute(
     sql`
-    UPDATE encounter_participant
+    UPDATE participants
     SET is_active = CASE 
         WHEN id = ${participant_id} THEN TRUE
         ELSE FALSE
@@ -170,7 +170,7 @@ export async function allEncounterParticipants(
       creature: true,
     },
   });
-  return participants.sort(sortEncounterCreatures);
+  return participants.sort(ParticipantUtils.sortLinearly);
 }
 
 const { POST } = createClient<paths>({

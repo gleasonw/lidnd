@@ -1,6 +1,6 @@
 import { Reminder } from "@/encounters/[id]/page";
 import { CreaturePost } from "./types";
-import { Participant } from "@/server/api/router";
+import { Participant, ParticipantWithData } from "@/server/api/router";
 
 export function getAWSimageURL(
   creature_id: string,
@@ -9,10 +9,10 @@ export function getAWSimageURL(
   return `https://dnd-init-tracker-icons-stats.s3.us-west-1.amazonaws.com/${type}-${creature_id}.png`;
 }
 
-export type UpdateTurnOrderReturn<T = Participant> = {
-  updatedParticipants: T[];
+export type UpdateTurnOrderReturn = {
+  updatedParticipants: ParticipantWithData[];
   updatedRoundNumber: number;
-  newlyActiveParticipant: T;
+  newlyActiveParticipant: ParticipantWithData;
 };
 
 declare const __brand: unique symbol;
@@ -38,13 +38,13 @@ export function defaultParticipant(
   },
 ): Participant {
   return {
-    is_active: false,
-    has_surprise: false,
-    minion_count: 0,
+    is_active: p.is_active ?? false,
+    has_surprise: p.has_surprise ?? false,
+    minion_count: p.minion_count ?? 0,
     has_played_this_round: false,
-    is_ally: false,
-    initiative: 0,
-    hp: 0,
+    is_ally: p.is_ally ?? false,
+    initiative: p.initiative ?? 0,
+    hp: p.hp ?? 0,
     created_at: new Date(),
     ...p,
   };

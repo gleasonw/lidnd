@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { CardContent, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
 import {
@@ -11,11 +10,10 @@ import {
   useEncounterId,
 } from "@/encounters/[id]/hooks";
 import { FullCreatureAddForm } from "@/encounters/full-creature-add-form";
-import { ParticipantPost } from "@/encounters/types";
 import { Creature } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { Heart, Plus, Skull, UserPlus } from "lucide-react";
-import { autorun, makeAutoObservable, runInAction } from "mobx";
+import { makeAutoObservable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import React, { Suspense, useMemo, useState } from "react";
 
@@ -126,8 +124,7 @@ export interface ListedCreatureProps {
 
 export const ListedCreature = observer<ListedCreatureProps>(
   function ListedCreature({ creature }) {
-    const { mutate: addCreature, isLoading: isAddingExistingCreature } =
-      useAddExistingCreatureToEncounter();
+    const { mutate: addCreature } = useAddExistingCreatureToEncounter();
 
     const { isAlly } = useParticipantContext();
     const id = useEncounterId();

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
 import { useEncounterId, useStartEncounter } from "@/encounters/[id]/hooks";
 import InitiativeInput from "@/encounters/[id]/InitiativeInput";
-import { ParticipantCreature } from "@/server/api/router";
+import { ParticipantWithData } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { ParticipantUtils } from "@/utils/participants";
 import { AnimatePresence } from "framer-motion";
@@ -64,7 +64,7 @@ export function PreBattleInput({
   participant,
 }: {
   children: React.ReactNode;
-  participant: ParticipantCreature;
+  participant: ParticipantWithData;
 }) {
   const pName = ParticipantUtils.name(participant);
   return (

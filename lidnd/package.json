@@ -75,6 +75,7 @@
     "tailwindcss-animate": "^1.0.7",
     "test": "^3.3.0",
     "use-debounce": "^9.0.4",
+    "vite-tsconfig-paths": "^4.3.2",
     "vitest": "^1.5.0",
     "zod": "3.22.4"
   },

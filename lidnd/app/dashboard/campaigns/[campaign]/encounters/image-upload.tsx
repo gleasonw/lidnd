@@ -82,6 +82,11 @@ export function ImageUpload({
           onPaste={(e) => {
             const clipboardData = e.clipboardData;
             const item = clipboardData.items[0];
+
+            if (!item) {
+              console.error("No item found when pasting image");
+              return;
+            }
             onImageInput(item);
           }}
         />
@@ -90,7 +95,13 @@ export function ImageUpload({
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();
-          onImageInput(e.dataTransfer.items[0]);
+          const dropItem = e.dataTransfer.items[0];
+
+          if (!dropItem) {
+            console.error("No item found when dropping image");
+            return;
+          }
+          onImageInput(dropItem);
         }}
         className="border-2 border-dashed border-gray-200 rounded-md p-2 flex flex-col gap-2 h-20 items-center justify-center"
       >
