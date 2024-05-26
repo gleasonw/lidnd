@@ -18,18 +18,17 @@ export function LinearBattleUI() {
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
 
-  // todo: need to clean up how i get encounter data. should just be a big object from encounterById
-  // i could then just pass encounter to displayReminders! Much simpler.
-  const [reminders] = api.encounterReminders.useSuspenseQuery(id);
+  const encounterParticipants = encounter.participants.toSorted(
+    ParticipantUtils.sortLinearly,
+  );
 
-  const encounterParticipants = encounter.participants;
   const { encounterById } = api.useUtils();
   const { displayReminders } = useBattleUIStore();
 
   const { mutate: cycleNextMutation, isLoading: isLoadingNextTurn } =
     api.cycleNextTurn.useMutation({
       onSettled: async () => {
-        displayReminders(encounter, reminders);
+        displayReminders(encounter);
         return await encounterById.invalidate(id);
       },
     });

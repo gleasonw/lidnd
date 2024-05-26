@@ -1,3 +1,4 @@
+import { Reminder } from "@/encounters/[id]/page";
 import { UpdateTurnOrderReturn } from "@/encounters/utils";
 import {
   Encounter,
@@ -62,6 +63,28 @@ export const EncounterUtils = {
         (p) => p.id !== participantId
       ),
     };
+  },
+
+  activeReminders(
+    {
+      reminders,
+      current_round,
+    }: {
+      current_round: number;
+      reminders: Reminder[];
+    },
+    nextRound: number
+  ) {
+    if (nextRound === current_round || nextRound < current_round) {
+      return;
+    }
+
+    // 0 means alert every round
+    return reminders.filter(
+      (reminder) =>
+        reminder.alert_after_round === nextRound ||
+        reminder.alert_after_round === 0
+    );
   },
 
   addParticipant(
@@ -152,7 +175,6 @@ export const EncounterUtils = {
     return this.cycleTurn({
       updateActiveAndRoundNumber: (participants) => {
         const prev = participants.findIndex((p) => p.is_active);
-        console.log(participants, prev);
         if (prev === 0 && encounter.current_round === 0) {
           // don't allow negative round numbers, just noop
           const newlyActiveParticipant = participants[prev];

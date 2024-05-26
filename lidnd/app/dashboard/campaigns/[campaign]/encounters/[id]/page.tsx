@@ -119,7 +119,7 @@ export interface ReminderEditorProps {
   reminder: Reminder;
 }
 
-export function ReminderRow(props: ReminderEditorProps) {
+function ReminderRow(props: ReminderEditorProps) {
   const { reminder } = props;
 
   return (

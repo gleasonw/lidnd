@@ -49,24 +49,3 @@ export function defaultParticipant(
     ...p,
   };
 }
-
-export function activeReminders({
-  previousRound,
-  currentRound,
-  reminders,
-}: {
-  previousRound: number;
-  currentRound: number;
-  reminders: Reminder[];
-}) {
-  if (currentRound === previousRound || currentRound < previousRound) {
-    return;
-  }
-
-  // 0 means alert every round
-  return reminders.filter(
-    (reminder) =>
-      reminder.alert_after_round === currentRound ||
-      reminder.alert_after_round === 0,
-  );
-}

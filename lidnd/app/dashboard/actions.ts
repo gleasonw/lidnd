@@ -143,8 +143,6 @@ export async function updateEncounterDescription(
 
   const { description: parsedDescription } = parsedForm.value;
 
-  console.log("parsed description", parsedDescription);
-
   await db
     .update(encounters)
     .set({ description: parsedDescription ?? "" })

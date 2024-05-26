@@ -36,7 +36,6 @@ import { Reminder } from "@/encounters/[id]/page";
 import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { ReminderDialog } from "@/encounters/[id]/run/reminder-dialog";
-import { activeReminders } from "@/encounters/utils";
 import { ParticipantUtils } from "@/utils/participants";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import { EncounterUtils } from "@/utils/encounters";
@@ -68,14 +67,13 @@ class BattleUIStore {
     makeAutoObservable(this);
   }
 
-  displayReminders = (encounter: EncounterWithData, reminders: Reminder[]) => {
+  displayReminders = (encounter: EncounterWithData) => {
     const { updatedRoundNumber } = EncounterUtils.cycleNextTurn(encounter);
 
-    const remindersToTrigger = activeReminders({
-      previousRound: encounter.current_round,
-      currentRound: updatedRoundNumber,
-      reminders: reminders ?? [],
-    });
+    const remindersToTrigger = EncounterUtils.activeReminders(
+      encounter,
+      updatedRoundNumber,
+    );
 
     if (remindersToTrigger && remindersToTrigger.length > 0) {
       this.remindersToDisplay = remindersToTrigger;
