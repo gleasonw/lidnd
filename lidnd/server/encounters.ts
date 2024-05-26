@@ -1,50 +1,107 @@
-import { mergeEncounterCreature } from "@/app/dashboard/campaigns/[campaign]/encounters/utils";
 import { db } from "@/server/api/db";
-import {
-  creatures,
-  encounter_participant,
-  encounters,
-} from "@/server/api/db/schema";
-import { EncounterWithParticipants } from "@/server/api/router";
-import { eq, and, ilike } from "drizzle-orm";
+import { reminders, encounters } from "@/server/api/db/schema";
+import { eq, and } from "drizzle-orm";
 
-export async function campaignEncounters(
+export async function encountersInCampaign(
   user_id: string,
   campaign_id: string
-): Promise<EncounterWithParticipants[]> {
-  const encountersWithParticipants = await db
-    .select()
+) {
+  return await db.query.encounters.findMany({
+    where: (encounter, { eq, and }) =>
+      and(
+        eq(encounter.user_id, user_id),
+        eq(encounter.campaign_id, campaign_id)
+      ),
+    with: {
+      participants: {
+        with: {
+          creature: true,
+          status_effects: {
+            with: {
+              effect: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+export type EncounterWithData = NonNullable<
+  Awaited<ReturnType<typeof encounterById>>
+>;
+
+export async function encounterById(
+  user_id: string,
+  encounter_id: string,
+  dbObject = db
+) {
+  return await dbObject.query.encounters.findFirst({
+    where: (encounter, { eq, and }) =>
+      and(eq(encounter.id, encounter_id), eq(encounter.user_id, user_id)),
+    with: {
+      participants: {
+        with: {
+          creature: true,
+          status_effects: {
+            with: {
+              effect: true,
+            },
+          },
+        },
+      },
+      reminders: true,
+    },
+  });
+}
+
+export async function encounterReminders(
+  user_id: string,
+  encounter_id: string,
+  dbObject = db
+) {
+  return await dbObject
+    .select({
+      id: reminders.id,
+      alert_after_round: reminders.alert_after_round,
+      reminder: reminders.reminder,
+      encounter_id: reminders.encounter_id,
+    })
     .from(encounters)
     .where(
-      and(
-        eq(encounters.user_id, user_id),
-        eq(encounters.campaign_id, campaign_id)
-      )
+      and(eq(encounters.id, encounter_id), eq(encounters.user_id, user_id))
     )
-    .leftJoin(
-      encounter_participant,
-      eq(encounters.id, encounter_participant.encounter_id)
-    )
-    .leftJoin(creatures, eq(encounter_participant.creature_id, creatures.id));
+    .rightJoin(reminders, eq(encounters.id, reminders.encounter_id));
+}
 
-  const response = encountersWithParticipants.reduce<
-    Record<string, EncounterWithParticipants>
-  >((acc, row) => {
-    const encounter = row["encounters"];
-    const participant = row["encounter_participant"];
-    const creature = row["creatures"];
-    if (!acc[encounter.id]) {
-      acc[encounter.id] = {
-        ...encounter,
-        participants: [],
-      };
-    }
-    if (!participant || !creature) return acc;
-    acc[encounter.id].participants.push(
-      mergeEncounterCreature(participant, creature)
-    );
-    return acc;
-  }, {});
+export type ObserveEncounter = NonNullable<
+  Awaited<ReturnType<typeof encounterWithCampaign>>
+>;
 
-  return Object.values(response);
+/**
+ *
+ * This route is for players observing a campaign. Should probably be protected in some way.
+ * But view-only.
+ */
+export async function encounterWithCampaign(encounter_id: string) {
+  return await db.query.encounters.findFirst({
+    where: (encounters, { eq }) => eq(encounters.id, encounter_id),
+    with: {
+      participants: {
+        with: {
+          creature: true,
+          status_effects: {
+            with: {
+              effect: true,
+            },
+          },
+        },
+      },
+      campaigns: {
+        with: {
+          system: true,
+        },
+      },
+    },
+  });
 }

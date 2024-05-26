@@ -14,32 +14,32 @@ import { ChevronUp, Plus } from "lucide-react";
 import { ParticipantHealthForm } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/run/creature-health-form";
 import { CharacterIcon } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/character-icon";
 import InitiativeInput from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/InitiativeInput";
-import React, { Suspense } from "react";
+import React, { createContext, Suspense, useContext } from "react";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { useEncounterId } from "../hooks";
-import { EncounterCreature } from "@/server/api/router";
+import { ParticipantWithData } from "@/server/api/router";
 import { useRemoveStatusEffect } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/hooks";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import { BasePopover } from "@/app/dashboard/campaigns/[campaign]/encounters/base-popover";
 import { StatusInput } from "./status-input";
 import { effectIconMap } from "./effectIconMap";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Tip } from "@/components/ui/tip";
 import { LinearBattleUI } from "./linear-battle-ui";
 import { GroupBattleUI } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/run/group-battle-ui";
 import { EncounterTime } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/run/encounter-time";
 import { useCampaign } from "@/app/dashboard/campaigns/[campaign]/hooks";
-import { ParticipantPost } from "@/encounters/types";
 import { ParticipantUpload } from "@/encounters/[id]/run/participant-add-form";
+import { Reminder } from "@/encounters/[id]/page";
+import { makeAutoObservable } from "mobx";
+import { observer } from "mobx-react-lite";
+import { ReminderDialog } from "@/encounters/[id]/run/reminder-dialog";
+import { ParticipantUtils } from "@/utils/participants";
+import { ParticipantEffectUtils } from "@/utils/participantEffects";
+import { EncounterUtils } from "@/utils/encounters";
+import { EncounterWithData } from "@/server/encounters";
 
 export function BattleUILoader() {
   return (
@@ -49,16 +49,63 @@ export function BattleUILoader() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, transition: { duration: 0.1 } }}
         >
-          <BattleUIHeader />
+          <BattleUI />
         </motion.div>
       </Suspense>
     </AnimatePresence>
   );
 }
 
-export function BattleUIHeader() {
+/**
+ * Manages ui state like dialogs, etc. I'm curious to see how this scales. A bit spooky to
+ * persist reminders outside react query.
+ */
+class BattleUIStore {
+  remindersToDisplay: Reminder[] = [];
+
+  constructor() {
+    makeAutoObservable(this);
+  }
+
+  displayReminders = (encounter: EncounterWithData) => {
+    const { updatedRoundNumber } = EncounterUtils.cycleNextTurn(encounter);
+
+    const remindersToTrigger = EncounterUtils.activeReminders(
+      encounter,
+      updatedRoundNumber,
+    );
+
+    if (remindersToTrigger && remindersToTrigger.length > 0) {
+      this.remindersToDisplay = remindersToTrigger;
+    } else {
+      this.remindersToDisplay = [];
+    }
+  };
+
+  hideReminders = () => {
+    this.remindersToDisplay = [];
+  };
+
+  get shouldShowReminders() {
+    return this.remindersToDisplay.length > 0;
+  }
+}
+
+const battleUIStore = new BattleUIStore();
+const BattleUIContext = createContext<BattleUIStore | null>(null);
+
+export function useBattleUIStore() {
+  const store = useContext(BattleUIContext);
+  if (!store) {
+    throw new Error("useBattleUIStore must be used within a BattleUIProvider");
+  }
+  return store;
+}
+
+export const BattleUI = observer(function BattleUI() {
   const id = useEncounterId();
   const { data: encounter } = api.encounterById.useQuery(id);
+
   const { data: campaign } = useCampaign();
 
   const roundText =
@@ -67,43 +114,46 @@ export function BattleUIHeader() {
       : `Round ${encounter?.current_round}`;
 
   return (
-    <div className="flex gap-8 flex-col">
-      <div className="flex gap-10 flex-wrap items-center justify-center">
-        <h1 className="text-xl text-center">{roundText}</h1>
-        <EncounterTime time={encounter?.started_at ?? undefined} />
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus /> Add creature
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl overflow-auto max-h-screen">
-            <div
-              className={"flex gap-10 flex-wrap w-full justify-center h-full"}
-            >
-              <ParticipantUpload />
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-      {encounter?.description && (
-        <CardDescription className="whitespace-pre-wrap">
-          {encounter.description}
-        </CardDescription>
-      )}
+    <BattleUIContext.Provider value={battleUIStore}>
+      <ReminderDialog />
+      <div className="flex gap-8 flex-col">
+        <div className="flex gap-10 flex-wrap items-center justify-center">
+          <h1 className="text-xl text-center">{roundText}</h1>
+          <EncounterTime time={encounter?.started_at ?? undefined} />
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus /> Add creature
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl overflow-auto max-h-screen">
+              <div
+                className={"flex gap-10 flex-wrap w-full justify-center h-full"}
+              >
+                <ParticipantUpload />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+        {encounter?.description && (
+          <CardDescription className="whitespace-pre-wrap">
+            {encounter.description}
+          </CardDescription>
+        )}
 
-      {campaign?.system?.initiative_type === "linear" ? (
-        <LinearBattleUI />
-      ) : (
-        <GroupBattleUI />
-      )}
-    </div>
+        {campaign?.system?.initiative_type === "linear" ? (
+          <LinearBattleUI />
+        ) : (
+          <GroupBattleUI />
+        )}
+      </div>
+    </BattleUIContext.Provider>
   );
-}
+});
 
 export interface SimpleIconBattleCardProps {
   children?: React.ReactNode;
-  creature: EncounterCreature;
+  participant: ParticipantWithData;
   className?: string;
   index: number;
   activeIndex: number;
@@ -111,7 +161,7 @@ export interface SimpleIconBattleCardProps {
 
 export function SimpleIconBattleCard({
   children,
-  creature,
+  participant,
   className,
   index,
   activeIndex,
@@ -148,44 +198,42 @@ export function SimpleIconBattleCard({
   });
   return (
     <span className="flex flex-col gap-2">
-      {creature.status_effects?.map((effect) => (
+      {participant.status_effects?.map((se) => (
         <BasePopover
-          key={effect.id}
+          key={se.id}
           trigger={
             <Button variant="outline" className="w-10 h-10">
-              {effectIconMap[effect.name as keyof typeof effectIconMap]}
+              {effectIconMap[se.effect.name as keyof typeof effectIconMap]}
             </Button>
           }
           className="flex flex-col gap-2 text-sm f."
         >
-          {effect.description}
-          {!!effect.save_ends_dc && (
-            <span>Save ends ({effect.save_ends_dc})</span>
-          )}
-          <Button onClick={() => removeStatusEffect(effect)}>Remove</Button>
+          {se.effect.description}
+          {!!se.save_ends_dc && <span>Save ends ({se.save_ends_dc})</span>}
+          <Button onClick={() => removeStatusEffect(se)}>Remove</Button>
         </BasePopover>
       ))}
-      <Tip text={creature.name}>
+      <Tip text={ParticipantUtils.name(participant)}>
         <Card
-          data-active={creature.is_active}
+          data-active={participant.is_active}
           className={clsx(
             "w-28 h-40 shadow-lg relative select-none mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
             {
-              "h-48 mb-0": creature.is_active,
+              "h-48 mb-0": participant.is_active,
               "opacity-40":
-                (encounter?.current_round === 0 && !creature.has_surprise) ||
+                (encounter?.current_round === 0 && !participant.has_surprise) ||
                 index < activeIndex,
             },
             className,
           )}
         >
-          <HealthMeterOverlay creature={creature} />
-          {creature.creature_id === "pending" ? (
+          <HealthMeterOverlay participant={participant} />
+          {participant.creature_id === "pending" ? (
             <span>Loading</span>
           ) : (
             <CharacterIcon
-              id={creature.creature_id}
-              name={creature.name}
+              id={participant.creature_id}
+              name={ParticipantUtils.name(participant)}
               width={400}
               height={400}
               className="h-60 object-cover"
@@ -196,14 +244,14 @@ export function SimpleIconBattleCard({
       </Tip>
 
       <div className={"flex justify-center "}>
-        {creature.is_active && <ChevronUp />}
+        {participant.is_active && <ChevronUp />}
       </div>
     </span>
   );
 }
 
 export type BattleCardProps = {
-  creature: EncounterCreature;
+  participant: ParticipantWithData;
   children?: React.ReactNode;
   className?: string;
   isSelected?: boolean;
@@ -211,7 +259,7 @@ export type BattleCardProps = {
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export function BattleCard({
-  creature,
+  participant,
   className,
   isSelected,
   header,
@@ -225,31 +273,31 @@ export function BattleCard({
       className={`relative flex-col gap-6 items-center justify-between flex`}
       {...props}
     >
-      {creature?.minion_count && creature.minion_count > 1 ? (
-        <MinionCardStack minionCount={creature.minion_count} />
+      {participant?.minion_count && participant.minion_count > 1 ? (
+        <MinionCardStack minionCount={participant.minion_count} />
       ) : null}
       <BattleCardLayout
-        key={creature.id}
-        data-active={creature.is_active}
+        key={participant.id}
+        data-active={participant.is_active}
         className={clsx(className, {
           "outline-zinc-900 outline": isSelected,
           "opacity-40":
-            encounter?.current_round === 0 && !creature.has_surprise,
+            encounter?.current_round === 0 && !participant.has_surprise,
         })}
       >
-        <BattleCardStatusEffects creature={creature} />
-        <BattleCardCreatureName creature={creature} />
+        <BattleCardStatusEffects participant={participant} />
+        <BattleCardCreatureName participant={participant} />
         <BattleCardContent>
           <span className="flex justify-between">
-            <BattleCardCreatureIcon creature={creature} />
-            <InitiativeInput participant={creature} key={creature.id} />
+            <BattleCardCreatureIcon participant={participant} />
+            <InitiativeInput participant={participant} key={participant.id} />
           </span>
-          <BattleCardHealthAndStatus creature={creature} />
+          <BattleCardHealthAndStatus participant={participant} />
         </BattleCardContent>
       </BattleCardLayout>
       <AnimatePresence>
         <div className={"flex absolute -bottom-8 flex-row gap-2"}>
-          {creature.is_active && (
+          {participant.is_active && (
             <FadePresenceItem>
               <ChevronUp />
             </FadePresenceItem>
@@ -295,30 +343,34 @@ export function BattleCardContent({
   );
 }
 
+type BattleCardParticipantProps = {
+  participant: ParticipantWithData;
+};
+
 export function BattleCardStatusEffects({
-  creature,
-}: {
-  creature: EncounterCreature;
-}) {
+  participant,
+}: BattleCardParticipantProps) {
   const { mutate: removeStatusEffect } = useRemoveStatusEffect();
 
   return (
     <span className={"h-12 flex gap-1 flex-wrap items-center"}>
-      {creature.status_effects?.map((effect) => (
+      {participant.status_effects?.map((se) => (
         <BasePopover
-          key={effect.id}
+          key={se.id}
           trigger={
             <Button variant="outline">
-              {effectIconMap[effect.name as keyof typeof effectIconMap]}
+              {
+                effectIconMap[
+                  ParticipantEffectUtils.name(se) as keyof typeof effectIconMap
+                ]
+              }
             </Button>
           }
           className="flex flex-col gap-2 text-sm"
         >
-          {effect.description}
-          {!!effect.save_ends_dc && (
-            <span>Save ends ({effect.save_ends_dc})</span>
-          )}
-          <Button onClick={() => removeStatusEffect(effect)}>Remove</Button>
+          {ParticipantEffectUtils.description(se)}
+          {!!se.save_ends_dc && <span>Save ends ({se.save_ends_dc})</span>}
+          <Button onClick={() => removeStatusEffect(se)}>Remove</Button>
         </BasePopover>
       ))}
     </span>
@@ -326,51 +378,48 @@ export function BattleCardStatusEffects({
 }
 
 export function BattleCardCreatureName({
-  creature,
-}: {
-  creature: EncounterCreature;
-}) {
+  participant,
+}: BattleCardParticipantProps) {
   return (
     <CardHeader className="flex pt-0 flex-col gap-2 justify-between items-center">
       <CardTitle className="text-xl truncate max-w-full group-hover:opacity-50">
-        {creature.name}
+        {ParticipantUtils.name(participant)}
       </CardTitle>
     </CardHeader>
   );
 }
 
 export function BattleCardCreatureIcon({
-  creature,
+  participant,
   className,
-}: {
-  creature: EncounterCreature;
+}: BattleCardParticipantProps & {
   className?: string;
 }) {
-  return creature.creature_id === "pending" ? (
+  return participant.creature_id === "pending" ? (
     <span>Loading</span>
   ) : (
     <div className={clsx("relative", className)}>
       <CharacterIcon
-        id={creature.creature_id}
-        name={creature.name}
+        id={participant.creature_id}
+        name={ParticipantUtils.name(participant)}
         width={200}
         height={200}
         className="object-cover w-32 h-32"
       />
-      <HealthMeterOverlay creature={creature} />
+      <HealthMeterOverlay participant={participant} />
     </div>
   );
 }
 
 export function BattleCardHealthAndStatus({
-  creature,
-}: {
-  creature: EncounterCreature;
-}) {
+  participant,
+}: BattleCardParticipantProps) {
   return (
     <div className="flex flex-col gap-3">
-      {!creature.is_player && <ParticipantHealthForm participant={creature} />}
-      <StatusInput participant={creature} />
+      {!ParticipantUtils.isPlayer(participant) && (
+        <ParticipantHealthForm participant={participant} />
+      )}
+      <StatusInput participant={participant} />
     </div>
   );
 }
@@ -384,13 +433,10 @@ export function MinionCardStack({ minionCount }: { minionCount: number }) {
 }
 
 export function HealthMeterOverlay({
-  creature,
-}: {
-  creature: EncounterCreature;
-}) {
-  let missingHp = creature.max_hp - creature.hp;
-  missingHp = Math.min(missingHp, creature.max_hp);
-  const creaturePercentDamage = (missingHp / creature.max_hp) * 100;
+  participant,
+}: BattleCardParticipantProps) {
+  const maxHP = ParticipantUtils.maxHp(participant);
+  const creaturePercentDamage = (participant.hp / maxHP) * 100;
   return (
     <div
       style={{ height: `${creaturePercentDamage}%` }}
@@ -422,47 +468,3 @@ export const AnimationListItem = ({
     </motion.div>
   );
 };
-
-export function SpellSearcher() {
-  const [showSearch, setShowSearch] = React.useState(false);
-  const [searchInput, setSearchInput] = React.useState("");
-
-  React.useEffect(() => {
-    document.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.key === "k") {
-        e.preventDefault();
-        setShowSearch(true);
-      }
-    });
-    return () => {
-      document.removeEventListener("keydown", () => {});
-    };
-  }, []);
-
-  const { data: spells } = api.spells.useQuery(searchInput);
-
-  return (
-    <Dialog open={showSearch} onOpenChange={(isOpen) => setShowSearch(isOpen)}>
-      <DialogContent className="max-w-3xl h-[500px] overflow-auto">
-        <Input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-        />
-        {
-          <div className="flex flex-col gap-8">
-            {spells?.map((spell) => (
-              <div key={spell.id} className="flex flex-col gap-3">
-                <DialogTitle>
-                  {spell.name} ({spell.source})
-                </DialogTitle>
-                <DialogDescription className="text-lg whitespace-break-spaces">
-                  {spell.entries}
-                </DialogDescription>
-              </div>
-            ))}
-          </div>
-        }
-      </DialogContent>
-    </Dialog>
-  );
-}

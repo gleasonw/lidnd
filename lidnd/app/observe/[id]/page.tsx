@@ -1,17 +1,16 @@
-import { getEncounterData } from "@/server/api/utils";
 import { Suspense } from "react";
 import { PageRefresher } from "@/app/observe/[id]/page-refresher";
 import React from "react";
 import { SimpleBattleCard } from "./SimpleBattleCard";
-import {
-  EncounterCreature,
-  EncounterWithParticipants,
-} from "@/server/api/router";
+import { ParticipantWithData } from "@/server/api/router";
 import { Card } from "@/components/ui/card";
 import clsx from "clsx";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
 import { HealthMeterOverlay } from "@/encounters/[id]/run/battle-ui";
 import { GroupBattleLayout } from "@/encounters/[id]/run/group-battle-ui";
+import { EncounterUtils } from "@/utils/encounters";
+import { encounterWithCampaign, ObserveEncounter } from "@/server/encounters";
+import { ParticipantUtils } from "@/utils/participants";
 
 export default function ObservePage({ params }: { params: { id: string } }) {
   return (
@@ -26,8 +25,7 @@ async function EncounterObserverView({ id }: { id?: string }) {
     return <div>Provide an id in the url.</div>;
   }
 
-  //TODO: we need to get the campaign data as well
-  const encounter = await getEncounterData(id);
+  const encounter = await encounterWithCampaign(id);
 
   if (!encounter) {
     return <div>Encounter not found.</div>;
@@ -37,16 +35,16 @@ async function EncounterObserverView({ id }: { id?: string }) {
     <section className="flex flex-col gap-20 w-screen pt-10 items-center">
       <h1 className="text-xl">{encounter.name}</h1>
       <PageRefresher />
-      <LinearObserve encounter={encounter} />
+      {EncounterUtils.initiativeType(encounter) === "linear" ? (
+        <LinearObserve encounter={encounter} />
+      ) : (
+        <GroupObserve encounter={encounter} />
+      )}
     </section>
   );
 }
 
-async function LinearObserve({
-  encounter,
-}: {
-  encounter: EncounterWithParticipants;
-}) {
+async function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
   const activeIndex = encounter.participants.findIndex(
     (participant) => participant.is_active,
   );
@@ -67,17 +65,9 @@ async function LinearObserve({
   );
 }
 
-async function GroupObserve({
-  encounter,
-}: {
-  encounter: EncounterWithParticipants;
-}) {
-  const monsters = encounter.participants.filter(
-    (participant) => !participant.is_player,
-  );
-  const players = encounter.participants.filter(
-    (participant) => participant.is_player,
-  );
+async function GroupObserve({ encounter }: { encounter: ObserveEncounter }) {
+  const monsters = EncounterUtils.monsters(encounter);
+  const players = EncounterUtils.allies(encounter);
 
   return (
     <GroupBattleLayout
@@ -94,7 +84,7 @@ async function GroupObserve({
 function SimpleGroupBattleCard({
   participant,
 }: {
-  participant: EncounterCreature;
+  participant: ParticipantWithData;
 }) {
   return (
     <Card
@@ -107,13 +97,13 @@ function SimpleGroupBattleCard({
         },
       )}
     >
-      <HealthMeterOverlay creature={participant} />
+      <HealthMeterOverlay participant={participant} />
       {participant.creature_id === "pending" ? (
         <span>Loading</span>
       ) : (
         <CharacterIcon
           id={participant.creature_id}
-          name={participant.name}
+          name={ParticipantUtils.name(participant)}
           width={400}
           height={400}
           className="h-60 object-cover"

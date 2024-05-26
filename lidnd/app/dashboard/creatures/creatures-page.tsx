@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/trpc/react";
 import { Creature } from "@/server/api/router";
@@ -22,11 +22,11 @@ import { columns } from "@/creatures/columns";
 export default function CreaturesPage() {
   const [name, setName] = useState("");
   const { getUserCreatures } = api.useUtils();
-  const { data: creatures, isLoading: isLoadingCreatures } =
-    api.getUserCreatures.useQuery({
-      name,
-    });
+  const { data: creatures } = api.getUserCreatures.useQuery({
+    name,
+  });
   const {
+    // @ts-ignore - I'll eventually use this...
     mutate: deleteCreature,
     variables: deletedId,
     isLoading: isDeletePending,
@@ -123,6 +123,7 @@ export default function CreaturesPage() {
   );
 }
 
+// @ts-ignore - I'll eventually use this... not sure a table is the best ui for displaying creatures, tbh
 function CreatureUpdateDialog({
   creature,
   deleteCreature,

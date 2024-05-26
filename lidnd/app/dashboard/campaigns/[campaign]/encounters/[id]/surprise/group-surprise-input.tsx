@@ -15,13 +15,14 @@ import {
   PreBattleInputsList,
   PreBattleInput,
 } from "@/encounters/[id]/roll/group-initiative-input";
+import { ParticipantUtils } from "@/utils/participants";
 
 export function GroupSurpriseInput() {
   const id = useEncounterId();
   const { encounterById } = api.useUtils();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
 
-  const [encounter, encounterQuery] = api.encounterById.useSuspenseQuery(id);
+  const [encounter] = api.encounterById.useSuspenseQuery(id);
   const { mutate: startEncounter } = api.startEncounter.useMutation({
     onSettled: async () => {
       return await encounterById.invalidate(id);
@@ -45,7 +46,9 @@ export function GroupSurpriseInput() {
           {encounter.participants
             .sort(
               (a, b) =>
-                a.name.localeCompare(b.name) || a.id.localeCompare(b.id),
+                ParticipantUtils.name(a).localeCompare(
+                  ParticipantUtils.name(b),
+                ) || a.id.localeCompare(b.id),
             )
             .map((participant) => (
               <PreBattleInput key={participant.id} participant={participant}>

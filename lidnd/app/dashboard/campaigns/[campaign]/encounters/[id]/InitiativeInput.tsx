@@ -2,7 +2,7 @@
 
 import { useUpdateEncounterParticipant } from "./hooks";
 import { Input } from "@/components/ui/input";
-import { EncounterParticipant } from "@/server/api/router";
+import { Participant } from "@/server/api/router";
 import React from "react";
 import { useDebouncedCallback } from "use-debounce";
 
@@ -11,7 +11,7 @@ export default function InitiativeInput({
   className,
   tabIndex,
 }: {
-  participant: EncounterParticipant;
+  participant: Participant;
   className?: string;
   tabIndex?: number;
 }) {

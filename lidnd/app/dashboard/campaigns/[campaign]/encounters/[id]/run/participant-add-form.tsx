@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { CardContent, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
 import {
@@ -11,11 +10,10 @@ import {
   useEncounterId,
 } from "@/encounters/[id]/hooks";
 import { FullCreatureAddForm } from "@/encounters/full-creature-add-form";
-import { ParticipantPost } from "@/encounters/types";
 import { Creature } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { Heart, Plus, Skull, UserPlus } from "lucide-react";
-import { autorun, makeAutoObservable, runInAction } from "mobx";
+import { makeAutoObservable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import React, { Suspense, useMemo, useState } from "react";
 
@@ -45,26 +43,28 @@ export const ParticipantUpload = observer(function ParticipantUpload() {
   const { isAlly } = store;
   return (
     <ParticipantContext.Provider value={store}>
-      <label>
-        Add as ally
-        <Checkbox
-          checked={isAlly}
-          onCheckedChange={(checked) =>
-            runInAction(() => {
-              store.isAlly = checked !== "indeterminate" && checked;
-            })
-          }
-        />
-      </label>
       <Tabs defaultValue="new">
-        <TabsList>
-          <TabsTrigger value="new">
-            <Plus /> Add new creature
-          </TabsTrigger>
-          <TabsTrigger value="existing">
-            <UserPlus /> Existing creatures
-          </TabsTrigger>
-        </TabsList>
+        <span className="flex gap-1 flex-wrap pr-2">
+          <TabsList>
+            <TabsTrigger value="new">
+              <Plus /> Add new creature
+            </TabsTrigger>
+            <TabsTrigger value="existing">
+              <UserPlus /> Existing creatures
+            </TabsTrigger>
+          </TabsList>
+          <label className="flex gap-2 ml-auto items-center ">
+            Add as ally
+            <Checkbox
+              checked={isAlly}
+              onCheckedChange={(checked) =>
+                runInAction(() => {
+                  store.isAlly = checked !== "indeterminate" && checked;
+                })
+              }
+            />
+          </label>
+        </span>
         <TabsContent value="new">
           <CardContent className={"flex flex-col gap-6 pt-5"}>
             <CardTitle>New creature</CardTitle>
@@ -124,8 +124,7 @@ export interface ListedCreatureProps {
 
 export const ListedCreature = observer<ListedCreatureProps>(
   function ListedCreature({ creature }) {
-    const { mutate: addCreature, isLoading: isAddingExistingCreature } =
-      useAddExistingCreatureToEncounter();
+    const { mutate: addCreature } = useAddExistingCreatureToEncounter();
 
     const { isAlly } = useParticipantContext();
     const id = useEncounterId();

@@ -3,7 +3,6 @@ import { appRoutes } from "@/app/routes";
 import { auth, discordAuth } from "@/server/api/auth/lucia";
 import { db } from "@/server/api/db";
 import { settings } from "@/server/api/db/schema";
-import { fetchWhitelist } from "@/server/api/utils";
 import { OAuthRequestError } from "@lucia-auth/oauth";
 import { cookies, headers } from "next/headers";
 

@@ -1,7 +1,6 @@
 import {
   creatureUploadSchema,
   participantInsertSchema,
-  participantSchema,
 } from "@/server/api/router";
 import { z } from "zod";
 

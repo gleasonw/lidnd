@@ -1,7 +1,6 @@
 import { isStringMeaningful } from "./utils";
-import { createCampaign } from "./actions";
 import { Campaign } from "./types";
-import { appRoutes, routeToCampaign } from "@/app/routes";
+import { routeToCampaign } from "@/app/routes";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,23 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectValue,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  getPageSession,
-  getSystems,
-  getUserCampaigns,
-} from "@/server/api/utils";
+import { getPageSession, getUserCampaigns } from "@/server/api/utils";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { CreateCampaignButton } from "@/app/dashboard/create-campaign-button";
 
@@ -39,14 +24,15 @@ export default async function Page() {
 
   const user = session.user;
 
-  const [userCampaigns, systems] = await Promise.all([
-    getUserCampaigns(user.userId),
-    getSystems(),
-  ]);
+  const userCampaigns = await getUserCampaigns(user.userId);
 
   if (userCampaigns && userCampaigns.length === 1) {
     // might as well redirect to the first campaign
-    return redirect(routeToCampaign(userCampaigns[0].id));
+    const firstCampaign = userCampaigns[0];
+    if (!firstCampaign) {
+      throw new Error("Impossible!");
+    }
+    return redirect(routeToCampaign(firstCampaign.id));
   }
 
   return (

@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { DbSpell, status_effects_5e, spells } from "@/server/api/db/schema";
+import { DbSpell, status_effects, spells } from "@/server/api/db/schema";
 
 type Entry = {
   type: string;
@@ -50,7 +50,7 @@ interface SpellBook {
 const db_url =
   process.env.NODE_ENV === "production"
     ? process.env.DATABASE_URL
-    : "postgresql://will:password@localhost:5432/dnd";
+    : "postgresql://postgres:postgres@localhost:5432/dnd";
 if (!db_url) {
   throw new Error("DATABASE_URL not set");
 }
@@ -105,14 +105,14 @@ const parsedSpells = spellResponses.reduce((acc, response) => {
     return acc.concat(
       response.value.map((spell) => ({
         ...spell,
-        time: `${spell.time[0].number} ${spell.time[0].unit}`,
+        time: `${spell.time[0]?.number} ${spell.time[0]?.unit}`,
         range:
           spell.range.distance &&
           `${spell.range.distance.amount} ${spell.range.distance.type} ${spell.range.type}`,
         components: `${spell.components.v ? "V" : ""} ${
           spell.components.s ? "S" : ""
         } ${spell.components.m ? "M" : ""}`,
-        duration: `${spell.duration[0].duration} ${spell.duration[0].type}`,
+        duration: `${spell.duration[0]?.duration} ${spell.duration[0]?.type}`,
         entries: entriesToString(spell.entries),
         scalingLevelDice:
           spell.scalingLevelDice &&
@@ -135,7 +135,7 @@ const parsedSpells = spellResponses.reduce((acc, response) => {
 await db.insert(spells).values(parsedSpells).onConflictDoNothing();
 
 await db
-  .insert(status_effects_5e)
+  .insert(status_effects)
   .values([
     {
       name: "Blinded",

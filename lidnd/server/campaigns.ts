@@ -1,7 +1,7 @@
 import { db } from "@/server/api/db";
 import {
   campaigns,
-  campaignsToPlayers,
+  campaignToPlayer,
   creatures,
   systems,
 } from "@/server/api/db/schema";
@@ -39,18 +39,18 @@ export async function playersInCampaign(
 ) {
   return await dbObject
     .select({
-      campaign_id: campaignsToPlayers.campaign_id,
+      campaign_id: campaignToPlayer.campaign_id,
       player: {
-        id: campaignsToPlayers.player_id,
+        id: campaignToPlayer.player_id,
         name: creatures.name,
       },
     })
-    .from(campaignsToPlayers)
-    .where(eq(campaignsToPlayers.campaign_id, campaignId))
+    .from(campaignToPlayer)
+    .where(eq(campaignToPlayer.campaign_id, campaignId))
     .leftJoin(
       creatures,
       and(
-        eq(campaignsToPlayers.player_id, creatures.id),
+        eq(campaignToPlayer.player_id, creatures.id),
         eq(creatures.user_id, userId)
       )
     );

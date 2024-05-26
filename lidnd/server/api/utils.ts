@@ -2,21 +2,15 @@ import { db } from "@/server/api/db";
 import {
   campaigns,
   creatures,
-  encounter_participant,
+  participants,
   encounters,
-  participant_status_effects,
-  settings,
-  status_effects_5e,
   systems,
+  settings,
 } from "@/server/api/db/schema";
-import { and, eq, sql } from "drizzle-orm";
-import { paths, components } from "@/app/schema";
+import { eq, sql } from "drizzle-orm";
+import { paths } from "@/app/schema";
 import createClient from "openapi-fetch";
-import {
-  EncounterCreature,
-  EncounterParticipant,
-  creatureUploadSchema,
-} from "@/server/api/router";
+import { Participant, creatureUploadSchema } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import * as z from "zod";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
@@ -24,10 +18,7 @@ import { cache } from "react";
 import { auth } from "@/server/api/auth/lucia";
 import * as context from "next/headers";
 import apiURL from "@/app/apiURL";
-import {
-  sortEncounterCreatures,
-  mergeEncounterCreature,
-} from "@/app/dashboard/campaigns/[campaign]/encounters/utils";
+import { ParticipantUtils } from "@/utils/participants";
 
 export async function getUserCampaigns(user_id: string) {
   return await db
@@ -49,7 +40,7 @@ export async function createCreature(
     .insert(creatures)
     .values({ ...creature, user_id })
     .returning();
-  if (newCreature.length === 0) {
+  if (newCreature.length === 0 || !newCreature[0]) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "Failed to create creature",
@@ -94,94 +85,22 @@ export async function createCreature(
   return newCreature[0];
 }
 
-export async function getEncounterCreature(
-  id: string
-): Promise<EncounterCreature> {
-  const encounter = await db
-    .select()
-    .from(encounter_participant)
-    .where(eq(encounter_participant.id, id))
-    .leftJoin(creatures, eq(encounter_participant.creature_id, creatures.id));
-  if (encounter.length === 0) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "No encounter found",
-    });
-  }
-  const encounterData = encounter[0];
-  if (!encounterData.encounter_participant || !encounterData.creatures) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "No encounter found",
-    });
-  }
-  return mergeEncounterCreature(
-    encounterData.encounter_participant,
-    encounterData.creatures
-  );
-}
-
-export async function getEncounterData(id: string) {
-  const encounter = await db
-    .select()
-    .from(encounters)
-    .where(and(eq(encounters.id, id)))
-    .leftJoin(
-      encounter_participant,
-      eq(encounters.id, encounter_participant.encounter_id)
-    )
-    .leftJoin(creatures, eq(encounter_participant.creature_id, creatures.id))
-    .leftJoin(
-      participant_status_effects,
-      eq(
-        encounter_participant.id,
-        participant_status_effects.encounter_participant_id
-      )
-    )
-    .leftJoin(
-      status_effects_5e,
-      eq(participant_status_effects.status_effect_id, status_effects_5e.id)
-    );
-  const response = encounter.reduce<Record<string, EncounterCreature>>(
-    (acc, row) => {
-      const participant = row["encounter_participant"];
-      const creature = row["creatures"];
-      const statusEffect = row["participant_status_effects"];
-      const statusEffectData = row["status_effects_5e"];
-      const finalStatusEffect = statusEffect
-        ? {
-            ...statusEffect,
-            description: statusEffectData?.description ?? "",
-            name: statusEffectData?.name ?? "",
-          }
-        : null;
-
-      if (!participant || !creature) return acc;
-      if (!acc[participant.id]) {
-        acc[participant.id] = {
-          ...mergeEncounterCreature(participant, creature),
-          status_effects: finalStatusEffect ? [finalStatusEffect] : [],
-        };
-      } else {
-        finalStatusEffect &&
-          acc[participant.id].status_effects.push(finalStatusEffect);
-      }
-      return acc;
+export async function getEncounterCreature(id: string) {
+  const participant = await db.query.participants.findFirst({
+    where: (participants, { eq }) => eq(participants.id, id),
+    with: {
+      creature: true,
     },
-    {}
-  );
-  const participants = Object.values(response);
+  });
 
-  const encounterData = encounter.at(0)?.encounters;
-
-  if (!encounterData) {
-    return null;
+  if (!participant) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "No encounter found",
+    });
   }
 
-  return {
-    ...encounterData,
-    participants: participants.sort(sortEncounterCreatures),
-  };
+  return participant;
 }
 
 export async function updateTurnData(
@@ -199,26 +118,6 @@ export async function updateTurnData(
       })
       .where(eq(encounters.id, encounter_id)),
   ]);
-}
-
-export async function getUserEncounter(
-  user_id: string,
-  encounter_id: string,
-  dbObject = db
-) {
-  const encounter = await dbObject
-    .select()
-    .from(encounters)
-    .where(
-      and(eq(encounters.id, encounter_id), eq(encounters.user_id, user_id))
-    );
-  if (encounter.length === 0) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "No encounter found",
-    });
-  }
-  return encounter[0];
 }
 
 export function getIconAWSname(creature_id: string) {
@@ -250,7 +149,7 @@ export async function setActiveParticipant(
 ) {
   await dbObject.execute(
     sql`
-    UPDATE encounter_participant
+    UPDATE participants
     SET is_active = CASE 
         WHEN id = ${participant_id} THEN TRUE
         ELSE FALSE
@@ -260,32 +159,20 @@ export async function setActiveParticipant(
   );
 }
 
-export async function getEncounterParticipants(
+export async function allEncounterParticipants(
   encounter_id: string,
   dbObject = db
-): Promise<EncounterParticipant[]> {
-  const participants = await dbObject
-    .select()
-    .from(encounter_participant)
-    .where(eq(encounter_participant.encounter_id, encounter_id));
-  return participants.sort(sortEncounterCreatures);
+): Promise<Participant[]> {
+  const participants = await dbObject.query.participants.findMany({
+    where: (participants, { eq }) =>
+      eq(participants.encounter_id, encounter_id),
+    with: {
+      creature: true,
+    },
+  });
+  return participants.sort(ParticipantUtils.sortLinearly);
 }
 
-export async function getEncounterParticipantsWithCreatureData(
-  encounter_id: string,
-  dbObject = db
-): Promise<EncounterCreature[]> {
-  const encouterCreatures = await dbObject
-    .select()
-    .from(encounter_participant)
-    .where(eq(encounter_participant.encounter_id, encounter_id))
-    .innerJoin(creatures, eq(encounter_participant.creature_id, creatures.id));
-  return encouterCreatures
-    .map(({ creatures, encounter_participant }) =>
-      mergeEncounterCreature(encounter_participant, creatures)
-    )
-    .sort(sortEncounterCreatures);
-}
 const { POST } = createClient<paths>({
   baseUrl: apiURL,
 });
@@ -302,7 +189,7 @@ export async function postEncounterToUserChannel(encounter: { id: string }) {
     .select()
     .from(settings)
     .where(eq(settings.user_id, session.user.userId));
-  if (userSettings.length === 0) {
+  if (userSettings.length === 0 || !userSettings[0]) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "No settings found",
@@ -330,13 +217,13 @@ export async function postEncounterToUserChannel(encounter: { id: string }) {
 }
 
 export async function updateParticipantHasPlayed(
-  participant: EncounterParticipant,
+  participant: Participant,
   dbObject = db
 ) {
   return await dbObject
-    .update(encounter_participant)
+    .update(participants)
     .set({
       has_played_this_round: participant.has_played_this_round,
     })
-    .where(eq(encounter_participant.id, participant.id));
+    .where(eq(participants.id, participant.id));
 }

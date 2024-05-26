@@ -1,16 +1,8 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React from "react";
 import Link from "next/link";
-import {
-  ChevronLeft,
-  Home,
-  LogOut,
-  PanelLeft,
-  Plus,
-  Rabbit,
-  Settings,
-} from "lucide-react";
+import { Home, LogOut, PanelLeft, Rabbit, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { logOut } from "./actions";
@@ -20,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/app/dashboard/UIStore";
 import { observer } from "mobx-react-lite";
 import styles from "./side-nav.module.css";
-import { CreateCampaignButton } from "@/app/dashboard/create-campaign-button";
 
 export interface SideNavProps {
   userAvatar: React.ReactNode;
@@ -103,7 +94,6 @@ export interface UserSettingsProps {
 }
 
 export function User(props: UserSettingsProps) {
-  const { userAvatar } = props;
   return (
     <form
       className="flex gap-5 items-center flex-col justify-end"

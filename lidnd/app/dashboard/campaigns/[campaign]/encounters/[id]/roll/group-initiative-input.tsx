@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
 import { useEncounterId, useStartEncounter } from "@/encounters/[id]/hooks";
 import InitiativeInput from "@/encounters/[id]/InitiativeInput";
-import { EncounterCreature } from "@/server/api/router";
+import { ParticipantWithData } from "@/server/api/router";
 import { api } from "@/trpc/react";
+import { ParticipantUtils } from "@/utils/participants";
 import { AnimatePresence } from "framer-motion";
 import { Swords, Zap } from "lucide-react";
 import Link from "next/link";
@@ -14,7 +15,7 @@ import Link from "next/link";
 export function GroupInitiativeInput() {
   const id = useEncounterId();
 
-  const [encounter, encounterQuery] = api.encounterById.useSuspenseQuery(id);
+  const [encounter] = api.encounterById.useSuspenseQuery(id);
   const { mutate: startEncounter } = useStartEncounter();
   return (
     <AnimatePresence>
@@ -38,10 +39,7 @@ export function GroupInitiativeInput() {
         </div>
         <PreBattleInputsList>
           {encounter.participants
-            .sort(
-              (a, b) =>
-                a.name.localeCompare(b.name) || a.id.localeCompare(b.id),
-            )
+            .toSorted(ParticipantUtils.sortLinearly)
             .map((participant) => (
               <PreBattleInput key={participant.id} participant={participant}>
                 <InitiativeInput participant={participant} />
@@ -66,8 +64,9 @@ export function PreBattleInput({
   participant,
 }: {
   children: React.ReactNode;
-  participant: EncounterCreature;
+  participant: ParticipantWithData;
 }) {
+  const pName = ParticipantUtils.name(participant);
   return (
     <div
       key={participant.id}
@@ -75,11 +74,11 @@ export function PreBattleInput({
     >
       <span className="flex gap-4 items-center">
         <CharacterIcon
-          name={participant.name}
+          name={pName}
           id={participant.creature_id}
           className={"h-20 object-cover"}
         />
-        <span>{participant.name}</span>
+        <span>{pName}</span>
       </span>
 
       {children}

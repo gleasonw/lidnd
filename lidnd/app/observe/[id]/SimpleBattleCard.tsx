@@ -3,17 +3,19 @@ import clsx from "clsx";
 import { ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React from "react";
-import { Encounter, EncounterCreature } from "@/server/api/router";
+import { ParticipantWithData } from "@/server/api/router";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
 import { HealthMeterOverlay } from "@/encounters/[id]/run/battle-ui";
 import effectIconMap from "@/encounters/[id]/run/effectIconMap";
 import { BasePopover } from "@/encounters/base-popover";
+import { ParticipantEffectUtils } from "@/utils/participantEffects";
+import { ParticipantUtils } from "@/utils/participants";
 
 export interface SimpleBattleCardProps {
   children?: React.ReactNode;
-  participant: EncounterCreature;
+  participant: ParticipantWithData;
   activeIndex: number;
-  encounter: Encounter;
+  encounter: { current_round?: number };
   index: number;
 }
 
@@ -32,12 +34,18 @@ export function SimpleBattleCard({
               key={effect.id}
               trigger={
                 <Button variant="outline">
-                  {effectIconMap[effect.name as keyof typeof effectIconMap]}
+                  {
+                    effectIconMap[
+                      ParticipantEffectUtils.name(
+                        effect,
+                      ) as keyof typeof effectIconMap
+                    ]
+                  }
                 </Button>
               }
               className="flex flex-col gap-2 text-sm"
             >
-              <span>{effect.description}</span>
+              <span>{ParticipantEffectUtils.description(effect)}</span>
               {!!effect.save_ends_dc && (
                 <span>Save ends ({effect.save_ends_dc})</span>
               )}
@@ -58,13 +66,13 @@ export function SimpleBattleCard({
           },
         )}
       >
-        <HealthMeterOverlay creature={participant} />
+        <HealthMeterOverlay participant={participant} />
         {participant.creature_id === "pending" ? (
           <span>Loading</span>
         ) : (
           <CharacterIcon
             id={participant.creature_id}
-            name={participant.name}
+            name={ParticipantUtils.name(participant)}
             width={400}
             height={400}
             className="h-60 object-cover"

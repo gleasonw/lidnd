@@ -3,24 +3,32 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import React from "react";
 import { AnimatePresence } from "framer-motion";
-import { cycleNextTurn, cyclePreviousTurn, getAWSimageURL } from "../../utils";
+import { getAWSimageURL } from "../../utils";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { useEncounterId } from "../hooks";
-import { EncounterCreature } from "@/server/api/router";
+import { ParticipantWithData } from "@/server/api/router";
 import { useRemoveParticipantFromEncounter } from "../hooks";
 import { OriginalSizeImage } from "../../original-size-image";
-import { AnimationListItem, BattleCard } from "./battle-ui";
+import { AnimationListItem, BattleCard, useBattleUIStore } from "./battle-ui";
+import { EncounterUtils } from "@/utils/encounters";
+import { ParticipantUtils } from "@/utils/participants";
 
 export function LinearBattleUI() {
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
-  const encounterParticipants = encounter.participants;
+
+  const encounterParticipants = encounter.participants.toSorted(
+    ParticipantUtils.sortLinearly,
+  );
+
   const { encounterById } = api.useUtils();
+  const { displayReminders } = useBattleUIStore();
 
   const { mutate: cycleNextMutation, isLoading: isLoadingNextTurn } =
     api.cycleNextTurn.useMutation({
       onSettled: async () => {
+        displayReminders(encounter);
         return await encounterById.invalidate(id);
       },
     });
@@ -32,19 +40,13 @@ export function LinearBattleUI() {
       },
     });
 
-  let displayedParticipants: EncounterCreature[];
+  let displayedParticipants: ParticipantWithData[];
 
   if (isLoadingNextTurn && encounterParticipants) {
-    const { updatedParticipants } = cycleNextTurn(
-      encounterParticipants,
-      encounter,
-    );
+    const { updatedParticipants } = EncounterUtils.cycleNextTurn(encounter);
     displayedParticipants = updatedParticipants;
   } else if (isLoadingPreviousTurn && encounterParticipants) {
-    const { updatedParticipants } = cyclePreviousTurn(
-      encounterParticipants,
-      encounter,
-    );
+    const { updatedParticipants } = EncounterUtils.cyclePreviousTurn(encounter);
     displayedParticipants = updatedParticipants;
   } else {
     displayedParticipants = encounterParticipants;
@@ -64,25 +66,20 @@ export function LinearBattleUI() {
   const { mutate: removeCreatureFromEncounter } =
     useRemoveParticipantFromEncounter();
 
-  function handleCycleNext() {
+  function cycleNext() {
     cycleNextMutation({ encounter_id: id });
-    const { newlyActiveParticipant } = cycleNextTurn(
-      encounterParticipants,
-      encounter,
-    );
+    const { newlyActiveParticipant } = EncounterUtils.cycleNextTurn(encounter);
     setDmSelectedCreature(newlyActiveParticipant.id);
   }
 
-  function handleCyclePrevious() {
+  function cyclePrevious() {
     cyclePreviousMutation({ encounter_id: id });
-    const { newlyActiveParticipant } = cyclePreviousTurn(
-      encounterParticipants,
-      encounter,
-    );
+    const { newlyActiveParticipant } =
+      EncounterUtils.cyclePreviousTurn(encounter);
     setDmSelectedCreature(newlyActiveParticipant.id);
   }
 
-  const creature = displayedParticipants?.find(
+  const selectedParticipant = displayedParticipants?.find(
     (participant) => participant.id === selectedId,
   );
 
@@ -116,7 +113,7 @@ export function LinearBattleUI() {
       >
         <Button
           className="absolute left-0 sm:left-10 z-10 h-10 rounded-full shadow-md"
-          onClick={handleCyclePrevious}
+          onClick={cyclePrevious}
           disabled={isTurnLoading}
         >
           <ChevronLeftIcon />
@@ -126,7 +123,7 @@ export function LinearBattleUI() {
             <AnimationListItem key={participant.id}>
               <BattleCard
                 onClick={() => setDmSelectedCreature(participant.id)}
-                creature={participant}
+                participant={participant}
                 isSelected={participant.id === selectedId}
                 className={clsx(
                   {
@@ -143,20 +140,25 @@ export function LinearBattleUI() {
         </AnimatePresence>
         <Button
           className="absolute right-0 sm:right-10 z-10 h-10 rounded-full shadow-md"
-          onClick={handleCycleNext}
+          onClick={cycleNext}
           disabled={isTurnLoading}
         >
           <ChevronRightIcon />
         </Button>
       </div>
 
-      {creature && (
+      {selectedParticipant && (
         <>
-          {!creature.is_player ? (
+          {!ParticipantUtils.isPlayer(selectedParticipant) ? (
             <OriginalSizeImage
-              src={getAWSimageURL(creature.creature_id, "stat_block")}
-              alt={"stat block for " + creature.name}
-              key={creature.creature_id}
+              src={getAWSimageURL(
+                selectedParticipant.creature_id,
+                "stat_block",
+              )}
+              alt={
+                "stat block for " + ParticipantUtils.name(selectedParticipant)
+              }
+              key={selectedParticipant.creature_id}
             />
           ) : (
             <span className="text-2xl p-5">Player</span>
@@ -166,7 +168,7 @@ export function LinearBattleUI() {
             onClick={() =>
               removeCreatureFromEncounter({
                 encounter_id: id,
-                participant_id: creature.id,
+                participant_id: selectedParticipant.id,
               })
             }
           >

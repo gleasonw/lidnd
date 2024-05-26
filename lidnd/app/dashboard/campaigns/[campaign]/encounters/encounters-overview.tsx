@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import React from "react";
-import { Card, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { CharacterIcon } from "../encounters/[id]/character-icon";
 import {
   Popover,
@@ -27,6 +27,7 @@ import { CreaturePost } from "@/encounters/types";
 import { getCreaturePostForm } from "@/encounters/utils";
 import { createPlayerAndAddToCampaign } from "@/app/dashboard/actions";
 import { Separator } from "@/components/ui/separator";
+import { ParticipantUtils } from "@/utils/participants";
 
 export interface CampaignEncountersProps {
   deleteCampaignButton: React.ReactNode;
@@ -39,7 +40,7 @@ export default function CampaignEncountersOverview(
 ) {
   const { deleteCampaignButton, playersDisplay, campaignHeader } = props;
   const campaignId = useCampaignId();
-  const { data: encounters, isLoading } = api.encounters.useQuery(campaignId);
+  const { data: encounters } = api.encounters.useQuery(campaignId);
   const displayedEncounters = encounters;
 
   const startedEncounters = displayedEncounters?.filter(
@@ -238,14 +239,14 @@ function MonstersInEncounter({ id }: { id: string }) {
 
   const participants = encounters
     ?.find((encounter) => encounter.id === id)
-    ?.participants.filter((creature) => !creature.is_player);
+    ?.participants.filter((p) => !ParticipantUtils.isPlayer(p));
 
   return (
     <div className={"flex gap-3 flex-wrap"}>
       {participants?.map((p) => (
         <CharacterIcon
           id={p.creature_id}
-          name={p.name}
+          name={ParticipantUtils.name(p)}
           key={p.id}
           className={"rounded-full object-cover w-10 h-10"}
           width={100}
