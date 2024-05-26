@@ -118,14 +118,13 @@ export function GroupBattleCard({
   const id = useEncounterId();
   const { encounterById } = api.useUtils();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
-  const [reminders] = api.encounterReminders.useSuspenseQuery(id);
 
   const { displayReminders } = useBattleUIStore();
 
   const { mutate: updateCreatureHasPlayedThisRound } =
     api.updateGroupTurn.useMutation({
       onSettled: async () => {
-        displayReminders(encounter, reminders);
+        displayReminders(encounter);
 
         return await encounterById.invalidate(id);
       },

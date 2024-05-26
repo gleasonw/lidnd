@@ -5,7 +5,7 @@ import {
   creatures,
   systems,
 } from "@/server/api/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export async function userCampaigns(userId: string) {
   return await db.select().from(campaigns).where(eq(campaigns.user_id, userId));

@@ -1,4 +1,3 @@
-import { Reminder } from "@/encounters/[id]/page";
 import { CreaturePost } from "./types";
 import { Participant, ParticipantWithData } from "@/server/api/router";
 

@@ -27,7 +27,6 @@ import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import {
   encountersInCampaign,
   encounterById,
-  encounterReminders,
   EncounterWithData,
 } from "@/server/encounters";
 import {
@@ -795,13 +794,6 @@ export const appRouter = t.router({
         });
       }
       return result[0];
-    }),
-
-  encounterReminders: protectedProcedure
-    .input(z.string())
-    .query(async (opts) => {
-      const user = opts.ctx.user;
-      return await encounterReminders(user.userId, opts.input);
     }),
 });
 
