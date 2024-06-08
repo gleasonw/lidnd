@@ -6,6 +6,9 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { createCreatureInEncounter } from "@/app/dashboard/actions";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
+import { removeUndefinedFields } from "@/app/dashboard/utils";
+import { useCampaignId } from "@/campaigns/hooks";
+import { UpsertEncounter } from "@/app/dashboard/types";
 
 export function useEncounterId() {
   const pathname = usePathname();
@@ -136,6 +139,56 @@ export function useUpdateEncounterParticipant() {
       return { previousEncounter };
     },
   });
+}
+
+export function useUpdateEncounter() {
+  const { encounters } = api.useUtils();
+  const campaignId = useCampaignId();
+
+  const mutation = api.updateEncounter.useMutation({
+    onSettled: async (en) => {
+      if (!en) return;
+      return await encounters.invalidate(campaignId);
+    },
+    onMutate: async (en) => {
+      if (!en) return;
+      await encounters.cancel(campaignId);
+      const previousEncounter = encounters
+        .getData(campaignId)
+        ?.find((e) => e.id === en.id);
+
+      if (!previousEncounter) {
+        throw new Error("No previous encounter found");
+      }
+
+      const filteredNewEncounter = removeUndefinedFields(en);
+      encounters.setData(campaignId, (old) => {
+        return old?.map((e) => {
+          if (e.id === en.id) {
+            return {
+              participants: e?.participants ?? [],
+              ...filteredNewEncounter,
+            };
+          }
+          return e;
+        });
+      });
+      return { previousEncounter };
+    },
+  });
+
+  const updateEncounter = (
+    encounter: Omit<UpsertEncounter, "user_id" | "campaign_id"> & {
+      id: string;
+    },
+  ) => {
+    mutation.mutate({
+      ...removeUndefinedFields(encounter),
+      campaign_id: campaignId,
+    });
+  };
+
+  return { ...mutation, mutate: updateEncounter };
 }
 
 export function useUpdateEncounterMinionParticipant() {

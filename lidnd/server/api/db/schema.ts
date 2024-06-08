@@ -57,6 +57,10 @@ export const reminderRelations = relations(reminders, ({ one }) => ({
 }));
 
 export const initiative_enum = pgEnum("initiative_type", ["linear", "group"]);
+export const encounter_status_enum = pgEnum("encounter_status", [
+  "active",
+  "inactive",
+]);
 
 export const systems = pgTable("systems", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -131,6 +135,8 @@ export const encounters = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     current_round: integer("current_round").default(1).notNull(),
     ended_at: timestamp("ended_at"),
+    status: encounter_status_enum("status").default("active").notNull(),
+    order: integer("order").default(0).notNull(),
   },
   (t) => {
     return {

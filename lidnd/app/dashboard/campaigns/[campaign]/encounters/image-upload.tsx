@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { X } from "lucide-react";
+import clsx from "clsx";
 
 export function ImageUpload({
   onUpload,
@@ -18,6 +19,7 @@ export function ImageUpload({
   previewSize?: number;
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "hovering">("idle");
 
   useEffect(() => {
     if (image && image instanceof File) {
@@ -92,7 +94,11 @@ export function ImageUpload({
         />
       </span>
       <span
-        onDragOver={(e) => e.preventDefault()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setStatus("hovering");
+        }}
+        onDragLeave={() => setStatus("idle")}
         onDrop={(e) => {
           e.preventDefault();
           const dropItem = e.dataTransfer.items[0];
@@ -103,7 +109,10 @@ export function ImageUpload({
           }
           onImageInput(dropItem);
         }}
-        className="border-2 border-dashed border-gray-200 rounded-md p-2 flex flex-col gap-2 h-20 items-center justify-center"
+        className={clsx(
+          "border-2 border-dashed border-gray-200 rounded-md p-2 flex flex-col gap-2 h-20 items-center justify-center transition-all",
+          status === "hovering" && "border-gray-400",
+        )}
       >
         Drop image here
       </span>

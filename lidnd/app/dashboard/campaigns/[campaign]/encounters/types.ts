@@ -1,8 +1,19 @@
-import {
-  creatureUploadSchema,
-  participantInsertSchema,
-} from "@/server/api/router";
+import { booleanSchema } from "@/app/dashboard/utils";
+import { creatures, participants } from "@/server/api/db/schema";
+import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+export const insertCreatureSchema = createInsertSchema(creatures);
+export const participantInsertSchema = createInsertSchema(participants);
+export const creatureUploadSchema = insertCreatureSchema
+  .extend({
+    icon_image: z.any(),
+    stat_block_image: z.unknown().optional(),
+    max_hp: z.coerce.number(),
+    challenge_rating: z.coerce.number(),
+    is_player: booleanSchema,
+  })
+  .omit({ user_id: true });
 
 export type CreaturePost = z.infer<typeof creatureUploadSchema>;
 

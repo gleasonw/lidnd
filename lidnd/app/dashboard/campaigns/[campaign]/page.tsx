@@ -1,5 +1,5 @@
 import { CharacterIcon } from "../[campaign]/encounters/[id]/character-icon";
-import CampaignEncountersOverview from "../[campaign]/encounters/encounters-overview";
+import CampaignEncountersOverview from "./encounters/campaign-encounters-overview";
 import { deleteCampaign } from "../../actions";
 import { Button } from "@/components/ui/button";
 import { getPageSession } from "@/server/api/utils";

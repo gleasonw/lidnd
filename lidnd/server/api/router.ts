@@ -37,6 +37,7 @@ import {
 import { booleanSchema } from "@/app/dashboard/utils";
 import { ParticipantUtils } from "@/utils/participants";
 import { EncounterUtils } from "@/utils/encounters";
+import { insertCreatureSchema } from "@/encounters/types";
 
 const t = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -84,20 +85,8 @@ export type EncounterWithParticipants = Encounter & {
 };
 
 export const participantSchema = createSelectSchema(participants);
-export const insertCreatureSchema = createInsertSchema(creatures);
 export const insertSettingsSchema = createInsertSchema(settings);
 export const updateEncounterSchema = createInsertSchema(encounters);
-export const participantInsertSchema = createInsertSchema(participants);
-
-export const creatureUploadSchema = insertCreatureSchema
-  .extend({
-    icon_image: z.any(),
-    stat_block_image: z.unknown().optional(),
-    max_hp: z.coerce.number(),
-    challenge_rating: z.coerce.number(),
-    is_player: booleanSchema,
-  })
-  .omit({ user_id: true });
 
 export const updateSettingsSchema = insertSettingsSchema
   .omit({ user_id: true })
@@ -224,19 +213,14 @@ export const appRouter = t.router({
 
   updateEncounter: protectedProcedure
     .input(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        description: z.string(),
-      })
+      updateEncounterSchema.merge(
+        z.object({ id: z.string(), user_id: z.string().optional() })
+      )
     )
     .mutation(async (opts) => {
       const result = await db
         .update(encounters)
-        .set({
-          name: opts.input.name,
-          description: opts.input.description,
-        })
+        .set(opts.input)
         .where(
           and(
             eq(encounters.id, opts.input.id),

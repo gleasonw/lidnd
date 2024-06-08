@@ -154,7 +154,7 @@ export function EncounterStartButton() {
       {campaign.system?.initiative_type === "group" ? (
         <Link
           href={`${id}/run`}
-          onClick={async () => encounter && (await startEncounter(id))}
+          onClick={async () => encounter && startEncounter(id)}
         >
           <Button>
             <Swords />
