@@ -17,11 +17,11 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { campaignInsertSchema } from "@/app/dashboard/types";
 import { and, eq } from "drizzle-orm";
-import { creatureUploadSchema } from "@/server/api/router";
 import { appRoutes, routeToCampaign, routeToEncounter } from "@/app/routes";
 import { CreaturePostData } from "@/encounters/utils";
 import { createInsertSchema } from "drizzle-zod";
 import { encounterById } from "@/server/encounters";
+import { creatureUploadSchema } from "@/encounters/types";
 
 export async function logOut() {
   const session = await getPageSession();

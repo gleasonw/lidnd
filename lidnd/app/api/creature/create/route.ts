@@ -1,7 +1,7 @@
 import { createCreature, getPageSession } from "@/server/api/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { parse } from "@conform-to/zod";
-import { creatureUploadSchema } from "@/server/api/router";
+import { creatureUploadSchema } from "@/encounters/types";
 
 export const POST = async (req: NextRequest, res: NextResponse) => {
   const session = await getPageSession();

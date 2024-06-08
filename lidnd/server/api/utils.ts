@@ -10,7 +10,7 @@ import {
 import { eq, sql } from "drizzle-orm";
 import { paths } from "@/app/schema";
 import createClient from "openapi-fetch";
-import { Participant, creatureUploadSchema } from "@/server/api/router";
+import { Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import * as z from "zod";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
@@ -19,6 +19,7 @@ import { auth } from "@/server/api/auth/lucia";
 import * as context from "next/headers";
 import apiURL from "@/app/apiURL";
 import { ParticipantUtils } from "@/utils/participants";
+import { creatureUploadSchema } from "@/encounters/types";
 
 export async function getUserCampaigns(user_id: string) {
   return await db
