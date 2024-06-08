@@ -166,7 +166,7 @@ export function useUpdateEncounter() {
         return old?.map((e) => {
           if (e.id === en.id) {
             return {
-              participants: e?.participants ?? [],
+              ...e,
               ...filteredNewEncounter,
             };
           }

@@ -71,10 +71,13 @@ export default function CampaignEncountersOverview(
       <div className="flex flex-row gap-5">
         <EncounterSection
           name="Active"
+          category="active"
           encounters={encountersByStatus.active ?? []}
         />
+        <div className="border h-full border-gray-100" />
         <EncounterSection
           name="Inactive"
+          category="inactive"
           encounters={encountersByStatus.inactive ?? []}
         />
       </div>
@@ -82,7 +85,11 @@ export default function CampaignEncountersOverview(
   );
 }
 
-function EncounterSection(props: { name: string; encounters: Encounter[] }) {
+function EncounterSection(props: {
+  name: string;
+  encounters: Encounter[];
+  category: Encounter["status"];
+}) {
   const campaignId = useCampaignId();
   const { encounters: encountersQuery } = api.useUtils();
   const [acceptDrop, setAcceptDrop] = useState(false);
@@ -115,7 +122,8 @@ function EncounterSection(props: { name: string; encounters: Encounter[] }) {
         }
         updateEncounter({
           id: encounter.id,
-          status: encounter.status === "active" ? "inactive" : "active",
+          status: props.category,
+          order: 0,
         });
         setAcceptDrop(false);
       }}
@@ -140,22 +148,37 @@ function EncounterSection(props: { name: string; encounters: Encounter[] }) {
       className={clsx(
         {
           "border-black": acceptDrop,
+          "border-transparent": !acceptDrop,
         },
-        "border-2 border-dashed border-transparent flex w-[348px] flex-col ",
+        "border-2 border-dashed flex w-[348px] flex-col h-[800px] transition-all rounded-md",
       )}
     >
       <h1 className={"text-2xl"}>{props.name}</h1>
-      <ul className="flex flex-col gap-5">
+      <ul className="flex flex-col">
         {props.encounters?.length === 0 ? (
           <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
         ) : null}
-        {props.encounters?.map((encounter) => (
-          <DraggableEncounterCard
-            encounter={encounter}
-            deleteEncounter={deleteEncounter}
-            key={encounter.id}
-          />
-        ))}
+        {props.encounters
+          ?.toSorted((a, b) => a.order - b.order)
+          .map((encounter, index) => {
+            const priorEncounter = props.encounters.at(index - 1);
+            const nextEncounter = props.encounters.at(index + 1);
+
+            return (
+              <DraggableEncounterCard
+                encounter={encounter}
+                category={props.category}
+                previousOrder={
+                  priorEncounter ? priorEncounter.order : encounter.order - 1
+                }
+                nextOrder={
+                  nextEncounter ? nextEncounter.order : encounter.order + 1
+                }
+                deleteEncounter={deleteEncounter}
+                key={encounter.id}
+              />
+            );
+          })}
       </ul>
     </section>
   );
@@ -216,13 +239,15 @@ function EncounterSkeleton({
   );
 }
 
-function DraggableEncounterCard({
-  encounter,
-  deleteEncounter,
-}: {
+function DraggableEncounterCard(props: {
   encounter: Encounter;
   deleteEncounter: (id: string) => void;
+  category: Encounter["status"];
+  previousOrder: number;
+  nextOrder: number;
 }) {
+  const { encounter, deleteEncounter, category, previousOrder, nextOrder } =
+    props;
   const campaignId = useCampaignId();
   const [acceptDrop, setAcceptDrop] = useState<"none" | "top" | "bottom">(
     "none",
@@ -241,7 +266,8 @@ function DraggableEncounterCard({
         }
         updateEncounter({
           id: droppedEncounter.id,
-          status: droppedEncounter.status === "active" ? "inactive" : "active",
+          status: category,
+          order: acceptDrop === "top" ? previousOrder : nextOrder,
         });
         setAcceptDrop("none");
       }}
@@ -268,8 +294,9 @@ function DraggableEncounterCard({
         {
           "border-b-transparent border-t-gray-400": acceptDrop === "top",
           "border-t-transparent border-b-gray-400": acceptDrop === "bottom",
+          "border-b-transparent border-t-transparent": acceptDrop === "none",
         },
-        "transition-all border-b-2 border-t-2 border-t-transparent border-b-transparent -mb-[2px] last:mb-0 py-1",
+        "transition-all border-b-2 border-t-2 -mb-[2px] last:mb-0 py-5",
       )}
     >
       <Card
