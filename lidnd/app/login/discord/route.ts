@@ -1,11 +1,15 @@
 // app/login/github/route.ts
 import { discordAuth } from "@/server/api/auth/lucia";
+import { generateState } from "arctic";
 import * as context from "next/headers";
 
 import type { NextRequest } from "next/server";
 
 export const GET = async (request: NextRequest) => {
-  const [url, state] = await discordAuth.getAuthorizationUrl();
+  const state = generateState();
+  const url = await discordAuth.createAuthorizationURL(state, {
+    scopes: ["identify"],
+  });
   // store state
   context.cookies().set("discord_oauth_state", state, {
     httpOnly: true,

@@ -1,12 +1,10 @@
-// app/login/github/callback/route.ts
 import { appRoutes } from "@/app/routes";
-import { auth, discordAuth } from "@/server/api/auth/lucia";
 import { db } from "@/server/api/db";
-import { settings } from "@/server/api/db/schema";
-import { OAuthRequestError } from "@lucia-auth/oauth";
-import { cookies, headers } from "next/headers";
-
+import { settings, users } from "@/server/api/db/schema";
+import { LidndAuth } from "@/app/authentication";
+import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
+import { OAuth2RequestError } from "arctic";
 
 export const GET = async (request: NextRequest) => {
   const storedState = cookies().get("discord_oauth_state")?.value;
@@ -14,46 +12,52 @@ export const GET = async (request: NextRequest) => {
   const state = url.searchParams.get("state");
   const code = url.searchParams.get("code");
   // validate state
+
   if (!storedState || !state || storedState !== state || !code) {
+    console.error("Invalid state when getting Discord user");
     return new Response(null, {
       status: 400,
     });
   }
+
   try {
-    const { getExistingUser, discordUser, createUser } =
-      await discordAuth.validateCallback(code);
+    const oauthUser = await LidndAuth.getOauthUser(code);
+    const existingUser = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.discord_id, oauthUser.id),
+    });
+    console.log(existingUser);
 
-    const getUser = async () => {
-      const existingUser = await getExistingUser();
-      if (existingUser) return existingUser;
-
-      const user = await createUser({
-        attributes: {
-          username: discordUser.username,
-          avatar: discordUser.avatar,
-          discord_id: parseInt(discordUser.id),
+    if (existingUser) {
+      await LidndAuth.createSession(existingUser.id);
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: "/",
         },
       });
-      await db.insert(settings).values({
-        user_id: user.userId,
-      });
-      // populate settings here
-      return user;
-    };
+    }
 
-    const user = await getUser();
+    const userCreationResult = await db
+      .insert(users)
+      .values({
+        username: oauthUser.username,
+        avatar: oauthUser.avatar,
+        discord_id: oauthUser.id,
+      })
+      .returning();
 
-    const session = await auth.createSession({
-      userId: user.userId,
-      attributes: {},
+    const newUser = userCreationResult.at(0);
+
+    if (!newUser) {
+      throw new Error("Failed to create user");
+    }
+
+    await db.insert(settings).values({
+      user_id: newUser.id,
     });
 
-    const authRequest = auth.handleRequest(request.method, {
-      cookies,
-      headers,
-    });
+    await LidndAuth.createSession(newUser.id);
 
-    authRequest.setSession(session);
     const redirectUrl = cookies().get("redirect")?.value;
     const redirectLocation =
       redirectUrl && redirectUrl !== "undefined"
@@ -68,7 +72,7 @@ export const GET = async (request: NextRequest) => {
     });
   } catch (e) {
     console.error(e);
-    if (e instanceof OAuthRequestError) {
+    if (e instanceof OAuth2RequestError) {
       // invalid code
       return new Response(null, {
         status: 400,

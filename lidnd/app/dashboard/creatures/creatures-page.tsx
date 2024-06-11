@@ -13,11 +13,11 @@ import { Creature } from "@/server/api/router";
 import { useMutation } from "@tanstack/react-query";
 import { getCreaturePostForm } from "@/encounters/utils";
 import { CreaturePost } from "@/encounters/types";
-import { rerouteUrl } from "@/app/login/page";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 import { DataTable } from "@/creatures/creatures-table";
 import { columns } from "@/creatures/columns";
+import { rerouteUrl } from "@/app/dashboard/utils";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");

@@ -9,6 +9,7 @@ import { UIStoreProvider } from "@/app/dashboard/UIStore";
 import { CreateCampaignButton } from "@/app/dashboard/create-campaign-button";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { LidndAuth } from "@/app/authentication";
 
 // user must be logged in to view anything in this sub route.
 export default async function CampaignsLayout({
@@ -64,11 +65,11 @@ export default async function CampaignsLayout({
 }
 
 async function UserAvatar() {
-  const session = await getPageSession();
-  if (!session) {
+  const result = await LidndAuth.getUserSession();
+  if (!result) {
     return redirect("/login");
   }
-  const user = session.user;
+  const user = result.user;
 
   return (
     <img

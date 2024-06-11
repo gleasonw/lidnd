@@ -2,11 +2,6 @@ import { DiscordIcon } from "@/app/login/discord";
 import "@/app/globals.css";
 import Link from "next/link";
 
-export const rerouteUrl =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3000"
-    : "https://lidnd.com";
-
 export default function Login({
   searchParams,
 }: {

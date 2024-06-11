@@ -87,6 +87,7 @@ export type EncounterWithParticipants = Encounter & {
 export const participantSchema = createSelectSchema(participants);
 export const insertSettingsSchema = createInsertSchema(settings);
 export const updateEncounterSchema = createInsertSchema(encounters);
+export const encounterInsertSchema = createInsertSchema(encounters);
 
 export const updateSettingsSchema = insertSettingsSchema
   .omit({ user_id: true })
@@ -162,11 +163,7 @@ export const appRouter = t.router({
 
   createEncounter: protectedProcedure
     .input(
-      z.object({
-        name: z.string().nullable(),
-        description: z.string().nullable(),
-        campaign_id: z.string(),
-      })
+      encounterInsertSchema.merge(z.object({ user_id: z.string().optional() }))
     )
     .mutation(async (opts) => {
       return await db.transaction(async (tx) => {
@@ -174,10 +171,8 @@ export const appRouter = t.router({
           tx
             .insert(encounters)
             .values({
-              name: opts.input.name,
-              description: opts.input.description,
+              ...opts.input,
               user_id: opts.ctx.user.userId,
-              campaign_id: opts.input.campaign_id,
             })
             .returning(),
           playersInCampaign(opts.input.campaign_id, opts.ctx.user.userId, tx),

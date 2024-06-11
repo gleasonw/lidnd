@@ -40,6 +40,24 @@ export const EncounterUtils = {
       .toSorted(ParticipantUtils.sortLinearly);
   },
 
+  placeholder(
+    encounter: Partial<Encounter> & { campaign_id: string }
+  ): Encounter {
+    return {
+      id: encounter.id ?? Math.random().toString(),
+      campaign_id: encounter.campaign_id,
+      user_id: encounter.user_id ?? "pending",
+      name: encounter.name ?? null,
+      description: encounter.description ?? null,
+      started_at: encounter.started_at ?? new Date(),
+      created_at: encounter.created_at ?? new Date(),
+      current_round: encounter.current_round ?? 0,
+      ended_at: encounter.ended_at ?? null,
+      status: encounter.status ?? "active",
+      order: encounter.order ?? 0,
+    };
+  },
+
   updateParticipant(newParticipant: Participant, encounter: EncounterWithData) {
     return {
       ...encounter,

@@ -1,37 +1,47 @@
-import { lucia } from "lucia";
-import { nextjs_future } from "lucia/middleware";
-import { postgres as postgresAdapter } from "@lucia-auth/adapter-postgresql";
-import { queryClient } from "@/server/api/db";
-import { discord } from "@lucia-auth/oauth/providers";
-import { rerouteUrl } from "@/app/login/page";
+import { Lucia, TimeSpan } from "lucia";
+import { session, users } from "@/server/api/db/schema";
+import { DrizzlePostgreSQLAdapter } from "@lucia-auth/adapter-drizzle";
+import { db } from "@/server/api/db";
+import { Discord } from "arctic";
+import { rerouteUrl } from "@/app/dashboard/utils";
 
-export const auth = lucia({
-  // @ts-ignore - i should upgrade lucia
-  adapter: postgresAdapter(queryClient, {
-    user: "users",
-    key: "user_key",
-    session: "user_session",
-  }),
-  env: process.env.NODE_ENV === "development" ? "DEV" : "PROD",
-  middleware: nextjs_future(),
-
-  sessionCookie: {
-    expires: false,
-  },
-
-  getUserAttributes: (user) => {
+const lucia = new Lucia(new DrizzlePostgreSQLAdapter(db, session, users), {
+  getUserAttributes: (attributes) => {
     return {
-      username: user.username,
-      avatar: user.avatar,
-      discord_id: user.discord_id,
+      username: attributes.username,
+      avatar: attributes.avatar,
+      discord_id: attributes.discord_id,
     };
   },
+  sessionExpiresIn: new TimeSpan(30, "d"),
+  sessionCookie: {
+    name: "session",
+    expires: false,
+  },
 });
 
-export const discordAuth = discord(auth, {
-  clientId: process.env.CLIENT_ID ?? "",
-  clientSecret: process.env.CLIENT_SECRET ?? "",
-  redirectUri: `${rerouteUrl}/api/discord`,
-});
+export const auth = lucia;
+export type Auth = typeof lucia;
+declare module "lucia" {
+  interface Register {
+    Lucia: typeof lucia;
+    DatabaseSessionAttributes: DatabaseSessionAttributes;
+    DatabaseUserAttributes: DatabaseUserAttributes;
+  }
+}
 
-export type Auth = typeof auth;
+interface DatabaseSessionAttributes {}
+interface DatabaseUserAttributes {
+  username: string;
+  avatar: string;
+  discord_id: string;
+}
+
+export const discordAuth = new Discord(
+  process.env.CLIENT_ID ?? "",
+  process.env.CLIENT_SECRET ?? "",
+  `${rerouteUrl}/api/discord`
+);
+
+// TODO: wrapper in case of change
+export interface LidndDiscordAuth {}

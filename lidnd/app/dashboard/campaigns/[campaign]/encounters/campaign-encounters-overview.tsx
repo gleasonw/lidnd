@@ -12,8 +12,6 @@ import {
 import { ExternalLink, MoreHorizontal, Plus, UserPlus } from "lucide-react";
 import { api } from "@/trpc/react";
 import { Encounter } from "@/server/api/router";
-import { useRouter } from "next/navigation";
-import { LoadingButton } from "@/components/ui/loading-button";
 import { useCampaignId } from "../hooks";
 import { routeToEncounter } from "@/app/routes";
 import { ButtonWithTooltip } from "@/components/ui/tip";
@@ -28,6 +26,10 @@ import { Separator } from "@/components/ui/separator";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
 import { useUpdateEncounter } from "@/encounters/[id]/hooks";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { EncounterUtils } from "@/utils/encounters";
 
 export interface CampaignEncountersProps {
   deleteCampaignButton: React.ReactNode;
@@ -52,7 +54,6 @@ export default function CampaignEncountersOverview(
   return (
     <div className="flex flex-col gap-5">
       {campaignHeader}
-      <h1 className="text-xl">Players</h1>
       <span className="flex gap-5 items-center">
         {playersDisplay}
         <Dialog>
@@ -67,7 +68,6 @@ export default function CampaignEncountersOverview(
         </Dialog>
       </span>
       <Separator />
-      <CreateEncounterButton />
       <div className="flex flex-row gap-5">
         <EncounterSection
           name="Active"
@@ -153,8 +153,12 @@ function EncounterSection(props: {
         "border-2 border-dashed flex w-[348px] flex-col h-[800px] transition-all rounded-md",
       )}
     >
-      <h1 className={"text-2xl"}>{props.name}</h1>
-      <ul className="flex flex-col">
+      <h1 className={"text-2xl flex justify-between"}>
+        {props.name}
+
+        <CreateEncounterButton category={props.category} />
+      </h1>
+      <ul className="flex flex-col bg-gray-50 p-1 rounded">
         {props.encounters?.length === 0 ? (
           <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
         ) : null}
@@ -184,39 +188,97 @@ function EncounterSection(props: {
   );
 }
 
-export function CreateEncounterButton({ className }: { className?: string }) {
+export function CreateEncounterButton({
+  className,
+  category,
+}: {
+  className?: string;
+  category: Encounter["status"];
+}) {
   const { encounters } = api.useUtils();
   const campaignId = useCampaignId();
 
-  const router = useRouter();
-  const { mutate: createDefaultEncounter, isLoading: isCreatingEncounter } =
-    api.createEncounter.useMutation({
-      onSuccess: async (encounter) => {
-        router.push(routeToEncounter(campaignId, encounter.id));
-        return await encounters.invalidate();
-      },
-    });
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [createMore, setCreateMore] = useState(false);
+  const [dialogIsOpen, setDialogIsOpen] = useState(false);
+
+  const { mutate: createDefaultEncounter } = api.createEncounter.useMutation({
+    onMutate: async (newEncounter) => {
+      await encounters.cancel(campaignId);
+      const previous = encounters.getData(campaignId);
+      encounters.setData(campaignId, (old) => {
+        if (!old) return [];
+        const placeholder = EncounterUtils.placeholder(newEncounter);
+        return [...old, { ...placeholder, participants: [] }];
+      });
+      return { previous };
+    },
+    onSuccess: async () => {
+      return await encounters.invalidate();
+    },
+  });
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        createDefaultEncounter({
-          name: null,
-          description: null,
-          campaign_id: campaignId,
-        });
-      }}
-      className={className}
+    <Dialog
+      open={dialogIsOpen}
+      onOpenChange={(isOpen) => setDialogIsOpen(isOpen)}
     >
-      <LoadingButton
-        isLoading={isCreatingEncounter}
-        type={"submit"}
-        className={"flex gap-5 w-52"}
-      >
-        <Plus />
-        Create encounter
-      </LoadingButton>
-    </form>
+      <DialogTrigger asChild>
+        <ButtonWithTooltip
+          variant="ghost"
+          text="Create encounter"
+          onClick={() => setDialogIsOpen(true)}
+        >
+          <Plus />
+        </ButtonWithTooltip>
+      </DialogTrigger>
+      <DialogContent>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            createDefaultEncounter({
+              name,
+              description,
+              campaign_id: campaignId,
+              status: category,
+            });
+            setName("");
+            setDescription("");
+
+            if (createMore) {
+              return;
+            }
+
+            setDialogIsOpen(false);
+          }}
+          className={"flex flex-col gap-5"}
+        >
+          <Input
+            placeholder="Encounter name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <Textarea
+            placeholder="Encounter description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+          <div className="flex justify-between items-center">
+            <div className="ml-auto flex gap-2 items-center">
+              <label className="flex gap-2">
+                <Switch
+                  placeholder="Create more"
+                  defaultChecked={createMore}
+                  onCheckedChange={(checked) => setCreateMore(checked)}
+                />
+                <span>Create more</span>
+              </label>
+              <Button type="submit">Create encounter</Button>
+            </div>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -300,7 +362,7 @@ function DraggableEncounterCard(props: {
       )}
     >
       <Card
-        className={clsx("flex flex-col transition-all cursor-grab")}
+        className={clsx("flex flex-col transition-all cursor-grab h-32")}
         draggable
         onDragStart={(e) => {
           typedDrag.set(e.dataTransfer, dragTypes.encounter, encounter);
@@ -313,7 +375,7 @@ function DraggableEncounterCard(props: {
               ? `${routeToEncounter(campaignId, encounter.id)}/run`
               : routeToEncounter(campaignId, encounter.id)
           }
-          className="flex hover:bg-gray-200 p-5 justify-center border-b relative group bg-gray-100 rounded-t-lg"
+          className="flex hover:bg-gray-200 p-3 text-ellipsis  border-b relative group bg-gray-100 rounded-t-lg"
         >
           <span
             className={
@@ -323,7 +385,7 @@ function DraggableEncounterCard(props: {
             <ExternalLink />
           </span>
 
-          <h2 className={"text-2xl pb-5"}>
+          <h2 className={"font-medium max-w-full truncate"}>
             {encounter.name ? encounter.name : "Unnamed"}
           </h2>
         </Link>

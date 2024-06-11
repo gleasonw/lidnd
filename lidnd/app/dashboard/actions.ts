@@ -1,6 +1,5 @@
 "use server";
 
-import { auth } from "@/server/api/auth/lucia";
 import { createCreature, getPageSession } from "@/server/api/utils";
 import { redirect } from "next/navigation";
 import {
@@ -22,11 +21,12 @@ import { CreaturePostData } from "@/encounters/utils";
 import { createInsertSchema } from "drizzle-zod";
 import { encounterById } from "@/server/encounters";
 import { creatureUploadSchema } from "@/encounters/types";
+import { LidndAuth } from "@/app/authentication";
 
 export async function logOut() {
   const session = await getPageSession();
   if (!session) return redirect("/login");
-  await auth.invalidateSession(session?.sessionId);
+  await LidndAuth.invalidateSession(session?.sessionId);
   redirect("/login");
 }
 

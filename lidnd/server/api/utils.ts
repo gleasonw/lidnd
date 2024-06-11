@@ -14,12 +14,10 @@ import { Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import * as z from "zod";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { cache } from "react";
-import { auth } from "@/server/api/auth/lucia";
-import * as context from "next/headers";
 import apiURL from "@/app/apiURL";
 import { ParticipantUtils } from "@/utils/participants";
 import { creatureUploadSchema } from "@/encounters/types";
+import { LidndAuth } from "@/app/authentication";
 
 export async function getUserCampaigns(user_id: string) {
   return await db
@@ -138,10 +136,31 @@ export async function fetchWhitelist() {
   return whitelist;
 }
 
-export const getPageSession = cache(() => {
-  const authRequest = auth.handleRequest("GET", context);
-  return authRequest.validate();
-});
+/**
+ * @deprecated
+ *
+ * just use LidndAuth.getUser()
+ */
+export async function getPageSession(): Promise<{
+  user: {
+    userId: string;
+  };
+  sessionId: string;
+} | null> {
+  const result = await LidndAuth.getUserSession();
+  console.log(result);
+
+  if (!result) {
+    return null;
+  }
+
+  return {
+    user: {
+      userId: result.user.id,
+    },
+    sessionId: result.session.id,
+  };
+}
 
 export async function setActiveParticipant(
   participant_id: string,

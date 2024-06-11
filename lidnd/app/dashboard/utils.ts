@@ -5,6 +5,11 @@ export function isStringMeaningful(str: string) {
   return str !== null && str !== undefined && str !== "";
 }
 
+export const rerouteUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : "https://lidnd.com";
+
 export const booleanSchema = z
   .union([z.boolean(), z.literal("true"), z.literal("false")])
   .transform((value) => value === true || value === "true");
