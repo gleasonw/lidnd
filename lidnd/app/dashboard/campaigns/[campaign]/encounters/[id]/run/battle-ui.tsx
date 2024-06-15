@@ -32,7 +32,6 @@ import { GroupBattleUI } from "@/app/dashboard/campaigns/[campaign]/encounters/[
 import { EncounterTime } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/run/encounter-time";
 import { useCampaign } from "@/app/dashboard/campaigns/[campaign]/hooks";
 import { ParticipantUpload } from "@/encounters/[id]/run/participant-add-form";
-import { Reminder } from "@/encounters/[id]/page";
 import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { ReminderDialog } from "@/encounters/[id]/run/reminder-dialog";
@@ -40,6 +39,7 @@ import { ParticipantUtils } from "@/utils/participants";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import { EncounterUtils } from "@/utils/encounters";
 import { EncounterWithData } from "@/server/encounters";
+import { Reminder } from "@/app/dashboard/types";
 
 export function BattleUILoader() {
   return (

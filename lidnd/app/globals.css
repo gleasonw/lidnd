@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  [contenteditable] {
+    outline: none;
+  }
+
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -68,9 +72,18 @@
 
 @layer base {
   * {
+    .tiptap p.is-editor-empty:first-child::before {
+      color: #adb5bd;
+      content: attr(data-placeholder);
+      float: left;
+      height: 0;
+      pointer-events: none;
+    }
+
     @apply border-border;
   }
   body {
+    overflow: hidden;
     @apply bg-background text-foreground;
   }
 }

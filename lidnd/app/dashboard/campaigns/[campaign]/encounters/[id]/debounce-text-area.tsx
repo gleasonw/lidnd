@@ -1,8 +1,12 @@
 "use client";
 
 import { updateEncounterDescription } from "@/app/dashboard/actions";
-import { Textarea, TextareaProps } from "@/components/ui/textarea";
+import { LidndTextArea } from "@/components/ui/lidnd-text-area";
+import { TextareaProps } from "@/components/ui/textarea";
 import { Encounter } from "@/server/api/router";
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
 import React from "react";
 import { useDebouncedCallback } from "use-debounce";
 
@@ -12,10 +16,7 @@ export interface DescriptionTextProps extends TextareaProps {
 
 export function DescriptionTextArea(props: DescriptionTextProps) {
   const { encounter } = props;
-  const [description, setDescription] = React.useState<string | undefined>(
-    encounter.description ?? "",
-  );
-  const [status, setStatus] = React.useState<"idle" | "saving">("idle");
+  const [_, setStatus] = React.useState<"idle" | "saving">("idle");
 
   const debouncedUpdate = useDebouncedCallback(async (description: string) => {
     if (!encounter) {
@@ -27,35 +28,24 @@ export function DescriptionTextArea(props: DescriptionTextProps) {
     setStatus("idle");
   }, 500);
 
+  const configuredPlaceholder = Placeholder.configure({
+    placeholder: "Flow, terrain, monster strategy, etc...",
+  });
+
+  const editor = useEditor({
+    extensions: [StarterKit, configuredPlaceholder],
+    content: encounter.description,
+    onUpdate: ({ editor }) => {
+      const content = editor.getHTML();
+      setStatus("saving");
+      debouncedUpdate(content);
+    },
+  });
+
   return (
-    <div>
-      <span className="h-5 relative flex">
-        <div
-          data-saving={status === "saving"}
-          className={
-            "opacity-0 absolute top-0 transition-opacity data-[saving=true]:opacity-100"
-          }
-        >
-          Saving...
-        </div>
-        <div
-          className="opacity-100 absolute top-0 transition-opacity data-[saving=true]:opacity-0 flex items-center gap-2"
-          data-saving={status === "saving"}
-        >
-          Saved
-        </div>
-      </span>
-      <Textarea
-        className="h-40"
-        name="description"
-        value={description}
-        placeholder="Flow, terrain, monster strategy, etc..."
-        onChange={(e) => {
-          setStatus("saving");
-          setDescription(e.target.value);
-          debouncedUpdate(e.target.value);
-        }}
-      />
-    </div>
+    <LidndTextArea
+      editor={editor}
+      placeholder="Flow, terrain, monster strategy, etc..."
+    />
   );
 }

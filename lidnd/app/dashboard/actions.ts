@@ -6,7 +6,6 @@ import {
   campaigns,
   campaignToPlayer,
   participants,
-  reminders,
   encounters,
 } from "@/server/api/db/schema";
 import { z } from "zod";
@@ -16,10 +15,8 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { campaignInsertSchema } from "@/app/dashboard/types";
 import { and, eq } from "drizzle-orm";
-import { appRoutes, routeToCampaign, routeToEncounter } from "@/app/routes";
+import { appRoutes, routeToCampaign } from "@/app/routes";
 import { CreaturePostData } from "@/encounters/utils";
-import { createInsertSchema } from "drizzle-zod";
-import { encounterById } from "@/server/encounters";
 import { creatureUploadSchema } from "@/encounters/types";
 import { LidndAuth } from "@/app/authentication";
 
@@ -185,46 +182,4 @@ export async function createCreatureInEncounter(formData: CreaturePostData) {
     status: 201,
     data: newCreature,
   };
-}
-
-const reminderSchema = createInsertSchema(reminders);
-
-export async function upsertEncounterReminder(
-  encounterId: string,
-  formData: FormData,
-) {
-  const session = await getPageSession();
-
-  if (!session) {
-    return { error: "No session found." };
-  }
-
-  const reminder = parse(formData, {
-    schema: reminderSchema.merge(
-      z.object({ encounter_id: z.string().optional() }),
-    ),
-  });
-
-  if (!reminder.value) {
-    return { error: reminder.error };
-  }
-
-  const encounter = await encounterById(session.user.userId, encounterId);
-
-  if (encounter?.user_id !== session.user.userId) {
-    return { error: "You do not have access to this encounter." };
-  }
-
-  await db
-    .insert(reminders)
-    .values({
-      ...reminder.value,
-      encounter_id: encounterId,
-    })
-    .onConflictDoUpdate({
-      target: reminders.id,
-      set: reminder.value,
-    });
-
-  revalidatePath(routeToEncounter(encounter.campaign_id, encounter.id));
 }

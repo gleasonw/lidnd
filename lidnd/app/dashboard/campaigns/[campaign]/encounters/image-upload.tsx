@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import clsx from "clsx";
 
 export function ImageUpload({
@@ -12,11 +12,15 @@ export function ImageUpload({
   image,
   clearImage,
   previewSize = 200,
+  dropText,
+  fileText,
 }: {
   onUpload: (file?: File) => void;
   image?: File;
   clearImage: () => void;
   previewSize?: number;
+  dropText: string;
+  fileText: string;
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "hovering">("idle");
@@ -45,54 +49,34 @@ export function ImageUpload({
     [onUpload],
   );
 
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+
+  if (previewUrl) {
+    return (
+      <div className="relative w-fit">
+        <Button
+          variant="destructive"
+          onClick={(e) => {
+            e.preventDefault();
+            clearImage();
+          }}
+          size="sm"
+          className="absolute top-0 right-0"
+        >
+          <X />
+        </Button>
+        <Image
+          src={previewUrl}
+          alt={"preview image for " + image?.name}
+          width={previewSize}
+          height={previewSize}
+        />
+      </div>
+    );
+  }
+
   return (
     <span className="h-auto relative flex flex-col gap-5 group">
-      {previewUrl && (
-        <div className="relative w-fit">
-          <Button
-            variant="outline"
-            onClick={(e) => {
-              e.preventDefault();
-              clearImage();
-            }}
-            className="absolute top-0 right-0"
-          >
-            <X />
-          </Button>
-          <Image
-            src={previewUrl}
-            alt={"preview image for " + image?.name}
-            width={previewSize}
-            height={previewSize}
-          />
-        </div>
-      )}
-      <span className="flex gap-3 items-center">
-        <Input
-          type={"file"}
-          className="max-w-xs"
-          accept="image/png, image/jpeg, image/jpg"
-          onChange={(e) => {
-            if (e.target.files) {
-              onUpload(e.target.files[0]);
-            }
-          }}
-        />
-        or
-        <Input
-          placeholder="Paste image"
-          onPaste={(e) => {
-            const clipboardData = e.clipboardData;
-            const item = clipboardData.items[0];
-
-            if (!item) {
-              console.error("No item found when pasting image");
-              return;
-            }
-            onImageInput(item);
-          }}
-        />
-      </span>
       <span
         onDragOver={(e) => {
           e.preventDefault();
@@ -105,8 +89,10 @@ export function ImageUpload({
 
           if (!dropItem) {
             console.error("No item found when dropping image");
+            setStatus("idle");
             return;
           }
+          setStatus("idle");
           onImageInput(dropItem);
         }}
         className={clsx(
@@ -114,7 +100,45 @@ export function ImageUpload({
           status === "hovering" && "border-gray-400",
         )}
       >
-        Drop image here
+        {dropText}
+      </span>
+      <span className="flex gap-3 items-center">
+        <input
+          ref={inputRef}
+          type="file"
+          className="hidden"
+          accept="image/png, image/jpeg, image/jpg"
+          onChange={(e) => {
+            if (e.target.files) {
+              onUpload(e.target.files[0]);
+            }
+          }}
+        />
+        <Button
+          variant="outline"
+          className="flex gap-1"
+          onClick={(e) => {
+            e.preventDefault();
+            inputRef.current?.click();
+          }}
+        >
+          <span className="whitespace-nowrap">{fileText}</span>
+          <Upload />
+        </Button>
+        or
+        <Input
+          placeholder="Paste"
+          onPaste={(e) => {
+            const clipboardData = e.clipboardData;
+            const item = clipboardData.items[0];
+
+            if (!item) {
+              console.error("No item found when pasting image");
+              return;
+            }
+            onImageInput(item);
+          }}
+        />
       </span>
     </span>
   );

@@ -21,8 +21,6 @@ export function TRPCReactProvider(props: {
           queries: {
             // ✅ globally default to 20 seconds
             staleTime: 1000 * 20,
-            keepPreviousData: true,
-            refetchOnWindowFocus: false,
           },
         },
       })

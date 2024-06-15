@@ -65,11 +65,10 @@ export default async function CampaignsLayout({
 }
 
 async function UserAvatar() {
-  const result = await LidndAuth.getUserSession();
-  if (!result) {
+  const user = await LidndAuth.getUser();
+  if (!user) {
     return redirect("/login");
   }
-  const user = result.user;
 
   return (
     <img

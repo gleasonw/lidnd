@@ -1,7 +1,7 @@
 import { Encounter } from "@/server/api/router";
 import { z } from "zod";
 
-export function isStringMeaningful(str: string) {
+export function isStringMeaningful(str: string | null) {
   return str !== null && str !== undefined && str !== "";
 }
 

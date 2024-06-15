@@ -148,7 +148,6 @@ export async function getPageSession(): Promise<{
   sessionId: string;
 } | null> {
   const result = await LidndAuth.getUserSession();
-  console.log(result);
 
   if (!result) {
     return null;
@@ -225,7 +224,6 @@ export async function postEncounterToUserChannel(encounter: { id: string }) {
       Authorization: `Bearer ${session.sessionId}`,
     },
   });
-  console.log(response);
   if (response.error) {
     console.error(response.error);
     throw new TRPCError({

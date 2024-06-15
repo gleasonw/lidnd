@@ -2,6 +2,7 @@
 
 import { AnimationListItem } from "@/encounters/[id]/run/battle-ui";
 import {
+  useEncounter,
   useEncounterId,
   useUpdateEncounterParticipant,
 } from "@/encounters/[id]/hooks";
@@ -18,6 +19,7 @@ import {
   Angry,
   Users2,
   Check,
+  Plus,
 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,18 +37,24 @@ import { ParticipantWithData } from "@/server/api/router";
 import { useCampaignId } from "@/campaigns/hooks";
 import { BasePopover } from "@/encounters/base-popover";
 import { CharacterIcon } from "@/encounters/[id]/character-icon";
-import { ParticipantUpload } from "@/encounters/[id]/run/participant-add-form";
+import {
+  AllyUpload,
+  MonsterUpload,
+} from "@/encounters/[id]/run/participant-add-form";
 import { OriginalSizeImage } from "@/encounters/original-size-image";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
+import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
+import { ButtonWithTooltip } from "@/components/ui/tip";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
+import { isStringMeaningful } from "@/app/dashboard/utils";
 
 export interface EncounterPrepProps {
   notesInput: React.ReactNode;
-  reminderInput: React.ReactNode;
 }
 
 export default function EncounterPrep(props: EncounterPrepProps) {
-  const { notesInput, reminderInput } = props;
+  const { notesInput } = props;
   const [selectedParticipantId, setSelectedParticipantId] = React.useState<
     string | null
   >(null);
@@ -69,23 +77,16 @@ export default function EncounterPrep(props: EncounterPrepProps) {
             <EncounterStats />
           </EncounterDetailsEditor>
           {notesInput}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
-            <div>
-              <EncounterParticipantRow
-                onSelectParticipant={setSelectedParticipantId}
-              />
-              {selectedParticipantId && (
-                <OriginalSizeImage
-                  src={getAWSimageURL(selectedParticipantId, "stat_block")}
-                  alt={"monster stat block"}
-                />
-              )}
-            </div>
-            <Card className="w-full grow">
-              <ParticipantUpload />
-            </Card>
-            {reminderInput}
-          </div>
+          <EncounterParticipantRow
+            onSelectParticipant={setSelectedParticipantId}
+          />
+          {selectedParticipantId && (
+            <OriginalSizeImage
+              src={getAWSimageURL(selectedParticipantId, "stat_block")}
+              alt={"monster stat block"}
+            />
+          )}
+          <EncounterReminderInput />
         </motion.div>
       </Suspense>
     </AnimatePresence>
@@ -117,10 +118,15 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex gap-5 items-center w-full flex-col md:flex-row justify-end">
       <span className="flex gap-3 items-center flex-col md:flex-row mr-auto">
-        <Input
+        <LidndTextInput
+          variant="ghost"
           value={encounterName}
-          placeholder={encounter?.name ?? "Unnamed encounter"}
-          className="text-2xl"
+          placeholder={
+            isStringMeaningful(encounterName)
+              ? encounterName
+              : "Unnamed encounter"
+          }
+          className="px-0 text-2xl"
           onChange={(e) => {
             setEncounterName(e.target.value);
             debouncedNameUpdate(e.target.value);
@@ -187,23 +193,51 @@ function EncounterParticipantRow(props: {
     <>
       <GroupBattleLayout
         playerTitle={
-          <h1 className="flex gap-5 text-xl">
-            Allies <Sword />
+          <h1 className="flex gap-5 text-xl items-center">
+            Allies <Sword />{" "}
+            <LidndPlusDialog text="Add ally">
+              <AllyUpload />
+            </LidndPlusDialog>
           </h1>
         }
         monsterTitle={
-          <h1 className="flex gap-5 text-xl">
+          <h1 className="flex gap-5 text-xl items-center">
             Monsters <Angry />
+            <LidndPlusDialog text="Add monster">
+              <MonsterUpload />
+            </LidndPlusDialog>
           </h1>
         }
-        monsters={monsters.map((participant, index) => (
-          <div
-            onClick={() => onSelectParticipant(participant.creature_id)}
-            key={participant.id + index}
-          >
-            <PrepParticipantCard participant={participant} />
-          </div>
-        ))}
+        monsters={
+          monsters?.length > 0
+            ? monsters.map((participant, index) => (
+                <div
+                  onClick={() => onSelectParticipant(participant.creature_id)}
+                  key={participant.id + index}
+                >
+                  <PrepParticipantCard participant={participant} />
+                </div>
+              ))
+            : [
+                <Card
+                  className="flex flex-col justify-center items-center w-32 h-60"
+                  key="monster-placeholder"
+                >
+                  <LidndDialog
+                    trigger={
+                      <ButtonWithTooltip
+                        text="Add monster"
+                        className="w-full h-full"
+                        variant="ghost"
+                      >
+                        <Plus />
+                      </ButtonWithTooltip>
+                    }
+                    content={<MonsterUpload />}
+                  />
+                </Card>,
+              ]
+        }
         players={players.map((participant, index) => (
           <PrepParticipantCard
             key={participant.id + index}
@@ -502,3 +536,116 @@ const encounterCRPerCharacter = [
   { level: 19, easy: 8, standard: 8.5, hard: 9.5, cap: 28 },
   { level: 20, easy: 8.5, standard: 9, hard: 10, cap: 30 },
 ];
+
+function EncounterReminderInput() {
+  const [encounter] = useEncounter();
+  const { encounterById } = api.useUtils();
+  const [alertAfterRound, setAlertAfterRound] = React.useState<
+    number | undefined
+  >(undefined);
+  const [reminder, setReminder] = React.useState<string | undefined>(undefined);
+  const { mutate: removeReminder } = api.removeEncounterReminder.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(encounter.id);
+    },
+    onMutate: async ({ reminder_id }) => {
+      await encounterById.cancel(encounter.id);
+      const previousEncounter = encounterById.getData(encounter.id);
+      encounterById.setData(encounter.id, (old) => {
+        if (!old) {
+          return;
+        }
+        return EncounterUtils.removeReminder(reminder_id, old);
+      });
+      return previousEncounter;
+    },
+  });
+  const { mutate: addReminder } = api.addEncounterReminder.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(encounter.id);
+    },
+    onMutate: async (newReminder) => {
+      await encounterById.cancel(encounter.id);
+      const previousEncounter = encounterById.getData(encounter.id);
+      encounterById.setData(encounter.id, (old) => {
+        if (!old) {
+          return;
+        }
+        return EncounterUtils.addReminder(
+          {
+            id: Math.random().toString(),
+            reminder: newReminder.reminder ?? "",
+            ...newReminder,
+          },
+          old,
+        );
+      });
+      return previousEncounter;
+    },
+  });
+
+  if (!encounter) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      <h2 className="text-xl">Round reminders</h2>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          addReminder({
+            encounter_id: encounter.id,
+            alert_after_round: alertAfterRound ?? 0,
+            reminder: reminder,
+          });
+        }}
+        className="flex flex-col gap-3"
+      >
+        <section className="flex gap-1 flex-wrap items-center">
+          <Input
+            className="w-80"
+            placeholder="Reminder text"
+            value={reminder}
+            onChange={(e) => setReminder(e.target.value)}
+          />
+          <Input
+            type="number"
+            value={alertAfterRound}
+            onChange={(e) =>
+              setAlertAfterRound(
+                !isNaN(parseInt(e.target.value))
+                  ? parseInt(e.target.value)
+                  : undefined,
+              )
+            }
+            placeholder="Alert after round (0 for every)"
+            className="w-72"
+          />
+          <Button type="submit">
+            <Plus /> Add{" "}
+          </Button>
+        </section>
+        {encounter?.reminders.map((reminder) => (
+          <div className="grid grid-cols-3 gap-3">
+            <span>{reminder.reminder}</span>
+            <span>{reminder.alert_after_round}</span>
+            <Button
+              variant="destructive"
+              className="w-20"
+              onClick={(e) => {
+                e.preventDefault();
+                removeReminder({
+                  reminder_id: reminder.id,
+                  encounter_id: encounter.id,
+                });
+              }}
+            >
+              <X />
+            </Button>
+          </div>
+        ))}
+      </form>
+    </div>
+  );
+}

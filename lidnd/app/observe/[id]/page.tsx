@@ -9,7 +9,7 @@ import { CharacterIcon } from "@/encounters/[id]/character-icon";
 import { HealthMeterOverlay } from "@/encounters/[id]/run/battle-ui";
 import { GroupBattleLayout } from "@/encounters/[id]/run/group-battle-ui";
 import { EncounterUtils } from "@/utils/encounters";
-import { encounterWithCampaign, ObserveEncounter } from "@/server/encounters";
+import { ServerEncounter, ObserveEncounter } from "@/server/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 
 export default function ObservePage({ params }: { params: { id: string } }) {
@@ -25,7 +25,7 @@ async function EncounterObserverView({ id }: { id?: string }) {
     return <div>Provide an id in the url.</div>;
   }
 
-  const encounter = await encounterWithCampaign(id);
+  const encounter = await ServerEncounter.encounterWithCampaign(id);
 
   if (!encounter) {
     return <div>Encounter not found.</div>;

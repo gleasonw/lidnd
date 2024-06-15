@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { EncounterUtils } from "@/utils/encounters";
+import { LidndDialog } from "@/components/ui/lidnd_dialog";
 
 export interface CampaignEncountersProps {
   deleteCampaignButton: React.ReactNode;
@@ -56,25 +57,22 @@ export default function CampaignEncountersOverview(
       {campaignHeader}
       <span className="flex gap-5 items-center">
         {playersDisplay}
-        <Dialog>
-          <DialogTrigger asChild>
+        <LidndDialog
+          trigger={
             <ButtonWithTooltip text="Add new player" variant="outline">
               <UserPlus />
             </ButtonWithTooltip>
-          </DialogTrigger>
-          <DialogContent>
-            <PlayerUploadForm uploadCreature={onPlayerUpload} />
-          </DialogContent>
-        </Dialog>
+          }
+          content={<PlayerUploadForm uploadCreature={onPlayerUpload} />}
+        />
       </span>
       <Separator />
-      <div className="flex flex-row gap-5">
+      <div className="flex flex-row gap-10">
         <EncounterSection
           name="Active"
           category="active"
           encounters={encountersByStatus.active ?? []}
         />
-        <div className="border h-full border-gray-100" />
         <EncounterSection
           name="Inactive"
           category="inactive"
@@ -251,7 +249,7 @@ export function CreateEncounterButton({
 
             setDialogIsOpen(false);
           }}
-          className={"flex flex-col gap-5"}
+          className={"flex flex-col gap-5 pt-3"}
         >
           <Input
             placeholder="Encounter name"
@@ -358,7 +356,7 @@ function DraggableEncounterCard(props: {
           "border-t-transparent border-b-gray-400": acceptDrop === "bottom",
           "border-b-transparent border-t-transparent": acceptDrop === "none",
         },
-        "transition-all border-b-2 border-t-2 -mb-[2px] last:mb-0 py-5",
+        "transition-all border-b-2 border-t-2 -mb-[2px] p-4",
       )}
     >
       <Card

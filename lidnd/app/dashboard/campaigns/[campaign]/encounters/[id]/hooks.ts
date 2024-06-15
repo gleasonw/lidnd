@@ -10,6 +10,12 @@ import { removeUndefinedFields } from "@/app/dashboard/utils";
 import { useCampaignId } from "@/campaigns/hooks";
 import { UpsertEncounter } from "@/app/dashboard/types";
 
+export function useEncounter() {
+  const currentEncounterId = useEncounterId();
+
+  return api.encounterById.useSuspenseQuery(currentEncounterId);
+}
+
 export function useEncounterId() {
   const pathname = usePathname();
   const id = pathname.split("/")[5];
@@ -261,11 +267,14 @@ export function useAddExistingCreatureToEncounter() {
         );
         if (!selectedCreature) return;
 
+        // boolean wonkyness comes from the boolean parsing we have to do server side
+        // we should always have pure booleans locally
         return EncounterUtils.addParticipant(
           ParticipantUtils.placeholderParticipantWithData(
             {
               encounter_id: id,
               creature_id: selectedCreature.id,
+              is_ally: is_ally === true || is_ally === "true" ? true : false,
             },
             {
               ...selectedCreature,

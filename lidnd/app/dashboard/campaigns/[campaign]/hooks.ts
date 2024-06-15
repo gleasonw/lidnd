@@ -1,6 +1,9 @@
 import { api } from "@/trpc/react";
 import { usePathname } from "next/navigation";
 
+import { useEditor } from "@tiptap/react";
+
+import StarterKit from "@tiptap/starter-kit";
 export function useCampaignId() {
   const pathName = usePathname();
 
@@ -16,4 +19,11 @@ export function useCampaignId() {
 export function useCampaign() {
   const campaignId = useCampaignId();
   return api.campaignById.useQuery(campaignId);
+}
+
+export function useTiptapEditor(content?: string) {
+  return useEditor({
+    extensions: [StarterKit],
+    content,
+  });
 }

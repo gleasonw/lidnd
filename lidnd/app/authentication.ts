@@ -3,6 +3,13 @@ import { discordApi } from "@/utils/discord";
 import { cookies } from "next/headers";
 import { cache } from "react";
 
+export type LidndUser = {
+  id: string;
+  username: string;
+  avatar: string;
+  discord_id: string;
+};
+
 export const LidndAuth = {
   getOauthUser: async (code: string) => {
     const tokens = await discordAuth.validateAuthorizationCode(code);
@@ -17,13 +24,11 @@ export const LidndAuth = {
   createSession: async (user_id: string) => {
     const session = await auth.createSession(user_id, {});
     const sessionCookie = auth.createSessionCookie(session.id);
-    console.log(sessionCookie.name);
     cookies().set(
       sessionCookie.name,
       sessionCookie.value,
       sessionCookie.attributes,
     );
-    console.log("cookies", cookies());
   },
 
   invalidateSession: async (session_id: string) => {
@@ -62,4 +67,12 @@ export const LidndAuth = {
 
     return { user, session };
   }),
+
+  getUser: async function (): Promise<LidndUser | null> {
+    const session = await this.getUserSession();
+    if (!session) {
+      return null;
+    }
+    return session.user;
+  },
 };

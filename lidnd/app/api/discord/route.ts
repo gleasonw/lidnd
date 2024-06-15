@@ -5,6 +5,7 @@ import { LidndAuth } from "@/app/authentication";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 import { OAuth2RequestError } from "arctic";
+import { generateIdFromEntropySize } from "lucia";
 
 export const GET = async (request: NextRequest) => {
   const storedState = cookies().get("discord_oauth_state")?.value;
@@ -25,7 +26,6 @@ export const GET = async (request: NextRequest) => {
     const existingUser = await db.query.users.findFirst({
       where: (users, { eq }) => eq(users.discord_id, oauthUser.id),
     });
-    console.log(existingUser);
 
     if (existingUser) {
       await LidndAuth.createSession(existingUser.id);
@@ -37,9 +37,12 @@ export const GET = async (request: NextRequest) => {
       });
     }
 
+    const userId = generateIdFromEntropySize(10);
+
     const userCreationResult = await db
       .insert(users)
       .values({
+        id: userId,
         username: oauthUser.username,
         avatar: oauthUser.avatar,
         discord_id: oauthUser.id,

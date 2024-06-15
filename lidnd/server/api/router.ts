@@ -8,6 +8,7 @@ import {
   participant_status_effects,
   status_effects,
   spells,
+  reminders,
 } from "@/server/api/db/schema";
 import { eq, and, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
@@ -24,11 +25,7 @@ import {
   updateTurnData,
 } from "@/server/api/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import {
-  encountersInCampaign,
-  encounterById,
-  EncounterWithData,
-} from "@/server/encounters";
+import { ServerEncounter, EncounterWithData } from "@/server/encounters";
 import {
   campaignById,
   playersInCampaign,
@@ -88,6 +85,7 @@ export const participantSchema = createSelectSchema(participants);
 export const insertSettingsSchema = createInsertSchema(settings);
 export const updateEncounterSchema = createInsertSchema(encounters);
 export const encounterInsertSchema = createInsertSchema(encounters);
+export const reminderInsertSchema = createInsertSchema(reminders);
 
 export const updateSettingsSchema = insertSettingsSchema
   .omit({ user_id: true })
@@ -105,7 +103,7 @@ export const appRouter = t.router({
     const userId = opts.ctx.user.userId;
     const campaignId = opts.input;
 
-    return await encountersInCampaign(userId, campaignId);
+    return await ServerEncounter.encountersInCampaign(userId, campaignId);
   }),
 
   spells: publicProcedure.input(z.string()).query(async (opts) => {
@@ -121,7 +119,10 @@ export const appRouter = t.router({
   }),
 
   encounterById: protectedProcedure.input(z.string()).query(async (opts) => {
-    const encounter = await encounterById(opts.ctx.user.userId, opts.input);
+    const encounter = await ServerEncounter.encounterById(
+      opts.ctx.user.userId,
+      opts.input
+    );
     if (!encounter) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
@@ -265,7 +266,11 @@ export const appRouter = t.router({
             })
             .where(eq(participants.id, opts.input.id))
             .returning(),
-          encounterById(opts.ctx.user.userId, opts.input.encounter_id, tx),
+          ServerEncounter.encounterById(
+            opts.ctx.user.userId,
+            opts.input.encounter_id,
+            tx
+          ),
         ]);
         if (updatedParticipant.length === 0) {
           throw new TRPCError({
@@ -288,7 +293,11 @@ export const appRouter = t.router({
             .set(opts.input)
             .where(eq(participants.id, opts.input.id))
             .returning(),
-          encounterById(opts.ctx.user.userId, opts.input.encounter_id, tx),
+          ServerEncounter.encounterById(
+            opts.ctx.user.userId,
+            opts.input.encounter_id,
+            tx
+          ),
         ]);
         const updatedParticipant = update[0];
 
@@ -368,16 +377,15 @@ export const appRouter = t.router({
     .input(z.string())
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
-        const encounter = await encounterById(
-          opts.ctx.user.userId,
+        const encounter = await ServerEncounter.encounterById(
           opts.input,
-          tx
+          opts.ctx.user.userId
         );
 
         if (!encounter) {
           throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "No encounter found",
+            code: "FORBIDDEN",
+            message: "User not allowed to access that encounter",
           });
         }
 
@@ -437,17 +445,10 @@ export const appRouter = t.router({
     )
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
-        const encounter = await encounterById(
+        const encounter = await ServerEncounter.encounterByIdThrows(
           opts.ctx.user.userId,
           opts.input.encounter_id
         );
-
-        if (!encounter) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "No encounter found",
-          });
-        }
 
         const { newlyActiveParticipant, updatedRoundNumber } =
           EncounterUtils.cycleNextTurn(encounter);
@@ -471,17 +472,10 @@ export const appRouter = t.router({
     )
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
-        const encounter = await encounterById(
+        const encounter = await ServerEncounter.encounterByIdThrows(
           opts.ctx.user.userId,
           opts.input.encounter_id
         );
-
-        if (!encounter) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "No encounter found",
-          });
-        }
 
         const { newlyActiveParticipant, updatedRoundNumber } =
           EncounterUtils.cyclePreviousTurn(encounter);
@@ -507,18 +501,11 @@ export const appRouter = t.router({
     )
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
-        const encounter = await encounterById(
+        const encounter = await ServerEncounter.encounterByIdThrows(
           opts.ctx.user.userId,
           opts.input.encounter_id,
           tx
         );
-
-        if (!encounter) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `No encounter found for ${opts.input.encounter_id}`,
-          });
-        }
 
         const { updatedParticipants, updatedRoundNumber } =
           EncounterUtils.updateGroupTurn(
@@ -541,6 +528,35 @@ export const appRouter = t.router({
       return result;
     }),
 
+  addEncounterReminder: protectedProcedure
+    .input(reminderInsertSchema)
+    .mutation(async (opts) => {
+      await ServerEncounter.encounterByIdThrows(
+        opts.ctx.user.userId,
+        opts.input.encounter_id
+      );
+
+      await db.insert(reminders).values(opts.input);
+    }),
+
+  removeEncounterReminder: protectedProcedure
+    .input(z.object({ reminder_id: z.string(), encounter_id: z.string() }))
+    .mutation(async (opts) => {
+      const encounter = await ServerEncounter.encounterByIdThrows(
+        opts.ctx.user.userId,
+        opts.input.encounter_id
+      );
+
+      await db
+        .delete(reminders)
+        .where(
+          and(
+            eq(reminders.id, opts.input.reminder_id),
+            eq(reminders.encounter_id, encounter.id)
+          )
+        );
+    }),
+
   removeParticipantFromEncounter: protectedProcedure
     .input(
       z.object({
@@ -549,17 +565,10 @@ export const appRouter = t.router({
       })
     )
     .mutation(async (opts) => {
-      const encounter = await encounterById(
+      const encounter = await ServerEncounter.encounterByIdThrows(
         opts.ctx.user.userId,
         opts.input.encounter_id
       );
-
-      if (!encounter) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "No encounter found",
-        });
-      }
 
       const result = await db
         .delete(participants)
@@ -609,7 +618,10 @@ export const appRouter = t.router({
               eq(creatures.user_id, opts.ctx.user.userId)
             )
           ),
-        encounterById(opts.ctx.user.userId, opts.input.encounter_id),
+        ServerEncounter.encounterByIdThrows(
+          opts.ctx.user.userId,
+          opts.input.encounter_id
+        ),
       ]);
       if (userCreature.length === 0 || !userCreature[0]) {
         throw new TRPCError({
@@ -641,7 +653,7 @@ export const appRouter = t.router({
       if (!opts.input.id) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "No creature id in reqquest",
+          message: "No creature id in request",
         });
       }
       const result = await db
@@ -734,7 +746,7 @@ export const appRouter = t.router({
       if (opts.input.name) {
         filters.push(ilike(creatures.name, `%${opts.input.name}%`));
       }
-      if (opts.input.is_player) {
+      if (opts.input.is_player !== undefined) {
         filters.push(eq(creatures.is_player, opts.input.is_player));
       }
       return await db

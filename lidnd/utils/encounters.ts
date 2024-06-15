@@ -1,4 +1,4 @@
-import { Reminder } from "@/encounters/[id]/page";
+import { Reminder } from "@/app/dashboard/types";
 import { UpdateTurnOrderReturn } from "@/encounters/utils";
 import {
   Encounter,
@@ -112,6 +112,20 @@ export const EncounterUtils = {
     return {
       ...encounter,
       participants: [...encounter.participants, newParticipant],
+    };
+  },
+
+  addReminder(reminder: Reminder, encounter: EncounterWithData) {
+    return {
+      ...encounter,
+      reminders: [...encounter.reminders, reminder],
+    };
+  },
+
+  removeReminder(id: string, encounter: EncounterWithData) {
+    return {
+      ...encounter,
+      reminders: encounter.reminders.filter((r) => r.id !== id),
     };
   },
 
