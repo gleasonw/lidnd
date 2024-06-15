@@ -34,4 +34,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 bun.lockb
-drizzle.config.ts
+**/drizzle.config.ts
