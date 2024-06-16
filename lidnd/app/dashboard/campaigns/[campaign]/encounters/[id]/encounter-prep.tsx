@@ -50,6 +50,10 @@ import { isStringMeaningful } from "@/app/dashboard/utils";
 import { DescriptionTextArea } from "@/encounters/[id]/description-text-area";
 import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
 
+// TODO:
+// - max hp and challenge rating required
+// - allow creature editing / deletion
+
 export default function EncounterPrep() {
   const [selectedParticipantId, setSelectedParticipantId] = React.useState<
     string | null

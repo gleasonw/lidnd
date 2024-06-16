@@ -74,7 +74,7 @@ function CampaignCard(props: CampaignCardProps) {
           <CardTitle>
             {isStringMeaningful(campaign.name) ? campaign.name : "Unnamed"}
           </CardTitle>
-          <CardDescription
+          <div
             className="whitespace-pre-wrap max-h-96 overflow-auto prose"
             dangerouslySetInnerHTML={{ __html: campaign.description ?? "" }}
           />

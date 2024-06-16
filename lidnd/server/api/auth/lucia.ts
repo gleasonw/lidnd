@@ -43,5 +43,4 @@ export const discordAuth = new Discord(
   `${rerouteUrl}/api/discord`
 );
 
-// TODO: wrapper in case of change
 export interface LidndDiscordAuth {}

@@ -32,6 +32,7 @@ import { EncounterUtils } from "@/utils/encounters";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { CampaignDescriptionArea } from "@/app/dashboard/campaign-description-area";
 import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
+import _ from "lodash";
 
 export interface CampaignEncountersProps {
   deleteCampaignButton: React.ReactNode;
@@ -46,7 +47,7 @@ export default function CampaignEncountersOverview(
   const campaignId = useCampaignId();
   const { data: encounters } = api.encounters.useQuery(campaignId);
 
-  const encountersByStatus = Object.groupBy(encounters ?? [], (e) => e.status);
+  const encountersByStatus = _.groupBy(encounters ?? [], (e) => e.status);
 
   function onPlayerUpload(data: CreaturePost) {
     const dataAsForm = getCreaturePostForm(data);
