@@ -1,4 +1,5 @@
 import { Reminder } from "@/app/dashboard/types";
+import { routeToEncounter } from "@/app/routes";
 import { UpdateTurnOrderReturn } from "@/encounters/utils";
 import {
   Encounter,
@@ -20,6 +21,18 @@ type Cyclable = {
 };
 
 export const EncounterUtils = {
+  dynamicRoute(encounter: {
+    id: string;
+    started_at: Encounter["started_at"];
+    campaign_id: string;
+  }) {
+    if (encounter.started_at) {
+      return `${routeToEncounter(encounter.campaign_id, encounter.id)}/run`;
+    }
+
+    return routeToEncounter(encounter.campaign_id, encounter.id);
+  },
+
   initiativeType(encounter: { campaigns: { system: System } }) {
     return encounter.campaigns.system.initiative_type;
   },

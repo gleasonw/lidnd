@@ -36,9 +36,9 @@ export const SmallSideNav = observer(function SmallSideNav(
   );
 });
 
-export function SideNav(props: SideNavProps) {
+export function LargeSideNav(props: SideNavProps) {
   return (
-    <nav className="flex-col gap-10 shadow-md h-screen hidden w-64 lg:flex items-center ">
+    <nav className="flex-col gap-10 h-screen hidden w-64 lg:flex items-center ">
       <SideNavBody {...props} />
     </nav>
   );

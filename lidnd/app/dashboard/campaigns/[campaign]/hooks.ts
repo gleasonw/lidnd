@@ -18,7 +18,7 @@ export function useCampaignId() {
 
 export function useCampaign() {
   const campaignId = useCampaignId();
-  return api.campaignById.useQuery(campaignId);
+  return api.campaignById.useSuspenseQuery(campaignId);
 }
 
 export function useTiptapEditor(content?: string) {

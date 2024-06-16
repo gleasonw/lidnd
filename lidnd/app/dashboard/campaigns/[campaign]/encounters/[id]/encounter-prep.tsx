@@ -7,7 +7,6 @@ import {
   useUpdateEncounterParticipant,
 } from "@/encounters/[id]/hooks";
 import { Button } from "@/components/ui/button";
-import { AnimatePresence, motion } from "framer-motion";
 import {
   Clock,
   Dices,
@@ -24,7 +23,7 @@ import {
 import Link from "next/link";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import React, { Suspense, useState } from "react";
+import React, { useState } from "react";
 import { getAWSimageURL } from "@/encounters/utils";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
@@ -48,52 +47,52 @@ import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { isStringMeaningful } from "@/app/dashboard/utils";
+import { DescriptionTextArea } from "@/encounters/[id]/description-text-area";
+import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
 
-export interface EncounterPrepProps {
-  notesInput: React.ReactNode;
-}
-
-export default function EncounterPrep(props: EncounterPrepProps) {
-  const { notesInput } = props;
+export default function EncounterPrep() {
   const [selectedParticipantId, setSelectedParticipantId] = React.useState<
     string | null
   >(null);
 
   return (
-    <AnimatePresence>
-      <Suspense
-        fallback={
-          <div className="w-screen p-20 flex items-center justify-center">
-            Loading encounter...
-          </div>
-        }
-      >
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.1 } }}
-          className="w-full flex flex-col gap-5"
-        >
-          <EncounterDetailsEditor>
-            <EncounterStats />
-          </EncounterDetailsEditor>
-          {notesInput}
-          <EncounterParticipantRow
-            onSelectParticipant={setSelectedParticipantId}
-          />
-          {selectedParticipantId && (
-            <OriginalSizeImage
-              src={getAWSimageURL(selectedParticipantId, "stat_block")}
-              alt={"monster stat block"}
-            />
-          )}
-          <EncounterReminderInput />
-        </motion.div>
-      </Suspense>
-    </AnimatePresence>
+    <FadeInSuspense
+      fallback={<div>Loading encounter...</div>}
+      wrapperClassName="flex"
+    >
+      <div className="flex flex-col gap-3 flex-grow ml-auto mr-auto max-w-[860px] min-w-0">
+        <EncounterDetailsTopBar>
+          <EncounterStats />
+        </EncounterDetailsTopBar>
+        <EncounterNameInput />
+        <DescriptionTextArea
+          tiptapReadyGate={
+            <>
+              <EncounterParticipantRow
+                onSelectParticipant={setSelectedParticipantId}
+              />
+              {selectedParticipantId && (
+                <OriginalSizeImage
+                  src={getAWSimageURL(selectedParticipantId, "stat_block")}
+                  alt={"monster stat block"}
+                />
+              )}
+              <div className="flex md:hidden">
+                <EncounterReminderInput />
+              </div>
+            </>
+          }
+        />
+      </div>
+      <EncounterDetailsSidebar>
+        <EncounterStats />
+        <EncounterReminderInput />
+      </EncounterDetailsSidebar>
+    </FadeInSuspense>
   );
 }
 
-function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
+export function EncounterNameInput() {
   const id = useEncounterId();
   const { encounterById } = api.useUtils();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
@@ -116,25 +115,31 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
   }, 500);
 
   return (
-    <div className="flex gap-5 items-center w-full flex-col md:flex-row justify-end">
-      <span className="flex gap-3 items-center flex-col md:flex-row mr-auto">
-        <LidndTextInput
-          variant="ghost"
-          value={encounterName}
-          placeholder={
-            isStringMeaningful(encounterName)
-              ? encounterName
-              : "Unnamed encounter"
-          }
-          className="px-0 text-2xl"
-          onChange={(e) => {
-            setEncounterName(e.target.value);
-            debouncedNameUpdate(e.target.value);
-          }}
-        />
-      </span>
-      {children}
+    <LidndTextInput
+      variant="ghost"
+      value={encounterName}
+      placeholder={
+        isStringMeaningful(encounterName) ? encounterName : "Unnamed encounter"
+      }
+      className="px-0 text-2xl"
+      onChange={(e) => {
+        setEncounterName(e.target.value);
+        debouncedNameUpdate(e.target.value);
+      }}
+    />
+  );
+}
 
+interface EncounterDetailsTopBarProps {
+  children?: React.ReactNode;
+}
+
+function EncounterDetailsTopBar(props: EncounterDetailsTopBarProps) {
+  const { children } = props;
+  const [encounter] = useEncounter();
+  const id = useEncounterId();
+  return (
+    <div className="flex items-center gap-1 flex-wrap md:hidden">
       {encounter?.started_at ? (
         <Link href={`${id}/run`}>
           <Button>
@@ -145,6 +150,27 @@ function EncounterDetailsEditor({ children }: { children: React.ReactNode }) {
       ) : (
         <EncounterStartButton />
       )}
+      {children}
+    </div>
+  );
+}
+
+function EncounterDetailsSidebar({ children }: { children: React.ReactNode }) {
+  const [encounter] = useEncounter();
+  const id = useEncounterId();
+  return (
+    <div className="flex-col h-screen bg-gray-50 p-3 items-center gap-5 max-w-[300px] hidden md:flex -m-[var(--main-content-padding)]">
+      {encounter?.started_at ? (
+        <Link href={`${id}/run`}>
+          <Button>
+            <Play />
+            Continue the battle!
+          </Button>
+        </Link>
+      ) : (
+        <EncounterStartButton />
+      )}
+      {children}
     </div>
   );
 }
@@ -448,7 +474,8 @@ function EncounterStats() {
         trigger={
           <Button
             className="flex text-xl items-center gap-2 w-44"
-            variant="ghost"
+            variant="outline"
+            size="sm"
           >
             <Skull />
             {difficulty}
@@ -481,8 +508,9 @@ function EncounterStats() {
         className="flex flex-col items-center gap-5"
         trigger={
           <Button
-            className="flex gap-5 items-center text-xl whitespace-nowrap w-60"
-            variant="ghost"
+            className="flex gap-5 items-center text-xl whitespace-nowrap"
+            variant="outline"
+            size="sm"
           >
             <Clock className="flex-shrink-0" />
             {encounterTime}
@@ -602,14 +630,15 @@ function EncounterReminderInput() {
         }}
         className="flex flex-col gap-3"
       >
-        <section className="flex gap-1 flex-wrap items-center">
-          <Input
-            className="w-80"
+        <section className="flex gap-3 flex-wrap items-center">
+          <LidndTextInput
+            variant="ghost"
             placeholder="Reminder text"
             value={reminder}
             onChange={(e) => setReminder(e.target.value)}
           />
-          <Input
+          <LidndTextInput
+            variant="ghost"
             type="number"
             value={alertAfterRound}
             onChange={(e) =>

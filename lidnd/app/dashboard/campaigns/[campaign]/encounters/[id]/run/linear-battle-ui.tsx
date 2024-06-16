@@ -25,7 +25,7 @@ export function LinearBattleUI() {
   const { encounterById } = api.useUtils();
   const { displayReminders } = useBattleUIStore();
 
-  const { mutate: cycleNextMutation, isLoading: isLoadingNextTurn } =
+  const { mutate: cycleNextMutation, isPending: isLoadingNextTurn } =
     api.cycleNextTurn.useMutation({
       onSettled: async () => {
         displayReminders(encounter);
@@ -33,7 +33,7 @@ export function LinearBattleUI() {
       },
     });
 
-  const { mutate: cyclePreviousMutation, isLoading: isLoadingPreviousTurn } =
+  const { mutate: cyclePreviousMutation, isPending: isLoadingPreviousTurn } =
     api.cyclePreviousTurn.useMutation({
       onSettled: async () => {
         return await encounterById.invalidate(id);

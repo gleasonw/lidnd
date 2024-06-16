@@ -1,7 +1,8 @@
 import { db } from "@/server/api/db";
-import { reminders, encounters } from "@/server/api/db/schema";
+import { reminders, encounters, participants } from "@/server/api/db/schema";
+import { Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 export const ServerEncounter = {
   encountersInCampaign: async function (user_id: string, campaign_id: string) {
@@ -112,6 +113,56 @@ export const ServerEncounter = {
         },
       },
     });
+  },
+
+  setActiveParticipant: async function (
+    participant_id: string,
+    encounter_id: string,
+    dbObject = db
+  ) {
+    await dbObject.execute(
+      sql`
+        UPDATE participants
+        SET is_active = CASE 
+            WHEN id = ${participant_id} THEN TRUE
+            ELSE FALSE
+        END
+        WHERE encounter_id = ${encounter_id}
+    `
+    );
+  },
+
+  updateParticipantHasPlayed: async function (
+    participant: Participant,
+    dbObject = db
+  ) {
+    return await dbObject
+      .update(participants)
+      .set({
+        has_played_this_round: participant.has_played_this_round,
+      })
+      .where(eq(participants.id, participant.id));
+  },
+
+  updateTurnData: async function (
+    encounter_id: string,
+    updatedRoundNumber: number,
+    updatedActiveParticipantId: string,
+    dbObject = db
+  ) {
+    return await Promise.all([
+      this.setActiveParticipant(
+        updatedActiveParticipantId,
+        encounter_id,
+        dbObject
+      ),
+      dbObject
+        .update(encounters)
+        .set({
+          current_round: updatedRoundNumber,
+        })
+        .where(eq(encounters.id, encounter_id)),
+    ]);
   },
 };
 

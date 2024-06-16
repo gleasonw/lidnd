@@ -2,12 +2,10 @@ import { db } from "@/server/api/db";
 import {
   campaigns,
   creatures,
-  participants,
-  encounters,
   systems,
   settings,
 } from "@/server/api/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { paths } from "@/app/schema";
 import createClient from "openapi-fetch";
 import { Participant } from "@/server/api/router";
@@ -102,38 +100,12 @@ export async function getEncounterCreature(id: string) {
   return participant;
 }
 
-export async function updateTurnData(
-  encounter_id: string,
-  updatedRoundNumber: number,
-  updatedActiveParticipantId: string,
-  dbObject = db
-) {
-  return await Promise.all([
-    setActiveParticipant(updatedActiveParticipantId, encounter_id, dbObject),
-    dbObject
-      .update(encounters)
-      .set({
-        current_round: updatedRoundNumber,
-      })
-      .where(eq(encounters.id, encounter_id)),
-  ]);
-}
-
 export function getIconAWSname(creature_id: string) {
   return `icon-${creature_id}.png`;
 }
 
 export function getStatBlockAWSname(creature_id: string) {
   return `stat_block-${creature_id}.png`;
-}
-
-export async function fetchWhitelist() {
-  const response = await fetch(
-    "https://raw.githubusercontent.com/gleasonw/lidnd/main/whitelist.txt"
-  );
-  const data = await response.text();
-  const whitelist = new Set(data.split("\n"));
-  return whitelist;
 }
 
 /**
@@ -159,23 +131,6 @@ export async function getPageSession(): Promise<{
     },
     sessionId: result.session.id,
   };
-}
-
-export async function setActiveParticipant(
-  participant_id: string,
-  encounter_id: string,
-  dbObject = db
-) {
-  await dbObject.execute(
-    sql`
-    UPDATE participants
-    SET is_active = CASE 
-        WHEN id = ${participant_id} THEN TRUE
-        ELSE FALSE
-    END
-    WHERE encounter_id = ${encounter_id}
-    `
-  );
 }
 
 export async function allEncounterParticipants(
@@ -232,16 +187,4 @@ export async function postEncounterToUserChannel(encounter: { id: string }) {
     });
   }
   return response;
-}
-
-export async function updateParticipantHasPlayed(
-  participant: Participant,
-  dbObject = db
-) {
-  return await dbObject
-    .update(participants)
-    .set({
-      has_played_this_round: participant.has_played_this_round,
-    })
-    .where(eq(participants.id, participant.id));
 }

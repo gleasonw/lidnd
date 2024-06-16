@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -14,11 +8,11 @@ import { ChevronUp, Plus } from "lucide-react";
 import { ParticipantHealthForm } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/run/creature-health-form";
 import { CharacterIcon } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/character-icon";
 import InitiativeInput from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/InitiativeInput";
-import React, { createContext, Suspense, useContext } from "react";
+import React, { createContext, useContext } from "react";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
-import { useEncounterId } from "../hooks";
+import { useEncounter, useEncounterId } from "../hooks";
 import { ParticipantWithData } from "@/server/api/router";
 import { useRemoveStatusEffect } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/hooks";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
@@ -40,19 +34,14 @@ import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import { EncounterUtils } from "@/utils/encounters";
 import { EncounterWithData } from "@/server/encounters";
 import { Reminder } from "@/app/dashboard/types";
+import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
+import { DescriptionTextArea } from "@/encounters/[id]/description-text-area";
 
 export function BattleUILoader() {
   return (
-    <AnimatePresence>
-      <Suspense fallback={<div>Loading...</div>}>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.1 } }}
-        >
-          <BattleUI />
-        </motion.div>
-      </Suspense>
-    </AnimatePresence>
+    <FadeInSuspense fallback={<div>Loading...</div>}>
+      <BattleUI />
+    </FadeInSuspense>
   );
 }
 
@@ -103,10 +92,8 @@ export function useBattleUIStore() {
 }
 
 export const BattleUI = observer(function BattleUI() {
-  const id = useEncounterId();
-  const { data: encounter } = api.encounterById.useQuery(id);
-
-  const { data: campaign } = useCampaign();
+  const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
 
   const roundText =
     encounter?.current_round === 0
@@ -116,10 +103,10 @@ export const BattleUI = observer(function BattleUI() {
   return (
     <BattleUIContext.Provider value={battleUIStore}>
       <ReminderDialog />
-      <div className="flex gap-8 flex-col">
+      <div className="flex gap-4 flex-col">
         <div className="flex gap-10 flex-wrap items-center justify-center">
           <h1 className="text-xl text-center">{roundText}</h1>
-          <EncounterTime time={encounter?.started_at ?? undefined} />
+          <EncounterTime time={encounter.started_at ?? undefined} />
           <Dialog>
             <DialogTrigger asChild>
               <Button>
@@ -135,17 +122,15 @@ export const BattleUI = observer(function BattleUI() {
             </DialogContent>
           </Dialog>
         </div>
-        {encounter?.description && (
-          <CardDescription className="whitespace-pre-wrap">
-            {encounter.description}
-          </CardDescription>
-        )}
-
-        {campaign?.system?.initiative_type === "linear" ? (
-          <LinearBattleUI />
-        ) : (
-          <GroupBattleUI />
-        )}
+        <DescriptionTextArea
+          tiptapReadyGate={
+            campaign.system?.initiative_type === "linear" ? (
+              <LinearBattleUI />
+            ) : (
+              <GroupBattleUI />
+            )
+          }
+        />
       </div>
     </BattleUIContext.Provider>
   );

@@ -9,11 +9,12 @@ import z from "zod";
 export function SettingsForm() {
   const [userSettings] = api.settings.useSuspenseQuery();
   const { settings } = api.useUtils();
-  const { mutate: updateSettings, isLoading } = api.updateSettings.useMutation({
-    onSettled: async () => {
-      return await settings.invalidate();
-    },
-  });
+  const { mutate: updateSettings, isPending: isLoading } =
+    api.updateSettings.useMutation({
+      onSettled: async () => {
+        return await settings.invalidate();
+      },
+    });
 
   const updateSettingsSchema = z.object({
     show_health_in_discord: z.boolean(),

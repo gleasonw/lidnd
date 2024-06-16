@@ -1,6 +1,8 @@
+import { appRoutes } from "@/app/routes";
 import { auth, discordAuth } from "@/server/api/auth/lucia";
 import { discordApi } from "@/utils/discord";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { cache } from "react";
 
 export type LidndUser = {
@@ -74,5 +76,12 @@ export const LidndAuth = {
       return null;
     }
     return session.user;
+  },
+
+  verifyLogin: async function () {
+    const user = await this.getUser();
+    if (!user) {
+      return redirect(appRoutes.login);
+    }
   },
 };

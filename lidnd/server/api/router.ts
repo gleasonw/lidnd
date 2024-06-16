@@ -9,6 +9,7 @@ import {
   status_effects,
   spells,
   reminders,
+  campaigns,
 } from "@/server/api/db/schema";
 import { eq, and, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
@@ -20,17 +21,10 @@ import {
   getIconAWSname,
   getStatBlockAWSname,
   postEncounterToUserChannel,
-  setActiveParticipant,
-  updateParticipantHasPlayed,
-  updateTurnData,
 } from "@/server/api/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { ServerEncounter, EncounterWithData } from "@/server/encounters";
-import {
-  campaignById,
-  playersInCampaign,
-  userCampaigns,
-} from "@/server/campaigns";
+import { ServerCampaign } from "@/server/campaigns";
 import { booleanSchema } from "@/app/dashboard/utils";
 import { ParticipantUtils } from "@/utils/participants";
 import { EncounterUtils } from "@/utils/encounters";
@@ -84,6 +78,7 @@ export type EncounterWithParticipants = Encounter & {
 export const participantSchema = createSelectSchema(participants);
 export const insertSettingsSchema = createInsertSchema(settings);
 export const updateEncounterSchema = createInsertSchema(encounters);
+const updateCampaignSchema = createInsertSchema(campaigns);
 export const encounterInsertSchema = createInsertSchema(encounters);
 export const reminderInsertSchema = createInsertSchema(reminders);
 
@@ -148,19 +143,37 @@ export const appRouter = t.router({
 
   userCampaigns: protectedProcedure.query(async (opts) => {
     const userId = opts.ctx.user.userId;
-    return await userCampaigns(userId);
+    return await ServerCampaign.userCampaigns(userId);
   }),
 
   campaignById: protectedProcedure.input(z.string()).query(async (opts) => {
-    const campaign = await campaignById(opts.input, opts.ctx.user.userId);
-    if (!campaign) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "No campaign found",
-      });
-    }
-    return campaign;
+    return await ServerCampaign.campaignByIdThrows(
+      opts.input,
+      opts.ctx.user.userId
+    );
   }),
+
+  updateCampaign: protectedProcedure
+    .input(updateCampaignSchema.merge(z.object({ id: z.string() })))
+    .mutation(async (opts) => {
+      const result = await db
+        .update(campaigns)
+        .set(opts.input)
+        .where(
+          and(
+            eq(campaigns.id, opts.input.id),
+            eq(campaigns.user_id, opts.ctx.user.userId)
+          )
+        )
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update campaign",
+        });
+      }
+      return result[0];
+    }),
 
   createEncounter: protectedProcedure
     .input(
@@ -176,7 +189,11 @@ export const appRouter = t.router({
               user_id: opts.ctx.user.userId,
             })
             .returning(),
-          playersInCampaign(opts.input.campaign_id, opts.ctx.user.userId, tx),
+          ServerCampaign.playersInCampaign(
+            opts.input.campaign_id,
+            opts.ctx.user.userId,
+            tx
+          ),
         ]);
         const encounterResult = encounter[0];
         if (encounterResult === undefined) {
@@ -377,17 +394,10 @@ export const appRouter = t.router({
     .input(z.string())
     .mutation(async (opts) => {
       const result = await db.transaction(async (tx) => {
-        const encounter = await ServerEncounter.encounterById(
-          opts.input,
-          opts.ctx.user.userId
+        const encounter = await ServerEncounter.encounterByIdThrows(
+          opts.ctx.user.userId,
+          opts.input
         );
-
-        if (!encounter) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "User not allowed to access that encounter",
-          });
-        }
 
         const p = EncounterUtils.participants(encounter);
 
@@ -453,7 +463,7 @@ export const appRouter = t.router({
         const { newlyActiveParticipant, updatedRoundNumber } =
           EncounterUtils.cycleNextTurn(encounter);
 
-        await updateTurnData(
+        await ServerEncounter.updateTurnData(
           opts.input.encounter_id,
           updatedRoundNumber,
           newlyActiveParticipant.id,
@@ -480,7 +490,7 @@ export const appRouter = t.router({
         const { newlyActiveParticipant, updatedRoundNumber } =
           EncounterUtils.cyclePreviousTurn(encounter);
 
-        await updateTurnData(
+        await ServerEncounter.updateTurnData(
           opts.input.encounter_id,
           updatedRoundNumber,
           newlyActiveParticipant.id,
@@ -515,7 +525,9 @@ export const appRouter = t.router({
           );
 
         await Promise.all([
-          ...updatedParticipants.map((p) => updateParticipantHasPlayed(p, tx)),
+          ...updatedParticipants.map((p) =>
+            ServerEncounter.updateParticipantHasPlayed(p, tx)
+          ),
           tx
             .update(encounters)
             .set({
@@ -591,7 +603,7 @@ export const appRouter = t.router({
         const { newlyActiveParticipant } =
           EncounterUtils.cycleNextTurn(encounter);
 
-        setActiveParticipant(
+        ServerEncounter.setActiveParticipant(
           newlyActiveParticipant.id,
           opts.input.encounter_id
         );

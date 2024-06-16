@@ -86,18 +86,20 @@ export function GroupBattleLayout({
     <div className="flex flex-col max-w-full" {...props}>
       <div className="flex gap-4 flex-col">
         <AnimatePresence>
-          {React.cloneElement(playerTitle as React.ReactElement, {
-            key: "player_title",
-          })}
+          {playerTitle &&
+            React.cloneElement(playerTitle as React.ReactElement, {
+              key: "player_title",
+            })}
           <div
             className="flex overflow-auto max-w-full gap-4 pb-2 px-2"
             key="players"
           >
             {players}
           </div>
-          {React.cloneElement(monsterTitle as React.ReactElement, {
-            key: "monster_title",
-          })}
+          {monsterTitle &&
+            React.cloneElement(monsterTitle as React.ReactElement, {
+              key: "monster_title",
+            })}
           <div
             className="flex overflow-auto max-w-full gap-4 pb-2 px-2"
             key="monsters"

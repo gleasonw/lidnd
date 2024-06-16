@@ -4,7 +4,7 @@ import { getPageSession } from "@/server/api/utils";
 import { TRPCReactProvider } from "@/trpc/react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { SideNav, SmallSideNav } from "@/app/dashboard/side-nav";
+import { LargeSideNav, SmallSideNav } from "@/app/dashboard/side-nav";
 import { UIStoreProvider } from "@/app/dashboard/UIStore";
 import { CreateCampaignButton } from "@/app/dashboard/create-campaign-button";
 import { Button } from "@/components/ui/button";
@@ -49,12 +49,12 @@ export default async function CampaignsLayout({
             userAvatar={<UserAvatar />}
             createCampaignButton={createCampaign}
           />
-          <div className="flex">
-            <SideNav
+          <div className="flex pt-2">
+            <LargeSideNav
               userAvatar={<UserAvatar />}
               createCampaignButton={createCampaign}
             />
-            <div className="px-5 pt-2 pb-10 w-full max-h-screen overflow-auto">
+            <div className="w-full max-h-screen overflow-auto shadow-sm border p-[var(--main-content-padding)]">
               {children}
             </div>
           </div>

@@ -29,7 +29,7 @@ export default function CreaturesPage() {
     // @ts-ignore - I'll eventually use this...
     mutate: deleteCreature,
     variables: deletedId,
-    isLoading: isDeletePending,
+    isPending: isDeletePending,
   } = api.deleteCreature.useMutation({
     onSettled: async () => {
       await getUserCreatures.invalidate();
@@ -158,7 +158,7 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
   const [name, setName] = useState(creature.name);
   const [isPlayer, setIsPlayer] = useState(creature.is_player);
 
-  const { mutate: updateCreature, isLoading } =
+  const { mutate: updateCreature, isPending: isLoading } =
     api.updateCreature.useMutation();
 
   return (

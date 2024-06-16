@@ -1,7 +1,5 @@
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -12,6 +10,8 @@ import {
 import { createCampaign } from "@/app/dashboard/actions";
 import React from "react";
 import { getSystems } from "@/server/api/utils";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
+import { CampaignDescriptionForm } from "@/app/dashboard/campaign-description-area";
 
 export interface CreateCampaignButtonProps {
   trigger?: React.ReactNode;
@@ -26,15 +26,14 @@ export async function CreateCampaignButton(props: CreateCampaignButtonProps) {
       <DialogContent>
         <form action={createCampaign} className="flex flex-col gap-5 w-full">
           <div className="flex gap-2 flex-col">
-            <label>
-              <span>Name</span>
-
-              <Input type="text" name="name" />
-            </label>
-            <label>
-              <span>Description</span>
-              <Textarea name="description" />
-            </label>
+            <LidndTextInput
+              variant="ghost"
+              type="text"
+              name="name"
+              className="text-xl"
+              placeholder="Name"
+            />
+            <CampaignDescriptionForm />
             <Select name="system_id">
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select a system" />

@@ -17,7 +17,8 @@ export function ParticipantHealthForm({
   participant: ParticipantWithData;
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
-  const { mutate: edit, isLoading } = useUpdateEncounterParticipant();
+  const { mutate: edit, isPending: isLoading } =
+    useUpdateEncounterParticipant();
 
   if (isMinion(participant)) {
     return <MinionHealthForm participant={participant} />;
@@ -102,7 +103,8 @@ export function MinionHealthForm({ participant }: MinionHealthFormProps) {
   const [extraMinionsInRange, setExtraMinionsInRange] = useState<
     number | string
   >("");
-  const { mutate: edit, isLoading } = useUpdateEncounterMinionParticipant();
+  const { mutate: edit, isPending: isLoading } =
+    useUpdateEncounterMinionParticipant();
   const [isDoingDamage, setIsDoingDamage] = useState(false);
 
   function handleHPChange() {

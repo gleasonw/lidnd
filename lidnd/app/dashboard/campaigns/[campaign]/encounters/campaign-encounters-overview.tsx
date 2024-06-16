@@ -13,7 +13,6 @@ import { ExternalLink, MoreHorizontal, Plus, UserPlus } from "lucide-react";
 import { api } from "@/trpc/react";
 import { Encounter } from "@/server/api/router";
 import { useCampaignId } from "../hooks";
-import { routeToEncounter } from "@/app/routes";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DialogTrigger } from "@radix-ui/react-dialog";
@@ -31,6 +30,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { EncounterUtils } from "@/utils/encounters";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
+import { CampaignDescriptionArea } from "@/app/dashboard/campaign-description-area";
+import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
 
 export interface CampaignEncountersProps {
   deleteCampaignButton: React.ReactNode;
@@ -53,33 +54,47 @@ export default function CampaignEncountersOverview(
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      {campaignHeader}
-      <span className="flex gap-5 items-center">
-        {playersDisplay}
-        <LidndDialog
-          trigger={
-            <ButtonWithTooltip text="Add new player" variant="outline">
-              <UserPlus />
-            </ButtonWithTooltip>
+    <FadeInSuspense
+      fallback={
+        <div className="w-full pt-10 flex justify-center">
+          Loading campaign...
+        </div>
+      }
+    >
+      <div className="flex flex-col gap-5">
+        {campaignHeader}
+        <CampaignDescriptionArea
+          tiptapReadyGate={
+            <>
+              <span className="flex gap-5 items-center">
+                {playersDisplay}
+                <LidndDialog
+                  trigger={
+                    <ButtonWithTooltip text="Add new player" variant="outline">
+                      <UserPlus />
+                    </ButtonWithTooltip>
+                  }
+                  content={<PlayerUploadForm uploadCreature={onPlayerUpload} />}
+                />
+              </span>
+              <Separator />
+              <div className="flex flex-row gap-10">
+                <EncounterSection
+                  name="Active"
+                  category="active"
+                  encounters={encountersByStatus.active ?? []}
+                />
+                <EncounterSection
+                  name="Inactive"
+                  category="inactive"
+                  encounters={encountersByStatus.inactive ?? []}
+                />
+              </div>
+            </>
           }
-          content={<PlayerUploadForm uploadCreature={onPlayerUpload} />}
-        />
-      </span>
-      <Separator />
-      <div className="flex flex-row gap-10">
-        <EncounterSection
-          name="Active"
-          category="active"
-          encounters={encountersByStatus.active ?? []}
-        />
-        <EncounterSection
-          name="Inactive"
-          category="inactive"
-          encounters={encountersByStatus.inactive ?? []}
         />
       </div>
-    </div>
+    </FadeInSuspense>
   );
 }
 
@@ -308,7 +323,6 @@ function DraggableEncounterCard(props: {
 }) {
   const { encounter, deleteEncounter, category, previousOrder, nextOrder } =
     props;
-  const campaignId = useCampaignId();
   const [acceptDrop, setAcceptDrop] = useState<"none" | "top" | "bottom">(
     "none",
   );
@@ -368,11 +382,7 @@ function DraggableEncounterCard(props: {
       >
         <Link
           draggable={false}
-          href={
-            encounter.started_at
-              ? `${routeToEncounter(campaignId, encounter.id)}/run`
-              : routeToEncounter(campaignId, encounter.id)
-          }
+          href={EncounterUtils.dynamicRoute(encounter)}
           className="flex hover:bg-gray-200 p-3 text-ellipsis  border-b relative group bg-gray-100 rounded-t-lg"
         >
           <span
