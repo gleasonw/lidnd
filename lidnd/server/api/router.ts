@@ -29,6 +29,7 @@ import { booleanSchema } from "@/app/dashboard/utils";
 import { ParticipantUtils } from "@/utils/participants";
 import { EncounterUtils } from "@/utils/encounters";
 import { insertCreatureSchema } from "@/encounters/types";
+import { LidndUserId } from "@/app/authentication";
 
 const t = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -54,7 +55,7 @@ const isAuthed = t.middleware((opts) => {
   }
   return opts.next({
     ctx: {
-      user: ctx.user,
+      user: ctx.user as { userId: LidndUserId },
     },
   });
 });
