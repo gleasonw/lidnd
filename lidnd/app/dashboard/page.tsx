@@ -2,13 +2,7 @@ import { isStringMeaningful } from "./utils";
 import { Campaign } from "./types";
 import { routeToCampaign } from "@/app/routes";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPageSession, getUserCampaigns } from "@/server/api/utils";
 import Link from "next/link";
 import { redirect } from "next/navigation";

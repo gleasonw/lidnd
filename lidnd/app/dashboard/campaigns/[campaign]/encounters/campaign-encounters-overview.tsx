@@ -172,7 +172,7 @@ function EncounterSection(props: {
 
         <CreateEncounterButton category={props.category} />
       </h1>
-      <ul className="flex flex-col bg-gray-50 p-1 rounded">
+      <ul className="flex flex-col bg-gray-50 p-1">
         {props.encounters?.length === 0 ? (
           <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
         ) : null}
@@ -384,7 +384,7 @@ function DraggableEncounterCard(props: {
         <Link
           draggable={false}
           href={EncounterUtils.dynamicRoute(encounter)}
-          className="flex hover:bg-gray-200 p-3 text-ellipsis  border-b relative group bg-gray-100 rounded-t-lg"
+          className="flex hover:bg-gray-200 p-3 text-ellipsis  border-b relative group bg-gray-100"
         >
           <span
             className={

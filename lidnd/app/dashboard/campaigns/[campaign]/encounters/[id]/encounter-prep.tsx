@@ -14,8 +14,6 @@ import {
   Skull,
   X,
   Swords,
-  Sword,
-  Angry,
   Users2,
   Check,
   Plus,
@@ -51,8 +49,8 @@ import { DescriptionTextArea } from "@/encounters/[id]/description-text-area";
 import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
 
 // TODO:
-// - max hp and challenge rating required
 // - allow creature editing / deletion
+// make encounter title bigger
 
 export default function EncounterPrep() {
   const [selectedParticipantId, setSelectedParticipantId] = React.useState<
@@ -125,7 +123,7 @@ export function EncounterNameInput() {
       placeholder={
         isStringMeaningful(encounterName) ? encounterName : "Unnamed encounter"
       }
-      className="px-0 text-2xl"
+      className="px-0 text-3xl text-medium"
       onChange={(e) => {
         setEncounterName(e.target.value);
         debouncedNameUpdate(e.target.value);
@@ -163,7 +161,7 @@ function EncounterDetailsSidebar({ children }: { children: React.ReactNode }) {
   const [encounter] = useEncounter();
   const id = useEncounterId();
   return (
-    <div className="flex-col h-screen bg-gray-50 p-3 items-center gap-5 max-w-[300px] hidden md:flex -m-[var(--main-content-padding)]">
+    <div className="flex-col h-screen  p-3 items-center gap-5 max-w-[300px] hidden md:flex -m-[var(--main-content-padding)]">
       {encounter?.started_at ? (
         <Link href={`${id}/run`}>
           <Button>
@@ -224,7 +222,7 @@ function EncounterParticipantRow(props: {
       <GroupBattleLayout
         playerTitle={
           <h1 className="flex gap-5 text-xl items-center">
-            Allies <Sword />{" "}
+            Allies
             <LidndPlusDialog text="Add ally">
               <AllyUpload />
             </LidndPlusDialog>
@@ -232,7 +230,7 @@ function EncounterParticipantRow(props: {
         }
         monsterTitle={
           <h1 className="flex gap-5 text-xl items-center">
-            Monsters <Angry />
+            Monsters
             <LidndPlusDialog text="Add monster">
               <MonsterUpload />
             </LidndPlusDialog>

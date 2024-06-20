@@ -2,7 +2,6 @@ import { CharacterIcon } from "../[campaign]/encounters/[id]/character-icon";
 import CampaignEncountersOverview from "./encounters/campaign-encounters-overview";
 import { deleteCampaign } from "../../actions";
 import { Button } from "@/components/ui/button";
-import { getPageSession } from "@/server/api/utils";
 import { ServerCampaign } from "@/server/campaigns";
 import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
@@ -14,13 +13,13 @@ export default async function CampaignPage({
   params: { campaign: string };
 }) {
   const campaign = params.campaign;
-  const session = await getPageSession();
-  if (!session) {
+  const user = await LidndAuth.getUser();
+  if (!user) {
     console.error("No session found, layout should have redirected");
     return redirect(appRoutes.login);
   }
-  const user = session.user;
-  const campaignData = await ServerCampaign.campaignById(campaign, user.userId);
+
+  const campaignData = await ServerCampaign.campaignById(campaign, user.id);
 
   if (!campaignData) {
     console.error("No campaign found, layout should have redirected");

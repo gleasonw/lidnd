@@ -54,7 +54,7 @@ export default async function CampaignsLayout({
               userAvatar={<UserAvatar />}
               createCampaignButton={createCampaign}
             />
-            <div className="w-full max-h-screen overflow-auto shadow-sm border p-[var(--main-content-padding)]">
+            <div className="w-full max-h-screen overflow-auto shadow-sm border p-[var(--main-content-padding)] pt-2">
               {children}
             </div>
           </div>

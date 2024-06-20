@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-import { ChevronUp, Plus } from "lucide-react";
+import { ChevronUp } from "lucide-react";
 import { ParticipantHealthForm } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/run/creature-health-form";
 import { CharacterIcon } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/character-icon";
 import InitiativeInput from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/InitiativeInput";
@@ -19,13 +19,12 @@ import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import { BasePopover } from "@/app/dashboard/campaigns/[campaign]/encounters/base-popover";
 import { StatusInput } from "./status-input";
 import { effectIconMap } from "./effectIconMap";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Tip } from "@/components/ui/tip";
 import { LinearBattleUI } from "./linear-battle-ui";
 import { GroupBattleUI } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/run/group-battle-ui";
 import { EncounterTime } from "@/app/dashboard/campaigns/[campaign]/encounters/[id]/run/encounter-time";
 import { useCampaign } from "@/app/dashboard/campaigns/[campaign]/hooks";
-import { ParticipantUpload } from "@/encounters/[id]/run/participant-add-form";
+import { MonsterUpload } from "@/encounters/[id]/run/participant-add-form";
 import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { ReminderDialog } from "@/encounters/[id]/run/reminder-dialog";
@@ -36,6 +35,7 @@ import { EncounterWithData } from "@/server/encounters";
 import { Reminder } from "@/app/dashboard/types";
 import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
 import { DescriptionTextArea } from "@/encounters/[id]/description-text-area";
+import { LidndPlusDialog } from "@/components/ui/lidnd_dialog";
 
 export function BattleUILoader() {
   return (
@@ -107,20 +107,9 @@ export const BattleUI = observer(function BattleUI() {
         <div className="flex gap-10 flex-wrap items-center justify-center">
           <h1 className="text-xl text-center">{roundText}</h1>
           <EncounterTime time={encounter.started_at ?? undefined} />
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus /> Add creature
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl overflow-auto max-h-screen">
-              <div
-                className={"flex gap-10 flex-wrap w-full justify-center h-full"}
-              >
-                <ParticipantUpload />
-              </div>
-            </DialogContent>
-          </Dialog>
+          <LidndPlusDialog text="Add monster">
+            <MonsterUpload />
+          </LidndPlusDialog>
         </div>
         <DescriptionTextArea
           tiptapReadyGate={

@@ -8,5 +8,9 @@ export default async function EncounterPage() {
     return <div>User not logged in</div>;
   }
 
-  return <EncounterPrep />;
+  return (
+    <div>
+      <EncounterPrep />
+    </div>
+  );
 }

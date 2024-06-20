@@ -1,3 +1,4 @@
+import { LidndUserId } from "@/app/authentication";
 import { db } from "@/server/api/db";
 import {
   campaigns,
@@ -9,14 +10,14 @@ import { TRPCError } from "@trpc/server";
 import { eq, and } from "drizzle-orm";
 
 export const ServerCampaign = {
-  userCampaigns: async function (userId: string) {
+  userCampaigns: async function (userId: LidndUserId) {
     return await db
       .select()
       .from(campaigns)
       .where(eq(campaigns.user_id, userId));
   },
 
-  campaignById: async function (campaignId: string, userId: string) {
+  campaignById: async function (campaignId: string, userId: LidndUserId) {
     const res = await db
       .select({
         id: campaigns.id,
@@ -37,7 +38,7 @@ export const ServerCampaign = {
     return res.at(0);
   },
 
-  campaignByIdThrows: async function (campaignId: string, userId: string) {
+  campaignByIdThrows: async function (campaignId: string, userId: LidndUserId) {
     const campaign = await this.campaignById(campaignId, userId);
 
     if (!campaign) {
@@ -52,7 +53,7 @@ export const ServerCampaign = {
 
   playersInCampaign: async function (
     campaignId: string,
-    userId: string,
+    userId: LidndUserId,
     dbObject = db
   ) {
     return await dbObject

@@ -6,11 +6,13 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 
 export type LidndUser = {
-  id: string;
+  id: LidndUserId;
   username: string;
   avatar: string;
   discord_id: string;
 };
+
+export type LidndUserId = string & { __brand: "UserId" };
 
 export const LidndAuth = {
   getOauthUser: async (code: string) => {
@@ -75,7 +77,8 @@ export const LidndAuth = {
     if (!session) {
       return null;
     }
-    return session.user;
+    // cast for branding
+    return session.user as LidndUser;
   },
 
   verifyLogin: async function () {
