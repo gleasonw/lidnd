@@ -79,14 +79,20 @@ export const ParticipantUtils = {
     return Math.max(newMinionCount, 0);
   },
 
-  sortLinearly<T extends { initiative: number; created_at: Date; id: string }>(
-    a: T,
-    b: T
-  ) {
+  sortLinearly<
+    T extends { initiative: number; created_at: Date | string; id: string },
+  >(a: T, b: T) {
+    // react query data serialized on server will not be a Date object
+    const aTime =
+      a.created_at instanceof Date
+        ? a.created_at.getTime()
+        : new Date(a.created_at).getTime();
+    const bTime =
+      b.created_at instanceof Date
+        ? b.created_at.getTime()
+        : new Date(b.created_at).getTime();
     return (
-      b.initiative - a.initiative ||
-      a.created_at.getTime() - b.created_at.getTime() ||
-      a.id.localeCompare(b.id)
+      b.initiative - a.initiative || aTime - bTime || a.id.localeCompare(b.id)
     );
   },
 
