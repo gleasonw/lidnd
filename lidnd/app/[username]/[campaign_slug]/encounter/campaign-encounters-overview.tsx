@@ -36,6 +36,8 @@ import { useUser } from "@/app/[username]/user-provider";
 import { CharacterIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { useUpdateEncounter } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { appRoutes } from "@/app/routes";
+import { useRouter } from "next/navigation";
+import { Spinner } from "@/components/ui/spinner";
 
 export interface CampaignEncountersProps {
   deleteCampaignButton: React.ReactNode;
@@ -213,31 +215,38 @@ export function CreateEncounterButton({
   category: Encounter["label"];
 }) {
   const { encounters } = api.useUtils();
-  const campaignId = useCampaignId();
+  const [campaign] = useCampaign();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [createMore, setCreateMore] = useState(false);
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
+  const router = useRouter();
+  const user = useUser();
 
-  const { mutate: createDefaultEncounter } = api.createEncounter.useMutation({
-    onMutate: async (newEncounter) => {
-      await encounters.cancel(campaignId);
-      const previous = encounters.getData(campaignId);
-      encounters.setData(campaignId, (old) => {
-        if (!old) return [];
-        const placeholder = EncounterUtils.placeholder(newEncounter);
-        return [...old, { ...placeholder, participants: [] }];
-      });
-      return { previous };
-    },
-    onSuccess: async () => {
-      return await encounters.invalidate();
-    },
-    onError: (err, newEn, context) => {
-      encounters.setData(campaignId, context?.previous);
-    },
-  });
+  const { mutate: createDefaultEncounter, isPending } =
+    api.createEncounter.useMutation({
+      onMutate: async (newEncounter) => {
+        await encounters.cancel(campaign.id);
+        const previous = encounters.getData(campaign.id);
+        encounters.setData(campaign.id, (old) => {
+          if (!old) return [];
+          const placeholder = EncounterUtils.placeholder(newEncounter);
+          return [...old, { ...placeholder, participants: [] }];
+        });
+        return { previous };
+      },
+      onSuccess: async (encounter) => {
+        if (!createMore) {
+          router.push(appRoutes.encounter(campaign, encounter, user));
+        }
+
+        return await encounters.invalidate();
+      },
+      onError: (err, newEn, context) => {
+        encounters.setData(campaign.id, context?.previous);
+      },
+    });
   return (
     <Dialog
       open={dialogIsOpen}
@@ -259,17 +268,11 @@ export function CreateEncounterButton({
             createDefaultEncounter({
               name,
               description,
-              campaign_id: campaignId,
+              campaign_id: campaign.id,
               label: category,
             });
             setName("");
             setDescription("");
-
-            if (createMore) {
-              return;
-            }
-
-            setDialogIsOpen(false);
           }}
           className={"flex flex-col gap-5 pt-3"}
         >
@@ -294,6 +297,7 @@ export function CreateEncounterButton({
                 <span>Create more</span>
               </label>
               <Button type="submit">Create encounter</Button>
+              {isPending && <Spinner />}
             </div>
           </div>
         </form>

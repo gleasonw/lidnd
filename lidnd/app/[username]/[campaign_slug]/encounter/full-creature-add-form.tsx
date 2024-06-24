@@ -175,14 +175,14 @@ export function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
 
 const playerFormSchema = monsterFormSchema.omit({
   stat_block_image: true,
+  challenge_rating: true,
+  max_hp: true,
 });
 
 export function PlayerUploadForm({ uploadCreature }: CreatureAddProps) {
   const form = useForm<z.infer<typeof playerFormSchema>>({
     resolver: zodResolver(playerFormSchema),
     defaultValues: {
-      max_hp: 0,
-      challenge_rating: 0,
       icon_image: undefined,
       is_player: true,
     },
@@ -192,7 +192,7 @@ export function PlayerUploadForm({ uploadCreature }: CreatureAddProps) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((data) => {
-          uploadCreature(data);
+          uploadCreature({ ...data, max_hp: 0, challenge_rating: 0 });
           form.reset();
           setKeyToResetFile(keyToResetFile + 1);
         })}

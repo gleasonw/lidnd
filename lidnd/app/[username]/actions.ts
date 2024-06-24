@@ -90,11 +90,7 @@ export async function createPlayerAndAddToCampaign(
   }
 
   const player = parse(form, {
-    schema: creatureUploadSchema.merge(
-      z.object({
-        user_id: z.optional(z.string()),
-      }),
-    ),
+    schema: creatureUploadSchema,
   });
 
   console.log("player", player);

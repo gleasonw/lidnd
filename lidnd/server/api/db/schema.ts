@@ -218,7 +218,7 @@ export const creatures = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     name: varchar("name", { length: 256 }).notNull(),
     created_at: timestamp("created_at").defaultNow().notNull(),
-    max_hp: integer("max_hp").notNull(),
+    max_hp: integer("max_hp").notNull().default(0),
     challenge_rating: real("challenge_rating").default(0).notNull(),
     is_player: boolean("is_player").default(false).notNull(),
     user_id: text("user_id")
