@@ -1,4 +1,5 @@
 import { LidndUser } from "@/app/authentication";
+import { EncounterStatus } from "@/server/api/db/schema";
 import _ from "lodash";
 
 export const appRoutes = {
@@ -18,8 +19,13 @@ export const appRoutes = {
     campaign: { slug: string },
     encounter: { name: string; index_in_campaign: number },
     user: LidndUser,
+    status: EncounterStatus = "prep",
   ) {
-    return `${this.campaign(campaign, user)}/encounter/${encounter.index_in_campaign}/${_.kebabCase(encounter.name)}`;
+    if (status === "prep") {
+      return `${this.campaign(campaign, user)}/encounter/${encounter.index_in_campaign}/${_.kebabCase(encounter.name)}`;
+    }
+
+    return `${this.campaign(campaign, user)}/encounter/${encounter.index_in_campaign}/${_.kebabCase(encounter.name)}/${status}`;
   },
 
   campaign(campaign: { slug: string }, user: LidndUser) {

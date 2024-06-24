@@ -45,7 +45,7 @@ export function GroupInitiativeInput() {
         </div>
         <PreBattleInputsList>
           {encounter.participants
-            .toSorted(ParticipantUtils.sortLinearly)
+            .toSorted((a, b) => (a.id > b.id ? 1 : -1))
             .map((participant) => (
               <PreBattleInput key={participant.id} participant={participant}>
                 <InitiativeInput participant={participant} />

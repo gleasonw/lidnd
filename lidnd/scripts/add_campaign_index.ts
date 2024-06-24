@@ -1,9 +1,17 @@
 import { db } from "@/server/api/db";
 import { campaigns, encounters } from "@/server/api/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import _ from "lodash";
 
-async function main() {
+async function updateStatus() {
+  await db
+    .update(encounters)
+    .set({ status: "prep" })
+    .where(isNull(encounters.started_at));
+  return process.exit(0);
+}
+
+async function update_encounter_index() {
   const campaigns = await db.query.campaigns.findMany();
 
   for (const campaign of campaigns) {
@@ -30,7 +38,7 @@ async function main() {
   return process.exit(0);
 }
 
-async function addCampaignSlug() {
+async function add_campaign_slug() {
   const c = await db.query.campaigns.findMany();
 
   for (const campaign of c) {
@@ -46,4 +54,6 @@ async function addCampaignSlug() {
   return process.exit(0);
 }
 
-addCampaignSlug();
+updateStatus();
+update_encounter_index();
+add_campaign_slug();

@@ -35,18 +35,15 @@ export default async function Page({
 
   return (
     <div className="flex w-full flex-col">
-      <div className="flex flex-col gap-10 w-[700px]">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div className="flex flex-col gap-10 ">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
           {userCampaigns.map((campaign, index) => (
             <CampaignCard key={campaign.id} campaign={campaign} user={user} />
           ))}
           <CreateCampaignButton
             trigger={
-              <Card>
-                <Button
-                  variant="ghost"
-                  className="w-full h-full flex items-center"
-                >
+              <Card className="flex items-center justify-center">
+                <Button variant="ghost" className="flex items-center">
                   <CardTitle>New campaign</CardTitle>
                   <Plus />
                 </Button>

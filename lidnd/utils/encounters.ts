@@ -10,6 +10,7 @@ import { EncounterWithData } from "@/server/encounters";
 import { System } from "@/types";
 import { ParticipantUtils } from "@/utils/participants";
 import { LidndUser } from "@/app/authentication";
+import { EncounterStatus } from "@/server/api/db/schema";
 
 type EncounterWithParticipants<T extends Participant = Participant> =
   Encounter & {
@@ -44,6 +45,14 @@ export const EncounterUtils = {
     return encounter.campaigns.system.initiative_type;
   },
 
+  updateStatus(encounter: EncounterWithData, status: EncounterStatus) {
+    // maybe we'll have more of a state machine here someday
+    return {
+      ...encounter,
+      status,
+    };
+  },
+
   participants<T extends Participant>(encounter: EncounterWithParticipants<T>) {
     return encounter.participants;
   },
@@ -73,7 +82,8 @@ export const EncounterUtils = {
       created_at: encounter.created_at ?? new Date(),
       current_round: encounter.current_round ?? 0,
       ended_at: encounter.ended_at ?? null,
-      status: encounter.status ?? "active",
+      status: encounter.status ?? "prep",
+      label: encounter.label ?? "active",
       order: encounter.order ?? 0,
       index_in_campaign: encounter.index_in_campaign ?? 0,
     };

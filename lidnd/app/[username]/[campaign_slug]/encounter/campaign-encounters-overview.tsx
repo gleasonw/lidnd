@@ -50,7 +50,7 @@ export default function CampaignEncountersOverview(
   const campaignId = useCampaignId();
   const { data: encounters } = api.encounters.useQuery(campaignId);
 
-  const encountersByStatus = _.groupBy(encounters ?? [], (e) => e.status);
+  const encountersByStatus = Object.groupBy(encounters ?? [], (e) => e.label);
 
   function onPlayerUpload(data: CreaturePost) {
     const dataAsForm = getCreaturePostForm(data);
@@ -105,7 +105,7 @@ export default function CampaignEncountersOverview(
 function EncounterSection(props: {
   name: string;
   encounters: Encounter[];
-  category: Encounter["status"];
+  category: Encounter["label"];
 }) {
   const campaignId = useCampaignId();
   const { encounters: encountersQuery } = api.useUtils();
@@ -139,7 +139,7 @@ function EncounterSection(props: {
         }
         updateEncounter({
           id: encounter.id,
-          status: props.category,
+          label: props.category,
           order: 0,
         });
         setAcceptDrop(false);
@@ -210,7 +210,7 @@ export function CreateEncounterButton({
   category,
 }: {
   className?: string;
-  category: Encounter["status"];
+  category: Encounter["label"];
 }) {
   const { encounters } = api.useUtils();
   const campaignId = useCampaignId();
@@ -233,6 +233,9 @@ export function CreateEncounterButton({
     },
     onSuccess: async () => {
       return await encounters.invalidate();
+    },
+    onError: (err, newEn, context) => {
+      encounters.setData(campaignId, context?.previous);
     },
   });
   return (
@@ -257,7 +260,7 @@ export function CreateEncounterButton({
               name,
               description,
               campaign_id: campaignId,
-              status: category,
+              label: category,
             });
             setName("");
             setDescription("");
@@ -321,7 +324,7 @@ function EncounterSkeleton({
 function DraggableEncounterCard(props: {
   encounter: Encounter;
   deleteEncounter: (id: string) => void;
-  category: Encounter["status"];
+  category: Encounter["label"];
   previousOrder: number;
   nextOrder: number;
 }) {
@@ -346,7 +349,7 @@ function DraggableEncounterCard(props: {
         }
         updateEncounter({
           id: droppedEncounter.id,
-          status: category,
+          label: category,
           order: acceptDrop === "top" ? previousOrder : nextOrder,
         });
         setAcceptDrop("none");

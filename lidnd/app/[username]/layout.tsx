@@ -11,10 +11,11 @@ import {
 } from "@/app/[username]/side-nav";
 import { UIStoreProvider } from "@/app/[username]/UIStore";
 import { CreateCampaignButton } from "@/app/[username]/create-campaign-button";
-import { Home, Rabbit, Settings } from "lucide-react";
+import { Home, Plus, Rabbit, Settings } from "lucide-react";
 import { LidndAuth } from "@/app/authentication";
 import { appRoutes } from "@/app/routes";
 import { UserProvider } from "@/app/[username]/user-provider";
+import { Button } from "@/components/ui/button";
 
 // user must be logged in to view anything in this sub route.
 export default async function CampaignsLayout({
@@ -40,15 +41,17 @@ export default async function CampaignsLayout({
       <UserProvider value={user}>
         <UIStoreProvider>
           <ClientOverlays>
-            <SmallSideNav>
-              <SideNavBody />
-            </SmallSideNav>
-            <div className="flex pt-2">
-              <LargeSideNav>
+            <div className="flex flex-col max-h-screen">
+              <SmallSideNav>
                 <SideNavBody />
-              </LargeSideNav>
-              <div className="w-full max-h-screen overflow-auto shadow-sm border p-[var(--main-content-padding)] pt-2">
-                {children}
+              </SmallSideNav>
+              <div className="flex pt-2 flex-grow overflow-hidden relative">
+                <LargeSideNav>
+                  <SideNavBody />
+                </LargeSideNav>
+                <div className="w-full overflow-auto shadow-sm border p-[var(--main-content-padding)] pt-2 bg-white">
+                  {children}
+                </div>
               </div>
             </div>
           </ClientOverlays>
@@ -70,13 +73,22 @@ export async function SideNavBody() {
     <>
       <AppLink route={appRoutes.dashboard(user)}>
         <Home />
+        Home
       </AppLink>
-      <CreateCampaignButton />
+      <CreateCampaignButton
+        trigger={
+          <Button variant="ghost">
+            <Plus /> New Campaign
+          </Button>
+        }
+      />
       <AppLink route={appRoutes.creatures(user)}>
         <Rabbit />
+        Creatures
       </AppLink>
       <AppLink route={appRoutes.settings(user)}>
         <Settings />
+        Settings
       </AppLink>
       <User />
     </>

@@ -10,6 +10,17 @@ import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
 import { ParticipantPost } from "@/app/[username]/[campaign_slug]/encounter/types";
 import { getCreaturePostForm } from "@/app/[username]/[campaign_slug]/encounter/utils";
+import { EncounterStatus } from "@/server/api/db/schema";
+import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
+import { useUser } from "@/app/[username]/user-provider";
+import { appRoutes } from "@/app/routes";
+
+export function useEncounterLink(status: EncounterStatus) {
+  const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
+  const user = useUser();
+  return appRoutes.encounter(campaign, encounter, user, status);
+}
 
 export function useEncounter() {
   const currentEncounterId = useEncounterId();
@@ -137,6 +148,44 @@ export function useUpdateEncounterParticipant() {
       return { previousEncounter };
     },
   });
+}
+
+export function useUpdateEncounterStatus() {
+  const { encounterById } = api.useUtils();
+  const encounterId = useEncounterId();
+
+  const mutation = api.updateEncounterStatus.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(encounterId);
+    },
+
+    onMutate: async ({ status }) => {
+      await encounterById.cancel(encounterId);
+
+      const current = encounterById.getData(encounterId);
+
+      if (!current) {
+        console.error("unable to optimistically update encounter status");
+        return;
+      }
+
+      encounterById.setData(encounterId, (old) => {
+        if (!old) {
+          return;
+        }
+        return {
+          ...old,
+          status,
+        };
+      });
+    },
+  });
+
+  function updateStatus(status: EncounterStatus) {
+    mutation.mutate({ status, encounter_id: encounterId });
+  }
+
+  return { ...mutation, mutate: updateStatus };
 }
 
 export function useUpdateEncounter() {

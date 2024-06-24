@@ -1,24 +1,34 @@
 import { LidndContext } from "@/server/api/router";
 import { ServerCampaign } from "@/server/campaigns";
 import { ServerEncounter } from "@/server/encounters";
+import { cache } from "react";
 
-type Path = {
+type CampaignSlug = {
   campaign_slug: string;
+};
+
+type IndexPath = {
   encounter_index: string;
 };
 
-function isPath(param: unknown): param is Path {
-  return (
-    param !== null &&
-    typeof param === "object" &&
-    "campaign_slug" in param &&
-    "encounter_index" in param
-  );
+type Nested = CampaignSlug & IndexPath;
+
+function isDefinedObject(
+  obj: unknown
+): obj is NonNullable<Record<string, unknown>> {
+  return obj !== null && typeof obj === "object";
 }
-export async function encounterFromPathParams(
-  ctx: LidndContext,
-  params: unknown
-) {
+
+export function isCampaignSlug(param: unknown): param is CampaignSlug {
+  return isDefinedObject(param) && "campaign_slug" in param;
+}
+
+function isPath(param: unknown): param is Nested {
+  return isCampaignSlug(param) && "encounter_index" in param;
+}
+
+export const encounterFromPathParams = cache(_encounterFromPathParams);
+async function _encounterFromPathParams(ctx: LidndContext, params: unknown) {
   if (!isPath(params)) {
     throw new Error("params is missing fields");
   }

@@ -106,7 +106,7 @@ export const BattleUI = observer(function BattleUI() {
   return (
     <BattleUIContext.Provider value={battleUIStore}>
       <ReminderDialog />
-      <div className="flex gap-4 flex-col">
+      <div className="flex gap-4 flex-col w-full">
         <div className="flex gap-10 flex-wrap items-center justify-center">
           <h1 className="text-xl text-center">{roundText}</h1>
           <EncounterTime time={encounter.started_at ?? undefined} />

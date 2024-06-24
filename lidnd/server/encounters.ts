@@ -1,5 +1,10 @@
 import { db } from "@/server/api/db";
-import { reminders, encounters, participants } from "@/server/api/db/schema";
+import {
+  reminders,
+  encounters,
+  participants,
+  EncounterStatus,
+} from "@/server/api/db/schema";
 import { LidndContext, Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql } from "drizzle-orm";
@@ -30,12 +35,29 @@ export const ServerEncounter = {
     });
   },
 
+  updateStatus(
+    ctx: LidndContext,
+    encounter_id: string,
+    status: EncounterStatus
+  ) {
+    return db
+      .update(encounters)
+      .set({
+        status,
+      })
+      .where(
+        and(
+          eq(encounters.id, encounter_id),
+          eq(encounters.user_id, ctx.user.id)
+        )
+      );
+  },
+
   encounterFromCampaignAndIndex: async function (
     ctx: LidndContext,
     campaign_id: string,
     index_in_campaign: number
   ) {
-    console.log(ctx, campaign_id, index_in_campaign);
     return await db.query.encounters.findFirst({
       where: (encounter, { eq, and }) =>
         and(

@@ -12,7 +12,6 @@ import {
   Check,
   Plus,
 } from "lucide-react";
-import Link from "next/link";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import React, { useState } from "react";
@@ -38,16 +37,17 @@ import {
   useRemoveParticipantFromEncounter,
   useEncounter,
   useUpdateEncounterParticipant,
+  useEncounterLink,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import {
   AllyUpload,
   MonsterUpload,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/participant-add-form";
 import { AnimationListItem } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/battle-ui";
-import { useRouter } from "next/navigation";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
+import Link from "next/link";
 
 // TODO:
 // - allow creature editing / deletion
@@ -111,6 +111,7 @@ export function EncounterNameInput() {
         appRoutes.encounter(campaign, newEncounter, user),
       ),
   });
+
   const [encounterName, setEncounterName] = React.useState(
     encounter?.name ?? "",
   );
@@ -147,12 +148,11 @@ interface EncounterDetailsTopBarProps {
 function EncounterDetailsTopBar(props: EncounterDetailsTopBarProps) {
   const { children } = props;
   const [encounter] = useEncounter();
-  const [campaign] = useCampaign();
-  const user = useUser();
+  const runLink = useEncounterLink("run");
   return (
     <div className="flex items-center gap-1 flex-wrap md:hidden">
       {encounter?.started_at ? (
-        <Link href={appRoutes.encounter(campaign, encounter, user)}>
+        <Link href={runLink}>
           <Button>
             <Play />
             Continue the battle!
@@ -167,12 +167,12 @@ function EncounterDetailsTopBar(props: EncounterDetailsTopBarProps) {
 }
 
 function EncounterDetailsSidebar({ children }: { children: React.ReactNode }) {
+  const runLink = useEncounterLink("run");
   const [encounter] = useEncounter();
-  const id = useEncounterId();
   return (
-    <div className="flex-col h-screen  p-3 items-center gap-5 max-w-[300px] hidden md:flex -m-[var(--main-content-padding)]">
+    <div className="flex-col flex-grow p-4 items-center gap-5 max-w-[300px] hidden md:flex -mt-[var(--encounter-sidebar-negative-top-margin)] border-l">
       {encounter?.started_at ? (
-        <Link href={`${id}/run`}>
+        <Link href={runLink}>
           <Button>
             <Play />
             Continue the battle!
@@ -189,23 +189,25 @@ function EncounterDetailsSidebar({ children }: { children: React.ReactNode }) {
 export function EncounterStartButton() {
   const id = useEncounterId();
   const campaignId = useCampaignId();
-  const [encounter] = api.encounterById.useSuspenseQuery(id);
   const [campaign] = api.campaignById.useSuspenseQuery(campaignId);
   const { mutate: startEncounter } = useStartEncounter();
+  const runLink = useEncounterLink("run");
+  const rollLink = useEncounterLink("roll");
   return (
     <span className="flex gap-2 items-center">
       {campaign.system?.initiative_type === "group" ? (
-        <Link
-          href={`${id}/run`}
-          onClick={async () => encounter && startEncounter(id)}
-        >
-          <Button>
+        <Link href={runLink}>
+          <Button
+            onClick={() => {
+              startEncounter(id);
+            }}
+          >
             <Swords />
             Commence the battle
           </Button>
         </Link>
       ) : (
-        <Link href={`${id}/roll`}>
+        <Link href={rollLink}>
           <Button>
             <Dices />
             Roll initiative!
