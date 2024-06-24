@@ -4,12 +4,12 @@ import { ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React from "react";
 import { ParticipantWithData } from "@/server/api/router";
-import { CharacterIcon } from "@/encounters/[id]/character-icon";
-import { HealthMeterOverlay } from "@/encounters/[id]/run/battle-ui";
-import effectIconMap from "@/encounters/[id]/run/effectIconMap";
-import { BasePopover } from "@/encounters/base-popover";
+import { BasePopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import { ParticipantUtils } from "@/utils/participants";
+import { HealthMeterOverlay } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/battle-ui";
+import { CharacterIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
+import effectIconMap from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/effectIconMap";
 
 export interface SimpleBattleCardProps {
   children?: React.ReactNode;

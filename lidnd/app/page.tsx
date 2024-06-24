@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { getPageSession } from "@/server/api/utils";
 
 import type { Metadata } from "next";
 import { appRoutes } from "@/app/routes";
+import { LidndAuth } from "@/app/authentication";
 
 export const metadata: Metadata = {
   title: "LiDnD",
@@ -10,9 +10,11 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const session = await getPageSession();
-  if (!session) {
+  const user = await LidndAuth.getUser();
+
+  if (!user) {
     return redirect(appRoutes.login);
   }
-  redirect(appRoutes.dashboard);
+
+  redirect(appRoutes.dashboard(user));
 }

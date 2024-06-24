@@ -1,7 +1,7 @@
 import { appRoutes } from "@/app/routes";
 import { db } from "@/server/api/db";
 import { settings, users } from "@/server/api/db/schema";
-import { LidndAuth } from "@/app/authentication";
+import { LidndAuth, LidndUser } from "@/app/authentication";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 import { OAuth2RequestError } from "arctic";
@@ -65,7 +65,7 @@ export const GET = async (request: NextRequest) => {
     const redirectLocation =
       redirectUrl && redirectUrl !== "undefined"
         ? redirectUrl
-        : appRoutes.dashboard;
+        : appRoutes.dashboard(newUser as LidndUser);
 
     return new Response(null, {
       status: 302,

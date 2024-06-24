@@ -64,9 +64,7 @@ export function TRPCReactProvider(props: {
   return (
     <QueryClientProvider client={queryClient}>
       <api.Provider client={trpcClient} queryClient={queryClient}>
-        <ReactQueryStreamedHydration>
-          {props.children}
-        </ReactQueryStreamedHydration>
+        {props.children}
       </api.Provider>
     </QueryClientProvider>
   );

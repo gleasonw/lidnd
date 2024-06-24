@@ -7,12 +7,22 @@ import { cache } from "react";
 
 export type LidndUser = {
   id: LidndUserId;
-  username: string;
+  username: LidndUserName;
   avatar: string;
   discord_id: string;
 };
 
-export type LidndUserId = string & { __brand: "UserId" };
+export const UserUtils = {
+  // Will this bring any value? to be seen. the idea is that we might
+  // add more stuff to the context at some point. ui route handlers
+  // don't create a context automatically
+  context: (user: LidndUser) => ({
+    user,
+  }),
+};
+
+export type LidndUserName = string & { __brand: "username" };
+export type LidndUserId = string & { __brand: "user_id" };
 
 export const LidndAuth = {
   getOauthUser: async (code: string) => {

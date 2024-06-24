@@ -1,12 +1,12 @@
-import { inferAsyncReturnType } from "@trpc/server";
+import { LidndAuth } from "@/app/authentication";
 import { NextRequest } from "next/server";
-import { getPageSession } from "@/server/api/utils";
 
-export async function createContext(request: { req: NextRequest; res?: any }) {
-  const session = await getPageSession();
-  if (!session) return { user: null };
+export async function createContext({ req }: { req: NextRequest }) {
+  const user = await LidndAuth.getUser();
+  if (!user) return { user: null };
   return {
-    user: session.user,
+    user,
   };
 }
-export type Context = inferAsyncReturnType<typeof createContext>;
+
+export type Context = Awaited<ReturnType<typeof createContext>>;
