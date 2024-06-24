@@ -10,7 +10,6 @@ import {
   spells,
   reminders,
   campaigns,
-  encounter_status,
 } from "@/server/api/db/schema";
 import { eq, and, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";

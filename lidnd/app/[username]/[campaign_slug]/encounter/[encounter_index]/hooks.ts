@@ -150,44 +150,6 @@ export function useUpdateEncounterParticipant() {
   });
 }
 
-export function useUpdateEncounterStatus() {
-  const { encounterById } = api.useUtils();
-  const encounterId = useEncounterId();
-
-  const mutation = api.updateEncounterStatus.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(encounterId);
-    },
-
-    onMutate: async ({ status }) => {
-      await encounterById.cancel(encounterId);
-
-      const current = encounterById.getData(encounterId);
-
-      if (!current) {
-        console.error("unable to optimistically update encounter status");
-        return;
-      }
-
-      encounterById.setData(encounterId, (old) => {
-        if (!old) {
-          return;
-        }
-        return {
-          ...old,
-          status,
-        };
-      });
-    },
-  });
-
-  function updateStatus(status: EncounterStatus) {
-    mutation.mutate({ status, encounter_id: encounterId });
-  }
-
-  return { ...mutation, mutate: updateStatus };
-}
-
 export function useUpdateEncounter() {
   const { encounters } = api.useUtils();
   const campaignId = useCampaignId();
