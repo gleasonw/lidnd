@@ -1,4 +1,4 @@
-import { defaultParticipant } from "@/encounters/utils";
+import { defaultParticipant } from "@/app/[username]/[campaign_slug]/encounter/utils";
 import {
   Creature,
   Participant,

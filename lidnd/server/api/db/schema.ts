@@ -11,6 +11,7 @@ import {
   uuid,
   varchar,
   pgEnum,
+  unique,
 } from "drizzle-orm/pg-core";
 
 export type DbSpell = InferInsertModel<typeof spells>;
@@ -57,10 +58,18 @@ export const reminderRelations = relations(reminders, ({ one }) => ({
 }));
 
 export const initiative_enum = pgEnum("initiative_type", ["linear", "group"]);
-export const encounter_status_enum = pgEnum("encounter_status", [
+export const encounter_label_enum = pgEnum("encounter_label", [
   "active",
   "inactive",
 ]);
+
+export const encounter_status = ["roll", "surprise", "prep", "run"] as const;
+export type EncounterStatus = (typeof encounter_status)[number];
+
+export const encounter_status_enum = pgEnum(
+  "encounter_status",
+  encounter_status
+);
 
 export const systems = pgTable("systems", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -78,6 +87,7 @@ export const campaigns = pgTable(
       .notNull()
       .references(() => systems.id, { onDelete: "cascade" }),
     name: varchar("name", { length: 256 }).notNull(),
+    slug: varchar("slug", { length: 256 }).notNull().default(""),
     description: text("description"),
     started_at: timestamp("started_at"),
     created_at: timestamp("created_at").defaultNow(),
@@ -88,6 +98,7 @@ export const campaigns = pgTable(
   (t) => {
     return {
       userIndex: index("user_index_campaigns").on(t.user_id),
+      unq: unique().on(t.user_id, t.name),
     };
   }
 );
@@ -123,7 +134,7 @@ export const encounters = pgTable(
   "encounters",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    name: text("name"),
+    name: text("name").notNull().default("Unnamed encounter"),
     description: text("description"),
     started_at: timestamp("started_at"),
     created_at: timestamp("created_at").defaultNow(),
@@ -135,8 +146,10 @@ export const encounters = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     current_round: integer("current_round").default(1).notNull(),
     ended_at: timestamp("ended_at"),
-    status: encounter_status_enum("status").default("active").notNull(),
+    status: encounter_status_enum("status").default("prep").notNull(),
+    label: encounter_label_enum("label").default("active").notNull(),
     order: integer("order").default(0).notNull(),
+    index_in_campaign: integer("index_in_campaign").notNull().default(0),
   },
   (t) => {
     return {

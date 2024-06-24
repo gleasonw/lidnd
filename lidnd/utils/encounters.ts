@@ -1,6 +1,6 @@
-import { Reminder } from "@/app/dashboard/types";
-import { routeToEncounter } from "@/app/routes";
-import { UpdateTurnOrderReturn } from "@/encounters/utils";
+import { Reminder } from "@/app/[username]/types";
+import { appRoutes } from "@/app/routes";
+import { UpdateTurnOrderReturn } from "@/app/[username]/[campaign_slug]/encounter/utils";
 import {
   Encounter,
   Participant,
@@ -9,6 +9,8 @@ import {
 import { EncounterWithData } from "@/server/encounters";
 import { System } from "@/types";
 import { ParticipantUtils } from "@/utils/participants";
+import { LidndUser } from "@/app/authentication";
+import { EncounterStatus } from "@/server/api/db/schema";
 
 type EncounterWithParticipants<T extends Participant = Participant> =
   Encounter & {
@@ -21,20 +23,34 @@ type Cyclable = {
 };
 
 export const EncounterUtils = {
-  dynamicRoute(encounter: {
-    id: string;
-    started_at: Encounter["started_at"];
-    campaign_id: string;
-  }) {
+  dynamicRoute(
+    encounter: {
+      id: string;
+      started_at: Encounter["started_at"];
+      campaign_id: string;
+      name: string;
+      index_in_campaign: number;
+    },
+    campaign: { slug: string },
+    user: LidndUser
+  ) {
     if (encounter.started_at) {
-      return `${routeToEncounter(encounter.campaign_id, encounter.id)}/run`;
+      return `${appRoutes.encounter(campaign, encounter, user)}/run`;
     }
 
-    return routeToEncounter(encounter.campaign_id, encounter.id);
+    return appRoutes.encounter(campaign, encounter, user);
   },
 
   initiativeType(encounter: { campaigns: { system: System } }) {
     return encounter.campaigns.system.initiative_type;
+  },
+
+  updateStatus(encounter: EncounterWithData, status: EncounterStatus) {
+    // maybe we'll have more of a state machine here someday
+    return {
+      ...encounter,
+      status,
+    };
   },
 
   participants<T extends Participant>(encounter: EncounterWithParticipants<T>) {
@@ -60,14 +76,16 @@ export const EncounterUtils = {
       id: encounter.id ?? Math.random().toString(),
       campaign_id: encounter.campaign_id,
       user_id: encounter.user_id ?? "pending",
-      name: encounter.name ?? null,
+      name: encounter.name ?? "Unnamed encounter",
       description: encounter.description ?? null,
       started_at: encounter.started_at ?? new Date(),
       created_at: encounter.created_at ?? new Date(),
       current_round: encounter.current_round ?? 0,
       ended_at: encounter.ended_at ?? null,
-      status: encounter.status ?? "active",
+      status: encounter.status ?? "prep",
+      label: encounter.label ?? "active",
       order: encounter.order ?? 0,
+      index_in_campaign: encounter.index_in_campaign ?? 0,
     };
   },
 

@@ -3,7 +3,7 @@ import { session, users } from "@/server/api/db/schema";
 import { DrizzlePostgreSQLAdapter } from "@lucia-auth/adapter-drizzle";
 import { db } from "@/server/api/db";
 import { Discord } from "arctic";
-import { rerouteUrl } from "@/app/dashboard/utils";
+import { rerouteUrl } from "@/app/[username]/utils";
 
 const lucia = new Lucia(new DrizzlePostgreSQLAdapter(db, session, users), {
   getUserAttributes: (attributes) => {

@@ -14,7 +14,7 @@ import * as z from "zod";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import apiURL from "@/app/apiURL";
 import { ParticipantUtils } from "@/utils/participants";
-import { creatureUploadSchema } from "@/encounters/types";
+import { creatureUploadSchema } from "@/app/[username]/[campaign_slug]/encounter/types";
 import { LidndAuth } from "@/app/authentication";
 
 export async function getUserCampaigns(user_id: string) {

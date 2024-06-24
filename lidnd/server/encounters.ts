@@ -1,15 +1,23 @@
 import { db } from "@/server/api/db";
-import { reminders, encounters, participants } from "@/server/api/db/schema";
-import { Participant } from "@/server/api/router";
+import {
+  reminders,
+  encounters,
+  participants,
+  EncounterStatus,
+} from "@/server/api/db/schema";
+import { LidndContext, Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql } from "drizzle-orm";
 
 export const ServerEncounter = {
-  encountersInCampaign: async function (user_id: string, campaign_id: string) {
+  encountersInCampaign: async function (
+    ctx: LidndContext,
+    campaign_id: string
+  ) {
     return await db.query.encounters.findMany({
       where: (encounter, { eq, and }) =>
         and(
-          eq(encounter.user_id, user_id),
+          eq(encounter.user_id, ctx.user.id),
           eq(encounter.campaign_id, campaign_id)
         ),
       with: {
@@ -27,14 +35,47 @@ export const ServerEncounter = {
     });
   },
 
+  updateStatus(
+    ctx: LidndContext,
+    encounter_id: string,
+    status: EncounterStatus
+  ) {
+    return db
+      .update(encounters)
+      .set({
+        status,
+      })
+      .where(
+        and(
+          eq(encounters.id, encounter_id),
+          eq(encounters.user_id, ctx.user.id)
+        )
+      );
+  },
+
+  encounterFromCampaignAndIndex: async function (
+    ctx: LidndContext,
+    campaign_id: string,
+    index_in_campaign: number
+  ) {
+    return await db.query.encounters.findFirst({
+      where: (encounter, { eq, and }) =>
+        and(
+          eq(encounter.user_id, ctx.user.id),
+          eq(encounter.campaign_id, campaign_id),
+          eq(encounter.index_in_campaign, index_in_campaign)
+        ),
+    });
+  },
+
   encounterById: async function (
-    user_id: string,
+    ctx: LidndContext,
     encounter_id: string,
     dbObject = db
   ) {
     return await dbObject.query.encounters.findFirst({
       where: (encounter, { eq, and }) =>
-        and(eq(encounter.id, encounter_id), eq(encounter.user_id, user_id)),
+        and(eq(encounter.id, encounter_id), eq(encounter.user_id, ctx.user.id)),
       with: {
         participants: {
           with: {
@@ -52,11 +93,11 @@ export const ServerEncounter = {
   },
 
   encounterByIdThrows: async function (
-    user_id: string,
+    ctx: LidndContext,
     encounter_id: string,
     dbObject = db
   ) {
-    const encounter = await this.encounterById(user_id, encounter_id, dbObject);
+    const encounter = await this.encounterById(ctx, encounter_id, dbObject);
 
     if (!encounter) {
       throw new TRPCError({
@@ -69,7 +110,7 @@ export const ServerEncounter = {
   },
 
   encounterReminders: async function (
-    user_id: string,
+    ctx: LidndContext,
     encounter_id: string,
     dbObject = db
   ) {
@@ -82,7 +123,10 @@ export const ServerEncounter = {
       })
       .from(encounters)
       .where(
-        and(eq(encounters.id, encounter_id), eq(encounters.user_id, user_id))
+        and(
+          eq(encounters.id, encounter_id),
+          eq(encounters.user_id, ctx.user.id)
+        )
       )
       .rightJoin(reminders, eq(encounters.id, reminders.encounter_id));
   },

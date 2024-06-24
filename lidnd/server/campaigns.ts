@@ -1,4 +1,3 @@
-import { LidndUserId } from "@/app/authentication";
 import { db } from "@/server/api/db";
 import {
   campaigns,
@@ -6,18 +5,30 @@ import {
   creatures,
   systems,
 } from "@/server/api/db/schema";
+import { LidndContext } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and } from "drizzle-orm";
 
 export const ServerCampaign = {
-  userCampaigns: async function (userId: LidndUserId) {
+  userCampaigns: async function (ctx: LidndContext) {
     return await db
       .select()
       .from(campaigns)
-      .where(eq(campaigns.user_id, userId));
+      .where(eq(campaigns.user_id, ctx.user.id));
   },
 
-  campaignById: async function (campaignId: string, userId: LidndUserId) {
+  campaignFromSlug: async function (ctx: LidndContext, campaignSlug: string) {
+    return await db.query.campaigns.findFirst({
+      where: (campaigns, { eq, and }) =>
+        and(
+          eq(campaigns.user_id, ctx.user.id),
+          eq(campaigns.slug, campaignSlug)
+        ),
+    });
+  },
+
+  //TODO: use drizzle relation query
+  campaignById: async function (ctx: LidndContext, campaignId: string) {
     const res = await db
       .select({
         id: campaigns.id,
@@ -26,6 +37,7 @@ export const ServerCampaign = {
         started_at: campaigns.started_at,
         created_at: campaigns.created_at,
         user_id: campaigns.user_id,
+        slug: campaigns.slug,
         system: {
           id: systems.id,
           name: systems.name,
@@ -33,13 +45,15 @@ export const ServerCampaign = {
         },
       })
       .from(campaigns)
-      .where(and(eq(campaigns.id, campaignId), eq(campaigns.user_id, userId)))
+      .where(
+        and(eq(campaigns.id, campaignId), eq(campaigns.user_id, ctx.user.id))
+      )
       .leftJoin(systems, eq(campaigns.system_id, systems.id));
     return res.at(0);
   },
 
-  campaignByIdThrows: async function (campaignId: string, userId: LidndUserId) {
-    const campaign = await this.campaignById(campaignId, userId);
+  campaignByIdThrows: async function (ctx: LidndContext, campaignId: string) {
+    const campaign = await this.campaignById(ctx, campaignId);
 
     if (!campaign) {
       throw new TRPCError({
@@ -52,8 +66,8 @@ export const ServerCampaign = {
   },
 
   playersInCampaign: async function (
+    ctx: LidndContext,
     campaignId: string,
-    userId: LidndUserId,
     dbObject = db
   ) {
     return await dbObject
@@ -70,7 +84,7 @@ export const ServerCampaign = {
         creatures,
         and(
           eq(campaignToPlayer.player_id, creatures.id),
-          eq(creatures.user_id, userId)
+          eq(creatures.user_id, ctx.user.id)
         )
       );
   },

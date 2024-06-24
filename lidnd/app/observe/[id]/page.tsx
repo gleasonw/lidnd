@@ -5,12 +5,12 @@ import { SimpleBattleCard } from "./SimpleBattleCard";
 import { ParticipantWithData } from "@/server/api/router";
 import { Card } from "@/components/ui/card";
 import clsx from "clsx";
-import { CharacterIcon } from "@/encounters/[id]/character-icon";
-import { HealthMeterOverlay } from "@/encounters/[id]/run/battle-ui";
-import { GroupBattleLayout } from "@/encounters/[id]/run/group-battle-ui";
 import { EncounterUtils } from "@/utils/encounters";
 import { ServerEncounter, ObserveEncounter } from "@/server/encounters";
 import { ParticipantUtils } from "@/utils/participants";
+import { HealthMeterOverlay } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/battle-ui";
+import { CharacterIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
+import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/group-battle-ui";
 
 export default function ObservePage({ params }: { params: { id: string } }) {
   return (

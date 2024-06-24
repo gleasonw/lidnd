@@ -21,10 +21,11 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",
     "paths": {
-      "@/encounters/*": ["./app/dashboard/campaigns/[campaign]/encounters/*"],
-      "@/campaigns/*": ["./app/dashboard/campaigns/[campaign]/*"],
-      "@/creatures/*": ["./app/dashboard/creatures/*"],
+      "@/encounters/*": ["app/[username]/[campaign_slug]/encounter/*"],
+      "@/campaigns/*": ["app/[username]/[campaign_slug]/[campaign]/*"],
+      "@/creatures/*": ["app/[username]/creatures/*"],
       "@/*": ["./*"]
     },
     "forceConsistentCasingInFileNames": true
