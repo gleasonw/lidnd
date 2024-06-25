@@ -14,7 +14,7 @@ export function LidndTextArea(props: LidndTextAreaProps) {
   return (
     <EditorContent
       editor={editor}
-      className="w-full min-h-[80px] prose prose-p:mt-0 prose-p:mb-0 max-w-none"
+      className="w-full min-h-[50px] prose prose-p:mt-0 prose-p:mb-0 max-w-none"
     />
   );
 }

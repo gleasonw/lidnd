@@ -359,7 +359,7 @@ export function BattleCardCreatureName({
 }: BattleCardParticipantProps) {
   return (
     <CardHeader className="flex pt-0 flex-col gap-2 justify-between items-center">
-      <CardTitle className="text-xl truncate max-w-full group-hover:opacity-50">
+      <CardTitle className="text-lg  truncate max-w-full group-hover:opacity-50">
         {ParticipantUtils.name(participant)}
       </CardTitle>
     </CardHeader>

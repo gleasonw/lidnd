@@ -48,6 +48,7 @@ import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
 
 // TODO:
 // - allow creature editing / deletion
@@ -60,7 +61,7 @@ export default function EncounterPrep() {
 
   return (
     <>
-      <div className="flex flex-col gap-3 flex-grow ml-auto mr-auto max-w-[860px] min-w-0">
+      <div className="flex flex-col gap-6 flex-grow ml-auto mr-auto max-w-[860px] min-w-0">
         <EncounterDetailsTopBar>
           <EncounterStats />
         </EncounterDetailsTopBar>
@@ -68,6 +69,7 @@ export default function EncounterPrep() {
         <DescriptionTextArea
           tiptapReadyGate={
             <>
+              <Separator />
               <EncounterParticipantRow
                 onSelectParticipant={setSelectedParticipantId}
               />
