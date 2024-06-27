@@ -63,35 +63,37 @@ export const ParticipantUpload = function ParticipantUpload({
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
 
   return (
-    <Tabs defaultValue="new">
-      <span className="flex gap-1 flex-wrap pr-2">
-        <TabsList>
-          <TabsTrigger value="new">
-            <Plus /> Add new creature
-          </TabsTrigger>
-          <TabsTrigger value="existing">
-            <UserPlus /> Existing creatures
-          </TabsTrigger>
-        </TabsList>
-      </span>
-      <TabsContent value="new">
-        {form ?? (
-          <FullCreatureAddForm
-            uploadCreature={(data) =>
-              addCreatureToEncounter({
-                creature: data,
-                participant: {
-                  is_ally: false,
-                },
-              })
-            }
-          />
-        )}
-      </TabsContent>
-      <TabsContent value="existing">
-        {existingCreatures ?? <ExistingCreature />}
-      </TabsContent>
-    </Tabs>
+    <div>
+      <Tabs defaultValue="new">
+        <span className="flex gap-1 flex-wrap pr-2">
+          <TabsList>
+            <TabsTrigger value="new">
+              <Plus /> Add new creature
+            </TabsTrigger>
+            <TabsTrigger value="existing">
+              <UserPlus /> Existing creatures
+            </TabsTrigger>
+          </TabsList>
+        </span>
+        <TabsContent value="new">
+          {form ?? (
+            <FullCreatureAddForm
+              uploadCreature={(data) =>
+                addCreatureToEncounter({
+                  creature: data,
+                  participant: {
+                    is_ally: false,
+                  },
+                })
+              }
+            />
+          )}
+        </TabsContent>
+        <TabsContent value="existing">
+          {existingCreatures ?? <ExistingCreature />}
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

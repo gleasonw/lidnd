@@ -42,8 +42,11 @@ export default async function Page({
           ))}
           <CreateCampaignButton
             trigger={
-              <Card className="flex items-center justify-center">
-                <Button variant="ghost" className="flex items-center">
+              <Card className="flex items-center justify-center w-full h-full">
+                <Button
+                  variant="ghost"
+                  className="flex items-center w-full h-full"
+                >
                   <CardTitle>New campaign</CardTitle>
                   <Plus />
                 </Button>
@@ -65,17 +68,18 @@ function CampaignCard(props: CampaignCardProps) {
   const { campaign, user } = props;
   return (
     <Link href={appRoutes.campaign(campaign, user)}>
-      <Card className="flex flex-col gap-5 transition-all hover:bg-gray-200 max-w-lg">
+      <Card className="flex flex-col gap-5 transition-all hover:bg-gray-200 max-w-lg h-96">
         <CardHeader>
           <CardTitle>
             {isStringMeaningful(campaign.name) ? campaign.name : "Unnamed"}
           </CardTitle>
+        </CardHeader>
+        <CardContent className="max-h-full overflow-auto prose">
           <div
-            className="whitespace-pre-wrap max-h-96 overflow-auto prose"
+            className="whitespace-pre-wrap"
             dangerouslySetInnerHTML={{ __html: campaign.description ?? "" }}
           />
-        </CardHeader>
-        <CardContent></CardContent>
+        </CardContent>
       </Card>
     </Link>
   );

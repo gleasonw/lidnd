@@ -49,6 +49,7 @@ import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import _ from "lodash";
 
 // TODO:
 // - allow creature editing / deletion
@@ -249,36 +250,33 @@ function EncounterParticipantRow(props: {
             </LidndPlusDialog>
           </h1>
         }
-        monsters={
-          monsters?.length > 0
-            ? monsters.map((participant, index) => (
-                <div
-                  onClick={() => onSelectParticipant(participant.creature_id)}
-                  key={participant.id + index}
+        monsters={[
+          ...monsters.map((participant, index) => (
+            <div
+              onClick={() => onSelectParticipant(participant.creature_id)}
+              key={participant.id + index}
+            >
+              <PrepParticipantCard participant={participant} />
+            </div>
+          )),
+          <Card
+            className="flex flex-col justify-center items-center w-32 h-60"
+            key="monster-placeholder"
+          >
+            <LidndDialog
+              trigger={
+                <ButtonWithTooltip
+                  text="Add monster"
+                  className="w-full h-full"
+                  variant="ghost"
                 >
-                  <PrepParticipantCard participant={participant} />
-                </div>
-              ))
-            : [
-                <Card
-                  className="flex flex-col justify-center items-center w-32 h-60"
-                  key="monster-placeholder"
-                >
-                  <LidndDialog
-                    trigger={
-                      <ButtonWithTooltip
-                        text="Add monster"
-                        className="w-full h-full"
-                        variant="ghost"
-                      >
-                        <Plus />
-                      </ButtonWithTooltip>
-                    }
-                    content={<MonsterUpload />}
-                  />
-                </Card>,
-              ]
-        }
+                  <Plus />
+                </ButtonWithTooltip>
+              }
+              content={<MonsterUpload />}
+            />
+          </Card>,
+        ]}
         players={players.map((participant, index) => (
           <PrepParticipantCard
             key={participant.id + index}
@@ -304,8 +302,10 @@ function PrepParticipantCard({ participant }: ParticipantCreatureProps) {
     <AnimationListItem key={participant.id}>
       <div className="flex flex-col items-center gap-3">
         <Card className="flex flex-col justify-center w-32">
-          <CardHeader>
-            <CardTitle>{ParticipantUtils.name(participant)}</CardTitle>
+          <CardHeader className="p-3">
+            <CardTitle className="text-xl text-center">
+              {ParticipantUtils.name(participant)}
+            </CardTitle>
           </CardHeader>
           <CharacterIcon
             id={participant.creature_id}
@@ -404,84 +404,27 @@ export function MonsterParticipantActions(props: ParticipantCreatureProps) {
 }
 
 function EncounterStats() {
-  const id = useEncounterId();
   const { data: settings } = api.settings.useQuery();
-  const { data: encounter } = api.encounterById.useQuery(id);
+  const [encounter] = useEncounter();
 
   const [estimatedTurnSeconds, setEstimatedTurnSeconds] = React.useState<
     number | null
   >(null);
   const [playerLevel, setPlayerLevel] = React.useState<number | null>(null);
-  const [localNumPlayers, setLocalNumPlayers] = React.useState<number | null>(
-    null,
-  );
   const [estimatedRounds, setEstimatedRounds] = React.useState<number | null>(
     null,
   );
 
-  const finalTurnSeconds =
-    estimatedTurnSeconds ?? settings?.average_turn_seconds ?? 180;
-  const finalPlayerLevel = playerLevel ?? settings?.default_player_level ?? 1;
-  const finalNumPlayers =
-    localNumPlayers ??
-    encounter?.participants?.filter((p) => ParticipantUtils.isPlayer(p))
-      ?.length ??
-    4;
-  const finalEstimatedRounds = estimatedRounds ?? 3;
-
-  const numParticipants = encounter?.participants?.length ?? 0;
-
-  const estimatedEncounterDuration =
-    (numParticipants * finalEstimatedRounds * finalTurnSeconds) / 60;
-
-  const totalCr =
-    encounter?.participants?.reduce((acc, p) => {
-      if (p.is_ally) return acc;
-      return acc + ParticipantUtils.challengeRating(p);
-    }, 0) ?? 0;
-
-  const crBudget = encounterCRPerCharacter.find(
-    (cr) => cr.level === finalPlayerLevel,
+  const encounterTime = EncounterUtils.durationEstimate(
+    encounter,
+    estimatedRounds,
+    estimatedTurnSeconds,
+    settings,
   );
 
-  const alliesWeighted =
-    encounter?.participants?.reduce((acc, participant) => {
-      if (!participant.is_ally) {
-        return acc;
-      }
-
-      // rough approximation from monster cr to player level
-      return acc + ParticipantUtils.challengeRating(participant) * 4;
-    }, 0) ?? 0;
-
-  const playersAndAllies = finalNumPlayers + alliesWeighted;
-
-  const easyTier = (crBudget?.easy ?? 0) * playersAndAllies;
-  const standardTier = (crBudget?.standard ?? 0) * playersAndAllies;
-  const hardTier = (crBudget?.hard ?? 0) * playersAndAllies;
-
-  let difficulty = "";
-  if (totalCr <= easyTier) {
-    difficulty = "Easy";
-  } else if (totalCr <= standardTier) {
-    difficulty = "Standard";
-  } else if (totalCr <= hardTier) {
-    difficulty = "Hard";
-  } else {
-    difficulty = "Deadly";
-  }
-
-  let encounterTime = "";
-  const hourTime = estimatedEncounterDuration / 60;
-  const hourCount = Math.floor(hourTime);
-  const minuteRemainder = estimatedEncounterDuration % 60;
-  if (hourTime >= 1) {
-    encounterTime = `${hourCount} hour${hourCount > 1 ? "s" : ""} ${
-      minuteRemainder ? `${Math.floor(minuteRemainder)} minutes` : ""
-    }`;
-  } else {
-    encounterTime = `${Math.floor(estimatedEncounterDuration % 60)} minutes`;
-  }
+  const { easy, standard, hard } = EncounterUtils.findCRBudget(
+    playerLevel ?? settings?.default_player_level ?? 1,
+  );
 
   return (
     <>
@@ -493,28 +436,22 @@ function EncounterStats() {
             size="sm"
           >
             <Skull />
-            {difficulty}
+            {EncounterUtils.difficulty(encounter, playerLevel, settings)}
           </Button>
         }
         className="flex flex-col items-center gap-5"
       >
-        <span>Total CR: {totalCr}</span>
+        <span>Total CR: {EncounterUtils.totalCr(encounter)}</span>
         <span>
-          Budget: {easyTier} / {standardTier} / {hardTier}
+          Budget: {easy} / {standard} / {hard}
         </span>
-        <label>
-          Number of players in encounter
-          <Input
-            type={"number"}
-            value={finalNumPlayers}
-            onChange={(e) => setLocalNumPlayers(parseInt(e.target.value))}
-          />
-        </label>
         <label>
           Player level
           <Input
             type={"number"}
-            value={finalPlayerLevel}
+            min={1}
+            max={20}
+            value={playerLevel ?? settings?.default_player_level ?? 1}
             onChange={(e) => setPlayerLevel(parseInt(e.target.value))}
           />
         </label>
@@ -537,7 +474,9 @@ function EncounterStats() {
             Estimated turn seconds
             <Input
               type={"number"}
-              value={finalTurnSeconds}
+              value={
+                estimatedTurnSeconds ?? settings?.average_turn_seconds ?? 180
+              }
               onChange={(e) =>
                 setEstimatedTurnSeconds(parseInt(e.target.value))
               }
@@ -547,7 +486,7 @@ function EncounterStats() {
             Estimated rounds
             <Input
               type={"number"}
-              value={finalEstimatedRounds}
+              value={estimatedRounds ?? 2}
               onChange={(e) => setEstimatedRounds(parseInt(e.target.value))}
             />
           </label>
@@ -556,29 +495,6 @@ function EncounterStats() {
     </>
   );
 }
-
-const encounterCRPerCharacter = [
-  { level: 1, easy: 0.125, standard: 0.125, hard: 0.25, cap: 1 },
-  { level: 2, easy: 0.125, standard: 0.25, hard: 0.5, cap: 3 },
-  { level: 3, easy: 0.25, standard: 0.5, hard: 0.75, cap: 4 },
-  { level: 4, easy: 0.5, standard: 0.75, hard: 1, cap: 6 },
-  { level: 5, easy: 1, standard: 1.5, hard: 2.5, cap: 8 },
-  { level: 6, easy: 1.5, standard: 2, hard: 3, cap: 9 },
-  { level: 7, easy: 2, standard: 2.5, hard: 3.5, cap: 10 },
-  { level: 8, easy: 2.5, standard: 3, hard: 4, cap: 13 },
-  { level: 9, easy: 3, standard: 3.5, hard: 4.5, cap: 13 },
-  { level: 10, easy: 3.5, standard: 4, hard: 5, cap: 15 },
-  { level: 11, easy: 4, standard: 4.5, hard: 5.5, cap: 16 },
-  { level: 12, easy: 4.5, standard: 5, hard: 6, cap: 17 },
-  { level: 13, easy: 5, standard: 5.5, hard: 6.5, cap: 19 },
-  { level: 14, easy: 5.5, standard: 6, hard: 7, cap: 20 },
-  { level: 15, easy: 6, standard: 6.5, hard: 7.5, cap: 22 },
-  { level: 16, easy: 6.5, standard: 7, hard: 8, cap: 24 },
-  { level: 17, easy: 7, standard: 7.5, hard: 8.5, cap: 25 },
-  { level: 18, easy: 7.5, standard: 8, hard: 9, cap: 26 },
-  { level: 19, easy: 8, standard: 8.5, hard: 9.5, cap: 28 },
-  { level: 20, easy: 8.5, standard: 9, hard: 10, cap: 30 },
-];
 
 function EncounterReminderInput() {
   const [encounter] = useEncounter();

@@ -5,12 +5,13 @@ import {
   Encounter,
   Participant,
   ParticipantWithData,
+  Settings,
 } from "@/server/api/router";
 import { EncounterWithData } from "@/server/encounters";
 import { System } from "@/types";
 import { ParticipantUtils } from "@/utils/participants";
 import { LidndUser } from "@/app/authentication";
-import { EncounterStatus } from "@/server/api/db/schema";
+import _ from "lodash";
 
 type EncounterWithParticipants<T extends Participant = Participant> =
   Encounter & {
@@ -45,12 +46,92 @@ export const EncounterUtils = {
     return encounter.campaigns.system.initiative_type;
   },
 
-  updateStatus(encounter: EncounterWithData, status: EncounterStatus) {
-    // maybe we'll have more of a state machine here someday
-    return {
-      ...encounter,
-      status,
-    };
+  totalCr(encounter: { participants: EncounterWithData["participants"] }) {
+    return _.sumBy(encounter.participants, (p) => {
+      if (p.is_ally) return 0;
+      return ParticipantUtils.challengeRating(p);
+    });
+  },
+
+  playerCount(encounter: { participants: EncounterWithData["participants"] }) {
+    return encounter.participants.filter((p) => ParticipantUtils.isPlayer(p))
+      .length;
+  },
+
+  findCRBudget(playerLevel: number) {
+    if (playerLevel < 1 || playerLevel > 20) {
+      throw new Error("playerLevel must be between 1 and 20");
+    }
+
+    const foundLevel = encounterCRPerCharacter.find(
+      (cr) => cr.level === playerLevel
+    );
+
+    if (!foundLevel) {
+      throw new Error("No CR budget found for this player level");
+    }
+
+    return foundLevel;
+  },
+
+  durationEstimate(
+    encounter: { participants: EncounterWithData["participants"] },
+    estimatedRounds?: number | null,
+    estimatedTurnSeconds?: number | null,
+    settings?: Settings
+  ) {
+    const finalEstimatedRounds = estimatedRounds ?? 3;
+    const finalTurnSeconds =
+      estimatedTurnSeconds ?? settings?.average_turn_seconds ?? 180;
+    const estimateEncounterSeconds =
+      (encounter.participants.length *
+        finalEstimatedRounds *
+        finalTurnSeconds) /
+      60;
+
+    const hourTime = estimateEncounterSeconds / 60;
+    const hourCount = Math.floor(hourTime);
+    const minuteRemainder = estimateEncounterSeconds % 60;
+
+    if (hourTime >= 1) {
+      return `${hourCount} hour${hourCount > 1 ? "s" : ""} ${
+        minuteRemainder ? `${Math.floor(minuteRemainder)} minutes` : ""
+      }`;
+    }
+
+    return `${Math.floor(estimateEncounterSeconds % 60)} minutes`;
+  },
+
+  difficulty(
+    encounter: { participants: EncounterWithData["participants"] },
+    playerLevel?: number | null,
+    settings?: Settings
+  ) {
+    const finalPlayerLevel = playerLevel ?? settings?.default_player_level ?? 1;
+    const totalCr = this.totalCr(encounter);
+
+    const crBudget = this.findCRBudget(finalPlayerLevel);
+
+    const alliesWeighted = _.sumBy(encounter?.participants, (p) => {
+      if (!p.is_ally) return 0;
+      return ParticipantUtils.challengeRating(p) * 4;
+    });
+
+    const playersAndAllies = this.playerCount(encounter) + alliesWeighted;
+
+    const easyTier = (crBudget?.easy ?? 0) * playersAndAllies;
+    const standardTier = (crBudget?.standard ?? 0) * playersAndAllies;
+    const hardTier = (crBudget?.hard ?? 0) * playersAndAllies;
+
+    if (totalCr <= easyTier) {
+      return "Easy";
+    } else if (totalCr <= standardTier) {
+      return "Standard";
+    } else if (totalCr <= hardTier) {
+      return "Hard";
+    } else {
+      return "Deadly";
+    }
   },
 
   participants<T extends Participant>(encounter: EncounterWithParticipants<T>) {
@@ -378,3 +459,26 @@ type CycleTurnArgs = {
   ) => Omit<UpdateTurnOrderReturn, "updatedParticipants">;
   encounter: Cyclable;
 };
+
+const encounterCRPerCharacter = [
+  { level: 1, easy: 0.125, standard: 0.125, hard: 0.25, cap: 1 },
+  { level: 2, easy: 0.125, standard: 0.25, hard: 0.5, cap: 3 },
+  { level: 3, easy: 0.25, standard: 0.5, hard: 0.75, cap: 4 },
+  { level: 4, easy: 0.5, standard: 0.75, hard: 1, cap: 6 },
+  { level: 5, easy: 1, standard: 1.5, hard: 2.5, cap: 8 },
+  { level: 6, easy: 1.5, standard: 2, hard: 3, cap: 9 },
+  { level: 7, easy: 2, standard: 2.5, hard: 3.5, cap: 10 },
+  { level: 8, easy: 2.5, standard: 3, hard: 4, cap: 13 },
+  { level: 9, easy: 3, standard: 3.5, hard: 4.5, cap: 13 },
+  { level: 10, easy: 3.5, standard: 4, hard: 5, cap: 15 },
+  { level: 11, easy: 4, standard: 4.5, hard: 5.5, cap: 16 },
+  { level: 12, easy: 4.5, standard: 5, hard: 6, cap: 17 },
+  { level: 13, easy: 5, standard: 5.5, hard: 6.5, cap: 19 },
+  { level: 14, easy: 5.5, standard: 6, hard: 7, cap: 20 },
+  { level: 15, easy: 6, standard: 6.5, hard: 7.5, cap: 22 },
+  { level: 16, easy: 6.5, standard: 7, hard: 8, cap: 24 },
+  { level: 17, easy: 7, standard: 7.5, hard: 8.5, cap: 25 },
+  { level: 18, easy: 7.5, standard: 8, hard: 9, cap: 26 },
+  { level: 19, easy: 8, standard: 8.5, hard: 9.5, cap: 28 },
+  { level: 20, easy: 8.5, standard: 9, hard: 10, cap: 30 },
+];
