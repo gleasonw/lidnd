@@ -422,8 +422,9 @@ function EncounterStats() {
     settings,
   );
 
-  const { easy, standard, hard } = EncounterUtils.findCRBudget(
+  const { easyTier, standardTier, hardTier } = EncounterUtils.findCRBudget(
     playerLevel ?? settings?.default_player_level ?? 1,
+    encounter,
   );
 
   return (
@@ -443,7 +444,7 @@ function EncounterStats() {
       >
         <span>Total CR: {EncounterUtils.totalCr(encounter)}</span>
         <span>
-          Budget: {easy} / {standard} / {hard}
+          Budget: {easyTier} / {standardTier} / {hardTier}
         </span>
         <label>
           Player level

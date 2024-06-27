@@ -13,10 +13,11 @@ import { ParticipantUtils } from "@/utils/participants";
 import { LidndUser } from "@/app/authentication";
 import _ from "lodash";
 
-type EncounterWithParticipants<T extends Participant = Participant> =
-  Encounter & {
-    participants: T[];
-  };
+type EncounterWithParticipants<
+  T extends Participant = EncounterWithData["participants"][number],
+> = Encounter & {
+  participants: T[];
+};
 
 type Cyclable = {
   participants: ParticipantWithData[];
@@ -58,24 +59,35 @@ export const EncounterUtils = {
       .length;
   },
 
-  findCRBudget(playerLevel: number) {
-    if (playerLevel < 1 || playerLevel > 20) {
+  findCRBudget(playersLevel: number, encounter: EncounterWithParticipants) {
+    if (playersLevel < 1 || playersLevel > 20) {
       throw new Error("playerLevel must be between 1 and 20");
     }
 
     const foundLevel = encounterCRPerCharacter.find(
-      (cr) => cr.level === playerLevel
+      (cr) => cr.level === playersLevel
     );
+
+    const alliesWeighted = _.sumBy(encounter?.participants, (p) => {
+      if (!p.is_ally) return 0;
+      return ParticipantUtils.challengeRating(p) * 4;
+    });
+
+    const playersAndAllies = this.playerCount(encounter) + alliesWeighted;
 
     if (!foundLevel) {
       throw new Error("No CR budget found for this player level");
     }
 
-    return foundLevel;
+    const easyTier = foundLevel.easy * playersAndAllies;
+    const standardTier = foundLevel.standard * playersAndAllies;
+    const hardTier = foundLevel.hard * playersAndAllies;
+
+    return { easyTier, standardTier, hardTier };
   },
 
   durationEstimate(
-    encounter: { participants: EncounterWithData["participants"] },
+    encounter: EncounterWithParticipants,
     estimatedRounds?: number | null,
     estimatedTurnSeconds?: number | null,
     settings?: Settings
@@ -103,25 +115,17 @@ export const EncounterUtils = {
   },
 
   difficulty(
-    encounter: { participants: EncounterWithData["participants"] },
+    encounter: EncounterWithParticipants,
     playerLevel?: number | null,
     settings?: Settings
   ) {
     const finalPlayerLevel = playerLevel ?? settings?.default_player_level ?? 1;
     const totalCr = this.totalCr(encounter);
 
-    const crBudget = this.findCRBudget(finalPlayerLevel);
-
-    const alliesWeighted = _.sumBy(encounter?.participants, (p) => {
-      if (!p.is_ally) return 0;
-      return ParticipantUtils.challengeRating(p) * 4;
-    });
-
-    const playersAndAllies = this.playerCount(encounter) + alliesWeighted;
-
-    const easyTier = (crBudget?.easy ?? 0) * playersAndAllies;
-    const standardTier = (crBudget?.standard ?? 0) * playersAndAllies;
-    const hardTier = (crBudget?.hard ?? 0) * playersAndAllies;
+    const { easyTier, standardTier, hardTier } = this.findCRBudget(
+      finalPlayerLevel,
+      encounter
+    );
 
     if (totalCr <= easyTier) {
       return "Easy";
