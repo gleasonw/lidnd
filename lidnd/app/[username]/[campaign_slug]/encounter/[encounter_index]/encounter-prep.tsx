@@ -65,7 +65,6 @@ class EncounterPrepStore {
   }
 
   setselectedCreatureId = (id: string) => {
-    console.log("setselectedCreatureId", id);
     this.selectedCreatureId = id;
   };
 }
@@ -319,7 +318,7 @@ export interface ParticipantCreatureProps {
 function PrepParticipantCard({ participant }: ParticipantCreatureProps) {
   return (
     <AnimationListItem key={participant.id}>
-      <div className="flex flex-col items-center gap-3 h-full">
+      <div className="flex flex-col items-center gap-3 h-full w-32">
         <Card className="flex flex-col justify-center w-32 h-full">
           <CardHeader className="p-3">
             <CardTitle className="text-xl text-center">
@@ -393,7 +392,7 @@ export function MonsterParticipantActions(props: ParticipantCreatureProps) {
 
   if (status === "input") {
     return (
-      <span className="flex items-center gap-2">
+      <span className="flex items-center">
         <Input
           type="number"
           className="w-32"
@@ -413,7 +412,7 @@ export function MonsterParticipantActions(props: ParticipantCreatureProps) {
   }
 
   return (
-    <span className="flex gap-3">
+    <span className="flex flex-wrap">
       <RemoveCreatureFromEncounterButton participant={participant} />
       <ButtonWithTooltip
         text="Show stat block"
