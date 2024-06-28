@@ -136,8 +136,6 @@ export async function updateEncounterDescription(
     .update(encounters)
     .set({ description: parsedDescription ?? "" })
     .where(and(eq(encounters.id, id), eq(encounters.user_id, user.id)));
-
-  revalidatePath(appRoutes.dashboard(user));
 }
 
 export async function createCreatureInEncounter(formData: CreaturePostData) {

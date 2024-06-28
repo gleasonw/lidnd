@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React from "react";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { api } from "@/trpc/react";
 import {
@@ -17,16 +16,6 @@ export default function ClientOverlays({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
-
-  useEffect(() => {
-    window.addEventListener("focus", router.refresh);
-
-    return () => {
-      window.removeEventListener("focus", () => {});
-    };
-  }, []);
-
   return (
     <>
       <SpellSearcher />

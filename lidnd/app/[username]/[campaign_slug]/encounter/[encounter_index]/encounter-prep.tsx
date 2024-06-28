@@ -86,7 +86,7 @@ const EncounterPrep = observer(function EncounterPrep() {
   const { selectedCreatureId } = encounterPrepStore;
   return (
     <EncounterPrepContext.Provider value={encounterPrepStore}>
-      <div className="flex flex-col gap-6 flex-grow ml-auto mr-auto max-w-[860px] min-w-0">
+      <div className="flex flex-col gap-5 flex-grow ml-auto mr-auto max-w-[860px] min-w-0">
         <EncounterDetailsTopBar>
           <EncounterStats />
         </EncounterDetailsTopBar>
