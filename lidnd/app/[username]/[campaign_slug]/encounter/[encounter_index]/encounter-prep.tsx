@@ -11,10 +11,11 @@ import {
   Users2,
   Check,
   Plus,
+  FileText,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import React, { useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { getAWSimageURL } from "@/app/[username]/[campaign_slug]/encounter/utils";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
@@ -50,18 +51,41 @@ import { useUser } from "@/app/[username]/user-provider";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import _ from "lodash";
+import { makeAutoObservable } from "mobx";
+import { observer } from "mobx-react-lite";
 
 // TODO:
 // - allow creature editing / deletion
-// make encounter title bigger
 
-export default function EncounterPrep() {
-  const [selectedParticipantId, setSelectedParticipantId] = React.useState<
-    string | null
-  >(null);
+class EncounterPrepStore {
+  selectedCreatureId: string | null = null;
 
+  constructor() {
+    makeAutoObservable(this);
+  }
+
+  setselectedCreatureId = (id: string) => {
+    console.log("setselectedCreatureId", id);
+    this.selectedCreatureId = id;
+  };
+}
+
+const encounterPrepStore = new EncounterPrepStore();
+const EncounterPrepContext = createContext<EncounterPrepStore | null>(null);
+const useEncounterPrepStore = () => {
+  const store = useContext(EncounterPrepContext);
+  if (!store) {
+    throw new Error(
+      "useEncounterPrepStore must be used within a EncounterPrepProvider",
+    );
+  }
+  return store;
+};
+
+const EncounterPrep = observer(function EncounterPrep() {
+  const { selectedCreatureId } = encounterPrepStore;
   return (
-    <>
+    <EncounterPrepContext.Provider value={encounterPrepStore}>
       <div className="flex flex-col gap-6 flex-grow ml-auto mr-auto max-w-[860px] min-w-0">
         <EncounterDetailsTopBar>
           <EncounterStats />
@@ -71,12 +95,10 @@ export default function EncounterPrep() {
           tiptapReadyGate={
             <>
               <Separator />
-              <EncounterParticipantRow
-                onSelectParticipant={setSelectedParticipantId}
-              />
-              {selectedParticipantId && (
+              <EncounterParticipantRow />
+              {selectedCreatureId && (
                 <OriginalSizeImage
-                  src={getAWSimageURL(selectedParticipantId, "stat_block")}
+                  src={getAWSimageURL(selectedCreatureId, "stat_block")}
                   alt={"monster stat block"}
                 />
               )}
@@ -91,9 +113,11 @@ export default function EncounterPrep() {
         <EncounterStats />
         <EncounterReminderInput />
       </EncounterDetailsSidebar>
-    </>
+    </EncounterPrepContext.Provider>
   );
-}
+});
+
+export default EncounterPrep;
 
 export function EncounterNameInput() {
   const id = useEncounterId();
@@ -221,10 +245,7 @@ export function EncounterStartButton() {
   );
 }
 
-function EncounterParticipantRow(props: {
-  onSelectParticipant: (id: string) => void;
-}) {
-  const { onSelectParticipant } = props;
+function EncounterParticipantRow() {
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
 
@@ -252,12 +273,10 @@ function EncounterParticipantRow(props: {
         }
         monsters={[
           ...monsters.map((participant, index) => (
-            <div
-              onClick={() => onSelectParticipant(participant.creature_id)}
+            <PrepParticipantCard
+              participant={participant}
               key={participant.id + index}
-            >
-              <PrepParticipantCard participant={participant} />
-            </div>
+            />
           )),
           <Card
             className="flex flex-col justify-center items-center w-32 h-60"
@@ -300,8 +319,8 @@ export interface ParticipantCreatureProps {
 function PrepParticipantCard({ participant }: ParticipantCreatureProps) {
   return (
     <AnimationListItem key={participant.id}>
-      <div className="flex flex-col items-center gap-3">
-        <Card className="flex flex-col justify-center w-32">
+      <div className="flex flex-col items-center gap-3 h-full">
+        <Card className="flex flex-col justify-center w-32 h-full">
           <CardHeader className="p-3">
             <CardTitle className="text-xl text-center">
               {ParticipantUtils.name(participant)}
@@ -310,7 +329,7 @@ function PrepParticipantCard({ participant }: ParticipantCreatureProps) {
           <CharacterIcon
             id={participant.creature_id}
             name={ParticipantUtils.name(participant)}
-            className="object-cover w-32 h-32"
+            className="object-cover w-32 h-32 mt-auto"
           />
         </Card>
         <ParticipantActions participant={participant} />
@@ -345,7 +364,8 @@ export function RemoveCreatureFromEncounterButton(
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
   return (
-    <Button
+    <ButtonWithTooltip
+      text="Remove creature"
       variant="ghost"
       onClick={() =>
         removeCreatureFromEncounter({
@@ -355,13 +375,14 @@ export function RemoveCreatureFromEncounterButton(
       }
     >
       <X />
-    </Button>
+    </ButtonWithTooltip>
   );
 }
 
 export function MonsterParticipantActions(props: ParticipantCreatureProps) {
   const { participant } = props;
 
+  const { setselectedCreatureId } = useEncounterPrepStore();
   const { mutate: updateCreature } = useUpdateEncounterParticipant();
   const { data: settings } = api.settings.useQuery();
 
@@ -394,6 +415,15 @@ export function MonsterParticipantActions(props: ParticipantCreatureProps) {
   return (
     <span className="flex gap-3">
       <RemoveCreatureFromEncounterButton participant={participant} />
+      <ButtonWithTooltip
+        text="Show stat block"
+        variant="ghost"
+        onClick={() =>
+          setselectedCreatureId(ParticipantUtils.creatureId(participant))
+        }
+      >
+        <FileText />
+      </ButtonWithTooltip>
       {settings?.enable_minions && (
         <Button variant="outline" onClick={() => setStatus("input")}>
           <Users2 />
@@ -423,8 +453,8 @@ function EncounterStats() {
   );
 
   const { easyTier, standardTier, hardTier } = EncounterUtils.findCRBudget(
-    playerLevel ?? settings?.default_player_level ?? 1,
     encounter,
+    playerLevel ?? settings?.default_player_level ?? 1,
   );
 
   return (

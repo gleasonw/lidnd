@@ -23,8 +23,6 @@ import { createPlayerAndAddToCampaign } from "@/app/[username]/actions";
 import { Separator } from "@/components/ui/separator";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { EncounterUtils } from "@/utils/encounters";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
@@ -38,6 +36,11 @@ import { useUpdateEncounter } from "@/app/[username]/[campaign_slug]/encounter/[
 import { appRoutes } from "@/app/routes";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
+import { LidndTextArea } from "@/components/ui/lidnd-text-area";
+import Placeholder from "@tiptap/extension-placeholder";
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 
 export interface CampaignEncountersProps {
   deleteCampaignButton: React.ReactNode;
@@ -247,6 +250,20 @@ export function CreateEncounterButton({
         encounters.setData(campaign.id, context?.previous);
       },
     });
+
+  const configuredPlaceholder = Placeholder.configure({
+    placeholder: "Flow, terrain, monster strategy, etc...",
+  });
+
+  const editor = useEditor({
+    extensions: [StarterKit, configuredPlaceholder],
+    content: description,
+    onUpdate: ({ editor }) => {
+      const content = editor.getHTML();
+      setDescription(content);
+    },
+  });
+
   return (
     <Dialog
       open={dialogIsOpen}
@@ -276,16 +293,14 @@ export function CreateEncounterButton({
           }}
           className={"flex flex-col gap-5 pt-3"}
         >
-          <Input
+          <LidndTextInput
             placeholder="Encounter name"
             value={name}
+            variant="ghost"
+            className="text-2xl"
             onChange={(e) => setName(e.target.value)}
           />
-          <Textarea
-            placeholder="Encounter description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
+          <LidndTextArea placeholder="Encounter description" editor={editor} />
           <div className="flex justify-between items-center">
             <div className="ml-auto flex gap-2 items-center">
               <label className="flex gap-2">

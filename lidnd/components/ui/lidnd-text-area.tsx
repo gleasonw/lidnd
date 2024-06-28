@@ -1,4 +1,6 @@
 import { EditorContent, Editor } from "@tiptap/react";
+import styles from "./lidnd-text-area.module.css";
+import clsx from "clsx";
 
 type Variants =
   | { variant: "ghost"; placeholder: string }
@@ -14,7 +16,10 @@ export function LidndTextArea(props: LidndTextAreaProps) {
   return (
     <EditorContent
       editor={editor}
-      className="w-full min-h-[50px] prose prose-p:mt-0 prose-p:mb-0 max-w-none"
+      className={clsx(
+        styles.root,
+        "w-full prose prose-p:mt-0 prose-p:mb-0 max-w-none min-h-[calc(32px+3rem)]"
+      )}
     />
   );
 }

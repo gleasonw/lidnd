@@ -18,6 +18,10 @@ export const ParticipantUtils = {
     return participant.creature.name;
   },
 
+  creatureId(participant: ParticipantWithCreature) {
+    return participant.creature.id;
+  },
+
   isMinion(
     participant: ParticipantWithCreature
   ): participant is MinionParticipant {

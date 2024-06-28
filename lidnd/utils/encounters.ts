@@ -13,6 +13,9 @@ import { ParticipantUtils } from "@/utils/participants";
 import { LidndUser } from "@/app/authentication";
 import _ from "lodash";
 
+export const ESTIMATED_TURN_SECONDS = 180;
+export const ESTIMATED_ROUNDS = 2;
+
 type EncounterWithParticipants<
   T extends Participant = EncounterWithData["participants"][number],
 > = Encounter & {
@@ -59,7 +62,7 @@ export const EncounterUtils = {
       .length;
   },
 
-  findCRBudget(playersLevel: number, encounter: EncounterWithParticipants) {
+  findCRBudget(encounter: EncounterWithParticipants, playersLevel: number) {
     if (playersLevel < 1 || playersLevel > 20) {
       throw new Error("playerLevel must be between 1 and 20");
     }
@@ -92,7 +95,17 @@ export const EncounterUtils = {
     estimatedTurnSeconds?: number | null,
     settings?: Settings
   ) {
-    const finalEstimatedRounds = estimatedRounds ?? 3;
+    const difficulty = this.difficulty(encounter, null, settings);
+    const finalEstimatedRounds =
+      estimatedRounds ?? difficulty === "Deadly"
+        ? 5
+        : difficulty === "Hard"
+          ? 4
+          : difficulty === "Standard"
+            ? 3
+            : difficulty === "Easy"
+              ? 2
+              : 1;
     const finalTurnSeconds =
       estimatedTurnSeconds ?? settings?.average_turn_seconds ?? 180;
     const estimateEncounterSeconds =
@@ -123,8 +136,8 @@ export const EncounterUtils = {
     const totalCr = this.totalCr(encounter);
 
     const { easyTier, standardTier, hardTier } = this.findCRBudget(
-      finalPlayerLevel,
-      encounter
+      encounter,
+      finalPlayerLevel
     );
 
     if (totalCr <= easyTier) {

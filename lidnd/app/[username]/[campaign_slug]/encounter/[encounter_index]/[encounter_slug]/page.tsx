@@ -13,7 +13,7 @@ export default async function EncounterPage({ params }: { params: unknown }) {
   return (
     <FadeInSuspense
       fallback={<div>Loading encounter...</div>}
-      wrapperClassName="flex"
+      wrapperClassName="flex gap-[var(--main-content-padding)]"
     >
       <EncounterPrep />
     </FadeInSuspense>
