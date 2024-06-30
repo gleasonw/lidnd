@@ -8,7 +8,7 @@ type CampaignSlug = {
 };
 
 type IndexPath = {
-  encounter_index: string;
+  encounter_index: number;
 };
 
 type Nested = CampaignSlug & IndexPath;
@@ -23,20 +23,18 @@ export function isCampaignSlug(param: unknown): param is CampaignSlug {
   return isDefinedObject(param) && "campaign_slug" in param;
 }
 
-function isPath(param: unknown): param is Nested {
-  return isCampaignSlug(param) && "encounter_index" in param;
+export function isEncounterPathParams(param: unknown): param is Nested {
+  return (
+    isCampaignSlug(param) &&
+    "encounter_index" in param &&
+    typeof Number(param.encounter_index) === "number"
+  );
 }
 
 export const encounterFromPathParams = cache(_encounterFromPathParams);
 async function _encounterFromPathParams(ctx: LidndContext, params: unknown) {
-  if (!isPath(params)) {
+  if (!isEncounterPathParams(params)) {
     throw new Error("params is missing fields");
-  }
-
-  const numberIndex = Number(params.encounter_index);
-
-  if (typeof numberIndex !== "number") {
-    throw new Error("encounter_index is not a number");
   }
 
   const campaign = await ServerCampaign.campaignFromSlug(
@@ -51,7 +49,7 @@ async function _encounterFromPathParams(ctx: LidndContext, params: unknown) {
   const encounter = await ServerEncounter.encounterFromCampaignAndIndex(
     ctx,
     campaign.id,
-    numberIndex
+    params.encounter_index
   );
 
   if (!encounter) {

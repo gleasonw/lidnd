@@ -196,7 +196,7 @@ function EncounterDetailsSidebar({ children }: { children: React.ReactNode }) {
   const runLink = useEncounterLink("run");
   const [encounter] = useEncounter();
   return (
-    <div className="flex-col flex-grow p-4 items-center gap-5 max-w-[300px] hidden md:flex -mt-[var(--encounter-sidebar-negative-top-margin)] border-l">
+    <div className="flex-col flex-grow pl-7 pt-5 gap-5 max-w-[300px] hidden md:flex -mt-[var(--encounter-sidebar-negative-top-margin)] border-l">
       {encounter?.started_at ? (
         <Link href={runLink}>
           <Button>
@@ -617,12 +617,12 @@ function EncounterReminderInput() {
           </Button>
         </section>
         {encounter?.reminders.map((reminder) => (
-          <div className="grid grid-cols-3 gap-3">
-            <span>{reminder.reminder}</span>
-            <span>{reminder.alert_after_round}</span>
-            <Button
-              variant="destructive"
-              className="w-20"
+          <div className="flex gap-1 shadow-md border items-center p-3">
+            <span className="flex-grow">{reminder.reminder}</span>
+            <span>after round {reminder.alert_after_round}</span>
+            <ButtonWithTooltip
+              text="Remove reminder"
+              variant="ghost"
               onClick={(e) => {
                 e.preventDefault();
                 removeReminder({
@@ -632,7 +632,7 @@ function EncounterReminderInput() {
               }}
             >
               <X />
-            </Button>
+            </ButtonWithTooltip>
           </div>
         ))}
       </form>
