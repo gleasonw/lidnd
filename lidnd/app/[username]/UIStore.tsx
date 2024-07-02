@@ -13,6 +13,10 @@ export class UIStore {
   toggleSideNav = () => {
     this.isSideNavOpen = !this.isSideNavOpen;
   };
+
+  closeSideNav = () => {
+    this.isSideNavOpen = false;
+  };
 }
 
 const UIStoreContext = createContext<UIStore | null>(null);
