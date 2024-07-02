@@ -41,7 +41,7 @@ export const SmallSideNav = observer(function SmallSideNav(
   }, []);
 
   return (
-    <div className="flex lg:hidden relative">
+    <div className="flex xl:hidden relative">
       <Button
         variant="ghost"
         onClick={toggleSideNav}
@@ -62,7 +62,7 @@ export const SmallSideNav = observer(function SmallSideNav(
 
 export function LargeSideNav(props: SideNavProps) {
   return (
-    <nav className="flex-col gap-10 h-screen hidden w-64 lg:flex items-center">
+    <nav className="flex-col gap-10 h-screen hidden w-64 xl:flex items-center flex-shrink-0">
       {props.children}
     </nav>
   );

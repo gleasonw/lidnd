@@ -18,7 +18,7 @@ export function LidndTextArea(props: LidndTextAreaProps) {
       editor={editor}
       className={clsx(
         styles.root,
-        "w-full prose prose-p:mt-0 prose-p:mb-0 max-w-none min-h-[calc(32px+3rem)]"
+        "w-full prose prose-p:mt-0 prose-p:mb-0 max-w-none "
       )}
     />
   );

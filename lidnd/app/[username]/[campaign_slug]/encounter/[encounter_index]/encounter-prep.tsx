@@ -108,10 +108,6 @@ const EncounterPrep = observer(function EncounterPrep() {
           }
         />
       </div>
-      <EncounterDetailsSidebar>
-        <EncounterStats />
-        <EncounterReminderInput />
-      </EncounterDetailsSidebar>
     </EncounterPrepContext.Provider>
   );
 });
@@ -192,11 +188,11 @@ function EncounterDetailsTopBar(props: EncounterDetailsTopBarProps) {
   );
 }
 
-function EncounterDetailsSidebar({ children }: { children: React.ReactNode }) {
+export function EncounterDetailsSidebar() {
   const runLink = useEncounterLink("run");
   const [encounter] = useEncounter();
   return (
-    <div className="flex-col flex-grow pl-7 pt-5 gap-5 max-w-[300px] hidden md:flex -mt-[var(--encounter-sidebar-negative-top-margin)] border-l">
+    <div className="flex-col gap-5 flex">
       {encounter?.started_at ? (
         <Link href={runLink}>
           <Button>
@@ -207,7 +203,8 @@ function EncounterDetailsSidebar({ children }: { children: React.ReactNode }) {
       ) : (
         <EncounterStartButton />
       )}
-      {children}
+      <EncounterStats />
+      <EncounterReminderInput />
     </div>
   );
 }
