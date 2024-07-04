@@ -25,8 +25,15 @@ export default function CreaturesPage() {
   const { data: creatures } = api.getUserCreatures.useQuery({
     name,
   });
+  const [selectedCreatureId, setSelectedCreatureId] = useState<string | null>(
+    null,
+  );
+
+  const selectedCreature = creatures?.find(
+    (creature) => creature.id === selectedCreatureId,
+  );
+
   const {
-    // @ts-ignore - I'll eventually use this...
     mutate: deleteCreature,
     variables: deletedId,
     isPending: isDeletePending,
@@ -99,7 +106,7 @@ export default function CreaturesPage() {
                   <Plus />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-[900px] w-full h-5/6">
+              <DialogContent className="max-w-[900px] w-full overflow-auto">
                 <FullCreatureAddForm uploadCreature={createCreature} />
               </DialogContent>
             </Dialog>
@@ -111,7 +118,11 @@ export default function CreaturesPage() {
           </span>
           <div className="flex gap-10 flex-wrap ">
             {displayCreatures && (
-              <DataTable columns={columns} data={displayCreatures} />
+              <DataTable
+                columns={columns}
+                data={displayCreatures}
+                onRowClick={(row) => setSelectedCreatureId(row.original.id)}
+              />
             )}
           </div>
         </div>
@@ -119,6 +130,19 @@ export default function CreaturesPage() {
       <div className="hidden md:block">
         <FullCreatureAddForm uploadCreature={createCreature} />
       </div>
+      <Dialog
+        open={selectedCreatureId !== null}
+        onOpenChange={(isOpen) =>
+          setSelectedCreatureId(isOpen ? selectedCreatureId : null)
+        }
+      >
+        {selectedCreature ? (
+          <CreatureUpdateDialog
+            creature={selectedCreature}
+            deleteCreature={deleteCreature}
+          />
+        ) : null}
+      </Dialog>
     </div>
   );
 }

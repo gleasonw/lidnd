@@ -49,7 +49,7 @@ export default async function CampaignsLayout({
                 <LargeSideNav>
                   <SideNavBody />
                 </LargeSideNav>
-                <div className="w-full shadow-sm border p-[var(--main-content-padding)] pt-2 bg-white min-w-0">
+                <div className="w-full shadow-sm border p-[var(--main-content-padding)] pt-2 bg-white min-w-0 overflow-auto">
                   {children}
                 </div>
               </div>
