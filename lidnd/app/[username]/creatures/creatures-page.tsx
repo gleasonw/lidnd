@@ -160,12 +160,7 @@ function CreatureUpdateDialog({
       <DialogHeader className="text-ellipsis max-w-full p-3">
         <DialogTitle>{creature.name}</DialogTitle>
       </DialogHeader>
-      <CharacterIcon
-        width={200}
-        height={200}
-        id={creature.id}
-        name={creature.name}
-      />
+      <CharacterIcon id={creature.id} name={creature.name} />
       <CreatureUpdateForm creature={creature} key={creature.id} />
       <Button variant="destructive" onClick={() => deleteCreature(creature.id)}>
         Delete

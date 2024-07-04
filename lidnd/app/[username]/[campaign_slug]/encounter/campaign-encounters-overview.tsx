@@ -458,15 +458,13 @@ function MonstersInEncounter({ id }: { id: string }) {
     ?.participants.filter((p) => !ParticipantUtils.isPlayer(p));
 
   return (
-    <div className={"flex gap-3 flex-wrap"}>
+    <div className={"flex gap-3 overflow-hidden"}>
       {participants?.map((p) => (
         <CharacterIcon
           id={p.creature_id}
           name={ParticipantUtils.name(p)}
           key={p.id}
           className={"rounded-full object-cover w-10 h-10"}
-          width={100}
-          height={100}
         />
       ))}
     </div>

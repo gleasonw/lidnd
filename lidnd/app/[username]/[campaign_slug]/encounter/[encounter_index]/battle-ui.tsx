@@ -211,8 +211,6 @@ export function SimpleIconBattleCard({
             <CharacterIcon
               id={participant.creature_id}
               name={ParticipantUtils.name(participant)}
-              width={400}
-              height={400}
               className="h-60 object-cover"
             />
           )}
@@ -379,8 +377,6 @@ export function BattleCardCreatureIcon({
       <CharacterIcon
         id={participant.creature_id}
         name={ParticipantUtils.name(participant)}
-        width={200}
-        height={200}
         className="object-cover w-32 h-32"
       />
       <HealthMeterOverlay participant={participant} />

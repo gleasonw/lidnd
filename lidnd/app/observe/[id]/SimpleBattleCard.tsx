@@ -73,8 +73,6 @@ export function SimpleBattleCard({
           <CharacterIcon
             id={participant.creature_id}
             name={ParticipantUtils.name(participant)}
-            width={400}
-            height={400}
             className="h-60 object-cover"
           />
         )}
