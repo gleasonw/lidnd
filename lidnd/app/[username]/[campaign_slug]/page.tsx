@@ -87,7 +87,12 @@ async function CampaignPlayers(props: { campaignId: string }) {
       {players.map(
         ({ player }) =>
           player.name && (
-            <CharacterIcon key={player.id} id={player.id} name={player.name} />
+            <CharacterIcon
+              key={player.id}
+              id={player.id}
+              name={player.name}
+              className="w-32"
+            />
           ),
       )}
     </div>

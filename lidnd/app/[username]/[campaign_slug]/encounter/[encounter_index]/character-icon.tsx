@@ -8,8 +8,6 @@ export function CharacterIcon({
   id: string;
   name: string;
   className?: string;
-  width?: number;
-  height?: number;
 }) {
   return (
     <img src={getAWSimageURL(id, "icon")} alt={name} className={className} />
