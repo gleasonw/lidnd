@@ -408,16 +408,15 @@ export function MinionCardStack({ minionCount }: { minionCount: number }) {
 export function HealthMeterOverlay({
   participant,
 }: BattleCardParticipantProps) {
-  const maxHP = ParticipantUtils.maxHp(participant);
-  const creaturePercentDamage = (participant.hp / maxHP) * 100;
+  const percentDamage = ParticipantUtils.percentDamage(participant);
   return (
     <div
-      style={{ height: `${creaturePercentDamage}%` }}
+      style={{ height: `${percentDamage}%` }}
       className={clsx(
         "absolute rounded bottom-0 left-0 w-full bg-opacity-70 transition-all",
         {
-          "bg-gray-500": creaturePercentDamage === 100,
-          "bg-red-500": creaturePercentDamage !== 100,
+          "bg-gray-500": percentDamage >= 100,
+          "bg-red-500": percentDamage !== 100,
         },
       )}
     />

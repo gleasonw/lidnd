@@ -32,6 +32,12 @@ export const ParticipantUtils = {
     return participant.creature.max_hp;
   },
 
+  percentDamage(participant: ParticipantWithCreature) {
+    const maxHP = this.maxHp(participant);
+    const missingHP = maxHP - participant.hp;
+    return (missingHP / maxHP) * 100;
+  },
+
   challengeRating(participant: ParticipantWithCreature) {
     return participant.creature.challenge_rating;
   },
