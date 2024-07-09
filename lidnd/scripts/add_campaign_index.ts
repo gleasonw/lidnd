@@ -11,6 +11,7 @@ async function setPlayerHpTo1() {
   return process.exit(0);
 }
 
+//@ts-ignore
 async function updateStatus() {
   await db
     .update(encounters)
@@ -19,6 +20,7 @@ async function updateStatus() {
   return process.exit(0);
 }
 
+//@ts-ignore
 async function update_encounter_index() {
   const campaigns = await db.query.campaigns.findMany();
 
@@ -46,6 +48,7 @@ async function update_encounter_index() {
   return process.exit(0);
 }
 
+//@ts-ignore
 async function add_campaign_slug() {
   const c = await db.query.campaigns.findMany();
 
