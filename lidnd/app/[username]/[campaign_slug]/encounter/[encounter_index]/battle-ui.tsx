@@ -159,7 +159,7 @@ export function BattleCardLayout({
   return (
     <Card
       className={clsx(
-        "bg-white w-[300px] shadow-lg flex flex-col justify-between transition-all hover:rounded-xl group",
+        "bg-white w-[300px] shadow-lg flex flex-col justify-between transition-all group",
         className,
       )}
       {...props}
@@ -225,11 +225,11 @@ export function BattleCardCreatureName({
   participant,
 }: BattleCardParticipantProps) {
   return (
-    <h1 className="flex flex-col gap-2 justify-between items-center py-3 font-bold text-3xl">
+    <span className="flex flex-col gap-2 justify-between items-center py-3 font-bold text-3xl">
       <CardTitle className="text-lg  truncate max-w-full group-hover:opacity-50">
         {ParticipantUtils.name(participant)}
       </CardTitle>
-    </h1>
+    </span>
   );
 }
 

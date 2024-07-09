@@ -1,7 +1,15 @@
 import { db } from "@/server/api/db";
-import { campaigns, encounters } from "@/server/api/db/schema";
+import { campaigns, creatures, encounters } from "@/server/api/db/schema";
 import { eq, isNull } from "drizzle-orm";
 import _ from "lodash";
+
+async function setPlayerHpTo1() {
+  await db
+    .update(creatures)
+    .set({ max_hp: 1 })
+    .where(eq(creatures.is_player, true));
+  return process.exit(0);
+}
 
 async function updateStatus() {
   await db
@@ -54,6 +62,4 @@ async function add_campaign_slug() {
   return process.exit(0);
 }
 
-updateStatus();
-update_encounter_index();
-add_campaign_slug();
+setPlayerHpTo1();

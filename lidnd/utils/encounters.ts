@@ -130,16 +130,25 @@ export const EncounterUtils = {
   optimisticParticipants(
     status: "loadingNext" | "loadingPrevious" | "idle",
     encounter: EncounterWithParticipants
-  ) {
+  ): EncounterWithParticipants {
     if (status === "loadingNext") {
-      const { updatedParticipants } = EncounterUtils.cycleNextTurn(encounter);
-      return { ...encounter, participants: updatedParticipants };
+      const { updatedParticipants, updatedRoundNumber } =
+        EncounterUtils.cycleNextTurn(encounter);
+      return {
+        ...encounter,
+        participants: updatedParticipants,
+        current_round: updatedRoundNumber,
+      };
     }
 
     if (status === "loadingPrevious") {
-      const { updatedParticipants } =
+      const { updatedParticipants, updatedRoundNumber } =
         EncounterUtils.cyclePreviousTurn(encounter);
-      return { ...encounter, participants: updatedParticipants };
+      return {
+        ...encounter,
+        participants: updatedParticipants,
+        current_round: updatedRoundNumber,
+      };
     }
 
     return encounter;
@@ -254,24 +263,17 @@ export const EncounterUtils = {
     };
   },
 
-  activeReminders(
-    {
-      reminders,
-      current_round,
-    }: {
-      current_round: number;
-      reminders: Reminder[];
-    },
-    nextRound: number
-  ) {
-    if (nextRound === current_round || nextRound < current_round) {
-      return;
-    }
-
+  postRoundReminders({
+    reminders,
+    current_round,
+  }: {
+    current_round: number;
+    reminders: Reminder[];
+  }) {
     // 0 means alert every round
     return reminders.filter(
       (reminder) =>
-        reminder.alert_after_round === nextRound ||
+        reminder.alert_after_round === current_round ||
         reminder.alert_after_round === 0
     );
   },

@@ -14,6 +14,14 @@ export const ParticipantUtils = {
     return participant.creature.is_player;
   },
 
+  isDead(participant: ParticipantWithCreature) {
+    // wonky that player hp is 0 by default. maybe we should
+    // separate creatures and players? have them implement an interface?
+    // having hp = non player character, since we assume players track their own hp?
+    // or maybe we just have a "player" creature type?
+    return participant.hp <= 0;
+  },
+
   isFriendly(participant: ParticipantWithCreature) {
     return this.isPlayer(participant) || participant.is_ally;
   },

@@ -14,6 +14,7 @@ import { EncounterStatus } from "@/server/api/db/schema";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { useUser } from "@/app/[username]/user-provider";
 import { appRoutes } from "@/app/routes";
+import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 
 export function useEncounterLink(status: EncounterStatus) {
   const [encounter] = useEncounter();
@@ -31,6 +32,7 @@ export function useEncounter() {
 export function useCycleNextTurn() {
   const [encounter] = useEncounter();
   const { encounterById } = api.useUtils();
+  const { displayReminders } = useEncounterUIStore();
 
   return api.cycleNextTurn.useMutation({
     onSettled: async () => {
@@ -41,11 +43,14 @@ export function useCycleNextTurn() {
       const previousEncounter = encounterById.getData(encounter_id);
       encounterById.setData(encounter_id, (old) => {
         if (!old) return old;
-        const { participants } = EncounterUtils.optimisticParticipants(
-          "loadingNext",
-          old,
-        );
-        return { ...old, participants };
+        const { participants, current_round: updatedRoundNumber } =
+          EncounterUtils.optimisticParticipants("loadingNext", old);
+
+        if (updatedRoundNumber > encounter.current_round) {
+          displayReminders(encounter);
+        }
+
+        return { ...old, participants, current_round: updatedRoundNumber };
       });
       return { previousEncounter };
     },
@@ -65,11 +70,9 @@ export function useCyclePreviousTurn() {
       const previousEncounter = encounterById.getData(encounter_id);
       encounterById.setData(encounter_id, (old) => {
         if (!old) return old;
-        const { participants } = EncounterUtils.optimisticParticipants(
-          "loadingPrevious",
-          old,
-        );
-        return { ...old, participants };
+        const { participants, current_round } =
+          EncounterUtils.optimisticParticipants("loadingPrevious", old);
+        return { ...old, participants, current_round };
       });
       return { previousEncounter };
     },

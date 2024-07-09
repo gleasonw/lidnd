@@ -11,7 +11,7 @@ import {
   useCyclePreviousTurn,
   useEncounter,
 } from "@/encounters/[encounter_index]/hooks";
-import { MonsterUpload } from "@/encounters/[encounter_index]/participant-add-form";
+import { ParticipantUpload } from "@/encounters/[encounter_index]/participant-add-form";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
@@ -93,19 +93,21 @@ function ParticipantIcons() {
   const activeIndex = EncounterUtils.activeParticipantIndex(encounter);
 
   return (
-    <div className="flex gap-1 flex-grow overflow-auto max-w-full">
+    <div className="flex gap-1 flex-grow overflow-auto max-w-full h-28">
       {encounter.participants
         .toSorted(ParticipantUtils.sortLinearly)
         .map((p, index) => (
           <Tip text={ParticipantUtils.name(p)} key={p.id}>
             <button
               className={clsx(
-                "w-20 border-4 flex-grow-0 flex justify-center items-center transition-all h-16 relative hover:opacity-60",
+                "w-20 border-4 flex-grow-0 flex justify-center items-center transition-all h-16 relative",
                 ParticipantUtils.isFriendly(p)
                   ? "border-blue-600"
                   : "border-red-600",
                 p.is_active && "h-28",
-                index < activeIndex && "opacity-60",
+                index < activeIndex
+                  ? "opacity-60 hover:opacity-100"
+                  : "hover:opacity-60",
               )}
               onClick={() => setSelectedParticipantId(p.id)}
             >
@@ -119,7 +121,7 @@ function ParticipantIcons() {
           </Tip>
         ))}
       <LidndPlusDialog text="Add monster">
-        <MonsterUpload />
+        <ParticipantUpload />
       </LidndPlusDialog>
     </div>
   );

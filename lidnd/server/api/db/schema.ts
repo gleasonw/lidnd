@@ -181,7 +181,7 @@ export const participants = pgTable(
     created_at: timestamp("created_at").defaultNow().notNull(),
     is_ally: boolean("is_ally").default(false).notNull(),
     initiative: integer("initiative").default(0).notNull(),
-    hp: integer("hp").default(0).notNull(),
+    hp: integer("hp").default(1).notNull(),
     is_active: boolean("is_active").default(false).notNull(),
     has_surprise: boolean("has_surprise").default(false).notNull(),
     minion_count: integer("minion_count"),
@@ -220,7 +220,7 @@ export const creatures = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     name: varchar("name", { length: 256 }).notNull(),
     created_at: timestamp("created_at").defaultNow().notNull(),
-    max_hp: integer("max_hp").notNull().default(0),
+    max_hp: integer("max_hp").notNull().default(1),
     challenge_rating: real("challenge_rating").default(0).notNull(),
     is_player: boolean("is_player").default(false).notNull(),
     user_id: text("user_id")

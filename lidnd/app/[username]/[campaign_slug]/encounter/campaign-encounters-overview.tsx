@@ -59,6 +59,7 @@ export default function CampaignEncountersOverview(
 
   function onPlayerUpload(data: CreaturePost) {
     const dataAsForm = getCreaturePostForm(data);
+    dataAsForm.set("max_hp", "1");
     createPlayerAndAddToCampaign(campaignId, dataAsForm);
   }
 

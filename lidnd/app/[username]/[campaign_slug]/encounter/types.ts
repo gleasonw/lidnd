@@ -9,7 +9,7 @@ export const creatureUploadSchema = insertCreatureSchema
   .extend({
     icon_image: z.any(),
     stat_block_image: z.unknown().optional(),
-    max_hp: z.coerce.number(),
+    max_hp: z.coerce.number().gt(0),
     challenge_rating: z.coerce.number(),
     is_player: booleanSchema,
   })
