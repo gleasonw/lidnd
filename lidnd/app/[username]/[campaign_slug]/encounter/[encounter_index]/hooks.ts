@@ -194,7 +194,10 @@ export function useUpdateEncounterParticipant() {
         }
 
         if (newParticipant.hp <= 0) {
-          cycleNext({ encounter_id: id });
+          if (newParticipant.is_active) {
+            cycleNext({ encounter_id: id });
+          }
+
           return EncounterUtils.removeParticipant(newParticipant.id, old);
         }
 
