@@ -1,85 +1,39 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import React from "react";
 import { AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
-import { ParticipantWithData } from "@/server/api/router";
-import { AnimationListItem, BattleCard, useBattleUIStore } from "./battle-ui";
+import { AnimationListItem, BattleCard } from "./battle-ui";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { OriginalSizeImage } from "@/app/[username]/[campaign_slug]/encounter/original-size-image";
 import { getAWSimageURL } from "@/app/[username]/[campaign_slug]/encounter/utils";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
 import { useRemoveParticipantFromEncounter } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
+import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
+import { observer } from "mobx-react-lite";
 
-export function LinearBattleUI() {
+export const LinearBattleUI = observer(function LinearBattleUI() {
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
 
-  const encounterParticipants = encounter.participants.toSorted(
-    ParticipantUtils.sortLinearly,
-  );
+  const activeIndex = EncounterUtils.activeParticipantIndex(encounter);
+  const activeParticipant = EncounterUtils.activeParticipant(encounter);
 
-  const { encounterById } = api.useUtils();
-  const { displayReminders } = useBattleUIStore();
-
-  const { mutate: cycleNextMutation, isPending: isLoadingNextTurn } =
-    api.cycleNextTurn.useMutation({
-      onSettled: async () => {
-        displayReminders(encounter);
-        return await encounterById.invalidate(id);
-      },
-    });
-
-  const { mutate: cyclePreviousMutation, isPending: isLoadingPreviousTurn } =
-    api.cyclePreviousTurn.useMutation({
-      onSettled: async () => {
-        return await encounterById.invalidate(id);
-      },
-    });
-
-  let displayedParticipants: ParticipantWithData[];
-
-  if (isLoadingNextTurn && encounterParticipants) {
-    const { updatedParticipants } = EncounterUtils.cycleNextTurn(encounter);
-    displayedParticipants = updatedParticipants;
-  } else if (isLoadingPreviousTurn && encounterParticipants) {
-    const { updatedParticipants } = EncounterUtils.cyclePreviousTurn(encounter);
-    displayedParticipants = updatedParticipants;
-  } else {
-    displayedParticipants = encounterParticipants;
-  }
-
-  const activeIndex = displayedParticipants.findIndex(
-    (creature) => creature.is_active,
-  );
-  const activeParticipant = displayedParticipants[activeIndex];
-
-  const [dmSelectedCreature, setDmSelectedCreature] = React.useState(
-    activeParticipant?.id ?? null,
-  );
+  const {
+    selectedParticipantId: dmSelectedCreature,
+    setSelectedParticipantId,
+  } = useEncounterUIStore();
 
   const selectedId = dmSelectedCreature ?? activeParticipant?.id ?? null;
 
   const { mutate: removeCreatureFromEncounter } =
     useRemoveParticipantFromEncounter();
 
-  function cycleNext() {
-    cycleNextMutation({ encounter_id: id });
-    const { newlyActiveParticipant } = EncounterUtils.cycleNextTurn(encounter);
-    setDmSelectedCreature(newlyActiveParticipant.id);
-  }
+  const displayedParticipants = EncounterUtils.participants(encounter);
 
-  function cyclePrevious() {
-    cyclePreviousMutation({ encounter_id: id });
-    const { newlyActiveParticipant } =
-      EncounterUtils.cyclePreviousTurn(encounter);
-    setDmSelectedCreature(newlyActiveParticipant.id);
-  }
-
-  const selectedParticipant = displayedParticipants?.find(
+  const selectedParticipant = displayedParticipants.find(
     (participant) => participant.id === selectedId,
   );
 
@@ -99,9 +53,7 @@ export function LinearBattleUI() {
         });
       }
     }
-  }, [activeParticipant?.id]);
-
-  const isTurnLoading = isLoadingNextTurn || isLoadingPreviousTurn;
+  }, [selectedId]);
 
   return (
     <div className="flex flex-col gap-5 relative">
@@ -111,18 +63,11 @@ export function LinearBattleUI() {
         )}
         ref={scrollContainer}
       >
-        <Button
-          className="absolute left-0 sm:left-10 z-10 h-10 rounded-full shadow-md"
-          onClick={cyclePrevious}
-          disabled={isTurnLoading}
-        >
-          <ChevronLeftIcon />
-        </Button>
         <AnimatePresence>
           {displayedParticipants?.slice().map((participant, index) => (
             <AnimationListItem key={participant.id}>
               <BattleCard
-                onClick={() => setDmSelectedCreature(participant.id)}
+                onClick={() => setSelectedParticipantId(participant.id)}
                 participant={participant}
                 isSelected={participant.id === selectedId}
                 className={clsx(
@@ -138,13 +83,6 @@ export function LinearBattleUI() {
             </AnimationListItem>
           ))}
         </AnimatePresence>
-        <Button
-          className="absolute right-0 sm:right-10 z-10 h-10 rounded-full shadow-md"
-          onClick={cycleNext}
-          disabled={isTurnLoading}
-        >
-          <ChevronRightIcon />
-        </Button>
       </div>
 
       {selectedParticipant && (
@@ -161,7 +99,9 @@ export function LinearBattleUI() {
               key={selectedParticipant.creature_id}
             />
           ) : (
-            <span className="text-2xl p-5">Player</span>
+            <span className="text-2xl p-5">
+              {ParticipantUtils.name(selectedParticipant)} (Player)
+            </span>
           )}
           <Button
             variant="destructive"
@@ -178,4 +118,4 @@ export function LinearBattleUI() {
       )}
     </div>
   );
-}
+});

@@ -45,6 +45,8 @@ export function defaultParticipant(
     initiative: p.initiative ?? 0,
     hp: p.hp ?? 0,
     created_at: new Date(),
+    nickname: p.nickname ?? "",
+    notes: p.notes ?? "",
     ...p,
   };
 }

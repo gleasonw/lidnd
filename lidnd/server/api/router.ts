@@ -371,6 +371,34 @@ export const appRouter = t.router({
   updateEncounterParticipant: protectedProcedure
     .input(participantSchema)
     .mutation(async (opts) => {
+      if (opts.input.hp <= 0) {
+        // just remove the participant
+        const result = await db.transaction(async (tx) => {
+          const [update, _] = await Promise.all([
+            await tx
+              .delete(participants)
+              .where(eq(participants.id, opts.input.id))
+              .returning(),
+            ServerEncounter.encounterByIdThrows(
+              opts.ctx,
+              opts.input.encounter_id,
+              tx
+            ),
+          ]);
+          const updatedParticipant = update[0];
+
+          if (!updatedParticipant) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to update encounter participant",
+            });
+          }
+
+          return updatedParticipant;
+        });
+        return result;
+      }
+
       const result = await db.transaction(async (tx) => {
         const [update, _] = await Promise.all([
           await tx
@@ -378,7 +406,11 @@ export const appRouter = t.router({
             .set(opts.input)
             .where(eq(participants.id, opts.input.id))
             .returning(),
-          ServerEncounter.encounterById(opts.ctx, opts.input.encounter_id, tx),
+          ServerEncounter.encounterByIdThrows(
+            opts.ctx,
+            opts.input.encounter_id,
+            tx
+          ),
         ]);
         const updatedParticipant = update[0];
 

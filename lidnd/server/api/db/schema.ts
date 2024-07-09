@@ -185,6 +185,8 @@ export const participants = pgTable(
     is_active: boolean("is_active").default(false).notNull(),
     has_surprise: boolean("has_surprise").default(false).notNull(),
     minion_count: integer("minion_count"),
+    nickname: text("nickname"),
+    notes: text("notes"),
     has_played_this_round: boolean("has_played_this_round")
       .default(false)
       .notNull(),

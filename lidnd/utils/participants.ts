@@ -14,6 +14,10 @@ export const ParticipantUtils = {
     return participant.creature.is_player;
   },
 
+  isFriendly(participant: ParticipantWithCreature) {
+    return this.isPlayer(participant) || participant.is_ally;
+  },
+
   name(participant: ParticipantWithCreature) {
     return participant.creature.name;
   },

@@ -17,7 +17,7 @@ export function EncounterTime({ time }: { time?: Date }) {
   // time is in UTC, so we need to convert it to local time
   const startedAtUTC = time;
   const startedAtLocal = new Date(
-    startedAtUTC.getTime() - startedAtUTC.getTimezoneOffset() * 60000
+    startedAtUTC.getTime() - startedAtUTC.getTimezoneOffset() * 60000,
   );
   const diff = now.getTime() - startedAtLocal.getTime();
   const seconds = diff / 1000;
@@ -45,7 +45,7 @@ export function EncounterTime({ time }: { time?: Date }) {
   }
 
   return (
-    <div className={"flex gap-5 items-center text-gray-500"}>
+    <div className={"flex gap-3 justify-center items-center text-gray-500"}>
       <Timer />
       <div className=" text-sm">{timeString}</div>
     </div>

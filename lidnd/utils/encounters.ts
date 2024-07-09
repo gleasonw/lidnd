@@ -98,9 +98,9 @@ export const EncounterUtils = {
     const difficulty = this.difficulty(encounter, null, settings);
     const finalEstimatedRounds =
       estimatedRounds ?? difficulty === "Deadly"
-        ? 5
+        ? 9
         : difficulty === "Hard"
-          ? 4
+          ? 7
           : difficulty === "Standard"
             ? 3
             : difficulty === "Easy"
@@ -125,6 +125,48 @@ export const EncounterUtils = {
     }
 
     return `${Math.floor(estimateEncounterSeconds % 60)} minutes`;
+  },
+
+  optimisticParticipants(
+    status: "loadingNext" | "loadingPrevious" | "idle",
+    encounter: EncounterWithParticipants
+  ) {
+    if (status === "loadingNext") {
+      const { updatedParticipants } = EncounterUtils.cycleNextTurn(encounter);
+      return { ...encounter, participants: updatedParticipants };
+    }
+
+    if (status === "loadingPrevious") {
+      const { updatedParticipants } =
+        EncounterUtils.cyclePreviousTurn(encounter);
+      return { ...encounter, participants: updatedParticipants };
+    }
+
+    return encounter;
+  },
+
+  activeParticipantIndex(encounter: EncounterWithParticipants) {
+    if (this.participants(encounter).filter((p) => p.is_active).length > 1) {
+      throw new Error(
+        `Encounter has more than one active participant: ${JSON.stringify(
+          this.participants(encounter).filter((p) => p.is_active)
+        )}`
+      );
+    }
+
+    const activeIndex = this.participants(encounter).findIndex(
+      (p) => p.is_active
+    );
+
+    if (activeIndex === -1) {
+      throw new Error("No active participant found, this should never happen");
+    }
+
+    return activeIndex;
+  },
+
+  activeParticipant(encounter: EncounterWithParticipants) {
+    return this.participants(encounter)[this.activeParticipantIndex(encounter)];
   },
 
   difficulty(
@@ -152,18 +194,18 @@ export const EncounterUtils = {
   },
 
   participants<T extends Participant>(encounter: EncounterWithParticipants<T>) {
-    return encounter.participants;
+    return encounter.participants.toSorted(ParticipantUtils.sortLinearly);
   },
 
   monsters(encounter: EncounterWithParticipants<ParticipantWithData>) {
     return this.participants(encounter)
-      .filter((p) => !ParticipantUtils.isPlayer(p) && !p.is_ally)
+      .filter((p) => !ParticipantUtils.isFriendly(p))
       .toSorted(ParticipantUtils.sortLinearly);
   },
 
   allies(encounter: EncounterWithParticipants<ParticipantWithData>) {
     return this.participants(encounter)
-      .filter((p) => ParticipantUtils.isPlayer(p) || p.is_ally)
+      .filter((p) => ParticipantUtils.isFriendly(p))
       .toSorted(ParticipantUtils.sortLinearly);
   },
 

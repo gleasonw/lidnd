@@ -54,9 +54,6 @@ import _ from "lodash";
 import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 
-// TODO:
-// - allow creature editing / deletion
-
 class EncounterPrepStore {
   selectedCreatureId: string | null = null;
 
@@ -184,27 +181,6 @@ function EncounterDetailsTopBar(props: EncounterDetailsTopBarProps) {
         <EncounterStartButton />
       )}
       {children}
-    </div>
-  );
-}
-
-export function EncounterDetailsSidebar() {
-  const runLink = useEncounterLink("run");
-  const [encounter] = useEncounter();
-  return (
-    <div className="flex-col gap-5 flex">
-      {encounter?.started_at ? (
-        <Link href={runLink}>
-          <Button>
-            <Play />
-            Continue the battle!
-          </Button>
-        </Link>
-      ) : (
-        <EncounterStartButton />
-      )}
-      <EncounterStats />
-      <EncounterReminderInput />
     </div>
   );
 }
@@ -429,7 +405,7 @@ export function MonsterParticipantActions(props: ParticipantCreatureProps) {
   );
 }
 
-function EncounterStats() {
+export function EncounterStats() {
   const { data: settings } = api.settings.useQuery();
   const [encounter] = useEncounter();
 
@@ -523,7 +499,7 @@ function EncounterStats() {
   );
 }
 
-function EncounterReminderInput() {
+export function EncounterReminderInput() {
   const [encounter] = useEncounter();
   const { encounterById } = api.useUtils();
   const [alertAfterRound, setAlertAfterRound] = React.useState<

@@ -8,7 +8,6 @@ import {
   BattleCardLayout,
   BattleCardStatusEffects,
   MinionCardStack,
-  useBattleUIStore,
 } from "./battle-ui";
 import { Button } from "@/components/ui/button";
 import { ParticipantWithData } from "@/server/api/router";
@@ -131,13 +130,9 @@ export function GroupBattleCard({
   const { encounterById } = api.useUtils();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
 
-  const { displayReminders } = useBattleUIStore();
-
   const { mutate: updateCreatureHasPlayedThisRound } =
     api.updateGroupTurn.useMutation({
       onSettled: async () => {
-        displayReminders(encounter);
-
         return await encounterById.invalidate(id);
       },
     });

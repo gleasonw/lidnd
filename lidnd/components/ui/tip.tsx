@@ -19,7 +19,9 @@ export function Tip({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent className={className}>{text}</TooltipContent>
+        <TooltipContent className={"bg-transparent bg-gray-800 text-white"}>
+          {text}
+        </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
@@ -36,7 +38,7 @@ export function ButtonWithTooltip({
   className?: string;
 } & React.ComponentPropsWithoutRef<typeof Button>) {
   return (
-    <Tip text={text} className="bg-transparent bg-gray-800 text-white">
+    <Tip text={text}>
       <Button className={className} {...props}>
         {children}
       </Button>

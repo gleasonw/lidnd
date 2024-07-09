@@ -28,6 +28,54 @@ export function useEncounter() {
   return api.encounterById.useSuspenseQuery(currentEncounterId);
 }
 
+export function useCycleNextTurn() {
+  const [encounter] = useEncounter();
+  const { encounterById } = api.useUtils();
+
+  return api.cycleNextTurn.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(encounter.id);
+    },
+    onMutate: async ({ encounter_id }) => {
+      await encounterById.cancel(encounter_id);
+      const previousEncounter = encounterById.getData(encounter_id);
+      encounterById.setData(encounter_id, (old) => {
+        if (!old) return old;
+        const { participants } = EncounterUtils.optimisticParticipants(
+          "loadingNext",
+          old,
+        );
+        return { ...old, participants };
+      });
+      return { previousEncounter };
+    },
+  });
+}
+
+export function useCyclePreviousTurn() {
+  const [encounter] = useEncounter();
+  const { encounterById } = api.useUtils();
+
+  return api.cyclePreviousTurn.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(encounter.id);
+    },
+    onMutate: async ({ encounter_id }) => {
+      await encounterById.cancel(encounter_id);
+      const previousEncounter = encounterById.getData(encounter_id);
+      encounterById.setData(encounter_id, (old) => {
+        if (!old) return old;
+        const { participants } = EncounterUtils.optimisticParticipants(
+          "loadingPrevious",
+          old,
+        );
+        return { ...old, participants };
+      });
+      return { previousEncounter };
+    },
+  });
+}
+
 export function useSelectedCreature() {
   const params = useSearchParams();
   const selectedCreature = params.get("selectedCreature");
@@ -132,6 +180,7 @@ export function useRemoveParticipantFromEncounter() {
 export function useUpdateEncounterParticipant() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
+  const { mutate: cycleNext } = useCycleNextTurn();
   return api.updateEncounterParticipant.useMutation({
     onSettled: async () => {
       return await encounterById.invalidate(id);
@@ -143,6 +192,12 @@ export function useUpdateEncounterParticipant() {
         if (!old) {
           return;
         }
+
+        if (newParticipant.hp <= 0) {
+          cycleNext({ encounter_id: id });
+          return EncounterUtils.removeParticipant(newParticipant.id, old);
+        }
+
         return EncounterUtils.updateParticipant(newParticipant, old);
       });
       return { previousEncounter };
