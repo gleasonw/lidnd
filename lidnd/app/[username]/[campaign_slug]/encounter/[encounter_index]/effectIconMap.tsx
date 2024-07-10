@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import React from "react";
 
-export const old_effectIconMap = {
+export const effectIconMap = {
   Blinded: <EyeOff className="text-gray-500" />,
   Charmed: <Heart className="text-pink-500" />,
   Deafened: <VolumeX className="text-blue-500" />,
@@ -41,7 +41,7 @@ export const old_effectIconMap = {
   Exhaustion: <ThermometerSun className="text-amber-500" />,
 };
 
-export const effectIconMap = {
+export const mcdm_effectIconMap = {
   BLOODIED: <HeartPulse className="text-red-500" />,
   DAZED: <ZapOff className="text-yellow-500" />,
   FRIGHTENED: <AlertTriangle className="text-purple-500" />,

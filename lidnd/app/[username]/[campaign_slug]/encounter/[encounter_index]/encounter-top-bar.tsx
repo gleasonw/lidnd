@@ -116,6 +116,7 @@ function ParticipantIcons() {
                 className="object-contain max-h-full max-w-full"
                 id={p.creature_id}
                 name={ParticipantUtils.name(p)}
+                size="none"
               />
             </button>
           </Tip>

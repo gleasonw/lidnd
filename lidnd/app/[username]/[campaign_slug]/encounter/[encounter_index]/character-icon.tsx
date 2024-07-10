@@ -10,7 +10,7 @@ export function CharacterIcon({
   id: string;
   name: string;
   className?: string;
-  size?: "small" | "medium" | "stat_block";
+  size?: "small" | "medium" | "stat_block" | "none";
 }) {
   return (
     <span
@@ -18,6 +18,7 @@ export function CharacterIcon({
         "w-10 h-10": size === "small",
         "w-32 h-32": size === "medium",
         "w-full h-32": size === "stat_block",
+        "": size === "none",
       })}
     >
       <img

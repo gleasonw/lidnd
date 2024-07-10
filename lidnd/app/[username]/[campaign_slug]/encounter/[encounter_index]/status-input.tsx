@@ -75,7 +75,7 @@ export function StatusInput({
         {effects?.map((effect) => (
           <CommandItem key={effect.id}>
             <ButtonWithTooltip
-              text={effect.description}
+              text={"Add effect"}
               variant="ghost"
               onClick={() =>
                 updateStatus({
