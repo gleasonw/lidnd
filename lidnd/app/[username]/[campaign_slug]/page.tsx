@@ -91,7 +91,7 @@ async function CampaignPlayers(props: { campaignId: string }) {
               key={player.id}
               id={player.id}
               name={player.name}
-              className="w-32"
+              size="medium"
             />
           ),
       )}

@@ -466,6 +466,7 @@ function MonstersInEncounter({ id }: { id: string }) {
           name={ParticipantUtils.name(p)}
           key={p.id}
           className={"rounded-full object-cover w-10 h-10"}
+          size="small"
         />
       ))}
     </div>

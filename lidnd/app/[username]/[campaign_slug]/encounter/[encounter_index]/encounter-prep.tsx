@@ -302,6 +302,7 @@ function PrepParticipantCard({ participant }: ParticipantCreatureProps) {
             id={participant.creature_id}
             name={ParticipantUtils.name(participant)}
             className="object-cover w-32 h-32 mt-auto"
+            size="stat_block"
           />
         </Card>
         <ParticipantActions participant={participant} />

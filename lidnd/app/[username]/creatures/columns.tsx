@@ -16,7 +16,7 @@ export const columns: ColumnDef<Creature>[] = [
     cell: (row) => {
       const data = row.getValue();
       if (valueIsCreature(data)) {
-        return <CharacterIcon id={data.id} name={data.name} />;
+        return <CharacterIcon id={data.id} name={data.name} size="small" />;
       }
       return <div>No icon</div>;
     },

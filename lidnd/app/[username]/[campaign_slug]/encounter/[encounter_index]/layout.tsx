@@ -60,6 +60,10 @@ export default async function EncounterLayout({
     (e) => e.index_in_campaign === Number(params.encounter_index),
   );
 
+  const indexForDisplay = campaign?.encounters
+    .toSorted((a, b) => a.index_in_campaign - b.index_in_campaign)
+    .findIndex((e) => e.id === encounter?.id);
+
   if (!encounter) {
     console.error("No encounter found -- bug!");
     return <div>No encounter found... bad url or bug</div>;
@@ -101,7 +105,7 @@ export default async function EncounterLayout({
                 </Breadcrumb>
                 <div className="flex gap-2">
                   <span>
-                    {currentIndex} / {campaign.encounters.length}
+                    {indexForDisplay + 1} / {campaign.encounters.length}
                   </span>
                   <span>
                     {priorEncounter ? (

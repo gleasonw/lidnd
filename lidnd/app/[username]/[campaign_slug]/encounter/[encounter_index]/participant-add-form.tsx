@@ -68,10 +68,6 @@ export const ParticipantUpload = function ParticipantUpload({
 
   return (
     <div className="flex flex-col gap-3">
-      <section className="flex flex-wrap gap-5 items-center text-xl font-medium">
-        <span>Total CR: {EncounterUtils.totalCr(encounter)}</span>
-        <span>{EncounterUtils.difficulty(encounter, null, settings)}</span>
-      </section>
       <Tabs defaultValue="new">
         <span className="flex gap-1 flex-wrap pr-2">
           <TabsList>
@@ -101,6 +97,11 @@ export const ParticipantUpload = function ParticipantUpload({
           {existingCreatures ?? <ExistingCreature />}
         </TabsContent>
       </Tabs>
+
+      <section className="flex flex-wrap gap-5 items-center text-xl font-medium">
+        <span>Total CR: {EncounterUtils.totalCr(encounter)}</span>
+        <span>{EncounterUtils.difficulty(encounter, null, settings)}</span>
+      </section>
     </div>
   );
 };
@@ -176,6 +177,7 @@ export const ListedCreature = observer<ListedCreatureProps>(
             id={creature.id}
             name={creature.name}
             className={"rounded-full object-cover w-14 h-14"}
+            size="small"
           />
           <div className="flex flex-col">
             <span className="font-semibold">{creature.name}</span>

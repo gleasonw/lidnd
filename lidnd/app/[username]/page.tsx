@@ -8,7 +8,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
 import { CreateCampaignButton } from "@/app/[username]/create-campaign-button";
-import { LidndAuth, LidndUser } from "@/app/authentication";
+import { LidndAuth, LidndUser, UserUtils } from "@/app/authentication";
+import { ServerCampaign } from "@/server/campaigns";
+import { CharacterIcon } from "@/encounters/[encounter_index]/character-icon";
 
 export default async function Page({
   params,
@@ -64,15 +66,31 @@ interface CampaignCardProps {
   user: LidndUser;
 }
 
-function CampaignCard(props: CampaignCardProps) {
+async function CampaignCard(props: CampaignCardProps) {
   const { campaign, user } = props;
+
+  const players = await ServerCampaign.playersInCampaign(
+    UserUtils.context(user),
+    campaign.id,
+  );
+
   return (
     <Link href={appRoutes.campaign(campaign, user)}>
-      <Card className="flex flex-col gap-5 transition-all hover:bg-gray-200 max-w-lg h-96">
-        <CardHeader>
+      <Card className="flex flex-col transition-all hover:bg-gray-200 max-w-lg h-96">
+        <CardHeader className="flex gap-2 flex-col">
           <CardTitle>
             {isStringMeaningful(campaign.name) ? campaign.name : "Unnamed"}
           </CardTitle>
+          <div className="flex gap-2 flex-wrap">
+            {players.map(({ player }) => (
+              <CharacterIcon
+                key={player.id}
+                id={player.id}
+                name={player.name ?? ""}
+                size="small"
+              />
+            ))}
+          </div>
         </CardHeader>
         <CardContent className="max-h-full overflow-auto prose">
           <div

@@ -1,13 +1,20 @@
 import { db } from "@/server/api/db";
-import { campaigns, creatures, encounters } from "@/server/api/db/schema";
+import {
+  campaigns,
+  creatures,
+  encounters,
+  participants,
+} from "@/server/api/db/schema";
 import { eq, isNull } from "drizzle-orm";
 import _ from "lodash";
 
 async function setPlayerHpTo1() {
-  await db
-    .update(creatures)
-    .set({ max_hp: 1 })
-    .where(eq(creatures.is_player, true));
+  const results = await db
+    .update(participants)
+    .set({ hp: 1 })
+    .where(eq(creatures.is_player, true))
+    .returning();
+  console.log(results);
   return process.exit(0);
 }
 
