@@ -77,7 +77,13 @@ export default function CreaturesPage() {
         }
         return [
           ...old,
-          { ...data, user_id: "", id: data.id ?? "", created_at: new Date() },
+          {
+            ...data,
+            user_id: "",
+            id: data.id ?? "",
+            created_at: new Date(),
+            initiative_bonus: 0,
+          },
         ];
       });
       return { previous };

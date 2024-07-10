@@ -71,6 +71,7 @@ export const ParticipantUtils = {
         challenge_rating: creature.challenge_rating ?? 0,
         is_player: creature.is_player ?? false,
         max_hp: creature.max_hp ?? 0,
+        initiative_bonus: creature.initiative_bonus ?? 0,
       },
       status_effects: [],
     };
