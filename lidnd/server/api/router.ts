@@ -495,21 +495,8 @@ export const appRouter = t.router({
           opts.input
         );
 
-        const p = EncounterUtils.participants(encounter);
-
-        const surpriseRoundExists = p.some((p) => p.has_surprise);
-
-        const activeParticipant = surpriseRoundExists
-          ? p.find((p) => p.has_surprise)
-          : p[0];
-
-        if (!activeParticipant) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message:
-              "No active participant was able to be set... participants list empty?",
-          });
-        }
+        const [activeParticipant, firstRoundNumber] =
+          EncounterUtils.firstActiveAndRoundNumber(encounter);
 
         await Promise.all([
           tx
@@ -527,7 +514,7 @@ export const appRouter = t.router({
             .update(encounters)
             .set({
               started_at: new Date(),
-              current_round: surpriseRoundExists ? 0 : 1,
+              current_round: firstRoundNumber,
             })
             .where(eq(encounters.id, opts.input)),
         ]);

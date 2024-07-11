@@ -33,7 +33,7 @@ async function EncounterObserverView({ id }: { id?: string }) {
 
   return (
     <section className="flex flex-col gap-20 w-screen pt-10 items-center">
-      <h1 className="text-xl">{encounter.name}</h1>
+      <h1 className="text-3xl font-bold">Round {encounter.current_round}</h1>
       <PageRefresher />
       {EncounterUtils.initiativeType(encounter) === "linear" ? (
         <LinearObserve encounter={encounter} />
@@ -45,22 +45,34 @@ async function EncounterObserverView({ id }: { id?: string }) {
 }
 
 async function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
-  const activeIndex = encounter.participants.findIndex(
+  const participants = EncounterUtils.participants(encounter);
+  const activeIndex = participants.findIndex(
     (participant) => participant.is_active,
   );
   return (
-    <div className={"flex margin-auto gap-3 overflow-auto max-w-full"}>
-      {encounter.participants.map((participant, index) => {
-        return (
-          <SimpleBattleCard
-            key={participant.id}
-            participant={participant}
-            activeIndex={activeIndex}
-            encounter={encounter}
-            index={index}
+    <div className={"flex margin-auto gap-1 md:gap-3 overflow-auto max-w-full"}>
+      {participants.map((p, index) => (
+        <div
+          className={clsx(
+            "w-32 border-4 flex-grow-0 flex justify-center items-center transition-all h-32 relative",
+            ParticipantUtils.isFriendly(p)
+              ? "border-blue-600"
+              : "border-red-600",
+            p.is_active && "h-48",
+            index < activeIndex
+              ? "opacity-60 hover:opacity-100"
+              : "hover:opacity-60",
+          )}
+        >
+          <HealthMeterOverlay participant={p} />
+          <CharacterIcon
+            className="object-contain max-h-full max-w-full"
+            id={p.creature_id}
+            name={ParticipantUtils.name(p)}
+            size="none"
           />
-        );
-      })}
+        </div>
+      ))}
     </div>
   );
 }

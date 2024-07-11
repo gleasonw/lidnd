@@ -58,22 +58,13 @@ export function StatusInput({
 
   return (
     <div className="flex gap-2">
-      <Input
-        type="number"
-        value={save_ends_dc}
-        className="w-24"
-        onChange={(e) => {
-          setSaveEndsDC(e.target.value ?? "");
-        }}
-        placeholder="DC"
-      />
       <Combobox
-        triggerPlaceholder="Status effect"
+        triggerPlaceholder="Add status effect"
         emptyResultText="No status effects"
         className="max-h-80 overflow-auto"
       >
         {effects?.map((effect) => (
-          <CommandItem key={effect.id}>
+          <CommandItem key={effect.id} className="w-full flex gap-1">
             <ButtonWithTooltip
               text={"Add effect"}
               variant="ghost"
@@ -88,6 +79,15 @@ export function StatusInput({
               {effectIconMap[effect.name as keyof typeof effectIconMap]}
               <span>{effect.name}</span>
             </ButtonWithTooltip>
+            <Input
+              type="number"
+              value={save_ends_dc}
+              className="w-24"
+              onChange={(e) => {
+                setSaveEndsDC(e.target.value ?? "");
+              }}
+              placeholder="DC save"
+            />
           </CommandItem>
         ))}
       </Combobox>

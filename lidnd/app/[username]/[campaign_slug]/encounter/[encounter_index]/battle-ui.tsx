@@ -130,7 +130,14 @@ export function BattleCard({
           />
           <span className="flex justify-between">
             <BattleCardCreatureIcon participant={participant} />
-            <InitiativeInput participant={participant} key={participant.id} />
+            <span className="flex flex-col gap-2 justify-evenly">
+              <InitiativeInput participant={participant} key={participant.id} />
+              {!ParticipantUtils.isPlayer(participant) && (
+                <span className="whitespace-nowrap font-bold text-lg text-center">
+                  {participant.hp} / {ParticipantUtils.maxHp(participant)}
+                </span>
+              )}
+            </span>
           </span>
           <BattleCardHealthAndStatus participant={participant} />
         </BattleCardContent>

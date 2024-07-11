@@ -263,6 +263,30 @@ export const EncounterUtils = {
     };
   },
 
+  hasSurpriseRound(encounter: EncounterWithParticipants) {
+    return this.participants(encounter).some((p) => p.has_surprise);
+  },
+
+  firstActiveAndRoundNumber(
+    encounter: EncounterWithParticipants
+  ): [Participant, number] {
+    const participants = this.participants(encounter);
+
+    const surprise = this.hasSurpriseRound(encounter);
+
+    const firstActive = surprise
+      ? participants.find((p) => p.has_surprise)
+      : participants.at(0);
+
+    if (!firstActive) {
+      throw new Error(
+        "No participant found to start the encounter... empty list?"
+      );
+    }
+
+    return [firstActive, surprise ? 0 : 1];
+  },
+
   postRoundReminders({
     reminders,
     current_round,

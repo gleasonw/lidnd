@@ -1,5 +1,4 @@
 import ClientOverlays from "@/app/[username]/overlays";
-import "@/app/globals.css";
 import { TRPCReactProvider } from "@/trpc/react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";

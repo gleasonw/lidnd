@@ -15,6 +15,10 @@ export const appRoutes = {
     return `${this.dashboard(user)}/settings`;
   },
 
+  observe: function (encounter_id: string) {
+    return `/observe/${encounter_id}`;
+  },
+
   encounter(
     campaign: { slug: string },
     encounter: { name: string; index_in_campaign: number },

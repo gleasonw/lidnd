@@ -372,5 +372,20 @@ export function useStartEncounter() {
     onSettled: async () => {
       return await encounterById.invalidate(id);
     },
+    onMutate: async () => {
+      await encounterById.cancel(id);
+      const previousEncounter = encounterById.getData(id);
+      encounterById.setData(id, (old) => {
+        if (!old) return old;
+        const [firstActive, firstRoundNumber] =
+          EncounterUtils.firstActiveAndRoundNumber(old);
+
+        return EncounterUtils.updateParticipant(
+          { ...firstActive, is_active: true },
+          { ...old, current_round: firstRoundNumber },
+        );
+      });
+      return { previousEncounter };
+    },
   });
 }

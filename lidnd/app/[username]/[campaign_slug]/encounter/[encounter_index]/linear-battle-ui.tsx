@@ -13,6 +13,8 @@ import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[enco
 import { useRemoveParticipantFromEncounter } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { observer } from "mobx-react-lite";
+import { appRoutes } from "@/app/routes";
+import { Share } from "lucide-react";
 
 export const LinearBattleUI = observer(function LinearBattleUI() {
   const id = useEncounterId();
@@ -113,6 +115,17 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
             }
           >
             Remove from encounter
+          </Button>
+          <Button
+            onClick={() => {
+              navigator.clipboard.writeText(
+                `${window.location.origin}${appRoutes.observe(id)}`,
+              );
+            }}
+            variant="ghost"
+          >
+            <Share />
+            Get sharable link
           </Button>
         </>
       )}

@@ -33,9 +33,6 @@ export function ParticipantHealthForm({
 
   return (
     <div className="flex flex-col gap-3">
-      <span className="whitespace-nowrap font-bold text-lg text-center">
-        {participant.hp} / {ParticipantUtils.maxHp(participant)}
-      </span>
       <div className="flex gap-4">
         <Button
           disabled={isLoading}
