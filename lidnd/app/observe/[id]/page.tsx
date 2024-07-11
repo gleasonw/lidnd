@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { PageRefresher } from "@/app/observe/[id]/page-refresher";
 import React from "react";
-import { SimpleBattleCard } from "./SimpleBattleCard";
 import { ParticipantWithData } from "@/server/api/router";
 import { Card } from "@/components/ui/card";
 import clsx from "clsx";
@@ -63,6 +62,7 @@ async function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
               ? "opacity-60 hover:opacity-100"
               : "hover:opacity-60",
           )}
+          key={p.id}
         >
           <HealthMeterOverlay participant={p} />
           <CharacterIcon
