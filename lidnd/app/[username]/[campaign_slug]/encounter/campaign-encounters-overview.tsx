@@ -55,7 +55,7 @@ export default function CampaignEncountersOverview(
   const campaignId = useCampaignId();
   const { data: encounters } = api.encounters.useQuery(campaignId);
 
-  const encountersByStatus = Object.groupBy(encounters ?? [], (e) => e.label);
+  const encountersByStatus = _.groupBy(encounters ?? [], (e) => e.label);
 
   function onPlayerUpload(data: CreaturePost) {
     const dataAsForm = getCreaturePostForm(data);
