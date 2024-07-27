@@ -41,6 +41,8 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
     (p) => !ParticipantUtils.isPlayer(p),
   );
 
+  const [monstersPerPage, setMonstersPerPage] = React.useState(2);
+
   useEffect(() => {
     if (!emblaApi) {
       return;
@@ -52,10 +54,10 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
       return;
     }
 
-    emblaApi.scrollTo(selectedIndex);
-  }, [selectedId, emblaApi]);
+    const adjustedIndex = Math.floor(selectedIndex / monstersPerPage);
 
-  const [monstersPerPage, setMonstersPerPage] = React.useState(2);
+    emblaApi.scrollTo(adjustedIndex);
+  }, [selectedId, emblaApi]);
 
   return (
     <div>

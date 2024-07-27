@@ -166,7 +166,7 @@ function EncounterSection(props: {
         e.stopPropagation();
         setAcceptDrop(true);
       }}
-      onDragLeave={(e) => {
+      onDragLeave={() => {
         setAcceptDrop(false);
       }}
       className={clsx(
@@ -213,7 +213,6 @@ function EncounterSection(props: {
 }
 
 export function CreateEncounterButton({
-  className,
   category,
 }: {
   className?: string;
