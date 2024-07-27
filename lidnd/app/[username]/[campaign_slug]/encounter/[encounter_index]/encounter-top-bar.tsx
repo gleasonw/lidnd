@@ -120,7 +120,9 @@ function ParticipantIcons({
   const activeIndex = EncounterUtils.activeParticipantIndex(encounter);
 
   return (
-    <div className="flex gap-1 flex-grow overflow-auto max-w-full">
+    <div
+      className={`flex gap-1 flex-grow overflow-auto max-w-full ${isEditingInitiative ? "h-auto" : "h-28"}`}
+    >
       {encounter.participants
         .toSorted(ParticipantUtils.sortLinearly)
         .map((p, index) => (
