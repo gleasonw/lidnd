@@ -4,13 +4,11 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-import { ChevronUp } from "lucide-react";
 import React from "react";
-import { AnimatePresence, motion, useIsPresent } from "framer-motion";
+import { motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { Participant, ParticipantWithData } from "@/server/api/router";
-import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import { BasePopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
 import { StatusInput } from "./status-input";
 import { effectIconMap } from "./effectIconMap";
@@ -29,12 +27,14 @@ import {
   useRemoveStatusEffect,
   useUpdateEncounterParticipant,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
-import InitiativeInput from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/InitiativeInput";
 import { ReminderDialog } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/reminder-dialog";
-import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { useDebouncedCallback } from "use-debounce";
 import { EncounterUtils } from "@/utils/encounters";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
+import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 
 export function BattleUILoader() {
   return (
@@ -50,7 +50,7 @@ export const BattleUI = observer(function BattleUI() {
   return (
     <>
       <ReminderDialog />
-      <div className="flex gap-4 flex-col w-full">
+      <div className="flex gap-8 flex-col w-full">
         <DescriptionTextArea
           tiptapReadyGate={
             campaign.system?.initiative_type === "linear" ? (
@@ -71,6 +71,7 @@ export type BattleCardProps = {
   className?: string;
   isSelected?: boolean;
   header?: React.ReactNode;
+  battleCardExtraContent?: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export function BattleCard({
@@ -78,6 +79,7 @@ export function BattleCard({
   className,
   isSelected,
   header,
+  battleCardExtraContent,
   ...props
 }: BattleCardProps) {
   const id = useEncounterId();
@@ -87,7 +89,19 @@ export function BattleCard({
   const debouncedUpdate = useDebouncedCallback((participant: Participant) => {
     updateParticipant(participant);
   }, 500);
-  const [notes, setNotes] = React.useState(participant.notes);
+
+  const configuredPlaceholder = Placeholder.configure({
+    placeholder: "Monster notes",
+  });
+
+  const editor = useEditor({
+    extensions: [StarterKit, configuredPlaceholder],
+    content: participant.notes,
+    onUpdate: ({ editor }) => {
+      const content = editor.getHTML();
+      debouncedUpdate({ ...participant, notes: content });
+    },
+  });
 
   const activeParticipant = EncounterUtils.activeParticipant(encounter);
 
@@ -106,51 +120,21 @@ export function BattleCard({
       <BattleCardLayout
         key={participant.id}
         data-active={participant.id === selectedId}
-        className={clsx(className, {
-          "opacity-40":
-            encounter?.current_round === 0 && !participant.has_surprise,
-          "outline-zinc-900 outline": participant.id === selectedId,
-        })}
       >
         <BattleCardStatusEffects participant={participant} />
         <BattleCardCreatureName participant={participant} />
         <BattleCardContent>
-          <LidndTextInput
-            placeholder="Notes"
-            className="w-full"
-            variant="ghost"
-            value={notes ?? ""}
-            onChange={(e) => {
-              setNotes(e.target.value);
-              debouncedUpdate({
-                ...participant,
-                notes: e.target.value,
-              });
-            }}
-          />
-          <span className="flex justify-between">
-            <BattleCardCreatureIcon participant={participant} />
-            <span className="flex flex-col gap-2 justify-evenly">
-              <InitiativeInput participant={participant} key={participant.id} />
-              {!ParticipantUtils.isPlayer(participant) && (
-                <span className="whitespace-nowrap font-bold text-lg text-center">
-                  {participant.hp} / {ParticipantUtils.maxHp(participant)}
-                </span>
-              )}
-            </span>
-          </span>
-          <BattleCardHealthAndStatus participant={participant} />
+          <LidndTextArea editor={editor} />
+          <div className="flex w-full gap-2 md:gap-6 justify-center">
+            <BattleCardCreatureIcon
+              className="flex justify-center"
+              participant={participant}
+            />
+            <BattleCardHealthAndStatus participant={participant} />
+          </div>
         </BattleCardContent>
+        {battleCardExtraContent}
       </BattleCardLayout>
-      <AnimatePresence>
-        <div className={"flex absolute -bottom-8 flex-row gap-2"}>
-          {participant.is_active && (
-            <FadePresenceItem>
-              <ChevronUp />
-            </FadePresenceItem>
-          )}
-        </div>
-      </AnimatePresence>
     </div>
   );
 }
@@ -166,7 +150,7 @@ export function BattleCardLayout({
   return (
     <Card
       className={clsx(
-        "bg-white w-[300px] shadow-lg flex flex-col justify-between transition-all group",
+        "bg-white shadow-lg flex flex-col justify-between transition-all group",
         className,
       )}
       {...props}
@@ -184,7 +168,9 @@ export function BattleCardContent({
   className?: string;
 }) {
   return (
-    <CardContent className={clsx("flex flex-col gap-2", className)}>
+    <CardContent
+      className={clsx("flex flex-col gap-4 px-3 items-center", className)}
+    >
       {children}
     </CardContent>
   );
@@ -232,7 +218,7 @@ export function BattleCardCreatureName({
   participant,
 }: BattleCardParticipantProps) {
   return (
-    <span className="flex flex-col gap-2 justify-between items-center py-3 font-bold text-3xl">
+    <span className="flex flex-col gap-2 justify-between items-center py-3 font-bold text-4xl">
       <CardTitle className="text-lg  truncate max-w-full group-hover:opacity-50">
         {ParticipantUtils.name(participant)}
       </CardTitle>

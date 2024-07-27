@@ -168,6 +168,7 @@ export const encountersRelations = relations(encounters, ({ many, one }) => ({
 }));
 
 //todo: there are system-specific fields in here...
+//todo: maybe separate creatures and players? players have a designated "player" creature?
 export const participants = pgTable(
   "participants",
   {
@@ -187,6 +188,8 @@ export const participants = pgTable(
     minion_count: integer("minion_count"),
     nickname: text("nickname"),
     notes: text("notes"),
+    temporary_hp: integer("temporary_hp").default(0).notNull(),
+    is_concentrating: boolean("is_concentrating").default(false).notNull(),
     has_played_this_round: boolean("has_played_this_round")
       .default(false)
       .notNull(),

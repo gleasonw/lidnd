@@ -3,5 +3,6 @@
     "editor.defaultFormatter": "ms-python.black-formatter"
   },
   "python.formatting.provider": "none",
-  "workbench.editor.labelFormat": "short"
+  "workbench.editor.labelFormat": "short",
+  "editor.formatOnSave": true
 }

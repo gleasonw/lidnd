@@ -156,6 +156,7 @@ export function useCreateCreatureInEncounter() {
 export function useRemoveParticipantFromEncounter() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
+  const { mutate: cycleNext } = useCycleNextTurn();
 
   return api.removeParticipantFromEncounter.useMutation({
     onMutate: async (data) => {
@@ -165,6 +166,19 @@ export function useRemoveParticipantFromEncounter() {
         if (!old) {
           return;
         }
+
+        const removedParticipant = old.participants.find(
+          (p) => p.id === data.participant_id,
+        )
+
+        if (!removedParticipant) {
+          throw new Error("No participant found when removing");
+        }
+
+        if (removedParticipant.is_active) {
+          cycleNext({ encounter_id: id });
+        }
+
         return EncounterUtils.removeParticipant(data.participant_id, old);
       });
       return { previousEncounterData };

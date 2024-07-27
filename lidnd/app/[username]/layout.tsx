@@ -44,7 +44,7 @@ export default async function CampaignsLayout({
               <SmallSideNav>
                 <SideNavBody />
               </SmallSideNav>
-              <div className="flex pt-2 flex-grow overflow-hidden relative">
+              <div className="flex flex-grow overflow-hidden relative">
                 <LargeSideNav>
                   <SideNavBody />
                 </LargeSideNav>

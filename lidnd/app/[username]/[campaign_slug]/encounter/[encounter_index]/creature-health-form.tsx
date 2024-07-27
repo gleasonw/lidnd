@@ -10,6 +10,8 @@ import {
   useUpdateEncounterParticipant,
   useUpdateEncounterMinionParticipant,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
+import { useDebouncedCallback } from "use-debounce";
+import React from "react";
 
 export function ParticipantHealthForm({
   participant,
@@ -17,6 +19,8 @@ export function ParticipantHealthForm({
   participant: ParticipantWithData;
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
+  const [tempHp, setTempHp] = useState<number>(participant.temporary_hp);
+
   const { mutate: edit, isPending: isLoading } =
     useUpdateEncounterParticipant();
 
@@ -24,36 +28,47 @@ export function ParticipantHealthForm({
     return <MinionHealthForm participant={participant} />;
   }
 
-  function handleHPChange(hp: number) {
+  function handleHPChange(updatedHp: number) {
+    const hpDiff = participant.hp - updatedHp;
+
+    if (participant.temporary_hp === 0 || hpDiff <= 0) {
+      return edit({
+        ...participant,
+        hp: updatedHp,
+      });
+    }
+
+    if (hpDiff >= participant.temporary_hp) {
+      setTempHp(0);
+      return edit({
+        ...participant,
+        hp: participant.hp - (hpDiff - participant.temporary_hp),
+        temporary_hp: 0,
+      });
+    }
+
+    // the damage is less than the temporary hp
+    setTempHp(participant.temporary_hp - hpDiff);
     edit({
       ...participant,
-      hp,
+      temporary_hp: participant.temporary_hp - hpDiff,
     });
   }
 
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex gap-4">
-        <Button
-          disabled={isLoading}
-          variant="default"
-          className={"bg-rose-800"}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleHPChange(
-              typeof hpDiff === "number"
-                ? participant.hp - hpDiff
-                : participant.hp,
-            );
-          }}
-        >
-          Damage
-        </Button>
+  const handleTempHpChange = useDebouncedCallback((tempHp: number) => {
+    edit({
+      ...participant,
+      temporary_hp: tempHp,
+    });
+  }, 300);
 
+  return (
+    <div className="grid grid-cols-3 gap-1">
+      <div className="flex flex-col gap-1">
         <Button
           disabled={isLoading}
           variant="default"
-          className={"bg-lime-800"}
+          className={"bg-lime-800 h-7"}
           onClick={(e) => {
             e.stopPropagation();
             handleHPChange(
@@ -77,7 +92,44 @@ export function ParticipantHealthForm({
             }
           }}
         />
+        <Button
+          disabled={isLoading}
+          variant="default"
+          className={"bg-rose-800 h-7"}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleHPChange(
+              typeof hpDiff === "number"
+                ? participant.hp - hpDiff
+                : participant.hp,
+            );
+          }}
+        >
+          Damage
+        </Button>
       </div>
+      {!ParticipantUtils.isPlayer(participant) && (
+        <span className="whitespace-nowrap font-bold text-lg text-center flex justify-center items-center">
+          {participant.hp} / {ParticipantUtils.maxHp(participant)}
+        </span>
+      )}
+      <label>
+        Temp
+        <Input
+          placeholder="Temp hp"
+          type="number"
+          value={tempHp}
+          onChange={(e) => {
+            if (!isNaN(parseInt(e.target.value))) {
+              setTempHp(parseInt(e.target.value));
+              handleTempHpChange(parseInt(e.target.value));
+            } else {
+              setTempHp(0);
+              handleTempHpChange(0);
+            }
+          }}
+        />
+      </label>
     </div>
   );
 }
@@ -116,9 +168,6 @@ export function MinionHealthForm({ participant }: MinionHealthFormProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      <span className="whitespace-nowrap font-bold text-lg text-center">
-        {participant.hp} / {ParticipantUtils.maxHp(participant)}
-      </span>
       <div className="flex gap-4">
         {isDoingDamage ? (
           <span className="flex items-center gap-3">
@@ -134,9 +183,8 @@ export function MinionHealthForm({ participant }: MinionHealthFormProps) {
               Damage
             </Button>
             <Input
-              placeholder="Additional minions in range (overkill)?"
+              placeholder="Overkill range"
               type="number"
-              className="w-60"
               value={extraMinionsInRange}
               onChange={(e) => {
                 if (!isNaN(parseInt(e.target.value))) {

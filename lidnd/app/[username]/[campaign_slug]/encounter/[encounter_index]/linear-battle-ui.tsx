@@ -1,26 +1,30 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import React from "react";
-import { AnimatePresence } from "framer-motion";
+import React, { useEffect, useState } from "react";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
-import { AnimationListItem, BattleCard } from "./battle-ui";
+import { BattleCard } from "./battle-ui";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
-import { OriginalSizeImage } from "@/app/[username]/[campaign_slug]/encounter/original-size-image";
-import { getAWSimageURL } from "@/app/[username]/[campaign_slug]/encounter/utils";
-import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
-import { useRemoveParticipantFromEncounter } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
+import { OriginalSizeImage } from "@/encounters/original-size-image";
+import { getAWSimageURL } from "@/encounters/utils";
+import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
+import { useRemoveParticipantFromEncounter } from "@/encounters/[encounter_index]/hooks";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { observer } from "mobx-react-lite";
-import { appRoutes } from "@/app/routes";
-import { Share } from "lucide-react";
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 export const LinearBattleUI = observer(function LinearBattleUI() {
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
+  const [emblaApi, setEmblaApi] = useState<CarouselApi | null>(null);
 
-  const activeIndex = EncounterUtils.activeParticipantIndex(encounter);
   const activeParticipant = EncounterUtils.activeParticipant(encounter);
 
   const {
@@ -33,102 +37,92 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
   const { mutate: removeCreatureFromEncounter } =
     useRemoveParticipantFromEncounter();
 
-  const displayedParticipants = EncounterUtils.participants(encounter);
-
-  const selectedParticipant = displayedParticipants.find(
-    (participant) => participant.id === selectedId,
+  const dmCreatures = EncounterUtils.participants(encounter).filter(
+    (p) => !ParticipantUtils.isPlayer(p),
   );
 
-  const scrollContainer = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (scrollContainer.current) {
-      const activeElement =
-        scrollContainer.current.querySelector("[data-active=true]");
-      if (activeElement) {
-        scrollContainer.current.scrollTo({
-          left:
-            activeElement.getBoundingClientRect().left +
-            scrollContainer.current.scrollLeft -
-            scrollContainer.current.getBoundingClientRect().left,
-          behavior: "smooth",
-        });
-      }
+  useEffect(() => {
+    if (!emblaApi) {
+      return;
     }
-  }, [selectedId]);
+
+    const selectedIndex = dmCreatures.findIndex((p) => p.id === selectedId);
+
+    if (selectedIndex === -1) {
+      return;
+    }
+
+    emblaApi.scrollTo(selectedIndex);
+  }, [selectedId, emblaApi]);
+
+  const [monstersPerPage, setMonstersPerPage] = React.useState(2);
 
   return (
-    <div className="flex flex-col gap-5 relative">
-      <div
-        className={clsx(
-          "flex flex-row sm:gap-4 px-8 pt-2 pb-8 max-w-full items-center overflow-auto mx-auto",
-        )}
-        ref={scrollContainer}
-      >
-        <AnimatePresence>
-          {displayedParticipants?.slice().map((participant, index) => (
-            <AnimationListItem key={participant.id}>
-              <BattleCard
-                onClick={() => setSelectedParticipantId(participant.id)}
-                participant={participant}
-                isSelected={participant.id === selectedId}
-                className={clsx(
-                  {
-                    "opacity-40":
-                      !(participant.id === selectedId) &&
-                      activeIndex &&
-                      index < activeIndex,
-                  },
-                  "cursor-pointer",
-                )}
-              />
-            </AnimationListItem>
+    <div>
+      <Carousel setApi={setEmblaApi} opts={{ slidesToScroll: monstersPerPage }}>
+        <div className="flex gap-2 items-center">
+          Monsters per page
+          {[1, 2, 3].map((pageSize) => (
+            <Button
+              key={pageSize}
+              variant={monstersPerPage === pageSize ? "outline" : "ghost"}
+              onClick={() => setMonstersPerPage(pageSize)}
+            >
+              {pageSize}
+            </Button>
           ))}
-        </AnimatePresence>
-      </div>
-
-      {selectedParticipant && (
-        <>
-          {!ParticipantUtils.isPlayer(selectedParticipant) ? (
-            <OriginalSizeImage
-              src={getAWSimageURL(
-                selectedParticipant.creature_id,
-                "stat_block",
-              )}
-              alt={
-                "stat block for " + ParticipantUtils.name(selectedParticipant)
-              }
-              key={selectedParticipant.creature_id}
-            />
-          ) : (
-            <span className="text-2xl p-5">
-              {ParticipantUtils.name(selectedParticipant)} (Player)
-            </span>
-          )}
-          <Button
-            variant="destructive"
-            onClick={() =>
-              removeCreatureFromEncounter({
-                encounter_id: id,
-                participant_id: selectedParticipant.id,
-              })
-            }
-          >
-            Remove from encounter
+          <Button variant="ghost" onClick={() => emblaApi?.scrollPrev()}>
+            <ArrowLeft />
           </Button>
-          <Button
-            onClick={() => {
-              navigator.clipboard.writeText(
-                `${window.location.origin}${appRoutes.observe(id)}`,
-              );
-            }}
-            variant="ghost"
-          >
-            <Share />
-            Get sharable link
+          <Button variant="ghost" onClick={() => emblaApi?.scrollNext()}>
+            <ArrowRight />
           </Button>
-        </>
-      )}
+        </div>
+        <CarouselContent>
+          {dmCreatures
+            ?.filter((p) => !ParticipantUtils.isPlayer(p))
+            .map((participant) => (
+              <CarouselItem
+                key={participant.id}
+                className={clsx({
+                  "basis-1/2": monstersPerPage === 2,
+                  "basis-1/3": monstersPerPage === 3,
+                })}
+              >
+                <BattleCard
+                  onClick={() => setSelectedParticipantId(participant.id)}
+                  participant={participant}
+                  className={clsx("cursor-pointer")}
+                  battleCardExtraContent={
+                    <>
+                      <OriginalSizeImage
+                        src={getAWSimageURL(
+                          participant.creature_id,
+                          "stat_block",
+                        )}
+                        alt={
+                          "stat block for " + ParticipantUtils.name(participant)
+                        }
+                        key={participant.creature_id}
+                      />
+                      <Button
+                        variant="destructive"
+                        onClick={() =>
+                          removeCreatureFromEncounter({
+                            encounter_id: id,
+                            participant_id: participant.id,
+                          })
+                        }
+                      >
+                        Remove from encounter
+                      </Button>
+                    </>
+                  }
+                />
+              </CarouselItem>
+            ))}
+        </CarouselContent>
+      </Carousel>
     </div>
   );
 });

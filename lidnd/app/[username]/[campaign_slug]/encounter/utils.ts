@@ -47,6 +47,8 @@ export function defaultParticipant(
     created_at: new Date(),
     nickname: p.nickname ?? "",
     notes: p.notes ?? "",
+    temporary_hp: p.temporary_hp ?? 0,
+    is_concentrating: p.is_concentrating ?? false,
     ...p,
   };
 }
