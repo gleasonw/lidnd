@@ -117,7 +117,7 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
                 <BattleCard
                   onClick={() => setSelectedParticipantId(participant.id)}
                   participant={participant}
-                  className={clsx("cursor-pointer")}
+                  className={clsx("cursor-pointer relative")}
                   battleCardExtraContent={
                     <>
                       <CreatureStatBlockImage creature={participant.creature} />
