@@ -49,9 +49,11 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
   const monstersPerPage =
     overrideMonstersPerPage ?? (screenWidth > 1000 ? 2 : 1);
 
-  // watch the screen size
   // TODO: put this in the ui store
   useEffect(() => {
+    // adjust number of monsters per page based on screen width
+    // need this in js-land to coordinate with the carousel's slidesToScroll option
+
     const handleResize: ResizeObserverCallback = (entries) => {
       for (const entry of entries) {
         setScreenWidth(entry.contentRect.width);
@@ -64,9 +66,43 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
     return () => {
       resizeObserver.disconnect();
     };
-  }, []);
+  }, [setScreenWidth]);
 
   useEffect(() => {
+    // update the selected participant when the carousel scrolls
+    // this is sort of weird, since we aren't really selecting a participant.
+    // however, this fixes a bug where, if the user scrolls away from a selected participant,
+    // clicking back on the selected participant won't update the scroll state.
+
+    if (!emblaApi) return;
+
+    const handleSelect = (carousel: CarouselApi) => {
+      if (!carousel) {
+        throw new Error("No carousel");
+      }
+
+      const selectedSnap = carousel.selectedScrollSnap();
+
+      const participantToSelect = dmCreatures[selectedSnap * monstersPerPage];
+
+      if (!participantToSelect) {
+        throw new Error("No participant to select");
+      }
+
+      setSelectedParticipantId(participantToSelect.id);
+    };
+
+    emblaApi.on("select", handleSelect);
+
+    return () => {
+      if (!emblaApi) return;
+      emblaApi.off("select", handleSelect);
+    };
+  }, [emblaApi, monstersPerPage, dmCreatures, setSelectedParticipantId]);
+
+  useEffect(() => {
+    // scroll to the snap containing the selected participant when the selected participant changes
+
     if (!emblaApi) {
       return;
     }

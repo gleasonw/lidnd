@@ -63,6 +63,7 @@
     "drizzle-zod": "^0.5.1",
     "embla-carousel-react": "^8.1.7",
     "eslint-config-next": "14.0.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
     "framer-motion": "^10.18.0",
     "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
