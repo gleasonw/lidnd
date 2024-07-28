@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LidndPlusDialog } from "@/components/ui/lidnd_dialog";
 import { ButtonWithTooltip, Tip } from "@/components/ui/tip";
 import { HealthMeterOverlay } from "@/encounters/[encounter_index]/battle-ui";
-import { CharacterIcon } from "@/encounters/[encounter_index]/character-icon";
+import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { EncounterTime } from "@/encounters/[encounter_index]/encounter-time";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import {
@@ -121,7 +121,7 @@ function ParticipantIcons({
 
   return (
     <div
-      className={`flex gap-1 flex-grow overflow-auto max-w-full ${isEditingInitiative ? "h-auto" : "h-28"}`}
+      className={`flex gap-1 flex-grow overflow-auto max-w-full ${isEditingInitiative ? "h-auto" : "h-32"}`}
     >
       {encounter.participants
         .toSorted(ParticipantUtils.sortLinearly)
@@ -130,11 +130,11 @@ function ParticipantIcons({
             <Tip text={ParticipantUtils.name(p)}>
               <button
                 className={clsx(
-                  "w-20 border-4 flex-grow-0 flex justify-center items-center transition-all h-16 relative",
+                  "w-24 border-4 flex-grow-0 flex justify-center items-center transition-all h-20 relative",
                   ParticipantUtils.isFriendly(p)
                     ? "border-blue-600"
                     : "border-red-600",
-                  p.is_active && "h-28",
+                  p.is_active && "h-32",
                   index < activeIndex
                     ? "opacity-60 hover:opacity-100"
                     : "hover:opacity-60",
@@ -142,11 +142,10 @@ function ParticipantIcons({
                 onClick={() => setSelectedParticipantId(p.id)}
               >
                 <HealthMeterOverlay participant={p} />
-                <CharacterIcon
-                  className="object-contain max-h-full max-w-full"
-                  id={p.creature_id}
-                  name={ParticipantUtils.name(p)}
-                  size="none"
+                <CreatureIcon
+                  creature={p.creature}
+                  size="small2"
+                  objectFit="contain"
                 />
               </button>
             </Tip>

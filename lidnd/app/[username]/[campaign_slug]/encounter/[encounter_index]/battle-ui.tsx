@@ -18,7 +18,7 @@ import { observer } from "mobx-react-lite";
 import { ParticipantUtils } from "@/utils/participants";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
-import { CharacterIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
+import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { ParticipantHealthForm } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/creature-health-form";
 import { DescriptionTextArea } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/description-text-area";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
@@ -76,9 +76,6 @@ export type BattleCardProps = {
 
 export function BattleCard({
   participant,
-  className,
-  isSelected,
-  header,
   battleCardExtraContent,
   ...props
 }: BattleCardProps) {
@@ -125,10 +122,10 @@ export function BattleCard({
         <BattleCardCreatureName participant={participant} />
         <BattleCardContent>
           <LidndTextArea editor={editor} />
-          <div className="flex w-full gap-2 md:gap-6 justify-center">
+          <div className="flex w-full gap-2 md:gap-6 justify-center h-36">
             <BattleCardCreatureIcon
-              className="flex justify-center"
               participant={participant}
+              className="max-h-full max-w-full"
             />
             <BattleCardHealthAndStatus participant={participant} />
           </div>
@@ -236,10 +233,10 @@ export function BattleCardCreatureIcon({
     <span>Loading</span>
   ) : (
     <div className={clsx("relative", className)}>
-      <CharacterIcon
-        id={participant.creature_id}
-        name={ParticipantUtils.name(participant)}
-        className="object-cover w-32 h-32"
+      <CreatureIcon
+        creature={participant.creature}
+        size="medium"
+        objectFit="contain"
       />
       <HealthMeterOverlay participant={participant} />
     </div>

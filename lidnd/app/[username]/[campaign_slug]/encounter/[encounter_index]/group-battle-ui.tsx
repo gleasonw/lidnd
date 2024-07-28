@@ -16,9 +16,7 @@ import clsx from "clsx";
 import React from "react";
 import { AnimatePresence } from "framer-motion";
 import { EncounterUtils } from "@/utils/encounters";
-import { ParticipantUtils } from "@/utils/participants";
-import { OriginalSizeImage } from "@/app/[username]/[campaign_slug]/encounter/original-size-image";
-import { getAWSimageURL } from "@/app/[username]/[campaign_slug]/encounter/utils";
+import { CreatureStatBlockImage } from "@/app/[username]/[campaign_slug]/encounter/original-size-image";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
 
 export function GroupBattleUI() {
@@ -57,10 +55,7 @@ export function GroupBattleUI() {
         ))}
       >
         {selectedMonster && (
-          <OriginalSizeImage
-            src={getAWSimageURL(selectedMonster.creature_id, "stat_block")}
-            alt={"stat block for " + ParticipantUtils.name(selectedMonster)}
-          />
+          <CreatureStatBlockImage creature={selectedMonster.creature} />
         )}
       </GroupBattleLayout>
     </div>
@@ -121,8 +116,6 @@ export type GroupBattleCardProps = {
 
 export function GroupBattleCard({
   participant,
-  children,
-  className,
   isSelected,
   ...props
 }: GroupBattleCardProps) {

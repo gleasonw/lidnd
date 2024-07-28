@@ -16,8 +16,8 @@ import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 import { DataTable } from "@/app/[username]/creatures/creatures-table";
 import { columns } from "@/app/[username]/creatures/columns";
-import { rerouteUrl } from "@/app/[username]/utils";
-import { CharacterIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
+import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
+import { postCreature } from "@/app/[username]/actions";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");
@@ -53,17 +53,11 @@ export default function CreaturesPage() {
 
   const { mutate: createCreature } = useMutation({
     mutationFn: async (rawData: CreaturePost) => {
-      const formData = getCreaturePostForm(rawData);
-      const response = await fetch(`${rerouteUrl}/api/creature/create`, {
-        method: "POST",
-        body: formData,
+      const formData = getCreaturePostForm({
+        ...rawData,
+        max_hp: rawData.max_hp ? rawData.max_hp : 1,
       });
-      const data = await response.json();
-      if (response.status !== 200) {
-        console.log(data.detail);
-        throw data;
-      }
-      return data;
+      return await postCreature(formData);
     },
     onSettled: async () => {
       await getUserCreatures.invalidate({ name });
@@ -83,6 +77,10 @@ export default function CreaturesPage() {
             id: data.id ?? "",
             created_at: new Date(),
             initiative_bonus: 0,
+            stat_block_height: 250,
+            stat_block_width: 250,
+            icon_height: 250,
+            icon_width: 250,
           },
         ];
       });
@@ -153,7 +151,6 @@ export default function CreaturesPage() {
   );
 }
 
-// @ts-ignore - I'll eventually use this... not sure a table is the best ui for displaying creatures, tbh
 function CreatureUpdateDialog({
   creature,
   deleteCreature,
@@ -166,7 +163,7 @@ function CreatureUpdateDialog({
       <DialogHeader className="text-ellipsis max-w-full p-3">
         <DialogTitle>{creature.name}</DialogTitle>
       </DialogHeader>
-      <CharacterIcon id={creature.id} name={creature.name} />
+      <CreatureIcon creature={creature} size="medium" />
       <CreatureUpdateForm creature={creature} key={creature.id} />
       <Button variant="destructive" onClick={() => deleteCreature(creature.id)}>
         Delete

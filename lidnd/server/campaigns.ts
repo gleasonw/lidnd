@@ -1,10 +1,5 @@
 import { db } from "@/server/api/db";
-import {
-  campaigns,
-  campaignToPlayer,
-  creatures,
-  systems,
-} from "@/server/api/db/schema";
+import { campaigns, systems } from "@/server/api/db/schema";
 import { LidndContext } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and } from "drizzle-orm";
@@ -70,22 +65,15 @@ export const ServerCampaign = {
     campaignId: string,
     dbObject = db
   ) {
-    return await dbObject
-      .select({
-        campaign_id: campaignToPlayer.campaign_id,
-        player: {
-          id: campaignToPlayer.player_id,
-          name: creatures.name,
+    return await dbObject.query.campaigns.findFirst({
+      where: (campaigns, { eq }) => eq(campaigns.id, campaignId),
+      with: {
+        campaignToPlayers: {
+          with: {
+            player: true,
+          },
         },
-      })
-      .from(campaignToPlayer)
-      .where(eq(campaignToPlayer.campaign_id, campaignId))
-      .leftJoin(
-        creatures,
-        and(
-          eq(campaignToPlayer.player_id, creatures.id),
-          eq(creatures.user_id, ctx.user.id)
-        )
-      );
+      },
+    });
   },
 };

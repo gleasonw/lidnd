@@ -20,7 +20,6 @@ import {
   getEncounterCreature,
   getIconAWSname,
   getStatBlockAWSname,
-  postEncounterToUserChannel,
 } from "@/server/api/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { ServerEncounter, EncounterWithData } from "@/server/encounters";
@@ -269,9 +268,9 @@ export const appRouter = t.router({
           });
         }
 
-        if (campaignPlayers.length > 0) {
+        if (campaignPlayers) {
           await tx.insert(participants).values(
-            campaignPlayers.map(({ player }) => ({
+            campaignPlayers.campaignToPlayers.map(({ player }) => ({
               encounter_id: encounterResult.id,
               creature_id: player.id,
             }))
@@ -526,7 +525,6 @@ export const appRouter = t.router({
           message: "Failed to start encounter",
         });
       }
-      await postEncounterToUserChannel(result);
       return result;
     }),
 

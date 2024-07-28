@@ -10,7 +10,7 @@ import { api } from "@/trpc/react";
 import { Heart, Plus, Skull, UserPlus } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { createContext, Suspense, useState } from "react";
-import { CharacterIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
+import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
 import {
   useCreateCreatureInEncounter,
@@ -173,12 +173,7 @@ export const ListedCreature = observer<ListedCreatureProps>(
     return (
       <div className="flex items-center space-x-2 justify-between">
         <div className="flex gap-4">
-          <CharacterIcon
-            id={creature.id}
-            name={creature.name}
-            className={"rounded-full object-cover w-14 h-14"}
-            size="small"
-          />
+          <CreatureIcon creature={creature} size="small" />
           <div className="flex flex-col">
             <span className="font-semibold">{creature.name}</span>
             {creature.challenge_rating ? (

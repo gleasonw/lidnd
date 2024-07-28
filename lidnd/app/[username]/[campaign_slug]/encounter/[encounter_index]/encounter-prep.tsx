@@ -16,12 +16,11 @@ import {
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import React, { createContext, useContext, useState } from "react";
-import { getAWSimageURL } from "@/app/[username]/[campaign_slug]/encounter/utils";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
 import { ParticipantWithData } from "@/server/api/router";
 import { BasePopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
-import { OriginalSizeImage } from "@/app/[username]/[campaign_slug]/encounter/original-size-image";
+import { CreatureStatBlockImage } from "@/app/[username]/[campaign_slug]/encounter/original-size-image";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
@@ -29,7 +28,7 @@ import { ButtonWithTooltip } from "@/components/ui/tip";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { isStringMeaningful } from "@/app/[username]/utils";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
-import { CharacterIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
+import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { DescriptionTextArea } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/description-text-area";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
 import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/group-battle-ui";
@@ -50,19 +49,18 @@ import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import _ from "lodash";
 import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 
 class EncounterPrepStore {
-  selectedCreatureId: string | null = null;
+  selectedeParticipantId: string | null = null;
 
   constructor() {
     makeAutoObservable(this);
   }
 
-  setselectedCreatureId = (id: string) => {
-    this.selectedCreatureId = id;
+  setSelectedParticipant = (id: string) => {
+    this.selectedeParticipantId = id;
   };
 }
 
@@ -79,7 +77,11 @@ const useEncounterPrepStore = () => {
 };
 
 const EncounterPrep = observer(function EncounterPrep() {
-  const { selectedCreatureId } = encounterPrepStore;
+  const { selectedeParticipantId: selectedCreatureId } = encounterPrepStore;
+  const [encounter] = useEncounter();
+  const selectedCreature = selectedCreatureId
+    ? EncounterUtils.participantFor(encounter, selectedCreatureId)?.creature
+    : null;
   return (
     <EncounterPrepContext.Provider value={encounterPrepStore}>
       <div className="flex flex-col gap-5 flex-grow ml-auto mr-auto max-w-[860px] min-w-0">
@@ -92,11 +94,8 @@ const EncounterPrep = observer(function EncounterPrep() {
             <>
               <Separator />
               <EncounterParticipantRow />
-              {selectedCreatureId && (
-                <OriginalSizeImage
-                  src={getAWSimageURL(selectedCreatureId, "stat_block")}
-                  alt={"monster stat block"}
-                />
+              {selectedCreature && (
+                <CreatureStatBlockImage creature={selectedCreature} />
               )}
               <div className="flex md:hidden">
                 <EncounterReminderInput />
@@ -292,18 +291,19 @@ function PrepParticipantCard({ participant }: ParticipantCreatureProps) {
   return (
     <AnimationListItem key={participant.id}>
       <div className="flex flex-col items-center gap-3 h-full w-32">
-        <Card className="flex flex-col justify-center w-32 h-full">
+        <Card className="flex flex-col w-32 h-full">
           <CardHeader className="p-3">
             <CardTitle className="text-xl text-center">
               {ParticipantUtils.name(participant)}
             </CardTitle>
           </CardHeader>
-          <CharacterIcon
-            id={participant.creature_id}
-            name={ParticipantUtils.name(participant)}
-            className="object-cover w-32 h-32 mt-auto"
-            size="stat_block"
-          />
+          <div className="mt-auto">
+            <CreatureIcon
+              creature={participant.creature}
+              size="medium"
+              objectFit="contain"
+            />
+          </div>
         </Card>
         <ParticipantActions participant={participant} />
       </div>
@@ -355,7 +355,7 @@ export function RemoveCreatureFromEncounterButton(
 export function MonsterParticipantActions(props: ParticipantCreatureProps) {
   const { participant } = props;
 
-  const { setselectedCreatureId } = useEncounterPrepStore();
+  const { setSelectedParticipant } = useEncounterPrepStore();
   const { mutate: updateCreature } = useUpdateEncounterParticipant();
   const { data: settings } = api.settings.useQuery();
 
@@ -391,9 +391,7 @@ export function MonsterParticipantActions(props: ParticipantCreatureProps) {
       <ButtonWithTooltip
         text="Show stat block"
         variant="ghost"
-        onClick={() =>
-          setselectedCreatureId(ParticipantUtils.creatureId(participant))
-        }
+        onClick={() => setSelectedParticipant(participant.id)}
       >
         <FileText />
       </ButtonWithTooltip>

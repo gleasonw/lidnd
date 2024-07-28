@@ -11,7 +11,7 @@ import Link from "next/link";
 import { appRoutes } from "@/app/routes";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { useUser } from "@/app/[username]/user-provider";
-import { CharacterIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
+import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
 import { useStartEncounter } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import InitiativeInput from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/InitiativeInput";
@@ -79,11 +79,7 @@ export function PreBattleInput({
       className="flex gap-20 items-center justify-between"
     >
       <span className="flex gap-4 items-center">
-        <CharacterIcon
-          name={pName}
-          id={participant.creature_id}
-          className={"h-20 object-cover"}
-        />
+        <CreatureIcon creature={participant.creature} size="small" />
         <span>{pName}</span>
       </span>
 

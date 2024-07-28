@@ -28,6 +28,9 @@ type Cyclable = {
 };
 
 export const EncounterUtils = {
+  participantFor(encounter: EncounterWithParticipants, id: string) {
+    return encounter.participants.find((p) => p.id === id);
+  },
   dynamicRoute(
     encounter: {
       id: string;

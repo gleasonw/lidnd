@@ -54,8 +54,6 @@ export default async function EncounterLayout({
     return <div>No campaign found... bad url or bug</div>;
   }
 
-  console.log(campaign, { params });
-
   const encounter = campaign?.encounters.find(
     (e) => e.index_in_campaign === Number(params.encounter_index),
   );

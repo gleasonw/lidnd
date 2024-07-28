@@ -31,7 +31,7 @@ import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
 import _ from "lodash";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useUser } from "@/app/[username]/user-provider";
-import { CharacterIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
+import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { useUpdateEncounter } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { appRoutes } from "@/app/routes";
 import { useRouter } from "next/navigation";
@@ -460,13 +460,14 @@ function MonstersInEncounter({ id }: { id: string }) {
   return (
     <div className={"flex gap-3 overflow-hidden"}>
       {participants?.map((p) => (
-        <CharacterIcon
-          id={p.creature_id}
-          name={ParticipantUtils.name(p)}
-          key={p.id}
-          className={"rounded-full object-cover w-10 h-10"}
-          size="small"
-        />
+        <div className={"rounded-full w-12 h-12 flex items-center"}>
+          <CreatureIcon
+            key={p.id}
+            creature={p.creature}
+            size="small"
+            objectFit="cover"
+          />
+        </div>
       ))}
     </div>
   );

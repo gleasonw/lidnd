@@ -1,12 +1,20 @@
-import { CharacterIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
+import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { Creature } from "@/server/api/router";
 import { ColumnDef } from "@tanstack/react-table";
 
-function valueIsCreature(value: any): value is Creature {
+function valueIsCreature(value: unknown): value is Creature {
   if (!value) {
     return false;
   }
-  return "id" in value && "name" in value;
+  return (
+    typeof value === "object" &&
+    "id" in value &&
+    "name" in value &&
+    "icon_width" in value &&
+    "icon_height" in value &&
+    "stat_block_width" in value &&
+    "stat_block_height" in value
+  );
 }
 
 export const columns: ColumnDef<Creature>[] = [
@@ -16,7 +24,7 @@ export const columns: ColumnDef<Creature>[] = [
     cell: (row) => {
       const data = row.getValue();
       if (valueIsCreature(data)) {
-        return <CharacterIcon id={data.id} name={data.name} size="small" />;
+        return <CreatureIcon creature={data} size="small" />;
       }
       return <div>No icon</div>;
     },

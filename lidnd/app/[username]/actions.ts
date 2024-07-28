@@ -20,6 +20,7 @@ import { CreaturePostData } from "@/app/[username]/[campaign_slug]/encounter/uti
 import { creatureUploadSchema } from "@/app/[username]/[campaign_slug]/encounter/types";
 import { LidndAuth, LidndUser } from "@/app/authentication";
 import _ from "lodash";
+import { ServerCreature } from "@/server/creatures";
 
 export async function logOut() {
   const session = await getPageSession();
@@ -78,6 +79,26 @@ export async function deleteCampaign(user: LidndUser, id: string) {
   redirect(appRoutes.dashboard(user));
 }
 
+export async function postCreature(uploadedCreature: FormData) {
+  const user = await LidndAuth.getUser();
+
+  if (!user) {
+    return { error: "No session found." };
+  }
+
+  const creature = parse(uploadedCreature, {
+    schema: creatureUploadSchema,
+  });
+
+  if (!creature.value) {
+    return { error: creature.error };
+  }
+
+  const newCreature = await ServerCreature.create({ user }, creature.value);
+
+  return newCreature;
+}
+
 export async function createPlayerAndAddToCampaign(
   campaignId: string,
   form: FormData,
@@ -100,7 +121,7 @@ export async function createPlayerAndAddToCampaign(
       return NextResponse.json({ error: player.error }, { status: 400 });
     }
 
-    const newCreature = await createCreature(user.id, player.value, tx);
+    const newCreature = await ServerCreature.create({ user }, player.value, tx);
 
     await tx.insert(campaignToPlayer).values({
       campaign_id: campaignId,
@@ -139,9 +160,9 @@ export async function updateEncounterDescription(
 }
 
 export async function createCreatureInEncounter(formData: CreaturePostData) {
-  const session = await getPageSession();
+  const user = await LidndAuth.getUser();
 
-  if (!session) {
+  if (!user) {
     return { error: "No session found." };
   }
 
@@ -157,7 +178,7 @@ export async function createCreatureInEncounter(formData: CreaturePostData) {
     return { error: creature.error };
   }
 
-  const newCreature = await createCreature(session.user.userId, creature.value);
+  const newCreature = await createCreature({ user }, creature.value);
 
   await db.insert(participants).values({
     encounter_id: creature.value.encounter_id,

@@ -10,7 +10,7 @@ import { Plus } from "lucide-react";
 import { CreateCampaignButton } from "@/app/[username]/create-campaign-button";
 import { LidndAuth, LidndUser, UserUtils } from "@/app/authentication";
 import { ServerCampaign } from "@/server/campaigns";
-import { CharacterIcon } from "@/encounters/[encounter_index]/character-icon";
+import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 
 export default async function Page({
   params,
@@ -82,13 +82,8 @@ async function CampaignCard(props: CampaignCardProps) {
             {isStringMeaningful(campaign.name) ? campaign.name : "Unnamed"}
           </CardTitle>
           <div className="flex gap-2 flex-wrap">
-            {players.map(({ player }) => (
-              <CharacterIcon
-                key={player.id}
-                id={player.id}
-                name={player.name ?? ""}
-                size="small"
-              />
+            {players?.campaignToPlayers.map(({ player }) => (
+              <CreatureIcon key={player.id} creature={player} size="small" />
             ))}
           </div>
         </CardHeader>

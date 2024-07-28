@@ -1,11 +1,15 @@
+import { CreatureUtils } from "@/utils/creatures";
 import { CreaturePost } from "./types";
 import { Participant, ParticipantWithData } from "@/server/api/router";
 
+/**
+ * @deprecated - use CreatureUtils.awsURL
+ */
 export function getAWSimageURL(
   creature_id: string,
   type: "icon" | "stat_block",
 ): string {
-  return `https://dnd-init-tracker-icons-stats.s3.us-west-1.amazonaws.com/${type}-${creature_id}.png`;
+  return CreatureUtils.awsURL({ id: creature_id }, type);
 }
 
 export type UpdateTurnOrderReturn = {

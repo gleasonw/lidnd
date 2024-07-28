@@ -109,6 +109,7 @@ export const campaignRelations = relations(campaigns, ({ one, many }) => ({
     references: [systems.id],
   }),
   encounters: many(encounters),
+  campaignToPlayers: many(campaignToPlayer),
 }));
 
 export const campaignToPlayer = pgTable(
@@ -128,6 +129,20 @@ export const campaignToPlayer = pgTable(
       playerIndex: index("player_index").on(t.player_id),
     };
   }
+);
+
+export const campaignToPlayerRelations = relations(
+  campaignToPlayer,
+  ({ one }) => ({
+    campaign: one(campaigns, {
+      fields: [campaignToPlayer.campaign_id],
+      references: [campaigns.id],
+    }),
+    player: one(creatures, {
+      fields: [campaignToPlayer.player_id],
+      references: [creatures.id],
+    }),
+  })
 );
 
 export const encounters = pgTable(
@@ -222,6 +237,10 @@ export const creatures = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: varchar("name", { length: 256 }).notNull(),
+    icon_width: integer("image_width").default(250).notNull(),
+    icon_height: integer("image_height").default(250).notNull(),
+    stat_block_width: integer("stat_block_width").default(250).notNull(),
+    stat_block_height: integer("stat_block_height").default(250).notNull(),
     created_at: timestamp("created_at").defaultNow().notNull(),
     max_hp: integer("max_hp").notNull().default(1),
     initiative_bonus: integer("initiative_bonus").default(0).notNull(),

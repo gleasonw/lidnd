@@ -6,8 +6,7 @@ import { api } from "@/trpc/react";
 import { BattleCard } from "./battle-ui";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
-import { OriginalSizeImage } from "@/encounters/original-size-image";
-import { getAWSimageURL } from "@/encounters/utils";
+import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { useRemoveParticipantFromEncounter } from "@/encounters/[encounter_index]/hooks";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
@@ -41,7 +40,31 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
     (p) => !ParticipantUtils.isPlayer(p),
   );
 
-  const [monstersPerPage, setMonstersPerPage] = React.useState(2);
+  const [overrideMonstersPerPage, setOverrideMonstersPerPage] = React.useState<
+    number | null
+  >(null);
+
+  const [screenWidth, setScreenWidth] = React.useState(0);
+
+  const monstersPerPage =
+    overrideMonstersPerPage ?? (screenWidth > 1000 ? 2 : 1);
+
+  // watch the screen size
+  // TODO: put this in the ui store
+  useEffect(() => {
+    const handleResize: ResizeObserverCallback = (entries) => {
+      for (const entry of entries) {
+        setScreenWidth(entry.contentRect.width);
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(document.body);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     if (!emblaApi) {
@@ -57,29 +80,29 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
     const adjustedIndex = Math.floor(selectedIndex / monstersPerPage);
 
     emblaApi.scrollTo(adjustedIndex);
-  }, [selectedId, emblaApi]);
+  }, [selectedId, emblaApi, monstersPerPage]);
 
   return (
-    <div>
+    <div className="flex gap-2 flex-col">
+      <div className="flex gap-2 items-center">
+        Monsters per page
+        {[1, 2, 3].map((pageSize) => (
+          <Button
+            key={pageSize}
+            variant={overrideMonstersPerPage === pageSize ? "outline" : "ghost"}
+            onClick={() => setOverrideMonstersPerPage(pageSize)}
+          >
+            {pageSize}
+          </Button>
+        ))}
+        <Button variant="ghost" onClick={() => emblaApi?.scrollPrev()}>
+          <ArrowLeft />
+        </Button>
+        <Button variant="ghost" onClick={() => emblaApi?.scrollNext()}>
+          <ArrowRight />
+        </Button>
+      </div>
       <Carousel setApi={setEmblaApi} opts={{ slidesToScroll: monstersPerPage }}>
-        <div className="flex gap-2 items-center">
-          Monsters per page
-          {[1, 2, 3].map((pageSize) => (
-            <Button
-              key={pageSize}
-              variant={monstersPerPage === pageSize ? "outline" : "ghost"}
-              onClick={() => setMonstersPerPage(pageSize)}
-            >
-              {pageSize}
-            </Button>
-          ))}
-          <Button variant="ghost" onClick={() => emblaApi?.scrollPrev()}>
-            <ArrowLeft />
-          </Button>
-          <Button variant="ghost" onClick={() => emblaApi?.scrollNext()}>
-            <ArrowRight />
-          </Button>
-        </div>
         <CarouselContent>
           {dmCreatures
             ?.filter((p) => !ParticipantUtils.isPlayer(p))
@@ -97,16 +120,7 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
                   className={clsx("cursor-pointer")}
                   battleCardExtraContent={
                     <>
-                      <OriginalSizeImage
-                        src={getAWSimageURL(
-                          participant.creature_id,
-                          "stat_block",
-                        )}
-                        alt={
-                          "stat block for " + ParticipantUtils.name(participant)
-                        }
-                        key={participant.creature_id}
-                      />
+                      <CreatureStatBlockImage creature={participant.creature} />
                       <Button
                         variant="destructive"
                         onClick={() =>

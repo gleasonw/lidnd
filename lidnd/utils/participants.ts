@@ -64,6 +64,7 @@ export const ParticipantUtils = {
         ...participant,
         id: participant.id ?? randomId,
       }),
+      // TODO: placeholder creature
       creature: {
         ...creature,
         id: creature.id ?? randomId,
@@ -72,6 +73,10 @@ export const ParticipantUtils = {
         is_player: creature.is_player ?? false,
         max_hp: creature.max_hp ?? 0,
         initiative_bonus: creature.initiative_bonus ?? 0,
+        stat_block_height: creature.stat_block_height ?? 250,
+        stat_block_width: creature.stat_block_width ?? 250,
+        icon_height: creature.icon_height ?? 250,
+        icon_width: creature.icon_width ?? 250,
       },
       status_effects: [],
     };

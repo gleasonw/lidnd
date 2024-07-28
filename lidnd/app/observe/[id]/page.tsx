@@ -8,7 +8,7 @@ import { EncounterUtils } from "@/utils/encounters";
 import { ServerEncounter, ObserveEncounter } from "@/server/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { HealthMeterOverlay } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/battle-ui";
-import { CharacterIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
+import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/group-battle-ui";
 
 export default function ObservePage({ params }: { params: { id: string } }) {
@@ -65,12 +65,7 @@ async function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
           key={p.id}
         >
           <HealthMeterOverlay participant={p} />
-          <CharacterIcon
-            className="object-contain max-h-full max-w-full"
-            id={p.creature_id}
-            name={ParticipantUtils.name(p)}
-            size="none"
-          />
+          <CreatureIcon creature={p.creature} size="medium" />
         </div>
       ))}
     </div>
@@ -113,11 +108,7 @@ function SimpleGroupBattleCard({
       {participant.creature_id === "pending" ? (
         <span>Loading</span>
       ) : (
-        <CharacterIcon
-          id={participant.creature_id}
-          name={ParticipantUtils.name(participant)}
-          className="h-60 object-cover"
-        />
+        <CreatureIcon creature={participant.creature} size="medium" />
       )}
     </Card>
   );

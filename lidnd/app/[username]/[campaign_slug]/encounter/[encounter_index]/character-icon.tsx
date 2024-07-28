@@ -1,40 +1,56 @@
-import { getAWSimageURL } from "@/app/[username]/[campaign_slug]/encounter/utils";
-import clsx from "clsx";
+import { Creature } from "@/server/api/router";
+import { CreatureUtils } from "@/utils/creatures";
+import Image from "next/image";
 
-export function CharacterIcon({
-  id,
-  name,
-  className,
-  size = "medium",
+function iconDimensions(
+  creature: Creature,
+  size?: "small" | "small2" | "medium" | "large",
+): { width: number; height: number } {
+  if (!size) {
+    return { width: creature.icon_width, height: creature.icon_height };
+  }
+
+  if (size === "small") {
+    return { width: 64, height: 64 };
+  }
+
+  if (size === "small2") {
+    return { width: 128, height: 128 };
+  }
+
+  if (size === "medium") {
+    return { width: 250, height: 250 };
+  }
+
+  return { width: 512, height: 512 };
+}
+
+export function CreatureIcon({
+  creature,
+  size,
+  objectFit,
 }: {
-  id: string;
-  name: string;
-  className?: string;
-  size?: "small" | "medium" | "stat_block" | "none";
+  creature: Creature;
+  size?: "small" | "small2" | "medium" | "large";
+  objectFit?: "contain" | "cover";
 }) {
-  if (size === "none") {
-    return (
-      <img
-        src={getAWSimageURL(id, "icon")}
-        alt={name}
-        className={clsx(className, "object-cover")}
-      />
+  if (!creature.icon_width || !creature.icon_height) {
+    console.trace();
+    throw new Error(
+      `No icon width or height for ${creature.name}, ${JSON.stringify(creature)}`,
     );
   }
 
   return (
-    <span
-      className={clsx({
-        "w-10 h-10": size === "small",
-        "w-32 h-32": size === "medium",
-        "w-full h-32": size === "stat_block",
-      })}
-    >
-      <img
-        src={getAWSimageURL(id, "icon")}
-        alt={name}
-        className={clsx(className, "object-cover")}
-      />
-    </span>
+    <Image
+      quality={100}
+      src={CreatureUtils.awsURL(creature, "icon")}
+      alt={creature.name}
+      priority
+      style={
+        objectFit ? { objectFit, maxWidth: "100%", maxHeight: "100%" } : {}
+      }
+      {...iconDimensions(creature, size)}
+    />
   );
 }

@@ -6,7 +6,7 @@ import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
-import { CharacterIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
+import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 
 export default async function CampaignPage({
   params,
@@ -73,28 +73,20 @@ async function CampaignPlayers(props: { campaignId: string }) {
     return <div>No session found</div>;
   }
 
-  const players = await ServerCampaign.playersInCampaign(
+  const playersInCampaign = await ServerCampaign.playersInCampaign(
     UserUtils.context(user),
     campaignId,
   );
 
-  if (!players.length) {
+  if (!playersInCampaign) {
     return <div>No player creatures yet</div>;
   }
 
   return (
     <div className="flex gap-3 flex-wrap">
-      {players.map(
-        ({ player }) =>
-          player.name && (
-            <CharacterIcon
-              key={player.id}
-              id={player.id}
-              name={player.name}
-              size="medium"
-            />
-          ),
-      )}
+      {playersInCampaign.campaignToPlayers.map(({ player }) => (
+        <CreatureIcon key={player.id} creature={player} size="small2" />
+      ))}
     </div>
   );
 }
