@@ -31,7 +31,7 @@ async function EncounterObserverView({ id }: { id?: string }) {
   }
 
   return (
-    <section className="flex flex-col gap-20 w-screen pt-10 items-center">
+    <section className="flex flex-col gap-10 lg:gap-20 w-screen pt-5 lg:pt-10 items-center px-1">
       <h1 className="text-3xl font-bold">Round {encounter.current_round}</h1>
       <PageRefresher />
       {EncounterUtils.initiativeType(encounter) === "linear" ? (
@@ -49,7 +49,9 @@ async function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
     (participant) => participant.is_active,
   );
   return (
-    <div className={"flex margin-auto gap-1 md:gap-3 overflow-auto max-w-full"}>
+    <div
+      className={"flex margin-auto gap-0.5 lg:gap-3 overflow-auto max-w-full"}
+    >
       {participants.map((p, index) => (
         <div
           className={clsx(
