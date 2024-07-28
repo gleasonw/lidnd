@@ -589,7 +589,10 @@ export function EncounterReminderInput() {
           </Button>
         </section>
         {encounter?.reminders.map((reminder) => (
-          <div className="flex gap-1 shadow-md border items-center p-3">
+          <div
+            className="flex gap-1 shadow-md border items-center p-3"
+            key={reminder.id}
+          >
             <span className="flex-grow">{reminder.reminder}</span>
             <span>after round {reminder.alert_after_round}</span>
             <ButtonWithTooltip
