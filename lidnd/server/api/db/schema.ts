@@ -320,6 +320,7 @@ export const settings = pgTable("settings", {
   average_turn_seconds: integer("average_turn_seconds").default(180).notNull(),
   default_player_level: integer("default_player_level").default(1).notNull(),
   enable_minions: boolean("enable_minions").default(false).notNull(),
+  collapse_sidebar: boolean("collapse_sidebar").default(false).notNull(),
 });
 
 // renamed this table to get avoid having to cast id

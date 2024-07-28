@@ -109,7 +109,7 @@ export function ParticipantHealthForm({
         </Button>
       </div>
       {!ParticipantUtils.isPlayer(participant) && (
-        <span className="whitespace-nowrap font-bold text-lg text-center flex justify-center items-center">
+        <span className="whitespace-nowrap text-xl text-center flex justify-center items-center">
           {participant.hp} / {ParticipantUtils.maxHp(participant)}
         </span>
       )}

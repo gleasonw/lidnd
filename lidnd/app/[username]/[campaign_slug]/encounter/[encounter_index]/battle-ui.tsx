@@ -216,7 +216,7 @@ export function BattleCardCreatureName({
 }: BattleCardParticipantProps) {
   return (
     <span className="flex flex-col gap-2 justify-between items-center py-3 font-bold text-4xl">
-      <CardTitle className="text-lg  truncate max-w-full group-hover:opacity-50">
+      <CardTitle className="text-2xl  truncate max-w-full">
         {ParticipantUtils.name(participant)}
       </CardTitle>
     </span>

@@ -27,7 +27,7 @@ export function DescriptionTextArea({
   }, 500);
 
   const configuredPlaceholder = Placeholder.configure({
-    placeholder: "Flow, terrain, monster strategy, etc...",
+    placeholder: "Objectives, monster tactics, etc...",
   });
 
   const editor = useEditor({
@@ -44,7 +44,7 @@ export function DescriptionTextArea({
     <>
       <LidndTextArea
         editor={editor}
-        placeholder="Flow, terrain, monster strategy, etc..."
+        placeholder="Objectives, monster tactics, etc..."
       />
       {isTipTapReady && tiptapReadyGate}
     </>

@@ -253,7 +253,7 @@ export function CreateEncounterButton({
     });
 
   const configuredPlaceholder = Placeholder.configure({
-    placeholder: "Flow, terrain, monster strategy, etc...",
+    placeholder: "Objectives, monster tactics, etc...",
   });
 
   const editor = useEditor({
@@ -460,13 +460,8 @@ function MonstersInEncounter({ id }: { id: string }) {
   return (
     <div className={"flex gap-3 overflow-hidden"}>
       {participants?.map((p) => (
-        <div className={"rounded-full w-12 h-12 flex items-center"}>
-          <CreatureIcon
-            key={p.id}
-            creature={p.creature}
-            size="small"
-            objectFit="cover"
-          />
+        <div className={"rounded-full w-12 h-12 flex items-center"} key={p.id}>
+          <CreatureIcon creature={p.creature} size="small" objectFit="cover" />
         </div>
       ))}
     </div>

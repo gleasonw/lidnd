@@ -49,7 +49,8 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
   const monstersPerPage =
     overrideMonstersPerPage ?? (screenWidth > 1000 ? 2 : 1);
 
-  // TODO: put this in the ui store
+  // TODO: put these crusty use effects in mobx
+
   useEffect(() => {
     // adjust number of monsters per page based on screen width
     // need this in js-land to coordinate with the carousel's slidesToScroll option
@@ -122,6 +123,12 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
     <div className="flex gap-2 flex-col">
       <div className="flex gap-2 items-center">
         Monsters per page
+        <Button
+          onClick={() => setOverrideMonstersPerPage(null)}
+          variant={overrideMonstersPerPage === null ? "outline" : "ghost"}
+        >
+          Auto
+        </Button>
         {[1, 2, 3].map((pageSize) => (
           <Button
             key={pageSize}
@@ -131,12 +138,14 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
             {pageSize}
           </Button>
         ))}
-        <Button variant="ghost" onClick={() => emblaApi?.scrollPrev()}>
-          <ArrowLeft />
-        </Button>
-        <Button variant="ghost" onClick={() => emblaApi?.scrollNext()}>
-          <ArrowRight />
-        </Button>
+        <div className="ml-auto">
+          <Button variant="ghost" onClick={() => emblaApi?.scrollPrev()}>
+            <ArrowLeft />
+          </Button>
+          <Button variant="ghost" onClick={() => emblaApi?.scrollNext()}>
+            <ArrowRight />
+          </Button>
+        </div>
       </div>
       <Carousel setApi={setEmblaApi} opts={{ slidesToScroll: monstersPerPage }}>
         <CarouselContent>
@@ -153,7 +162,7 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
                 <BattleCard
                   onClick={() => setSelectedParticipantId(participant.id)}
                   participant={participant}
-                  className={clsx("cursor-pointer relative")}
+                  className={clsx("relative")}
                   battleCardExtraContent={
                     <>
                       <CreatureStatBlockImage creature={participant.creature} />

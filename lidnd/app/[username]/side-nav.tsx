@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { LogOut, PanelLeft } from "lucide-react";
+import { LogOut, PanelLeft, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { logOut } from "./actions";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { Button } from "@/components/ui/button";
@@ -60,14 +60,6 @@ export const SmallSideNav = observer(function SmallSideNav(
   );
 });
 
-export function LargeSideNav(props: SideNavProps) {
-  return (
-    <nav className="flex-col gap-10 h-screen hidden w-64 xl:flex items-center flex-shrink-0">
-      {props.children}
-    </nav>
-  );
-}
-
 export interface AppLinkProps {
   children?: React.ReactNode;
   route: string;
@@ -98,5 +90,21 @@ export function User() {
         <LogOut />
       </ButtonWithTooltip>
     </form>
+  );
+}
+
+export function OpenSidebarButton() {
+  return (
+    <ButtonWithTooltip text="Open sidebar" variant="ghost">
+      <PanelLeftOpen />
+    </ButtonWithTooltip>
+  );
+}
+
+export function CloseSidebarButton() {
+  return (
+    <ButtonWithTooltip text="Close sidebar" variant="ghost">
+      <PanelLeftClose />
+    </ButtonWithTooltip>
   );
 }
