@@ -16,7 +16,6 @@ import { Angry, FileText, Plus, User } from "lucide-react";
 import { CreaturePost } from "./types";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 
 type CreatureAddProps = {
   uploadCreature: (data: CreaturePost) => void;
