@@ -1,15 +1,15 @@
-import { Button } from "@/components/ui/button";
+import { Button, ButtonProps } from "@/components/ui/button";
 import {
   TooltipProvider,
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import React from "react";
 
 export function Tip({
   children,
   text,
-  className,
 }: {
   children: React.ReactNode;
   text: string;
@@ -27,21 +27,15 @@ export function Tip({
   );
 }
 
-export function ButtonWithTooltip({
-  children,
-  text,
-  className,
-  ...props
-}: {
-  children: React.ReactNode;
-  text: string;
-  className?: string;
-} & React.ComponentPropsWithoutRef<typeof Button>) {
+export const ButtonWithTooltip = React.forwardRef<
+  HTMLButtonElement,
+  ButtonProps & { text: string }
+>(({ children, text, className, ...props }, ref) => {
   return (
     <Tip text={text}>
-      <Button className={className} {...props}>
+      <Button className={className} aria-label={text} {...props} ref={ref}>
         {children}
       </Button>
     </Tip>
   );
-}
+});

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Upload, X } from "lucide-react";
 import clsx from "clsx";
+import { ButtonWithTooltip } from "@/components/ui/tip";
 
 export function ImageUpload({
   onUpload,
@@ -13,14 +14,16 @@ export function ImageUpload({
   clearImage,
   previewSize = 200,
   dropText,
-  fileText,
+  dropContainerClassName,
+  dropIcon,
 }: {
   onUpload: (file?: File) => void;
   image?: File;
   clearImage: () => void;
   previewSize?: number;
   dropText: string;
-  fileText: string;
+  dropIcon?: React.ReactNode;
+  dropContainerClassName?: string;
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "hovering">("idle");
@@ -96,49 +99,51 @@ export function ImageUpload({
           onImageInput(dropItem);
         }}
         className={clsx(
-          "border-2 border-dashed border-gray-200 rounded-md p-2 flex flex-col gap-2 h-20 items-center justify-center transition-all",
+          "border-2 border-dashed border-gray-200 rounded-md p-2 flex flex-col gap-2 items-center justify-center transition-all",
           status === "hovering" && "border-gray-400",
+          dropContainerClassName,
         )}
       >
+        {dropIcon}
         {dropText}
-      </span>
-      <span className="flex gap-3 items-center">
-        <input
-          ref={inputRef}
-          type="file"
-          className="hidden"
-          accept="image/png, image/jpeg, image/jpg"
-          onChange={(e) => {
-            if (e.target.files) {
-              onUpload(e.target.files[0]);
-            }
-          }}
-        />
-        <Button
-          variant="outline"
-          className="flex gap-1"
-          onClick={(e) => {
-            e.preventDefault();
-            inputRef.current?.click();
-          }}
-        >
-          <span className="whitespace-nowrap">{fileText}</span>
-          <Upload />
-        </Button>
-        or
-        <Input
-          placeholder="Paste"
-          onPaste={(e) => {
-            const clipboardData = e.clipboardData;
-            const item = clipboardData.items[0];
+        <span className="flex gap-3 items-center">
+          <input
+            ref={inputRef}
+            type="file"
+            className="hidden"
+            accept="image/png, image/jpeg, image/jpg"
+            onChange={(e) => {
+              if (e.target.files) {
+                onUpload(e.target.files[0]);
+              }
+            }}
+          />
+          <ButtonWithTooltip
+            variant="outline"
+            className="flex gap-1"
+            text="Choose image"
+            onClick={(e) => {
+              e.preventDefault();
+              inputRef.current?.click();
+            }}
+          >
+            <Upload />
+          </ButtonWithTooltip>
+          or
+          <Input
+            placeholder="Paste"
+            onPaste={(e) => {
+              const clipboardData = e.clipboardData;
+              const item = clipboardData.items[0];
 
-            if (!item) {
-              console.error("No item found when pasting image");
-              return;
-            }
-            onImageInput(item);
-          }}
-        />
+              if (!item) {
+                console.error("No item found when pasting image");
+                return;
+              }
+              onImageInput(item);
+            }}
+          />
+        </span>
       </span>
     </span>
   );

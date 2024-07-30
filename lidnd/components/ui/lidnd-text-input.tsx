@@ -1,5 +1,6 @@
 import { Input, InputProps } from "@/components/ui/input";
 import clsx from "clsx";
+import React from "react";
 
 export type LidndTextInputProps =
   | ({
@@ -10,18 +11,23 @@ export type LidndTextInputProps =
       variant?: "default";
     } & InputProps);
 
-export function LidndTextInput(props: LidndTextInputProps) {
-  if (props.variant === "ghost") {
+export const LidndTextInput = React.forwardRef<
+  HTMLInputElement,
+  LidndTextInputProps
+>(({ variant, placeholder, className, ...props }, ref) => {
+  if (variant === "ghost") {
     return (
       <Input
-        {...props}
         className={clsx(
-          "border-transparent outline-none focus-visible:outline-none focus-visible:ring-transparent p-0",
-          props.className
+          "border-none outline-none focus-visible:outline-none focus-visible:ring-transparent p-0",
+          className
         )}
+        ref={ref}
+        placeholder={placeholder}
+        {...props}
       />
     );
   }
 
-  return <Input {...props} />;
-}
+  return <Input ref={ref} placeholder={placeholder} {...props} />;
+});

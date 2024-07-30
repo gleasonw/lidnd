@@ -12,10 +12,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import React from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Angry, Plus, User } from "lucide-react";
+import { Angry, FileText, Plus, User } from "lucide-react";
 import { CreaturePost } from "./types";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 
 type CreatureAddProps = {
   uploadCreature: (data: CreaturePost) => void;
@@ -71,7 +72,7 @@ export function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
           form.reset();
           setKeyToResetFile(keyToResetFile + 1);
         })}
-        className="flex flex-col gap-8"
+        className="flex flex-col gap-6 pt-3"
       >
         <FormField
           control={form.control}
@@ -97,8 +98,8 @@ export function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
                   onUpload={(file) =>
                     field.onChange({ target: { value: file } })
                   }
-                  fileText="Choose icon"
                   dropText="Drop an icon"
+                  dropIcon={<User />}
                   key={keyToResetFile}
                   image={field.value}
                   clearImage={() =>
@@ -121,7 +122,8 @@ export function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
                     field.onChange({ target: { value: file } })
                   }
                   dropText="Drop a stat block"
-                  fileText="Choose stat block"
+                  dropIcon={<FileText />}
+                  dropContainerClassName="h-48"
                   key={keyToResetFile}
                   image={field.value}
                   clearImage={() =>
@@ -224,7 +226,7 @@ export function PlayerUploadForm({ uploadCreature }: CreatureAddProps) {
                     field.onChange({ target: { value: file } })
                   }
                   dropText="Drop an icon"
-                  fileText="Choose icon"
+                  dropIcon={<User />}
                   key={keyToResetFile}
                   image={field.value}
                   clearImage={() =>
