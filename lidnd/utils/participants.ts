@@ -5,6 +5,7 @@ import type {
   ParticipantWithData,
 } from "@/server/api/router";
 import type { AddCreature, AddParticipant } from "@/types";
+import { CreatureUtils } from "@/utils/creatures";
 
 type ParticipantWithCreature = Participant & { creature: Creature };
 type MinionParticipant = ParticipantWithCreature & { minion_count: number };
@@ -55,24 +56,13 @@ export const ParticipantUtils = {
     creature: AddCreature
   ): ParticipantWithData {
     const randomId = Math.random().toString();
+    const placeholderCreature = CreatureUtils.placeholder(creature);
     return {
       ...defaultParticipant({
         ...participant,
         id: participant.id ?? randomId,
       }),
-      creature: {
-        ...creature,
-        id: creature.id ?? randomId,
-        created_at: new Date(),
-        challenge_rating: creature.challenge_rating ?? 0,
-        is_player: creature.is_player ?? false,
-        max_hp: creature.max_hp ?? 0,
-        initiative_bonus: creature.initiative_bonus ?? 0,
-        stat_block_height: creature.stat_block_height ?? 250,
-        stat_block_width: creature.stat_block_width ?? 250,
-        icon_height: creature.icon_height ?? 250,
-        icon_width: creature.icon_width ?? 250,
-      },
+      creature: placeholderCreature,
       status_effects: [],
     };
   },
