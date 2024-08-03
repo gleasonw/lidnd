@@ -1,4 +1,4 @@
-import { LidndContext } from "@/server/api/router";
+import type { LidndContext } from "@/server/api/router";
 import { ServerCampaign } from "@/server/campaigns";
 import { ServerEncounter } from "@/server/encounters";
 import { cache } from "react";

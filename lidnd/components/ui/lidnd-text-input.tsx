@@ -1,4 +1,4 @@
-import { Input, InputProps } from "@/components/ui/input";
+import { Input, type InputProps } from "@/components/ui/input";
 import clsx from "clsx";
 import React from "react";
 

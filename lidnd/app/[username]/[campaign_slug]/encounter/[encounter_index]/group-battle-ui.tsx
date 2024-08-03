@@ -10,7 +10,7 @@ import {
   MinionCardStack,
 } from "./battle-ui";
 import { Button } from "@/components/ui/button";
-import { ParticipantWithData } from "@/server/api/router";
+import type { ParticipantWithData } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import clsx from "clsx";
 import React from "react";

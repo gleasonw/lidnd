@@ -3,9 +3,9 @@ import {
   reminders,
   encounters,
   participants,
-  EncounterStatus,
+  type EncounterStatus,
 } from "@/server/api/db/schema";
-import { LidndContext, Participant } from "@/server/api/router";
+import type { LidndContext, Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql } from "drizzle-orm";
 

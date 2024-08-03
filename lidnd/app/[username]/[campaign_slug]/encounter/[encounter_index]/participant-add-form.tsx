@@ -5,7 +5,7 @@ import {
   FullCreatureAddForm,
   MonsterUploadForm,
 } from "@/app/[username]/[campaign_slug]/encounter/full-creature-add-form";
-import { Creature } from "@/server/api/router";
+import type { Creature } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { Heart, Plus, Skull, UserPlus } from "lucide-react";
 import { observer } from "mobx-react-lite";

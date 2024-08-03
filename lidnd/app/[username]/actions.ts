@@ -16,11 +16,12 @@ import { revalidatePath } from "next/cache";
 import { campaignInsertSchema } from "@/app/[username]/types";
 import { and, eq } from "drizzle-orm";
 import { appRoutes } from "@/app/routes";
-import { CreaturePostData } from "@/app/[username]/[campaign_slug]/encounter/utils";
-import { creatureUploadSchema } from "@/app/[username]/[campaign_slug]/encounter/types";
-import { LidndAuth, LidndUser } from "@/app/authentication";
+import type { CreaturePostData } from "@/encounters/utils";
+import { LidndAuth } from "@/app/authentication";
+import type { LidndUser } from "@/app/authentication";
 import _ from "lodash";
 import { ServerCreature } from "@/server/creatures";
+import { creatureUploadSchema } from "@/encounters/types";
 
 export async function logOut() {
   const session = await getPageSession();
@@ -114,8 +115,6 @@ export async function createPlayerAndAddToCampaign(
     schema: creatureUploadSchema,
   });
 
-  console.log("player", player);
-
   await db.transaction(async (tx) => {
     if (!player.value) {
       return NextResponse.json({ error: player.error }, { status: 400 });
@@ -128,8 +127,6 @@ export async function createPlayerAndAddToCampaign(
       player_id: newCreature.id,
     });
   });
-
-  revalidatePath(appRoutes.dashboard(user));
 }
 
 export async function updateEncounterDescription(

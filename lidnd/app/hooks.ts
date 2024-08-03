@@ -1,4 +1,4 @@
-import { LidndUserName } from "@/app/authentication";
+import type { LidndUserName } from "@/app/authentication";
 import { discordApi } from "@/utils/discord";
 import { useQuery } from "@tanstack/react-query";
 import { getCookie } from "cookies-next";

@@ -5,6 +5,7 @@ import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/trpc/react";
 import z from "zod";
+import React from "react";
 
 export function SettingsForm() {
   const [userSettings] = api.settings.useSuspenseQuery();

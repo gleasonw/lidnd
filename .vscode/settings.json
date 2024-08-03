@@ -4,5 +4,5 @@
   },
   "python.formatting.provider": "none",
   "workbench.editor.labelFormat": "short",
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
 }

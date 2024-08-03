@@ -1,6 +1,6 @@
 "use client";
 
-import { Creature } from "@/server/api/router";
+import type { Creature } from "@/server/api/router";
 import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
 

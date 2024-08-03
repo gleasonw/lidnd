@@ -1,8 +1,8 @@
 "use client";
-
+import * as R from "remeda";
 import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import { Button } from "@/components/ui/button";
-import { ParticipantWithData } from "@/server/api/router";
+import type { ParticipantWithData } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { ParticipantUtils } from "@/utils/participants";
 import { AnimatePresence } from "framer-motion";
@@ -44,13 +44,13 @@ export function GroupInitiativeInput() {
           </Link>
         </div>
         <PreBattleInputsList>
-          {encounter.participants
-            .toSorted((a, b) => (a.id > b.id ? 1 : -1))
-            .map((participant) => (
+          {R.sort(encounter.participants, (a, b) => (a.id > b.id ? 1 : -1)).map(
+            (participant) => (
               <PreBattleInput key={participant.id} participant={participant}>
                 <InitiativeInput participant={participant} />
               </PreBattleInput>
-            ))}
+            ),
+          )}
         </PreBattleInputsList>
       </FadePresenceItem>
     </AnimatePresence>

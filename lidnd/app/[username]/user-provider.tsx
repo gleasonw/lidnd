@@ -1,6 +1,6 @@
 "use client";
 
-import { LidndUser } from "@/app/authentication";
+import type { LidndUser } from "@/app/authentication";
 import { createContext, useContext } from "react";
 
 interface UserProps {

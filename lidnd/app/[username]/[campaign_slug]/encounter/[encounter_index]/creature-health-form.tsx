@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ParticipantWithData, Participant } from "@/server/api/router";
+import type { ParticipantWithData, Participant } from "@/server/api/router";
 import { useState } from "react";
 import { toNumber } from "lodash";
 import { ParticipantUtils } from "@/utils/participants";

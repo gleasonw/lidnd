@@ -1,16 +1,17 @@
-import { Reminder } from "@/app/[username]/types";
+import type { Reminder } from "@/app/[username]/types";
 import { appRoutes } from "@/app/routes";
-import { UpdateTurnOrderReturn } from "@/app/[username]/[campaign_slug]/encounter/utils";
-import {
+import type { UpdateTurnOrderReturn } from "@/app/[username]/[campaign_slug]/encounter/utils";
+import type {
   Encounter,
   Participant,
   ParticipantWithData,
   Settings,
 } from "@/server/api/router";
-import { EncounterWithData } from "@/server/encounters";
-import { System } from "@/types";
+import type { EncounterWithData } from "@/server/encounters";
+import type { System } from "@/types";
+import * as R from "remeda";
 import { ParticipantUtils } from "@/utils/participants";
-import { LidndUser } from "@/app/authentication";
+import type { LidndUser } from "@/app/authentication";
 import _ from "lodash";
 
 export const ESTIMATED_TURN_SECONDS = 180;
@@ -28,6 +29,9 @@ type Cyclable = {
 };
 
 export const EncounterUtils = {
+  byStatus(encounters: EncounterWithParticipants[]) {
+    return R.groupBy(encounters, (e) => e.label);
+  },
   participantFor(encounter: EncounterWithParticipants, id: string) {
     return encounter.participants.find((p) => p.id === id);
   },
@@ -206,19 +210,30 @@ export const EncounterUtils = {
   },
 
   participants<T extends Participant>(encounter: EncounterWithParticipants<T>) {
-    return encounter.participants.toSorted(ParticipantUtils.sortLinearly);
+    return R.sort(encounter.participants, ParticipantUtils.sortLinearly);
+  },
+
+  latest(encounters: { created_at: Encounter["created_at"] }[]) {
+    return R.sort(encounters, (a, b) => {
+      if (!a.created_at || !b.created_at) {
+        throw new Error("Encounters missing created_at");
+      }
+      return (
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
   },
 
   monsters(encounter: EncounterWithParticipants<ParticipantWithData>) {
-    return this.participants(encounter)
-      .filter((p) => !ParticipantUtils.isFriendly(p))
-      .toSorted(ParticipantUtils.sortLinearly);
+    return this.participants(encounter).filter(
+      (p) => !ParticipantUtils.isFriendly(p)
+    );
   },
 
   allies(encounter: EncounterWithParticipants<ParticipantWithData>) {
-    return this.participants(encounter)
-      .filter((p) => ParticipantUtils.isFriendly(p))
-      .toSorted(ParticipantUtils.sortLinearly);
+    return this.participants(encounter).filter((p) =>
+      ParticipantUtils.isFriendly(p)
+    );
   },
 
   placeholder(
@@ -449,7 +464,8 @@ export const EncounterUtils = {
 
   cycleTurn({ updateActiveAndRoundNumber, encounter }: CycleTurnArgs) {
     const participants = encounter.participants;
-    let sortedParticipants = participants.toSorted(
+    const sortedParticipants = R.sort(
+      participants,
       ParticipantUtils.sortLinearly
     );
 

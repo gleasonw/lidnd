@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import React, { createContext, useContext, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
-import { ParticipantWithData } from "@/server/api/router";
+import type { ParticipantWithData } from "@/server/api/router";
 import { BasePopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
 import { CreatureStatBlockImage } from "@/app/[username]/[campaign_slug]/encounter/original-size-image";
 import { EncounterUtils } from "@/utils/encounters";

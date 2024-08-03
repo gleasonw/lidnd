@@ -1,7 +1,7 @@
 import { db } from "@/server/api/db";
 import { campaigns, systems } from "@/server/api/db/schema";
 import { eq } from "drizzle-orm";
-import { Participant } from "@/server/api/router";
+import type { Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { ParticipantUtils } from "@/utils/participants";
 import { LidndAuth } from "@/app/authentication";

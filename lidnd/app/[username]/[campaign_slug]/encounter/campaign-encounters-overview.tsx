@@ -1,25 +1,26 @@
 "use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import * as R from "remeda";
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { ExternalLink, MoreHorizontal, Plus, UserPlus } from "lucide-react";
+import { Plus, Smile, Trash, User, UserPlus, X } from "lucide-react";
 import { api } from "@/trpc/react";
-import { Encounter } from "@/server/api/router";
-import { useCampaign } from "../hooks";
+import type { Encounter, EncounterWithParticipants } from "@/server/api/router";
+import {
+  useAddExistingToParty,
+  useAddNewToParty,
+  useCampaign,
+  useRemoveFromParty,
+} from "../hooks";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DialogTrigger } from "@radix-ui/react-dialog";
-import { PlayerUploadForm } from "@/app/[username]/[campaign_slug]/encounter/full-creature-add-form";
-import { CreaturePost } from "@/app/[username]/[campaign_slug]/encounter/types";
+import {
+  MonsterUploadForm,
+  PlayerUploadForm,
+} from "@/encounters/full-creature-add-form";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
-import { getCreaturePostForm } from "@/app/[username]/[campaign_slug]/encounter/utils";
-import { createPlayerAndAddToCampaign } from "@/app/[username]/actions";
 import { Separator } from "@/components/ui/separator";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
@@ -28,11 +29,10 @@ import { EncounterUtils } from "@/utils/encounters";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { CampaignDescriptionArea } from "@/app/[username]/campaign-description-area";
 import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
-import _ from "lodash";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useUser } from "@/app/[username]/user-provider";
-import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
-import { useUpdateEncounter } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
+import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
+import { useUpdateEncounter } from "@/encounters/[encounter_index]/hooks";
 import { appRoutes } from "@/app/routes";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
@@ -41,27 +41,25 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 export interface CampaignEncountersProps {
   deleteCampaignButton: React.ReactNode;
-  playersDisplay: React.ReactNode;
   campaignHeader: React.ReactNode;
 }
 
 export default function CampaignEncountersOverview(
   props: CampaignEncountersProps,
 ) {
-  const { playersDisplay, campaignHeader } = props;
-  const campaignId = useCampaignId();
-  const { data: encounters } = api.encounters.useQuery(campaignId);
-
-  const encountersByStatus = _.groupBy(encounters ?? [], (e) => e.label);
-
-  function onPlayerUpload(data: CreaturePost) {
-    const dataAsForm = getCreaturePostForm(data);
-    dataAsForm.set("max_hp", "1");
-    createPlayerAndAddToCampaign(campaignId, dataAsForm);
-  }
+  const { campaignHeader } = props;
 
   return (
     <FadeInSuspense
@@ -78,28 +76,16 @@ export default function CampaignEncountersOverview(
           tiptapReadyGate={
             <>
               <span className="flex gap-5 items-center">
-                {playersDisplay}
-                <LidndDialog
-                  trigger={
-                    <ButtonWithTooltip text="Add new player" variant="outline">
-                      <UserPlus />
-                    </ButtonWithTooltip>
-                  }
-                  content={<PlayerUploadForm uploadCreature={onPlayerUpload} />}
-                />
+                <CampaignPlayers />
               </span>
               <Separator />
-              <div className="flex flex-row gap-10">
-                <EncounterSection
-                  name="Active"
-                  category="active"
-                  encounters={encountersByStatus.active ?? []}
-                />
-                <EncounterSection
-                  name="Inactive"
-                  category="inactive"
-                  encounters={encountersByStatus.inactive ?? []}
-                />
+              <h1 className={"text-2xl flex items-center"}>
+                <span className="py-2 text-xl">Encounters</span>
+                <CreateEncounterButton category={"active"} />
+              </h1>
+              <div className="flex flex-col gap-5">
+                <SessionEncounters />
+                <EncounterArchive />
               </div>
             </>
           }
@@ -109,106 +95,299 @@ export default function CampaignEncountersOverview(
   );
 }
 
-function EncounterSection(props: {
-  name: string;
-  encounters: Encounter[];
-  category: Encounter["label"];
-}) {
-  const campaignId = useCampaignId();
-  const { encounters: encountersQuery } = api.useUtils();
-  const [acceptDrop, setAcceptDrop] = useState(false);
-  const { mutate: deleteEncounter } = api.deleteEncounter.useMutation({
-    onSettled: async () => {
-      await encountersQuery.invalidate();
-    },
-    onMutate: async (id) => {
-      await encountersQuery.cancel();
-      const previous = encountersQuery.getData();
-      encountersQuery.setData(campaignId, (old) => {
-        return old?.filter((encounter) => encounter.id !== id);
-      });
-      return { previous };
-    },
+function ExistingCreaturesForPartyAdd() {
+  const [name, setName] = useState("");
+  const { data: creatures } = api.getUserCreatures.useQuery({
+    name,
   });
-  const { mutate: updateEncounter } = useUpdateEncounter();
+  const campaignId = useCampaignId();
+  const { mutate: addCreature } = useAddExistingToParty();
+  const creaturesPlayersFirst = R.sort(creatures ?? [], (a, b) =>
+    a.is_player ? -1 : b.is_player ? 1 : 0,
+  );
+  return (
+    <div className="flex flex-col gap-5">
+      <Input
+        placeholder="Search..."
+        type="text"
+        onChange={(e) => setName(e.target.value)}
+        value={name}
+      />
+      <div className={"flex flex-col gap-2 h-96 overflow-auto"}>
+        {creaturesPlayersFirst?.map((creature) => (
+          <Button
+            key={creature.id}
+            variant="ghost"
+            onClick={() =>
+              addCreature({ player: creature, campaign_id: campaignId })
+            }
+            className="flex w-full items-center justify-between"
+          >
+            <span>{creature.name}</span>
+            <CreatureIcon creature={creature} size="small" />
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CampaignPlayers() {
+  const [campaign] = useCampaign();
+  const playersInCampaign = campaign?.campaignToPlayers;
+  const { mutate: removePlayer } = useRemoveFromParty();
+
+  const { mutate: onPlayerUpload } = useAddNewToParty();
 
   return (
-    <section
-      key={props.name}
-      onDrop={(e) => {
-        if (!acceptDrop) {
-          return;
+    <div className="flex flex-wrap gap-3">
+      {playersInCampaign.map(({ player }) => (
+        <Card
+          className="flex gap-2 h-12 pl-5 w-80 overflow-hidden max-h-full"
+          key={player.id}
+        >
+          <CreatureIcon
+            key={player.id}
+            creature={player}
+            size="small"
+            objectFit="contain"
+          />
+          <span className="flex gap-2 items-center w-full justify-between">
+            <span className="truncate">{player.name}</span>
+            <ButtonWithTooltip
+              variant="ghost"
+              text="Delete"
+              className="opacity-25"
+              onClick={() => removePlayer(player.id)}
+            >
+              <X />
+            </ButtonWithTooltip>
+          </span>
+        </Card>
+      ))}
+      <LidndDialog
+        trigger={
+          <Card className="flex h-12 w-80">
+            <ButtonWithTooltip
+              text="Add new party member"
+              variant="ghost"
+              className="w-full h-full"
+            >
+              <UserPlus />
+            </ButtonWithTooltip>
+          </Card>
         }
-        const encounter = typedDrag.get(e.dataTransfer, dragTypes.encounter);
-        if (!encounter) {
-          console.error("No encounter found when dragging");
-          return;
+        content={
+          <Tabs defaultValue="new">
+            <span className="flex gap-1 flex-wrap pr-2">
+              <TabsList>
+                <TabsTrigger value="new">
+                  <Plus /> Add new creature
+                </TabsTrigger>
+                <TabsTrigger value="existing">
+                  <UserPlus /> Existing creatures
+                </TabsTrigger>
+              </TabsList>
+            </span>
+            <TabsContent value="new">
+              <Tabs defaultValue="player">
+                <TabsList>
+                  <TabsTrigger value="player" className="flex gap-3">
+                    <User /> Player
+                  </TabsTrigger>
+                  <TabsTrigger value="npc" className="flex gap-3">
+                    <Smile /> NPC
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="npc">
+                  <MonsterUploadForm uploadCreature={onPlayerUpload} />
+                </TabsContent>
+                <TabsContent value="player">
+                  <PlayerUploadForm uploadCreature={onPlayerUpload} />
+                </TabsContent>
+              </Tabs>
+            </TabsContent>
+            <TabsContent value="existing">
+              <ExistingCreaturesForPartyAdd />
+            </TabsContent>
+          </Tabs>
         }
-        updateEncounter({
-          id: encounter.id,
-          label: props.category,
-          order: 0,
-        });
-        setAcceptDrop(false);
-      }}
-      onDragEnter={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      onDragOver={(e) => {
-        if (
-          !typedDrag.includes(e.dataTransfer, dragTypes.encounter) ||
-          props.encounters?.length > 0
-        ) {
-          return;
-        }
-        e.preventDefault();
-        e.stopPropagation();
-        setAcceptDrop(true);
-      }}
-      onDragLeave={() => {
-        setAcceptDrop(false);
-      }}
-      className={clsx(
-        {
-          "border-black": acceptDrop,
-          "border-transparent": !acceptDrop,
-        },
-        "border-2 border-dashed flex w-[348px] flex-col h-[800px] transition-all rounded-md",
-      )}
-    >
-      <h1 className={"text-2xl flex justify-between"}>
-        {props.name}
+      />
+    </div>
+  );
+}
 
-        <CreateEncounterButton category={props.category} />
-      </h1>
-      <ul className="flex flex-col bg-gray-50 p-1">
-        {props.encounters?.length === 0 ? (
-          <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
-        ) : null}
-        {props.encounters
-          ?.toSorted((a, b) => a.order - b.order)
-          .map((encounter, index) => {
-            const priorEncounter = props.encounters.at(index - 1);
-            const nextEncounter = props.encounters.at(index + 1);
+function SessionEncounters() {
+  const campaignId = useCampaignId();
+  const [acceptDrop, setAcceptDrop] = useState(false);
+  const { mutate: updateEncounter } = useUpdateEncounter();
+  const { data: encounters } = api.encounters.useQuery(campaignId);
+  const activeEncounters = encounters
+    ? R.sort(
+        EncounterUtils.byStatus(encounters).active ?? [],
+        (a, b) => a.order - b.order,
+      )
+    : [];
+
+  const lastOrder = activeEncounters?.length
+    ? (R.firstBy(activeEncounters, [(e) => e.order, "desc"])?.order ?? 1) + 1
+    : 1;
+
+  return (
+    <div>
+      <section
+        key={"active"}
+        onDrop={(e) => {
+          if (!acceptDrop) {
+            return;
+          }
+          const encounter = typedDrag.get(e.dataTransfer, dragTypes.encounter);
+          if (!encounter) {
+            console.error("No encounter found when dragging");
+            return;
+          }
+          updateEncounter({
+            id: encounter.id,
+            label: "active",
+            order: lastOrder,
+          });
+          setAcceptDrop(false);
+        }}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onDragOver={(e) => {
+          if (!typedDrag.includes(e.dataTransfer, dragTypes.encounter)) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          setAcceptDrop(true);
+        }}
+        onDragLeave={() => {
+          setAcceptDrop(false);
+        }}
+        className={clsx(
+          {
+            "border-black": acceptDrop,
+            "border-transparent": !acceptDrop,
+          },
+          "border-2 border-dashed flex w-full flex-col transition-all rounded-md  bg-gray-100 ",
+        )}
+      >
+        <ul className="flex flex-wrap p-1">
+          {activeEncounters?.length === 0 ? (
+            <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
+          ) : null}
+          {activeEncounters?.map((encounter, index) => {
+            const priorEncounter = activeEncounters[index - 1];
+            const nextEncounter = activeEncounters[index + 1];
 
             return (
               <DraggableEncounterCard
                 encounter={encounter}
-                category={props.category}
+                category={"active"}
                 previousOrder={
                   priorEncounter ? priorEncounter.order : encounter.order - 1
                 }
                 nextOrder={
                   nextEncounter ? nextEncounter.order : encounter.order + 1
                 }
-                deleteEncounter={deleteEncounter}
                 key={encounter.id}
               />
             );
           })}
-      </ul>
-    </section>
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+function EncounterArchive() {
+  const campaignId = useCampaignId();
+  const [acceptDrop, setAcceptDrop] = useState(false);
+  const { mutate: updateEncounter } = useUpdateEncounter();
+  const { data: encounters } = api.encounters.useQuery(campaignId);
+  const inactiveEncounters = encounters
+    ? R.sort(
+        EncounterUtils.byStatus(encounters).inactive ?? [],
+        (a, b) => a.order - b.order,
+      )
+    : [];
+
+  const lastOrder = inactiveEncounters?.length
+    ? (R.firstBy(inactiveEncounters, [(e) => e.order, "desc"])?.order ?? 1) + 1
+    : 1;
+
+  return (
+    <div>
+      <section
+        key={"inactive"}
+        onDrop={(e) => {
+          if (!acceptDrop) {
+            return;
+          }
+          const encounter = typedDrag.get(e.dataTransfer, dragTypes.encounter);
+          if (!encounter) {
+            console.error("No encounter found when dragging");
+            return;
+          }
+          updateEncounter({
+            id: encounter.id,
+            label: "inactive",
+            order: lastOrder,
+          });
+          setAcceptDrop(false);
+        }}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onDragOver={(e) => {
+          if (!typedDrag.includes(e.dataTransfer, dragTypes.encounter)) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          setAcceptDrop(true);
+        }}
+        onDragLeave={() => {
+          setAcceptDrop(false);
+        }}
+        className={clsx(
+          {
+            "border-black": acceptDrop,
+            "border-transparent": !acceptDrop,
+          },
+          "border-2 border-dashed flex flex-col w-full transition-all rounded-md ",
+        )}
+      >
+        <ul className="flex flex-wrap ">
+          {inactiveEncounters?.length === 0 ? (
+            <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
+          ) : null}
+          {inactiveEncounters?.map((encounter, index) => {
+            const priorEncounter = inactiveEncounters[index - 1];
+            const nextEncounter = inactiveEncounters[index + 1];
+
+            return (
+              <DraggableEncounterCard
+                encounter={encounter}
+                category={"inactive"}
+                previousOrder={
+                  priorEncounter ? priorEncounter.order : encounter.order - 1
+                }
+                nextOrder={
+                  nextEncounter ? nextEncounter.order : encounter.order + 1
+                }
+                key={encounter.id}
+              />
+            );
+          })}
+        </ul>
+      </section>
+    </div>
   );
 }
 
@@ -342,20 +521,37 @@ function EncounterSkeleton({
 }
 
 function DraggableEncounterCard(props: {
-  encounter: Encounter;
-  deleteEncounter: (id: string) => void;
+  encounter: EncounterWithParticipants;
   category: Encounter["label"];
   previousOrder: number;
   nextOrder: number;
 }) {
-  const { encounter, deleteEncounter, category, previousOrder, nextOrder } =
-    props;
-  const [acceptDrop, setAcceptDrop] = useState<"none" | "top" | "bottom">(
+  const { encounter, category, previousOrder, nextOrder } = props;
+  const [acceptDrop, setAcceptDrop] = useState<"none" | "left" | "right">(
     "none",
   );
   const { mutate: updateEncounter } = useUpdateEncounter();
   const user = useUser();
   const [campaign] = useCampaign();
+  const { data: settings } = api.settings.useQuery();
+  const encounterDifficulty = EncounterUtils.difficulty(
+    encounter,
+    settings?.default_player_level,
+  );
+  const { encounters: encountersQuery } = api.useUtils();
+  const { mutate: deleteEncounter } = api.deleteEncounter.useMutation({
+    onSettled: async () => {
+      await encountersQuery.invalidate();
+    },
+    onMutate: async (id) => {
+      await encountersQuery.cancel();
+      const previous = encountersQuery.getData();
+      encountersQuery.setData(campaign.id, (old) => {
+        return old?.filter((encounter) => encounter.id !== id);
+      });
+      return { previous };
+    },
+  });
   return (
     <li
       onDrop={(e) => {
@@ -367,10 +563,11 @@ function DraggableEncounterCard(props: {
           console.error("No encounter found when dragging");
           return;
         }
+        const updateOrder = acceptDrop === "right" ? nextOrder : previousOrder;
         updateEncounter({
           id: droppedEncounter.id,
           label: category,
-          order: acceptDrop === "top" ? previousOrder : nextOrder,
+          order: (encounter.order + updateOrder) / 2,
         });
         setAcceptDrop("none");
       }}
@@ -385,8 +582,8 @@ function DraggableEncounterCard(props: {
         e.preventDefault();
         e.stopPropagation();
         const currentBounds = e.currentTarget.getBoundingClientRect();
-        const midpoint = (currentBounds.top + currentBounds.bottom) / 2;
-        setAcceptDrop(e.clientY <= midpoint ? "top" : "bottom");
+        const midpoint = (currentBounds.left + currentBounds.right) / 2;
+        setAcceptDrop(e.clientX <= midpoint ? "left" : "right");
       }}
       onDragLeave={(e) => {
         e.preventDefault();
@@ -395,56 +592,59 @@ function DraggableEncounterCard(props: {
       key={encounter.id}
       className={clsx(
         {
-          "border-b-transparent border-t-gray-400": acceptDrop === "top",
-          "border-t-transparent border-b-gray-400": acceptDrop === "bottom",
-          "border-b-transparent border-t-transparent": acceptDrop === "none",
+          "border-l-transparent border-r-gray-400": acceptDrop === "right",
+          "border-r-transparent border-l-gray-400": acceptDrop === "left",
+          "border-l-transparent border-r-transparent": acceptDrop === "none",
         },
-        "transition-all border-b-2 border-t-2 -mb-[2px] p-4",
+        "transition-all border-l-2 border-r-2 -mb-[2px] p-4 flex-grow-0",
       )}
     >
-      <Card
-        className={clsx("flex flex-col transition-all cursor-grab h-32")}
-        draggable
-        onDragStart={(e) => {
-          typedDrag.set(e.dataTransfer, dragTypes.encounter, encounter);
-        }}
-      >
-        <Link
-          draggable={false}
-          href={appRoutes.encounter(campaign, encounter, user)}
-          className="flex hover:bg-gray-200 p-3 text-ellipsis  border-b relative group bg-gray-100"
-        >
-          <span
-            className={
-              "absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 text-white bg-black p-2 rounded-full transition-opacity"
-            }
+      <ContextMenu>
+        <ContextMenuTrigger>
+          <Link
+            href={appRoutes.encounter(campaign, encounter, user)}
+            className=""
           >
-            <ExternalLink />
-          </span>
-
-          <h2 className={"font-medium max-w-full truncate"}>
-            {encounter.name ? encounter.name : "Unnamed"}
-          </h2>
-        </Link>
-        <div className="p-3 flex flex-col relative gap-5">
-          <Popover>
-            <PopoverTrigger asChild className="absolute top-0 right-0">
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="flex flex-col gap-10">
-              <Button
-                variant="destructive"
-                onClick={() => deleteEncounter(encounter.id)}
-              >
-                Delete encounter
-              </Button>
-            </PopoverContent>
-          </Popover>
-          <MonstersInEncounter id={encounter.id} />
-        </div>
-      </Card>
+            <Card
+              className={clsx(
+                "flex flex-col transition-all cursor-grab h-32 w-80 p-4 gap-3",
+              )}
+              draggable
+              onDragStart={(e) => {
+                typedDrag.set(e.dataTransfer, dragTypes.encounter, encounter);
+              }}
+            >
+              <MonstersInEncounter id={encounter.id} />
+              <h2 className={"w-full flex justify-between items-center"}>
+                <span className="max-w-full truncate text-lg">
+                  {encounter.name ? encounter.name : "Unnamed"}
+                </span>
+                {settings && (
+                  <Badge
+                    className={clsx({
+                      "bg-red-500": encounterDifficulty === "Deadly",
+                      "bg-yellow-500": encounterDifficulty === "Hard",
+                      "bg-green-500": encounterDifficulty === "Easy",
+                      "bg-blue-500": encounterDifficulty === "Standard",
+                    })}
+                  >
+                    {encounterDifficulty}
+                  </Badge>
+                )}
+              </h2>
+            </Card>
+          </Link>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem
+            onClick={() => deleteEncounter(encounter.id)}
+            className="flex gap-2 items-center"
+          >
+            Delete encounter
+            <Trash className="opacity-50" />
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
     </li>
   );
 }
@@ -458,7 +658,7 @@ function MonstersInEncounter({ id }: { id: string }) {
     ?.participants.filter((p) => !ParticipantUtils.isPlayer(p));
 
   return (
-    <div className={"flex gap-3 overflow-hidden"}>
+    <div className={"flex gap-3 overflow-hidden pointer-events-none"}>
       {participants?.map((p) => (
         <div className={"rounded-full w-12 h-12 flex items-center"} key={p.id}>
           <CreatureIcon creature={p.creature} size="small" objectFit="cover" />

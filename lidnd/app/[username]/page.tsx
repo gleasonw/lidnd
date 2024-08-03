@@ -1,5 +1,5 @@
 import { isStringMeaningful } from "./utils";
-import { Campaign } from "./types";
+import type { Campaign } from "./types";
 import { appRoutes } from "@/app/routes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
 import { CreateCampaignButton } from "@/app/[username]/create-campaign-button";
-import { LidndAuth, LidndUser, UserUtils } from "@/app/authentication";
+import { LidndAuth, type LidndUser, UserUtils } from "@/app/authentication";
 import { ServerCampaign } from "@/server/campaigns";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 
@@ -69,7 +69,7 @@ interface CampaignCardProps {
 async function CampaignCard(props: CampaignCardProps) {
   const { campaign, user } = props;
 
-  const players = await ServerCampaign.playersInCampaign(
+  const players = await ServerCampaign.campaignById(
     UserUtils.context(user),
     campaign.id,
   );

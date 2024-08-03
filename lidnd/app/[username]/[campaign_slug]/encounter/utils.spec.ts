@@ -1,4 +1,4 @@
-import { ParticipantWithData } from "@/server/api/router";
+import type { ParticipantWithData } from "@/server/api/router";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { test, expect, describe } from "vitest";
@@ -49,7 +49,7 @@ function createParticipant({
 
 describe("Participant turn order tests", () => {
   test("updates turn order to next participant", () => {
-    let participants = [
+    const participants = [
       createParticipant({ id: "1", initiative: 1 }),
       createParticipant({ id: "2", is_active: false, initiative: 2 }),
     ];
@@ -62,7 +62,7 @@ describe("Participant turn order tests", () => {
   });
 
   test("updates turn order to previous participant", () => {
-    let participants = [
+    const participants = [
       createParticipant({ id: "1", is_active: false }),
       createParticipant({ id: "2", is_active: true, initiative: 2 }),
     ];
@@ -76,7 +76,7 @@ describe("Participant turn order tests", () => {
   });
 
   test("updates turn order to last surprise participant when wrapping back from first participant", () => {
-    let participants = [
+    const participants = [
       createParticipant({ id: "1", is_active: false }),
       createParticipant({
         id: "2",
@@ -96,7 +96,7 @@ describe("Participant turn order tests", () => {
   });
 
   test("updates turn order to last participant when wrapping back from first participant", () => {
-    let participants = [
+    const participants = [
       createParticipant({ id: "1", is_active: false }),
       createParticipant({ id: "2", is_active: false, initiative: 2 }),
       createParticipant({ id: "3", is_active: true, initiative: 3 }),
@@ -111,7 +111,7 @@ describe("Participant turn order tests", () => {
   });
 
   test("updates turn order to first participant when wrapping back from last participant", () => {
-    let participants = [
+    const participants = [
       createParticipant({ id: "1", is_active: true }),
       createParticipant({ id: "2", is_active: false, initiative: 2 }),
       createParticipant({ id: "3", is_active: false, initiative: 3 }),
@@ -126,7 +126,7 @@ describe("Participant turn order tests", () => {
   });
 
   test("does nothing if user tries to cycle previous from last participant on round 0", () => {
-    let participants = [
+    const participants = [
       createParticipant({ id: "1", is_active: false }),
       createParticipant({ id: "2", is_active: false, initiative: 2 }),
       createParticipant({ id: "3", is_active: true, initiative: 3 }),

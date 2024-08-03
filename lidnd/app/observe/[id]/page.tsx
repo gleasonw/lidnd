@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import { PageRefresher } from "@/app/observe/[id]/page-refresher";
 import React from "react";
-import { ParticipantWithData } from "@/server/api/router";
+import type { ParticipantWithData } from "@/server/api/router";
 import { Card } from "@/components/ui/card";
 import clsx from "clsx";
 import { EncounterUtils } from "@/utils/encounters";
-import { ServerEncounter, ObserveEncounter } from "@/server/encounters";
+import { ServerEncounter, type ObserveEncounter } from "@/server/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { HealthMeterOverlay } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/battle-ui";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";

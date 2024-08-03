@@ -1,7 +1,7 @@
 import { appRoutes } from "@/app/routes";
 import { db } from "@/server/api/db";
 import { settings, users } from "@/server/api/db/schema";
-import { LidndAuth, LidndUser } from "@/app/authentication";
+import { LidndAuth, type LidndUser } from "@/app/authentication";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 import { OAuth2RequestError } from "arctic";

@@ -5,12 +5,12 @@ import { createCreatureInEncounter } from "@/app/[username]/actions";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { removeUndefinedFields } from "@/app/[username]/utils";
-import { UpsertEncounter } from "@/app/[username]/types";
+import type { UpsertEncounter } from "@/app/[username]/types";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
-import { ParticipantPost } from "@/app/[username]/[campaign_slug]/encounter/types";
+import type { ParticipantPost } from "@/app/[username]/[campaign_slug]/encounter/types";
 import { getCreaturePostForm } from "@/app/[username]/[campaign_slug]/encounter/utils";
-import { EncounterStatus } from "@/server/api/db/schema";
+import type { EncounterStatus } from "@/server/api/db/schema";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { useUser } from "@/app/[username]/user-provider";
 import { appRoutes } from "@/app/routes";
@@ -169,7 +169,7 @@ export function useRemoveParticipantFromEncounter() {
 
         const removedParticipant = old.participants.find(
           (p) => p.id === data.participant_id,
-        )
+        );
 
         if (!removedParticipant) {
           throw new Error("No participant found when removing");

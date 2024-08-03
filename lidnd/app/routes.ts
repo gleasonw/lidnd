@@ -1,5 +1,5 @@
-import { LidndUser } from "@/app/authentication";
-import { EncounterStatus } from "@/server/api/db/schema";
+import type { LidndUser } from "@/app/authentication";
+import type { EncounterStatus } from "@/server/api/db/schema";
 import _ from "lodash";
 
 export const appRoutes = {

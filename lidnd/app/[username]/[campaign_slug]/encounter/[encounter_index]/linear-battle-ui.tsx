@@ -13,7 +13,7 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 import { observer } from "mobx-react-lite";
 import {
   Carousel,
-  CarouselApi,
+  type CarouselApi,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";

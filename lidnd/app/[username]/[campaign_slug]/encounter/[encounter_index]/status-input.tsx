@@ -1,6 +1,6 @@
 "use client";
 import { api } from "@/trpc/react";
-import { ParticipantWithData } from "@/server/api/router";
+import type { ParticipantWithData } from "@/server/api/router";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { CommandItem } from "@/components/ui/command";
 import React from "react";
@@ -12,7 +12,6 @@ import { Combobox } from "@/app/[username]/[campaign_slug]/encounter/[encounter_
 
 export function StatusInput({
   participant,
-  className,
 }: {
   participant: ParticipantWithData;
   className?: string;

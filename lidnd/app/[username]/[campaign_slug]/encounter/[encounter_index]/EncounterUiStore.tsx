@@ -1,7 +1,7 @@
 "use client";
 
-import { Reminder } from "@/app/[username]/types";
-import { EncounterWithData } from "@/server/encounters";
+import type { Reminder } from "@/app/[username]/types";
+import type { EncounterWithData } from "@/server/encounters";
 import { EncounterUtils } from "@/utils/encounters";
 import { makeAutoObservable } from "mobx";
 import { createContext, useContext } from "react";

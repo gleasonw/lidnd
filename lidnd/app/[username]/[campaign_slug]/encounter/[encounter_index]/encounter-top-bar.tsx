@@ -123,35 +123,33 @@ function ParticipantIcons({
     <div
       className={`flex gap-1 flex-grow overflow-auto max-w-full ${isEditingInitiative ? "h-auto" : "h-32"}`}
     >
-      {encounter.participants
-        .toSorted(ParticipantUtils.sortLinearly)
-        .map((p, index) => (
-          <div className="flex gap-2 flex-col" key={p.id}>
-            <Tip text={ParticipantUtils.name(p)}>
-              <button
-                className={clsx(
-                  "w-24 border-4 flex-grow-0 flex justify-center items-center transition-all h-20 relative",
-                  ParticipantUtils.isFriendly(p)
-                    ? "border-blue-600"
-                    : "border-red-600",
-                  p.is_active && "h-32",
-                  index < activeIndex
-                    ? "opacity-60 hover:opacity-100"
-                    : "hover:opacity-60",
-                )}
-                onClick={() => setSelectedParticipantId(p.id)}
-              >
-                <HealthMeterOverlay participant={p} />
-                <CreatureIcon
-                  creature={p.creature}
-                  size="small2"
-                  objectFit="contain"
-                />
-              </button>
-            </Tip>
-            {isEditingInitiative ? <InitiativeInput participant={p} /> : null}
-          </div>
-        ))}
+      {EncounterUtils.participants(encounter).map((p, index) => (
+        <div className="flex gap-2 flex-col" key={p.id}>
+          <Tip text={ParticipantUtils.name(p)}>
+            <button
+              className={clsx(
+                "w-24 border-4 flex-grow-0 flex justify-center items-center transition-all h-20 relative",
+                ParticipantUtils.isFriendly(p)
+                  ? "border-blue-600"
+                  : "border-red-600",
+                p.is_active && "h-32",
+                index < activeIndex
+                  ? "opacity-60 hover:opacity-100"
+                  : "hover:opacity-60",
+              )}
+              onClick={() => setSelectedParticipantId(p.id)}
+            >
+              <HealthMeterOverlay participant={p} />
+              <CreatureIcon
+                creature={p.creature}
+                size="small2"
+                objectFit="contain"
+              />
+            </button>
+          </Tip>
+          {isEditingInitiative ? <InitiativeInput participant={p} /> : null}
+        </div>
+      ))}
       <LidndPlusDialog text="Add monster">
         <ParticipantUpload />
       </LidndPlusDialog>

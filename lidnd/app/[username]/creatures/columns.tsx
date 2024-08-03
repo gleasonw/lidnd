@@ -1,6 +1,6 @@
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
-import { Creature } from "@/server/api/router";
-import { ColumnDef } from "@tanstack/react-table";
+import type { Creature } from "@/server/api/router";
+import type { ColumnDef } from "@tanstack/react-table";
 
 function valueIsCreature(value: unknown): value is Creature {
   if (!value) {

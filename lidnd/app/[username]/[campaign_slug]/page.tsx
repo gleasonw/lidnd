@@ -6,7 +6,6 @@ import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
-import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 
 export default async function CampaignPage({
   params,
@@ -41,7 +40,6 @@ export default async function CampaignPage({
         deleteCampaignButton={
           <CampaignDeleteButton campaignId={params.campaign_slug} />
         }
-        playersDisplay={<CampaignPlayers campaignId={campaignData.id} />}
       />
     </CampaignId>
   );
@@ -62,31 +60,5 @@ async function CampaignDeleteButton(props: { campaignId: string }) {
         Delete campaign
       </Button>
     </form>
-  );
-}
-
-async function CampaignPlayers(props: { campaignId: string }) {
-  const user = await LidndAuth.getUser();
-  const { campaignId } = props;
-
-  if (!user) {
-    return <div>No session found</div>;
-  }
-
-  const playersInCampaign = await ServerCampaign.playersInCampaign(
-    UserUtils.context(user),
-    campaignId,
-  );
-
-  if (!playersInCampaign) {
-    return <div>No player creatures yet</div>;
-  }
-
-  return (
-    <div className="flex gap-3 flex-wrap">
-      {playersInCampaign.campaignToPlayers.map(({ player }) => (
-        <CreatureIcon key={player.id} creature={player} size="small2" />
-      ))}
-    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { CreatureUtils } from "@/utils/creatures";
-import { CreaturePost } from "./types";
-import { Participant, ParticipantWithData } from "@/server/api/router";
+import type { CreaturePost } from "./types";
+import type { Participant, ParticipantWithData } from "@/server/api/router";
 
 /**
  * @deprecated - use CreatureUtils.awsURL

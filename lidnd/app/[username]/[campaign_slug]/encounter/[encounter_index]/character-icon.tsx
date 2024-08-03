@@ -1,4 +1,5 @@
-import { Creature } from "@/server/api/router";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { Creature } from "@/server/api/router";
 import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
 
@@ -39,6 +40,10 @@ export function CreatureIcon({
     throw new Error(
       `No icon width or height for ${creature.name}, ${JSON.stringify(creature)}`,
     );
+  }
+
+  if (creature.id === "pending") {
+    return <Skeleton />;
   }
 
   return (

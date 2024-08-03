@@ -13,7 +13,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Angry, FileText, Plus, User } from "lucide-react";
-import { CreaturePost } from "./types";
+import type { CreaturePost } from "./types";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { Input } from "@/components/ui/input";
 
@@ -144,7 +144,10 @@ export function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
                 <Input
                   placeholder="Max hp"
                   {...field}
-                  value={field.value?.toString()}
+                  type="number"
+                  onChange={(e) =>
+                    field.onChange(Math.max(1, parseInt(e.target.value)))
+                  }
                 />
               </CreatureFormItems>
             )}
@@ -157,7 +160,10 @@ export function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
                 <Input
                   placeholder="Challenge rating"
                   {...field}
-                  value={field.value?.toString()}
+                  onChange={(e) =>
+                    field.onChange(Math.max(1, parseInt(e.target.value)))
+                  }
+                  type="number"
                 />
               </CreatureFormItems>
             )}
@@ -186,6 +192,7 @@ export function PlayerUploadForm({ uploadCreature }: CreatureAddProps) {
     defaultValues: {
       icon_image: undefined,
       is_player: true,
+      name: "",
     },
   });
   const [keyToResetFile, setKeyToResetFile] = React.useState(0);
@@ -246,7 +253,6 @@ export function PlayerUploadForm({ uploadCreature }: CreatureAddProps) {
 }
 
 function CreatureFormItems({
-  name,
   children,
 }: {
   name: string;

@@ -2,7 +2,7 @@
 
 import { useUpdateEncounterParticipant } from "./hooks";
 import { Input } from "@/components/ui/input";
-import { Participant } from "@/server/api/router";
+import type { Participant } from "@/server/api/router";
 import React from "react";
 import { useDebouncedCallback } from "use-debounce";
 

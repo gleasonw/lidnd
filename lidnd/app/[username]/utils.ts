@@ -1,4 +1,4 @@
-import { Encounter } from "@/server/api/router";
+import type { Encounter } from "@/server/api/router";
 import { z } from "zod";
 
 export function isStringMeaningful(str: string | null) {

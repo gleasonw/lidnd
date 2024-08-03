@@ -8,8 +8,8 @@ import React from "react";
 import { motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
-import { Participant, ParticipantWithData } from "@/server/api/router";
-import { BasePopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
+import type { Participant, ParticipantWithData } from "@/server/api/router";
+import { BasePopover } from "@/encounters/base-popover";
 import { StatusInput } from "./status-input";
 import { effectIconMap } from "./effectIconMap";
 import { LinearBattleUI } from "./linear-battle-ui";
@@ -18,16 +18,16 @@ import { observer } from "mobx-react-lite";
 import { ParticipantUtils } from "@/utils/participants";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
-import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
-import { ParticipantHealthForm } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/creature-health-form";
-import { DescriptionTextArea } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/description-text-area";
-import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
-import { GroupBattleUI } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/group-battle-ui";
+import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
+import { ParticipantHealthForm } from "@/encounters/[encounter_index]/creature-health-form";
+import { DescriptionTextArea } from "@/encounters/[encounter_index]/description-text-area";
+import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
+import { GroupBattleUI } from "@/encounters/[encounter_index]/group-battle-ui";
 import {
   useRemoveStatusEffect,
   useUpdateEncounterParticipant,
-} from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
-import { ReminderDialog } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/reminder-dialog";
+} from "@/encounters/[encounter_index]/hooks";
+import { ReminderDialog } from "@/encounters/[encounter_index]/reminder-dialog";
 import { useDebouncedCallback } from "use-debounce";
 import { EncounterUtils } from "@/utils/encounters";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";

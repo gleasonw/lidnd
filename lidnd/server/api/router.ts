@@ -10,6 +10,7 @@ import {
   spells,
   reminders,
   campaigns,
+  campaignToPlayer,
 } from "@/server/api/db/schema";
 import { eq, and, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
@@ -22,14 +23,14 @@ import {
   getStatBlockAWSname,
 } from "@/server/api/utils";
 import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { ServerEncounter, EncounterWithData } from "@/server/encounters";
+import { ServerEncounter, type EncounterWithData } from "@/server/encounters";
 import { ServerCampaign } from "@/server/campaigns";
 import { booleanSchema } from "@/app/[username]/utils";
 import { ParticipantUtils } from "@/utils/participants";
 import { EncounterUtils } from "@/utils/encounters";
 import { insertCreatureSchema } from "@/app/[username]/[campaign_slug]/encounter/types";
 import _ from "lodash";
-import { LidndUser } from "@/app/authentication";
+import type { LidndUser } from "@/app/authentication";
 
 const t = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -86,6 +87,7 @@ export const updateEncounterSchema = createInsertSchema(encounters);
 const updateCampaignSchema = createInsertSchema(campaigns);
 export const encounterInsertSchema = createInsertSchema(encounters);
 export const reminderInsertSchema = createInsertSchema(reminders);
+export const creaturesSchema = createSelectSchema(creatures);
 
 export const updateSettingsSchema = insertSettingsSchema
   .omit({ user_id: true })
@@ -99,12 +101,6 @@ export const updateSettingsSchema = insertSettingsSchema
   );
 
 export const appRouter = t.router({
-  encounters: protectedProcedure.input(z.string()).query(async (opts) => {
-    const campaignId = opts.input;
-
-    return await ServerEncounter.encountersInCampaign(opts.ctx, campaignId);
-  }),
-
   spells: publicProcedure.input(z.string()).query(async (opts) => {
     return await db
       .select()
@@ -117,6 +113,8 @@ export const appRouter = t.router({
     return await db.select().from(status_effects);
   }),
 
+  //#region Encounters
+
   encounterById: protectedProcedure.input(z.string()).query(async (opts) => {
     const encounter = await ServerEncounter.encounterById(opts.ctx, opts.input);
     if (!encounter) {
@@ -128,25 +126,11 @@ export const appRouter = t.router({
     return encounter;
   }),
 
-  campaignFromUrl: protectedProcedure
-    .input(
-      z.object({
-        campaign_name: z.string(),
-      })
-    )
-    .query(async (opts) => {
-      const campaign = await ServerCampaign.campaignFromSlug(
-        opts.ctx,
-        opts.input.campaign_name
-      );
-      if (!campaign) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "No campaign found",
-        });
-      }
-      return campaign;
-    }),
+  encounters: protectedProcedure.input(z.string()).query(async (opts) => {
+    const campaignId = opts.input;
+
+    return await ServerEncounter.encountersInCampaign(opts.ctx, campaignId);
+  }),
 
   encounterFromCampaignIndex: protectedProcedure
     .input(
@@ -186,36 +170,6 @@ export const appRouter = t.router({
         .returning();
     }),
 
-  userCampaigns: protectedProcedure.query(async (opts) => {
-    return await ServerCampaign.userCampaigns(opts.ctx);
-  }),
-
-  campaignById: protectedProcedure.input(z.string()).query(async (opts) => {
-    return await ServerCampaign.campaignByIdThrows(opts.ctx, opts.input);
-  }),
-
-  updateCampaign: protectedProcedure
-    .input(updateCampaignSchema.merge(z.object({ id: z.string() })))
-    .mutation(async (opts) => {
-      const result = await db
-        .update(campaigns)
-        .set(opts.input)
-        .where(
-          and(
-            eq(campaigns.id, opts.input.id),
-            eq(campaigns.user_id, opts.ctx.user.id)
-          )
-        )
-        .returning();
-      if (result.length === 0) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update campaign",
-        });
-      }
-      return result[0];
-    }),
-
   createEncounter: protectedProcedure
     .input(
       encounterInsertSchema.merge(
@@ -243,7 +197,7 @@ export const appRouter = t.router({
 
         const newIndex = currentMaxIndex + 1;
 
-        const [encounter, campaignPlayers] = await Promise.all([
+        const [encounter, { campaignToPlayers }] = await Promise.all([
           tx
             .insert(encounters)
             .values({
@@ -252,7 +206,7 @@ export const appRouter = t.router({
               index_in_campaign: newIndex,
             })
             .returning(),
-          ServerCampaign.playersInCampaign(
+          ServerCampaign.campaignByIdThrows(
             opts.ctx,
             opts.input.campaign_id,
             tx
@@ -268,9 +222,9 @@ export const appRouter = t.router({
           });
         }
 
-        if (campaignPlayers) {
+        if (campaignToPlayers) {
           await tx.insert(participants).values(
-            campaignPlayers.campaignToPlayers.map(({ player }) => ({
+            campaignToPlayers.map(({ player }) => ({
               encounter_id: encounterResult.id,
               creature_id: player.id,
             }))
@@ -316,170 +270,6 @@ export const appRouter = t.router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to update encounter",
-        });
-      }
-      return result[0];
-    }),
-
-  updateEncounterMinionParticipant: protectedProcedure
-    .input(
-      participantSchema.merge(
-        z.object({
-          minion_count: z.number(),
-          minions_in_overkill_range: z.number(),
-          damage: z.number(),
-        })
-      )
-    )
-    .mutation(async (opts) => {
-      const result = await db.transaction(async (tx) => {
-        const participant = await getEncounterCreature(opts.input.id);
-        if (!ParticipantUtils.isMinion(participant)) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Participant is not a minion; minion_count is not set",
-          });
-        }
-        const updatedMinionCount = ParticipantUtils.updateMinionCount(
-          participant,
-          opts.input.minions_in_overkill_range,
-          opts.input.damage
-        );
-        const [updatedParticipant, _] = await Promise.all([
-          await tx
-            .update(participants)
-            .set({
-              minion_count: updatedMinionCount,
-              hp: ParticipantUtils.maxHp(participant),
-            })
-            .where(eq(participants.id, opts.input.id))
-            .returning(),
-          ServerEncounter.encounterById(opts.ctx, opts.input.encounter_id, tx),
-        ]);
-        if (updatedParticipant.length === 0) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to update encounter participant",
-          });
-        }
-        return updatedParticipant[0];
-      });
-      return result;
-    }),
-
-  updateEncounterParticipant: protectedProcedure
-    .input(participantSchema)
-    .mutation(async (opts) => {
-      if (opts.input.hp <= 0) {
-        // just remove the participant
-        const result = await db.transaction(async (tx) => {
-          const [update, _] = await Promise.all([
-            await tx
-              .delete(participants)
-              .where(eq(participants.id, opts.input.id))
-              .returning(),
-            ServerEncounter.encounterByIdThrows(
-              opts.ctx,
-              opts.input.encounter_id,
-              tx
-            ),
-          ]);
-          const updatedParticipant = update[0];
-
-          if (!updatedParticipant) {
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: "Failed to update encounter participant",
-            });
-          }
-
-          return updatedParticipant;
-        });
-        return result;
-      }
-
-      const result = await db.transaction(async (tx) => {
-        const [update, _] = await Promise.all([
-          await tx
-            .update(participants)
-            .set(opts.input)
-            .where(eq(participants.id, opts.input.id))
-            .returning(),
-          ServerEncounter.encounterByIdThrows(
-            opts.ctx,
-            opts.input.encounter_id,
-            tx
-          ),
-        ]);
-        const updatedParticipant = update[0];
-
-        if (!updatedParticipant) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to update encounter participant",
-          });
-        }
-
-        return updatedParticipant;
-      });
-      return result;
-    }),
-
-  removeStatusEffect: protectedProcedure
-    .input(
-      z.object({
-        encounter_participant_id: z.string(),
-        status_effect_id: z.string(),
-      })
-    )
-    .mutation(async (opts) => {
-      const result = await db
-        .delete(participant_status_effects)
-        .where(
-          and(
-            eq(
-              participant_status_effects.encounter_participant_id,
-              opts.input.encounter_participant_id
-            ),
-            eq(
-              participant_status_effects.status_effect_id,
-              opts.input.status_effect_id
-            )
-          )
-        )
-        .returning();
-      if (result.length === 0) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to remove status effect",
-        });
-      }
-      return result[0];
-    }),
-
-  assignStatusEffect: protectedProcedure
-    .input(
-      z.object({
-        encounter_participant_id: z.string(),
-        status_effect_id: z.string(),
-        duration: z.number().optional(),
-        save_ends_dc: z.number().optional(),
-      })
-    )
-    .mutation(async (opts) => {
-      const result = await db
-        .insert(participant_status_effects)
-        .values({
-          encounter_participant_id: opts.input.encounter_participant_id,
-          status_effect_id: opts.input.status_effect_id,
-          duration: opts.input.duration,
-          save_ends_dc: opts.input.save_ends_dc,
-        })
-        .returning();
-      if (result.length === 0) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to assign status effect",
         });
       }
       return result[0];
@@ -736,6 +526,277 @@ export const appRouter = t.router({
       }
       return encounterParticipant[0];
     }),
+  //#endregion
+
+  //#region Encounter Participants
+
+  updateEncounterMinionParticipant: protectedProcedure
+    .input(
+      participantSchema.merge(
+        z.object({
+          minion_count: z.number(),
+          minions_in_overkill_range: z.number(),
+          damage: z.number(),
+        })
+      )
+    )
+    .mutation(async (opts) => {
+      const result = await db.transaction(async (tx) => {
+        const participant = await getEncounterCreature(opts.input.id);
+        if (!ParticipantUtils.isMinion(participant)) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Participant is not a minion; minion_count is not set",
+          });
+        }
+        const updatedMinionCount = ParticipantUtils.updateMinionCount(
+          participant,
+          opts.input.minions_in_overkill_range,
+          opts.input.damage
+        );
+        const [updatedParticipant, _] = await Promise.all([
+          await tx
+            .update(participants)
+            .set({
+              minion_count: updatedMinionCount,
+              hp: ParticipantUtils.maxHp(participant),
+            })
+            .where(eq(participants.id, opts.input.id))
+            .returning(),
+          ServerEncounter.encounterById(opts.ctx, opts.input.encounter_id, tx),
+        ]);
+        if (updatedParticipant.length === 0) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update encounter participant",
+          });
+        }
+        return updatedParticipant[0];
+      });
+      return result;
+    }),
+
+  updateEncounterParticipant: protectedProcedure
+    .input(participantSchema)
+    .mutation(async (opts) => {
+      if (opts.input.hp <= 0) {
+        // just remove the participant
+        const result = await db.transaction(async (tx) => {
+          const [update, _] = await Promise.all([
+            await tx
+              .delete(participants)
+              .where(eq(participants.id, opts.input.id))
+              .returning(),
+            ServerEncounter.encounterByIdThrows(
+              opts.ctx,
+              opts.input.encounter_id,
+              tx
+            ),
+          ]);
+          const updatedParticipant = update[0];
+
+          if (!updatedParticipant) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to update encounter participant",
+            });
+          }
+
+          return updatedParticipant;
+        });
+        return result;
+      }
+
+      const result = await db.transaction(async (tx) => {
+        const [update, _] = await Promise.all([
+          await tx
+            .update(participants)
+            .set(opts.input)
+            .where(eq(participants.id, opts.input.id))
+            .returning(),
+          ServerEncounter.encounterByIdThrows(
+            opts.ctx,
+            opts.input.encounter_id,
+            tx
+          ),
+        ]);
+        const updatedParticipant = update[0];
+
+        if (!updatedParticipant) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update encounter participant",
+          });
+        }
+
+        return updatedParticipant;
+      });
+      return result;
+    }),
+
+  removeStatusEffect: protectedProcedure
+    .input(
+      z.object({
+        encounter_participant_id: z.string(),
+        status_effect_id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const result = await db
+        .delete(participant_status_effects)
+        .where(
+          and(
+            eq(
+              participant_status_effects.encounter_participant_id,
+              opts.input.encounter_participant_id
+            ),
+            eq(
+              participant_status_effects.status_effect_id,
+              opts.input.status_effect_id
+            )
+          )
+        )
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to remove status effect",
+        });
+      }
+      return result[0];
+    }),
+
+  assignStatusEffect: protectedProcedure
+    .input(
+      z.object({
+        encounter_participant_id: z.string(),
+        status_effect_id: z.string(),
+        duration: z.number().optional(),
+        save_ends_dc: z.number().optional(),
+      })
+    )
+    .mutation(async (opts) => {
+      const result = await db
+        .insert(participant_status_effects)
+        .values({
+          encounter_participant_id: opts.input.encounter_participant_id,
+          status_effect_id: opts.input.status_effect_id,
+          duration: opts.input.duration,
+          save_ends_dc: opts.input.save_ends_dc,
+        })
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to assign status effect",
+        });
+      }
+      return result[0];
+    }),
+  //#endregion
+
+  //#region Campaigns
+
+  campaignFromUrl: protectedProcedure
+    .input(
+      z.object({
+        campaign_name: z.string(),
+      })
+    )
+    .query(async (opts) => {
+      const campaign = await ServerCampaign.campaignFromSlug(
+        opts.ctx,
+        opts.input.campaign_name
+      );
+      if (!campaign) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "No campaign found",
+        });
+      }
+      return campaign;
+    }),
+
+  userCampaigns: protectedProcedure.query(async (opts) => {
+    return await ServerCampaign.userCampaigns(opts.ctx);
+  }),
+
+  campaignById: protectedProcedure.input(z.string()).query(async (opts) => {
+    return await ServerCampaign.campaignByIdThrows(opts.ctx, opts.input);
+  }),
+
+  updateCampaign: protectedProcedure
+    .input(updateCampaignSchema.merge(z.object({ id: z.string() })))
+    .mutation(async (opts) => {
+      const result = await db
+        .update(campaigns)
+        .set(opts.input)
+        .where(
+          and(
+            eq(campaigns.id, opts.input.id),
+            eq(campaigns.user_id, opts.ctx.user.id)
+          )
+        )
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update campaign",
+        });
+      }
+      return result[0];
+    }),
+
+  removeFromParty: protectedProcedure
+    .input(
+      z.object({
+        campaign_id: z.string(),
+        player_id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      db.transaction(async (tx) => {
+        // ensure ownership
+        const campaign = await ServerCampaign.campaignByIdThrows(
+          opts.ctx,
+          opts.input.campaign_id,
+          tx
+        );
+        await tx
+          .delete(campaignToPlayer)
+          .where(
+            and(
+              eq(campaignToPlayer.campaign_id, campaign.id),
+              eq(campaignToPlayer.player_id, opts.input.player_id)
+            )
+          );
+      });
+    }),
+
+  addToParty: protectedProcedure
+    .input(
+      z.object({
+        campaign_id: z.string(),
+        player: creaturesSchema,
+      })
+    )
+    .mutation(async (opts) => {
+      db.transaction(async (tx) => {
+        const campaign = await ServerCampaign.campaignByIdThrows(
+          opts.ctx,
+          opts.input.campaign_id,
+          tx
+        );
+        await tx.insert(campaignToPlayer).values({
+          campaign_id: campaign.id,
+          player_id: opts.input.player.id,
+        });
+      });
+    }),
+
+  //#endregion
+
+  //#region Creatures
 
   updateCreature: protectedProcedure
     .input(insertCreatureSchema.omit({ user_id: true }))
@@ -845,6 +906,10 @@ export const appRouter = t.router({
         .where(and(...filters));
     }),
 
+  //#endregion
+
+  //#region Settings
+
   settings: protectedProcedure.query(async (opts) => {
     opts.ctx.user.id;
     const userSettings = await db
@@ -876,6 +941,8 @@ export const appRouter = t.router({
       }
       return result[0];
     }),
+
+  //#endregion
 });
 
 // export type definition of API

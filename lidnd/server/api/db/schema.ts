@@ -1,4 +1,4 @@
-import { InferInsertModel, relations } from "drizzle-orm";
+import { type InferInsertModel, relations } from "drizzle-orm";
 import {
   bigint,
   boolean,
@@ -12,6 +12,7 @@ import {
   varchar,
   pgEnum,
   unique,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 
 export type DbSpell = InferInsertModel<typeof spells>;
@@ -163,7 +164,7 @@ export const encounters = pgTable(
     ended_at: timestamp("ended_at"),
     status: encounter_status_enum("status").default("prep").notNull(),
     label: encounter_label_enum("label").default("active").notNull(),
-    order: integer("order").default(0).notNull(),
+    order: doublePrecision("order").default(1).notNull(),
     index_in_campaign: integer("index_in_campaign").notNull().default(0),
   },
   (t) => {

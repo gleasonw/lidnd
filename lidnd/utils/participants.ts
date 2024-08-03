@@ -1,10 +1,10 @@
 import { defaultParticipant } from "@/app/[username]/[campaign_slug]/encounter/utils";
-import {
+import type {
   Creature,
   Participant,
   ParticipantWithData,
 } from "@/server/api/router";
-import { AddCreature, AddParticipant } from "@/types";
+import type { AddCreature, AddParticipant } from "@/types";
 
 type ParticipantWithCreature = Participant & { creature: Creature };
 type MinionParticipant = ParticipantWithCreature & { minion_count: number };
@@ -15,10 +15,6 @@ export const ParticipantUtils = {
   },
 
   isDead(participant: ParticipantWithCreature) {
-    // wonky that player hp is 0 by default. maybe we should
-    // separate creatures and players? have them implement an interface?
-    // having hp = non player character, since we assume players track their own hp?
-    // or maybe we just have a "player" creature type?
     return participant.hp <= 0;
   },
 
@@ -64,7 +60,6 @@ export const ParticipantUtils = {
         ...participant,
         id: participant.id ?? randomId,
       }),
-      // TODO: placeholder creature
       creature: {
         ...creature,
         id: creature.id ?? randomId,
