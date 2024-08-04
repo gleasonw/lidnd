@@ -14,6 +14,7 @@ import {
 } from "@/encounters/[encounter_index]/hooks";
 import InitiativeInput from "@/encounters/[encounter_index]/InitiativeInput";
 import { ParticipantUpload } from "@/encounters/[encounter_index]/participant-add-form";
+import type { ParticipantWithData } from "@/server/api/router";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
@@ -115,38 +116,27 @@ function ParticipantIcons({
   isEditingInitiative: boolean;
 }) {
   const [encounter] = useEncounter();
-  const { setSelectedParticipantId } = useEncounterUIStore();
-
   const activeIndex = EncounterUtils.activeParticipantIndex(encounter);
 
   return (
     <div
-      className={`flex gap-1 flex-grow overflow-auto max-w-full ${isEditingInitiative ? "h-auto" : "h-32"}`}
+      className={`flex gap-1 flex-grow overflow-auto max-w-full h-auto min-h-[132px]`}
     >
       {EncounterUtils.participants(encounter).map((p, index) => (
-        <div className="flex gap-2 flex-col" key={p.id}>
-          <Tip text={ParticipantUtils.name(p)}>
-            <button
-              className={clsx(
-                "w-24 border-4 flex-grow-0 flex justify-center items-center transition-all h-20 relative",
-                ParticipantUtils.isFriendly(p)
-                  ? "border-blue-600"
-                  : "border-red-600",
-                p.is_active && "h-32",
-                index < activeIndex
-                  ? "opacity-60 hover:opacity-100"
-                  : "hover:opacity-60",
-              )}
-              onClick={() => setSelectedParticipantId(p.id)}
-            >
-              <HealthMeterOverlay participant={p} />
-              <CreatureIcon
-                creature={p.creature}
-                size="small2"
-                objectFit="contain"
-              />
-            </button>
-          </Tip>
+        <div className="flex gap-2 flex-col relative" key={p.id}>
+          {ParticipantUtils.isPlayer(p) ? (
+            <PlayerCard
+              participant={p}
+              index={index}
+              activeIndex={activeIndex}
+            />
+          ) : (
+            <GMCreatureCard
+              participant={p}
+              index={index}
+              activeIndex={activeIndex}
+            />
+          )}
           {isEditingInitiative ? <InitiativeInput participant={p} /> : null}
         </div>
       ))}
@@ -154,5 +144,56 @@ function ParticipantIcons({
         <ParticipantUpload />
       </LidndPlusDialog>
     </div>
+  );
+}
+
+type CardProps = {
+  children?: React.ReactNode;
+  index: number;
+  activeIndex: number;
+  participant: ParticipantWithData;
+};
+
+function GMCreatureCard(props: CardProps) {
+  const { setSelectedParticipantId } = useEncounterUIStore();
+  return (
+    <button onClick={() => setSelectedParticipantId(props.participant.id)}>
+      <TopBarParticipantCard {...props}>
+        <HealthMeterOverlay participant={props.participant} />
+      </TopBarParticipantCard>
+    </button>
+  );
+}
+
+function PlayerCard(props: CardProps) {
+  return <TopBarParticipantCard {...props}></TopBarParticipantCard>;
+}
+
+function TopBarParticipantCard({
+  participant,
+  index,
+  activeIndex,
+  children,
+}: CardProps) {
+  return (
+    <Tip text={ParticipantUtils.name(participant)}>
+      <div
+        className={clsx(
+          "w-24 border-4 flex-grow-0 flex justify-center items-center transition-all h-20 relative overflow-hidden",
+          participant.is_active && "h-32",
+          index < activeIndex
+            ? "opacity-60 hover:opacity-100"
+            : "hover:opacity-60",
+        )}
+        style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
+      >
+        {children}
+        <CreatureIcon
+          creature={participant.creature}
+          size="small2"
+          objectFit="contain"
+        />
+      </div>
+    </Tip>
   );
 }

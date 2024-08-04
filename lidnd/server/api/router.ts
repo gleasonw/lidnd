@@ -96,7 +96,6 @@ export const updateSettingsSchema = insertSettingsSchema
       show_health_in_discord: booleanSchema,
       show_icons_in_discord: booleanSchema,
       average_turn_seconds: z.coerce.number(),
-      default_player_level: z.coerce.number(),
     })
   );
 

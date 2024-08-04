@@ -23,22 +23,58 @@ import {
 } from "lucide-react";
 import React from "react";
 
+const dndEffects = [
+  "Blinded",
+  "Charmed",
+  "Deafened",
+  "Frightened",
+  "Grappled",
+  "Incapacitated",
+  "Invisible",
+  "Paralyzed",
+  "Petrified",
+  "Poisoned",
+  "Prone",
+  "Restrained",
+  "Stunned",
+  "Unconscious",
+  "Exhaustion",
+] as const;
+
+export const effectColorMap: Record<(typeof dndEffects)[number], string> = {
+  Blinded: "gray",
+  Charmed: "pink",
+  Deafened: "blue",
+  Frightened: "yellow",
+  Grappled: "green",
+  Incapacitated: "red",
+  Invisible: "purple",
+  Paralyzed: "indigo",
+  Petrified: "stone",
+  Poisoned: "lime",
+  Prone: "orange",
+  Restrained: "teal",
+  Stunned: "violet",
+  Unconscious: "slate",
+  Exhaustion: "amber",
+};
+
 export const effectIconMap = {
-  Blinded: <EyeOff className="text-gray-500" />,
-  Charmed: <Heart className="text-pink-500" />,
-  Deafened: <VolumeX className="text-blue-500" />,
-  Frightened: <AlertTriangle className="text-yellow-500" />,
-  Grappled: <Hand className="text-green-500" />,
-  Incapacitated: <XCircle className="text-red-500" />,
-  Invisible: <Eye className="text-purple-500" />,
-  Paralyzed: <Anchor className="text-indigo-500" />,
-  Petrified: <ToyBrick className="text-stone-500" />,
-  Poisoned: <Skull className="text-lime-500" />,
-  Prone: <ArrowDownCircle className="text-orange-500" />,
-  Restrained: <Lock className="text-teal-500" />,
-  Stunned: <ZapOff className="text-violet-500" />,
-  Unconscious: <Moon className="text-slate-500" />,
-  Exhaustion: <ThermometerSun className="text-amber-500" />,
+  Blinded: <EyeOff />,
+  Charmed: <Heart />,
+  Deafened: <VolumeX />,
+  Frightened: <AlertTriangle />,
+  Grappled: <Hand />,
+  Incapacitated: <XCircle />,
+  Invisible: <Eye />,
+  Paralyzed: <Anchor />,
+  Petrified: <ToyBrick />,
+  Poisoned: <Skull />,
+  Prone: <ArrowDownCircle />,
+  Restrained: <Lock />,
+  Stunned: <ZapOff />,
+  Unconscious: <Moon />,
+  Exhaustion: <ThermometerSun />,
 };
 
 export const mcdm_effectIconMap = {

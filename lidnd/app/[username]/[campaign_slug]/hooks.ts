@@ -15,6 +15,30 @@ export function useCampaign() {
   return api.campaignById.useSuspenseQuery(campaignId);
 }
 
+export function useUpdateCampaign() {
+  const campaignId = useCampaignId();
+  const { campaignById } = api.useUtils();
+  return api.updateCampaign.useMutation({
+    onSettled: async () => {
+      return await campaignById.invalidate(campaignId);
+    },
+    onMutate: async (campaign) => {
+      await campaignById.cancel(campaignId);
+      const previous = campaignById.getData(campaignId);
+      campaignById.setData(campaignId, (old) => {
+        if (!old) {
+          return;
+        }
+        return {
+          ...old,
+          ...campaign,
+        };
+      });
+      return { previous };
+    },
+  });
+}
+
 export function useAddExistingToParty() {
   const campaignId = useCampaignId();
   const { campaignById } = api.useUtils();

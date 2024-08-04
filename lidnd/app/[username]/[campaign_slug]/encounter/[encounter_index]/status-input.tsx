@@ -1,14 +1,14 @@
 "use client";
 import { api } from "@/trpc/react";
-import type { ParticipantWithData } from "@/server/api/router";
+import type { ParticipantWithData, StatusEffect } from "@/server/api/router";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { CommandItem } from "@/components/ui/command";
 import React from "react";
-import { effectIconMap } from "./effectIconMap";
-import { Input } from "@/components/ui/input";
+import { effectColorMap, effectIconMap } from "./effectIconMap";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { Combobox } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/resistance-selector";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 
 export function StatusInput({
   participant,
@@ -63,7 +63,7 @@ export function StatusInput({
         className="max-h-80 overflow-auto"
       >
         {effects?.map((effect) => (
-          <CommandItem key={effect.id} className="w-full flex gap-1">
+          <CommandItem key={effect.id} className="w-full flex justify-between">
             <ButtonWithTooltip
               text={"Add effect"}
               variant="ghost"
@@ -75,13 +75,13 @@ export function StatusInput({
                 })
               }
             >
-              {effectIconMap[effect.name as keyof typeof effectIconMap]}
+              <EffectIcon effect={effect} />
               <span>{effect.name}</span>
             </ButtonWithTooltip>
-            <Input
+            <LidndTextInput
               type="number"
+              variant="ghost"
               value={save_ends_dc}
-              className="w-24"
               onChange={(e) => {
                 setSaveEndsDC(e.target.value ?? "");
               }}
@@ -90,6 +90,16 @@ export function StatusInput({
           </CommandItem>
         ))}
       </Combobox>
+    </div>
+  );
+}
+
+export function EffectIcon({ effect }: { effect: StatusEffect }) {
+  return (
+    <div
+      className={`bg-${effectColorMap[effect.name as keyof typeof effectIconMap]}-500 text-white h-10 w-10 flex justify-center items-center`}
+    >
+      {effectIconMap[effect.name as keyof typeof effectIconMap]}
     </div>
   );
 }

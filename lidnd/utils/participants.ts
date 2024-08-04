@@ -15,6 +15,13 @@ export const ParticipantUtils = {
     return participant.creature.is_player;
   },
 
+  iconHexColor(participant: ParticipantWithCreature) {
+    if (this.isFriendly(participant)) {
+      return "#2563eb";
+    }
+    return participant.hex_color ?? "#dc2626";
+  },
+
   isDead(participant: ParticipantWithCreature) {
     return participant.hp <= 0;
   },
@@ -117,9 +124,9 @@ export const ParticipantUtils = {
       is_player: boolean;
     };
   }) {
-    // if the active player is dead, we have to keep them in the order until the turn changes.
+    // if the active creature is dead, we have to keep them in the order until the turn changes.
     // a rare occurrence, but possible.
-    // Player characters are always active. Since their HP is default 0, we have to exempt them.
-    return p.hp > 0 || p.is_active || p.creature.is_player;
+    // update: we just remove creatures from the order with 0 hp, and set the next to active.
+    return p.hp > 0 || p.is_active;
   },
 };

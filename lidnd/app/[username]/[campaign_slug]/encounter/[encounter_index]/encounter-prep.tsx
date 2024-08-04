@@ -407,11 +407,14 @@ export function MonsterParticipantActions(props: ParticipantCreatureProps) {
 export function EncounterStats() {
   const { data: settings } = api.settings.useQuery();
   const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
 
   const [estimatedTurnSeconds, setEstimatedTurnSeconds] = React.useState<
     number | null
   >(null);
-  const [playerLevel, setPlayerLevel] = React.useState<number | null>(null);
+  const [playerLevel, setPlayerLevel] = React.useState<number>(
+    campaign?.party_level ?? 1,
+  );
   const [estimatedRounds, setEstimatedRounds] = React.useState<number | null>(
     null,
   );
@@ -425,7 +428,7 @@ export function EncounterStats() {
 
   const { easyTier, standardTier, hardTier } = EncounterUtils.findCRBudget(
     encounter,
-    playerLevel ?? settings?.default_player_level ?? 1,
+    playerLevel,
   );
 
   return (
@@ -438,7 +441,7 @@ export function EncounterStats() {
             size="sm"
           >
             <Skull />
-            {EncounterUtils.difficulty(encounter, playerLevel, settings)}
+            {EncounterUtils.difficulty(encounter, playerLevel)}
           </Button>
         }
         className="flex flex-col items-center gap-5"
@@ -453,7 +456,7 @@ export function EncounterStats() {
             type={"number"}
             min={1}
             max={20}
-            value={playerLevel ?? settings?.default_player_level ?? 1}
+            value={playerLevel}
             onChange={(e) => setPlayerLevel(parseInt(e.target.value))}
           />
         </label>

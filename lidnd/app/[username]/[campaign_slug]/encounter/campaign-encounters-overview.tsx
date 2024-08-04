@@ -12,6 +12,7 @@ import {
   useAddNewToParty,
   useCampaign,
   useRemoveFromParty,
+  useUpdateCampaign,
 } from "../hooks";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -35,7 +36,6 @@ import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { useUpdateEncounter } from "@/encounters/[encounter_index]/hooks";
 import { appRoutes } from "@/app/routes";
 import { useRouter } from "next/navigation";
-import { Spinner } from "@/components/ui/spinner";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useEditor } from "@tiptap/react";
@@ -50,6 +50,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { useDebouncedCallback } from "use-debounce";
 
 export interface CampaignEncountersProps {
   deleteCampaignButton: React.ReactNode;
@@ -76,7 +77,7 @@ export default function CampaignEncountersOverview(
           tiptapReadyGate={
             <>
               <span className="flex gap-5 items-center">
-                <CampaignPlayers />
+                <CampaignParty />
               </span>
               <Separator />
               <h1 className={"text-2xl flex items-center"}>
@@ -132,87 +133,112 @@ function ExistingCreaturesForPartyAdd() {
   );
 }
 
-function CampaignPlayers() {
+function CampaignParty() {
   const [campaign] = useCampaign();
   const playersInCampaign = campaign?.campaignToPlayers;
   const { mutate: removePlayer } = useRemoveFromParty();
 
   const { mutate: onPlayerUpload } = useAddNewToParty();
+  const { mutate: updateCampaign } = useUpdateCampaign();
+  const [partyLevel, setPartyLevel] = React.useState(
+    campaign?.party_level ?? 1,
+  );
+
+  const handlePartyLevelChange = useDebouncedCallback((level: string) => {
+    const stringAsInt = parseInt(level);
+    if (!isNaN(stringAsInt)) {
+      updateCampaign({
+        ...campaign,
+        party_level: Math.max(1, stringAsInt),
+      });
+    }
+  });
 
   return (
-    <div className="flex flex-wrap gap-3">
-      {playersInCampaign.map(({ player }) => (
-        <Card
-          className="flex gap-2 h-12 pl-5 w-80 overflow-hidden max-h-full"
-          key={player.id}
-        >
-          <CreatureIcon
-            key={player.id}
-            creature={player}
-            size="small"
-            objectFit="contain"
-          />
-          <span className="flex gap-2 items-center w-full justify-between">
-            <span className="truncate">{player.name}</span>
-            <ButtonWithTooltip
-              variant="ghost"
-              text="Delete"
-              className="opacity-25"
-              onClick={() => removePlayer(player.id)}
-            >
-              <X />
-            </ButtonWithTooltip>
-          </span>
-        </Card>
-      ))}
-      <LidndDialog
-        trigger={
-          <Card className="flex h-12 w-80">
-            <ButtonWithTooltip
-              text="Add new party member"
-              variant="ghost"
-              className="w-full h-full"
-            >
+    <div className="flex flex-col gap-5">
+      <span className="flex gap-5 items-center">
+        <span className="py-2 text-xl">Party</span>
+        <LidndDialog
+          trigger={
+            <ButtonWithTooltip text="Add new party member" variant="ghost">
               <UserPlus />
             </ButtonWithTooltip>
-          </Card>
-        }
-        content={
-          <Tabs defaultValue="new">
-            <span className="flex gap-1 flex-wrap pr-2">
-              <TabsList>
-                <TabsTrigger value="new">
-                  <Plus /> Add new creature
-                </TabsTrigger>
-                <TabsTrigger value="existing">
-                  <UserPlus /> Existing creatures
-                </TabsTrigger>
-              </TabsList>
-            </span>
-            <TabsContent value="new">
-              <Tabs defaultValue="player">
+          }
+          content={
+            <Tabs defaultValue="new">
+              <span className="flex gap-1 flex-wrap pr-2">
                 <TabsList>
-                  <TabsTrigger value="player" className="flex gap-3">
-                    <User /> Player
+                  <TabsTrigger value="new">
+                    <Plus /> Add new creature
                   </TabsTrigger>
-                  <TabsTrigger value="npc" className="flex gap-3">
-                    <Smile /> NPC
+                  <TabsTrigger value="existing">
+                    <UserPlus /> Existing creatures
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent value="npc">
-                  <MonsterUploadForm uploadCreature={onPlayerUpload} />
-                </TabsContent>
-                <TabsContent value="player">
-                  <PlayerUploadForm uploadCreature={onPlayerUpload} />
-                </TabsContent>
-              </Tabs>
-            </TabsContent>
-            <TabsContent value="existing">
-              <ExistingCreaturesForPartyAdd />
-            </TabsContent>
-          </Tabs>
-        }
-      />
+              </span>
+              <TabsContent value="new">
+                <Tabs defaultValue="player">
+                  <TabsList>
+                    <TabsTrigger value="player" className="flex gap-3">
+                      <User /> Player
+                    </TabsTrigger>
+                    <TabsTrigger value="npc" className="flex gap-3">
+                      <Smile /> NPC
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="npc">
+                    <MonsterUploadForm uploadCreature={onPlayerUpload} />
+                  </TabsContent>
+                  <TabsContent value="player">
+                    <PlayerUploadForm uploadCreature={onPlayerUpload} />
+                  </TabsContent>
+                </Tabs>
+              </TabsContent>
+              <TabsContent value="existing">
+                <ExistingCreaturesForPartyAdd />
+              </TabsContent>
+            </Tabs>
+          }
+        />
+        <label className="flex gap-2 items-center font-light whitespace-nowrap">
+          Level
+          <Input
+            type="number"
+            className="w-16"
+            value={partyLevel}
+            onChange={(e) => {
+              setPartyLevel(Math.max(1, parseInt(e.target.value)));
+              handlePartyLevelChange(e.target.value);
+            }}
+          />
+        </label>
+      </span>
+      <div className="flex flex-wrap gap-3">
+        {playersInCampaign.map(({ player }) => (
+          <Card
+            className="flex gap-2 h-12 pl-5 w-80 overflow-hidden max-h-full"
+            key={player.id}
+          >
+            <CreatureIcon
+              key={player.id}
+              creature={player}
+              size="small"
+              objectFit="contain"
+            />
+            <span className="flex gap-2 items-center w-full justify-between">
+              <span className="truncate">{player.name}</span>
+              <ButtonWithTooltip
+                variant="ghost"
+                text="Delete"
+                className="opacity-25"
+                onClick={() => removePlayer(player.id)}
+              >
+                <X />
+              </ButtonWithTooltip>
+            </span>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
@@ -276,7 +302,7 @@ function SessionEncounters() {
           "border-2 border-dashed flex w-full flex-col transition-all rounded-md  bg-gray-100 ",
         )}
       >
-        <ul className="flex flex-wrap p-1">
+        <ul className="flex flex-wrap p-1 flex-col sm:flex-row items-center">
           {activeEncounters?.length === 0 ? (
             <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
           ) : null}
@@ -491,8 +517,9 @@ export function CreateEncounterButton({
                 />
                 <span>Create more</span>
               </label>
-              <Button type="submit">Create encounter</Button>
-              {isPending && <Spinner />}
+              <Button type="submit">
+                {isPending ? "Creating..." : "Create"}
+              </Button>
             </div>
           </div>
         </form>
@@ -536,7 +563,7 @@ function DraggableEncounterCard(props: {
   const { data: settings } = api.settings.useQuery();
   const encounterDifficulty = EncounterUtils.difficulty(
     encounter,
-    settings?.default_player_level,
+    campaign?.party_level,
   );
   const { encounters: encountersQuery } = api.useUtils();
   const { mutate: deleteEncounter } = api.deleteEncounter.useMutation({
@@ -607,7 +634,7 @@ function DraggableEncounterCard(props: {
           >
             <Card
               className={clsx(
-                "flex flex-col transition-all cursor-grab h-32 w-80 p-4 gap-3",
+                "flex flex-col transition-all cursor-grab h-32 w-64 sm:w-80 p-4 gap-3 justify-between",
               )}
               draggable
               onDragStart={(e) => {

@@ -181,6 +181,31 @@ test("skip non-surprise participants when cycling next on surprise round", () =>
   expect(result2.newlyActiveParticipant.id).toBe("2");
 });
 
+test("when cycling from surprise round end, correctly set non-surprise but first active participant", () => {
+  const participants = [
+    createParticipant({
+      id: "2",
+      is_active: true,
+      has_surprise: true,
+      initiative: 3,
+    }),
+    createParticipant({ id: "1", is_active: false, initiative: 4 }),
+    createParticipant({
+      id: "3",
+      is_active: false,
+      initiative: 2,
+    }),
+  ];
+
+  const result = EncounterUtils.cycleNextTurn({
+    current_round: 0,
+    participants,
+  });
+
+  expect(result.updatedRoundNumber).toBe(1);
+  expect(result.newlyActiveParticipant.id).toBe("1");
+});
+
 describe("Overkill minions", () => {
   test("overkill damage kills the right number of minions", () => {
     const participant = createParticipant({

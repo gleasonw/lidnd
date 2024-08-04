@@ -10,6 +10,7 @@ import { ParticipantUtils } from "@/utils/participants";
 import { HealthMeterOverlay } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/battle-ui";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/group-battle-ui";
+import { EffectIcon } from "@/encounters/[encounter_index]/status-input";
 
 export default function ObservePage({ params }: { params: { id: string } }) {
   return (
@@ -53,21 +54,29 @@ async function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
       className={"flex margin-auto gap-0.5 lg:gap-3 overflow-auto max-w-full"}
     >
       {participants.map((p, index) => (
-        <div
-          className={clsx(
-            "w-32 border-4 flex-grow-0 flex justify-center items-center transition-all h-32 relative",
-            ParticipantUtils.isFriendly(p)
-              ? "border-blue-600"
-              : "border-red-600",
-            p.is_active && "h-48",
-            index < activeIndex
-              ? "opacity-60 hover:opacity-100"
-              : "hover:opacity-60",
-          )}
-          key={p.id}
-        >
-          <HealthMeterOverlay participant={p} />
-          <CreatureIcon creature={p.creature} size="medium" />
+        <div key={p.id}>
+          <div
+            className={clsx(
+              "w-32 border-8 flex-grow-0 flex justify-center items-center transition-all h-32 relative",
+              p.is_active && "h-48",
+              index < activeIndex
+                ? "opacity-60 hover:opacity-100"
+                : "hover:opacity-60",
+            )}
+            style={{ borderColor: ParticipantUtils.iconHexColor(p) }}
+            key={p.id}
+          >
+            <HealthMeterOverlay participant={p} />
+            <CreatureIcon creature={p.creature} size="medium" />
+          </div>
+          <ul>
+            {p.status_effects.map((effect) => (
+              <li key={effect.id} className="flex gap-2">
+                <EffectIcon effect={effect.effect} />
+                {effect.effect.name}
+              </li>
+            ))}
+          </ul>
         </div>
       ))}
     </div>

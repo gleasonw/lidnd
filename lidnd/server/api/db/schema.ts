@@ -90,6 +90,7 @@ export const campaigns = pgTable(
     name: varchar("name", { length: 256 }).notNull(),
     slug: varchar("slug", { length: 256 }).notNull().default(""),
     description: text("description"),
+    party_level: integer("party_level").notNull().default(1),
     started_at: timestamp("started_at"),
     created_at: timestamp("created_at").defaultNow(),
     user_id: text("user_id")
@@ -203,9 +204,9 @@ export const participants = pgTable(
     has_surprise: boolean("has_surprise").default(false).notNull(),
     minion_count: integer("minion_count"),
     nickname: text("nickname"),
+    hex_color: text("hex_color"),
     notes: text("notes"),
     temporary_hp: integer("temporary_hp").default(0).notNull(),
-    is_concentrating: boolean("is_concentrating").default(false).notNull(),
     has_played_this_round: boolean("has_played_this_round")
       .default(false)
       .notNull(),
@@ -319,7 +320,6 @@ export const settings = pgTable("settings", {
     .default(true)
     .notNull(),
   average_turn_seconds: integer("average_turn_seconds").default(180).notNull(),
-  default_player_level: integer("default_player_level").default(1).notNull(),
   enable_minions: boolean("enable_minions").default(false).notNull(),
   collapse_sidebar: boolean("collapse_sidebar").default(false).notNull(),
 });

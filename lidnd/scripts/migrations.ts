@@ -10,8 +10,7 @@ import { eq, isNull } from "drizzle-orm";
 import _ from "lodash";
 import sharp from "sharp";
 
-addImageDimensions();
-
+// @ts-expect-error - unused unused
 async function addImageDimensions() {
   const allCreatures = await db.query.creatures.findMany();
 

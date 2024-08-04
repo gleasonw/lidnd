@@ -100,9 +100,10 @@ export const EncounterUtils = {
     encounter: EncounterWithParticipants,
     estimatedRounds?: number | null,
     estimatedTurnSeconds?: number | null,
-    settings?: Settings
+    settings?: Settings,
+    playerLevel?: number | null
   ) {
-    const difficulty = this.difficulty(encounter, null, settings);
+    const difficulty = this.difficulty(encounter, playerLevel);
     const finalEstimatedRounds =
       estimatedRounds ?? difficulty === "Deadly"
         ? 9
@@ -187,10 +188,9 @@ export const EncounterUtils = {
 
   difficulty(
     encounter: EncounterWithParticipants,
-    playerLevel?: number | null,
-    settings?: Settings
+    playerLevel?: number | null
   ) {
-    const finalPlayerLevel = playerLevel ?? settings?.default_player_level ?? 1;
+    const finalPlayerLevel = playerLevel ?? 1;
     const totalCr = this.totalCr(encounter);
 
     const { easyTier, standardTier, hardTier } = this.findCRBudget(
@@ -233,6 +233,12 @@ export const EncounterUtils = {
   allies(encounter: EncounterWithParticipants<ParticipantWithData>) {
     return this.participants(encounter).filter((p) =>
       ParticipantUtils.isFriendly(p)
+    );
+  },
+
+  players(encounter: EncounterWithParticipants<ParticipantWithData>) {
+    return this.participants(encounter).filter((p) =>
+      ParticipantUtils.isPlayer(p)
     );
   },
 
@@ -526,10 +532,11 @@ export const EncounterUtils = {
       updateActiveAndRoundNumber(activeParticipants);
 
     if (updatedRoundNumber === 0 && encounter.current_round === 1) {
+      // when cycling back to surprise round, set the first active participant to the last surprise participant
+
       const lastSurpriseParticipant = participants
         .filter((p) => p.has_surprise)
         .pop();
-
       if (!lastSurpriseParticipant) {
         throw new Error(
           "cycleTurnWithSurprise: lastSurpriseParticipant not found"
@@ -543,6 +550,24 @@ export const EncounterUtils = {
         })),
         updatedRoundNumber,
         newlyActiveParticipant: lastSurpriseParticipant,
+      };
+    }
+
+    if (updatedRoundNumber === 1 && encounter.current_round === 0) {
+      // set first active as just the first active participant when cycling from surprise round
+
+      const firstActive = participants.at(0);
+      if (!firstActive) {
+        throw new Error("Participants empty?");
+      }
+
+      return {
+        updatedParticipants: participants.map((p) => ({
+          ...p,
+          is_active: p.id === firstActive.id,
+        })),
+        updatedRoundNumber,
+        newlyActiveParticipant: firstActive,
       };
     }
 

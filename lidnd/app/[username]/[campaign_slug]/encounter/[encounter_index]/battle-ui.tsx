@@ -10,8 +10,7 @@ import clsx from "clsx";
 import { api } from "@/trpc/react";
 import type { Participant, ParticipantWithData } from "@/server/api/router";
 import { BasePopover } from "@/encounters/base-popover";
-import { StatusInput } from "./status-input";
-import { effectIconMap } from "./effectIconMap";
+import { EffectIcon, StatusInput } from "./status-input";
 import { LinearBattleUI } from "./linear-battle-ui";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { observer } from "mobx-react-lite";
@@ -192,13 +191,9 @@ export function BattleCardStatusEffects({
         <BasePopover
           key={se.id}
           trigger={
-            <Button variant="outline">
-              {
-                effectIconMap[
-                  ParticipantEffectUtils.name(se) as keyof typeof effectIconMap
-                ]
-              }
-            </Button>
+            <button>
+              <EffectIcon effect={se.effect} />
+            </button>
           }
           className="flex flex-col gap-2 text-sm"
         >
@@ -214,11 +209,55 @@ export function BattleCardStatusEffects({
 export function BattleCardCreatureName({
   participant,
 }: BattleCardParticipantProps) {
+  const labelColors = [
+    "#FF4D4F", // Red
+    "#FA8C16", // Orange
+    "#FFEC3D", // Yellow
+    "#52C41A", // Green
+    "#13C2C2", // Teal
+    "#1890FF", // Blue
+    "#722ED1", // Purple
+    "#EB2F96", // Pink
+    "#36CFC9", // Cyan
+    "#A0D911", // Lime
+    "#FAAD14", // Gold
+    "#EB2F96", // Magenta
+    "#8C8C8C", // Gray
+    "#40A9FF", // Light Blue
+    "#73D13D", // Light Green
+  ];
+  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   return (
-    <span className="flex flex-col gap-2 justify-between items-center py-3 font-bold text-4xl">
+    <span className="flex gap-2 justify-center items-center py-3 font-bold text-4xl">
       <CardTitle className="text-2xl  truncate max-w-full">
         {ParticipantUtils.name(participant)}
       </CardTitle>
+      <BasePopover
+        trigger={
+          <Button
+            style={{
+              backgroundColor: ParticipantUtils.iconHexColor(participant),
+            }}
+            variant="ghost"
+          />
+        }
+      >
+        <div className="grid grid-cols-3">
+          {labelColors.map((color, index) => (
+            <Button
+              key={index}
+              style={{ backgroundColor: color }}
+              variant="ghost"
+              onClick={() => {
+                updateParticipant({
+                  ...participant,
+                  hex_color: color,
+                });
+              }}
+            />
+          ))}
+        </div>
+      </BasePopover>
     </span>
   );
 }

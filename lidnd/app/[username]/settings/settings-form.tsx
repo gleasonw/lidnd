@@ -21,7 +21,6 @@ export function SettingsForm() {
     show_health_in_discord: z.boolean(),
     show_icons_in_discord: z.boolean(),
     average_turn_seconds: z.coerce.number(),
-    default_player_level: z.coerce.number(),
     enable_minions: z.boolean(),
   });
 
@@ -49,16 +48,6 @@ export function SettingsForm() {
               name="average_turn_seconds"
               type="number"
               defaultValue={userSettings?.average_turn_seconds ?? 180}
-            />
-          </label>
-        </div>
-        <div className={"flex gap-5 justify-between"}>
-          <label>
-            Default player level
-            <Input
-              name="default_player_level"
-              type="number"
-              defaultValue={userSettings?.default_player_level ?? 1}
             />
           </label>
         </div>

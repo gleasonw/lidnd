@@ -1,5 +1,8 @@
 import { Timer } from "lucide-react";
+import React from "react";
 import { useState, useEffect } from "react";
+
+const emptySubscribe = () => () => {};
 
 export function EncounterTime({ time }: { time?: Date }) {
   const [now, setNow] = useState(new Date());
@@ -14,8 +17,22 @@ export function EncounterTime({ time }: { time?: Date }) {
 
   if (!time) return <div></div>;
 
+  const timeString = React.useSyncExternalStore(
+    emptySubscribe,
+    () => timeToDisplay(time, now),
+    () => null,
+  );
+
+  return (
+    <div className={"flex gap-3 justify-center items-center text-gray-500"}>
+      <Timer />
+      <div className=" text-sm">{timeString}</div>
+    </div>
+  );
+}
+
+function timeToDisplay(startedAtUTC: Date, now: Date) {
   // time is in UTC, so we need to convert it to local time
-  const startedAtUTC = time;
   const startedAtLocal = new Date(
     startedAtUTC.getTime() - startedAtUTC.getTimezoneOffset() * 60000,
   );
@@ -25,29 +42,19 @@ export function EncounterTime({ time }: { time?: Date }) {
   const hours = minutes / 60;
   const days = hours / 24;
 
-  let timeString = "";
   if (days >= 1) {
-    timeString = startedAtLocal.toLocaleDateString();
+    return startedAtLocal.toLocaleDateString();
   } else if (hours >= 1) {
-    timeString = `${Math.floor(hours)} hour${
-      Math.floor(hours) > 1 ? "s" : ""
-    } ago`;
+    return `${Math.floor(hours)} hour${Math.floor(hours) > 1 ? "s" : ""} ago`;
   } else if (minutes >= 1) {
-    timeString = `${Math.floor(minutes)} minute${
+    return `${Math.floor(minutes)} minute${
       Math.floor(minutes) > 1 ? "s" : ""
     } ago`;
   } else if (seconds >= 1) {
-    timeString = `${Math.floor(seconds)} second${
+    return `${Math.floor(seconds)} second${
       Math.floor(seconds) > 1 ? "s" : ""
     } ago`;
   } else {
-    timeString = "Just now";
+    return "Just now";
   }
-
-  return (
-    <div className={"flex gap-3 justify-center items-center text-gray-500"}>
-      <Timer />
-      <div className=" text-sm">{timeString}</div>
-    </div>
-  );
 }
