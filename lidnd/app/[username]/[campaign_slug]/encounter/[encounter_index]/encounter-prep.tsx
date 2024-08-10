@@ -51,6 +51,7 @@ import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
+import { EncounterCanvas } from "@/encounters/[encounter_index]/_canvas/encounter-canvas-editor";
 
 class EncounterPrepStore {
   selectedeParticipantId: string | null = null;
@@ -79,30 +80,11 @@ const useEncounterPrepStore = () => {
 const EncounterPrep = observer(function EncounterPrep() {
   const { selectedeParticipantId: selectedCreatureId } = encounterPrepStore;
   const [encounter] = useEncounter();
-  const selectedCreature = selectedCreatureId
-    ? EncounterUtils.participantFor(encounter, selectedCreatureId)?.creature
-    : null;
+
   return (
     <EncounterPrepContext.Provider value={encounterPrepStore}>
-      <div className="flex flex-col gap-5 flex-grow ml-auto mr-auto max-w-[860px] min-w-0">
-        <EncounterDetailsTopBar>
-          <EncounterStats />
-        </EncounterDetailsTopBar>
-        <EncounterNameInput />
-        <DescriptionTextArea
-          tiptapReadyGate={
-            <>
-              <Separator />
-              <EncounterParticipantRow />
-              {selectedCreature && (
-                <CreatureStatBlockImage creature={selectedCreature} />
-              )}
-              <div className="flex md:hidden">
-                <EncounterReminderInput />
-              </div>
-            </>
-          }
-        />
+      <div className="w-full h-full relative">
+        <EncounterCanvas />
       </div>
     </EncounterPrepContext.Provider>
   );
@@ -616,4 +598,7 @@ export function EncounterReminderInput() {
       </form>
     </div>
   );
+}
+function useMsg() {
+  throw new Error("Function not implemented.");
 }

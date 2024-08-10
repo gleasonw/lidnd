@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url("tldraw/tldraw.css");
 
 * {
   .tiptap p.is-editor-empty:first-child::before {

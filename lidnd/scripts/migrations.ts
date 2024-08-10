@@ -10,6 +10,8 @@ import { eq, isNull } from "drizzle-orm";
 import _ from "lodash";
 import sharp from "sharp";
 
+// TODO: add canvas snapshots
+
 // @ts-expect-error - unused unused
 async function addImageDimensions() {
   const allCreatures = await db.query.creatures.findMany();

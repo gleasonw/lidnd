@@ -71,7 +71,7 @@ export default function CampaignEncountersOverview(
       }
       wrapperClassName="flex h-full overflow-hidden"
     >
-      <div className="flex flex-col gap-5 h-full overflow-auto w-full">
+      <div className="flex flex-col gap-5 h-full overflow-auto w-full px-3 pt-2">
         {campaignHeader}
         <CampaignDescriptionArea
           tiptapReadyGate={

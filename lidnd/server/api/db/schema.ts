@@ -13,6 +13,7 @@ import {
   pgEnum,
   unique,
   doublePrecision,
+  json,
 } from "drizzle-orm/pg-core";
 
 export type DbSpell = InferInsertModel<typeof spells>;
@@ -64,7 +65,7 @@ export const encounter_label_enum = pgEnum("encounter_label", [
   "inactive",
 ]);
 
-export const encounter_status = ["roll", "surprise", "prep", "run"] as const;
+export const encounter_status = ["roll", "prep", "run"] as const;
 export type EncounterStatus = (typeof encounter_status)[number];
 
 export const encounter_status_enum = pgEnum(
@@ -167,6 +168,8 @@ export const encounters = pgTable(
     label: encounter_label_enum("label").default("active").notNull(),
     order: doublePrecision("order").default(1).notNull(),
     index_in_campaign: integer("index_in_campaign").notNull().default(0),
+    canvas_snapshot: json("canvas_snapshot"),
+    is_first_canvas_load: boolean("is_first_canvas_load").default(true),
   },
   (t) => {
     return {

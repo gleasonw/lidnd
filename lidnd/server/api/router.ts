@@ -12,7 +12,7 @@ import {
   campaigns,
   campaignToPlayer,
 } from "@/server/api/db/schema";
-import { eq, and, ilike } from "drizzle-orm";
+import { eq, and, ilike, is } from "drizzle-orm";
 import { db } from "@/server/api/db";
 import superjson from "superjson";
 import { ZodError, z } from "zod";
@@ -282,7 +282,6 @@ export const appRouter = t.router({
           opts.ctx,
           opts.input
         );
-
         const [activeParticipant, firstRoundNumber] =
           EncounterUtils.firstActiveAndRoundNumber(encounter);
 
@@ -524,6 +523,28 @@ export const appRouter = t.router({
         });
       }
       return encounterParticipant[0];
+    }),
+
+  updateCanvasSnapshot: protectedProcedure
+    .input(z.object({ encounter_id: z.string(), snapshot: z.string() }))
+    .mutation(async (opts) => {
+      const result = await db
+        .update(encounters)
+        .set({ canvas_snapshot: opts.input.snapshot })
+        .where(
+          and(
+            eq(encounters.id, opts.input.encounter_id),
+            eq(encounters.user_id, opts.ctx.user.id)
+          )
+        )
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update encounter",
+        });
+      }
+      return result[0];
     }),
   //#endregion
 

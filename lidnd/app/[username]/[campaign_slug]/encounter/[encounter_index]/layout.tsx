@@ -9,6 +9,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { EncounterCanvasEditor } from "@/encounters/[encounter_index]/_canvas/encounter-canvas-editor";
 import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { EncounterSidebar } from "@/encounters/[encounter_index]/encounter-sidebar";
 import { EncounterTopBar } from "@/encounters/[encounter_index]/encounter-top-bar";
@@ -85,81 +86,90 @@ export default async function EncounterLayout({
     <EncounterUI>
       <CampaignId value={campaign.id}>
         <EncounterId value={encounter.id}>
-          <section className="flex h-full overflow-hidden">
-            <section className="flex flex-col flex-grow min-w-0 gap-3">
-              <div className="flex flex-wrap justify-between">
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem>
-                      <BreadcrumbLink href={appRoutes.campaign(campaign, user)}>
-                        {campaign.name}
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbLink
-                      href={appRoutes.encounter(campaign, encounter, user)}
-                    >
-                      <BreadcrumbItem>{encounter.name}</BreadcrumbItem>
-                    </BreadcrumbLink>
-                  </BreadcrumbList>
-                </Breadcrumb>
-                <div className="flex gap-2">
-                  <span>
-                    {indexForDisplay + 1} / {campaign.encounters.length}
-                  </span>
-                  <span>
-                    {priorEncounter ? (
-                      <Link
-                        href={appRoutes.encounter(
-                          campaign,
-                          priorEncounter,
-                          user,
-                        )}
+          <EncounterCanvasEditor>
+            <section className="flex h-full overflow-hidden">
+              <section className="flex flex-col flex-grow min-w-0 gap-3">
+                <div className="flex flex-wrap justify-between px-2 pt-2">
+                  <Breadcrumb>
+                    <BreadcrumbList>
+                      <BreadcrumbItem>
+                        <BreadcrumbLink
+                          href={appRoutes.campaign(campaign, user)}
+                        >
+                          {campaign.name}
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator />
+                      <BreadcrumbLink
+                        href={appRoutes.encounter(campaign, encounter, user)}
                       >
+                        <BreadcrumbItem>{encounter.name}</BreadcrumbItem>
+                      </BreadcrumbLink>
+                    </BreadcrumbList>
+                  </Breadcrumb>
+                  <div className="flex gap-2">
+                    <span>
+                      {indexForDisplay + 1} / {campaign.encounters.length}
+                    </span>
+                    <span>
+                      {priorEncounter ? (
+                        <Link
+                          href={appRoutes.encounter(
+                            campaign,
+                            priorEncounter,
+                            user,
+                          )}
+                        >
+                          <Button
+                            variant="ghost"
+                            className="p-0 h-6 w-6"
+                            size="icon"
+                          >
+                            <ChevronUp />
+                          </Button>
+                        </Link>
+                      ) : (
                         <Button
                           variant="ghost"
-                          className="p-0 h-6 w-6"
-                          size="icon"
+                          disabled
+                          className="h-6 w-6 p-0"
                         >
                           <ChevronUp />
                         </Button>
-                      </Link>
-                    ) : (
-                      <Button variant="ghost" disabled className="h-6 w-6 p-0">
-                        <ChevronUp />
-                      </Button>
-                    )}
-                    {nextEncounter ? (
-                      <Link
-                        href={appRoutes.encounter(
-                          campaign,
-                          nextEncounter,
-                          user,
-                        )}
-                      >
+                      )}
+                      {nextEncounter ? (
+                        <Link
+                          href={appRoutes.encounter(
+                            campaign,
+                            nextEncounter,
+                            user,
+                          )}
+                        >
+                          <Button
+                            variant="ghost"
+                            className="p-0 h-6 w-6"
+                            size="icon"
+                          >
+                            <ChevronDown />
+                          </Button>
+                        </Link>
+                      ) : (
                         <Button
                           variant="ghost"
-                          className="p-0 h-6 w-6"
-                          size="icon"
+                          disabled
+                          className="h-6 w-6 p-0"
                         >
                           <ChevronDown />
                         </Button>
-                      </Link>
-                    ) : (
-                      <Button variant="ghost" disabled className="h-6 w-6 p-0">
-                        <ChevronDown />
-                      </Button>
-                    )}
-                  </span>
+                      )}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <EncounterTopBar />
-              <section className="flex flex-col overflow-y-auto">
+                <EncounterTopBar />
                 {children}
               </section>
             </section>
-            <EncounterSidebar />
-          </section>
+          </EncounterCanvasEditor>
         </EncounterId>
       </CampaignId>
     </EncounterUI>

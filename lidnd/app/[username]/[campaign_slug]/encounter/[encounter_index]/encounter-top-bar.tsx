@@ -65,7 +65,7 @@ function BattleTopBar() {
 
   const isTurnLoading = isLoadingNextTurn || isLoadingPreviousTurn;
   return (
-    <div className="flex w-full flex-col gap-5 items-center">
+    <div className="flex w-full flex-col gap-5 items-center bg-transparent absolute top-10 z-10">
       <div className="flex gap-10 justify-center w-full items-center">
         <Button
           className="mr-auto w-48 shadow-lg"

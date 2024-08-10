@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Card } from "@/components/ui/card";
+import { Tip } from "@/components/ui/tip";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import {
   EncounterReminderInput,
@@ -21,7 +22,7 @@ import { BasePopover } from "@/encounters/base-popover";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import clsx from "clsx";
-import { PanelRightClose, PanelRightOpen, Play } from "lucide-react";
+import { Play } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
@@ -65,41 +66,37 @@ function StatusEffectSidebar() {
   return (
     <div
       className={clsx(
-        "flex flex-col gap-5 border-l transition-all items-center flex-shrink-0",
-        {
-          "w-[400px]": isOpen,
-          "w-14": !isOpen,
-        },
+        "flex flex-col gap-5 transition-all flex-shrink-0 absolute right-0 top-1/4",
       )}
     >
       <div className="flex flex-col gap-5 items-center justify-center w-full">
-        {isOpen && <h1 className="text-xl">Player status effects</h1>}
-        <Button variant="ghost" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <PanelRightClose /> : <PanelRightOpen />}
-        </Button>
         {isOpen && (
           <div className="flex flex-col gap-5 w-full px-5">
             {players.map((p) => (
-              <div key={p.id} className="flex flex-col gap-2 w-full">
+              <Card key={p.id} className="flex flex-col gap-2 w-full">
                 <div key={p.id} className="flex gap-2">
-                  <CreatureIcon
-                    creature={p.creature}
-                    size="small"
-                    objectFit="contain"
-                  />
-                  <span
-                    className={clsx(
-                      {
-                        "text-2xl": p.is_active,
-                        "text-lg": !p.is_active,
-                      },
-                      "transition-all",
-                    )}
-                  >
-                    {p.creature.name}
-                  </span>
+                  <button onClick={() => setIsOpen(false)}>
+                    <CreatureIcon
+                      creature={p.creature}
+                      size="small"
+                      objectFit="contain"
+                    />
+                  </button>
+                  <div className="fle flex-col gap-2">
+                    <span
+                      className={clsx(
+                        {
+                          "text-2xl": p.is_active,
+                          "text-lg": !p.is_active,
+                        },
+                        "transition-all",
+                      )}
+                    >
+                      {p.creature.name}
+                    </span>
+                    <StatusInput participant={p} />
+                  </div>
                 </div>
-                <StatusInput participant={p} />
                 {p.status_effects?.length > 0 && (
                   <ul className="text-left overflow-hidden p-3">
                     {p.status_effects.map((se) => (
@@ -133,10 +130,43 @@ function StatusEffectSidebar() {
                     ))}
                   </ul>
                 )}
-                <Separator />
-              </div>
+              </Card>
             ))}
           </div>
+        )}
+        {!isOpen && (
+          <>
+            {players.map((p) => (
+              <Card
+                key={p.id}
+                className="flex gap-2 overflow-x-visible self-end"
+              >
+                {p.status_effects?.length > 0 && (
+                  <ul className="flex gap-1 flex-col">
+                    {p.status_effects.map((se) => (
+                      <li
+                        key={se.id}
+                        className="flex gap-2 items-center w-full"
+                      >
+                        <Tip text={ParticipantEffectUtils.description(se)}>
+                          <button className="flex gap-2 items-center">
+                            <EffectIcon effect={se.effect} />
+                            <span>
+                              {se.effect.name}{" "}
+                              {se.save_ends_dc ? `(${se.save_ends_dc})` : null}
+                            </span>
+                          </button>
+                        </Tip>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <button onClick={() => setIsOpen(true)}>
+                  <CreatureIcon creature={p.creature} size="small" />
+                </button>
+              </Card>
+            ))}
+          </>
         )}
       </div>
     </div>
