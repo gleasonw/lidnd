@@ -148,6 +148,15 @@ export const campaignToPlayerRelations = relations(
   })
 );
 
+export const canvas_snapshots = pgTable("canvas_snapshots", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  user_id: text("user_id"),
+  encounter_id: uuid("encounter_id")
+    .references(() => encounters.id, { onDelete: "cascade" })
+    .notNull(),
+  snapshot: text("snapshot"),
+});
+
 export const encounters = pgTable(
   "encounters",
   {
@@ -168,8 +177,7 @@ export const encounters = pgTable(
     label: encounter_label_enum("label").default("active").notNull(),
     order: doublePrecision("order").default(1).notNull(),
     index_in_campaign: integer("index_in_campaign").notNull().default(0),
-    canvas_snapshot: json("canvas_snapshot"),
-    is_first_canvas_load: boolean("is_first_canvas_load").default(true),
+    is_canvas_initialized: boolean("is_canvas_initialized").default(false),
   },
   (t) => {
     return {

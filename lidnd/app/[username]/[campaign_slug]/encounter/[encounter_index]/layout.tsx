@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { EncounterCanvasEditor } from "@/encounters/[encounter_index]/_canvas/encounter-canvas-editor";
 import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
-import { EncounterSidebar } from "@/encounters/[encounter_index]/encounter-sidebar";
 import { EncounterTopBar } from "@/encounters/[encounter_index]/encounter-top-bar";
 import { EncounterUI } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { db } from "@/server/api/db";

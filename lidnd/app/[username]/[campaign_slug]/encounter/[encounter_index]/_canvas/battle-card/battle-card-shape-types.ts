@@ -6,8 +6,6 @@ export type BattleCardShape = TLBaseShape<
   {
     w: number;
     h: number;
-    props: {
-      participantId: string;
-    };
+    participantId: string;
   }
 >;

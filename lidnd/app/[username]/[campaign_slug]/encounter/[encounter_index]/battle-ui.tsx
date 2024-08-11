@@ -70,12 +70,12 @@ export type BattleCardProps = {
   className?: string;
   isSelected?: boolean;
   header?: React.ReactNode;
-  battleCardExtraContent?: React.ReactNode;
+  extraContent?: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export function BattleCard({
   participant,
-  battleCardExtraContent,
+  extraContent,
   ...props
 }: BattleCardProps) {
   const id = useEncounterId();
@@ -106,10 +106,7 @@ export function BattleCard({
   const selectedId = dmSelectedCreature ?? activeParticipant?.id ?? null;
 
   return (
-    <div
-      className={`relative flex-col gap-6 items-center justify-between flex`}
-      {...props}
-    >
+    <div className={`relative flex-col gap-6 w-full h-full flex`} {...props}>
       {participant?.minion_count && participant.minion_count > 1 ? (
         <MinionCardStack minionCount={participant.minion_count} />
       ) : null}
@@ -129,7 +126,7 @@ export function BattleCard({
             <BattleCardHealthAndStatus participant={participant} />
           </div>
         </BattleCardContent>
-        {battleCardExtraContent}
+        {extraContent}
       </BattleCardLayout>
     </div>
   );

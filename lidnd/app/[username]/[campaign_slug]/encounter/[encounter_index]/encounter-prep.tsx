@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Clock,
   Dices,
-  Play,
   Skull,
   X,
   Swords,
@@ -15,43 +14,66 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import React, { createContext, useContext, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
 import type { ParticipantWithData } from "@/server/api/router";
 import { BasePopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
-import { CreatureStatBlockImage } from "@/app/[username]/[campaign_slug]/encounter/original-size-image";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
-import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { isStringMeaningful } from "@/app/[username]/utils";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
-import { DescriptionTextArea } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/description-text-area";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
-import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/group-battle-ui";
 import {
   useStartEncounter,
   useRemoveParticipantFromEncounter,
   useEncounter,
   useUpdateEncounterParticipant,
   useEncounterLink,
+  useUpdateEncounter,
+  useCreateCreatureInEncounter,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
-import {
-  AllyUpload,
-  MonsterUpload,
-} from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/participant-add-form";
 import { AnimationListItem } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/battle-ui";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import Link from "next/link";
-import { Separator } from "@/components/ui/separator";
 import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
-import { EncounterCanvas } from "@/encounters/[encounter_index]/_canvas/encounter-canvas-editor";
+import {
+  ContextMenu,
+  createShapeId,
+  DefaultContextMenuContent,
+  registerDefaultExternalContentHandlers,
+  registerDefaultSideEffects,
+  TldrawUi,
+  useEditor,
+  useToasts,
+  useTranslation,
+  type TLEditorSnapshot,
+  type TLUiComponents,
+} from "tldraw";
+import {
+  uiOverrides,
+  overrideComponents,
+} from "@/encounters/[encounter_index]/_canvas/ui-overrides";
+import { LidndDialog } from "@/components/ui/lidnd_dialog";
+import {
+  ExistingMonster,
+  MonsterUpload,
+  ParticipantUpload,
+} from "@/encounters/[encounter_index]/participant-add-form";
+import { MonsterUploadForm } from "@/encounters/full-creature-add-form";
+import { customShapeTypes } from "@/encounters/[encounter_index]/_canvas/encounter-canvas-editor";
 
 class EncounterPrepStore {
   selectedeParticipantId: string | null = null;
@@ -78,17 +100,153 @@ const useEncounterPrepStore = () => {
 };
 
 const EncounterPrep = observer(function EncounterPrep() {
-  const { selectedeParticipantId: selectedCreatureId } = encounterPrepStore;
-  const [encounter] = useEncounter();
-
   return (
     <EncounterPrepContext.Provider value={encounterPrepStore}>
       <div className="w-full h-full relative">
         <EncounterCanvas />
+        <EncounterCanvasInitializer />
+        <EncounterCanvasPersistence />
       </div>
     </EncounterPrepContext.Provider>
   );
 });
+
+export function EncounterCanvas() {
+  return (
+    <TldrawUi
+      onUiEvent={(data) => console.log(data)}
+      components={customUiComponents}
+      overrides={uiOverrides}
+    >
+      <EncounterCanvasMainContent />
+    </TldrawUi>
+  );
+}
+
+function EncounterCanvasMainContent() {
+  const editor = useEditor();
+  const toasts = useToasts();
+  const msg = useTranslation();
+
+  useEffect(() => {
+    registerDefaultExternalContentHandlers(
+      editor,
+      {
+        maxImageDimension: 5000,
+        maxAssetSize: 10 * 1024 * 1024, // 10mb
+        acceptedImageMimeTypes: ["image/png", "image/jpeg", "image/gif"],
+        acceptedVideoMimeTypes: ["video/mp4", "video/webm"],
+      },
+      {
+        toasts,
+        msg,
+      },
+    );
+
+    const cleanupSideEffects = registerDefaultSideEffects(editor);
+
+    return () => {
+      cleanupSideEffects();
+    };
+  }, [editor, msg, toasts]);
+  return (
+    <ContextMenu>
+      <DefaultContextMenuContent />
+    </ContextMenu>
+  );
+}
+
+function EncounterCanvasTopPanel() {
+  return (
+    <div>
+      <Card className="flex gap-5 p-3 items-center">
+        <LidndDialog
+          trigger={
+            <Button className="pointer-events-auto z-10">
+              Add creature to encounter
+            </Button>
+          }
+          content={<MonsterUpload />}
+        />
+      </Card>
+    </div>
+  );
+}
+
+const customUiComponents: TLUiComponents = {
+  TopPanel: EncounterCanvasTopPanel,
+  ...overrideComponents,
+};
+
+function EncounterCanvasInitializer() {
+  // ideally we would do this on the server or something. we're just loading in the starter shapes
+
+  const editor = useEditor();
+  const encounterId = useEncounterId();
+  const [encounter] = useEncounter();
+  const [snapshot] = api.initCanvasSnapshotShapes.useSuspenseQuery(encounterId);
+  const isFirstRender = useRef(true);
+  const { mutate: updateEncounter } = useUpdateEncounter();
+
+  useEffect(() => {
+    if (!encounter.is_canvas_initialized && isFirstRender.current) {
+      editor.run(() => {
+        const viewCenter = editor.getViewportScreenCenter();
+        editor.createShape({
+          id: createShapeId(),
+          type: "text",
+          props: { text: encounter.name },
+          x: viewCenter.x,
+          y: viewCenter.y,
+        });
+        let offset = 0;
+        encounter.participants.forEach((p) => {
+          offset += 100;
+          editor.createShape({
+            id: createShapeId(),
+            type: customShapeTypes.battleCard,
+            props: { participantId: p.id },
+            x: viewCenter.x + offset,
+            y: viewCenter.y,
+          });
+        });
+      });
+
+      isFirstRender.current = false;
+      updateEncounter({
+        ...encounter,
+        is_canvas_initialized: true,
+      });
+    }
+  }, [editor, snapshot, encounter]);
+
+  return null;
+}
+
+function EncounterCanvasPersistence() {
+  const [encounter] = useEncounter();
+  const editor = useEditor();
+
+  const { mutate: updateSnapshot } = api.updateCanvasSnapshot.useMutation();
+
+  const debounceUpdateSnapshot = useDebouncedCallback(
+    (storeSnapshot: TLEditorSnapshot) => {
+      const snapshot = JSON.stringify(storeSnapshot);
+      updateSnapshot({ encounter_id: encounter.id, snapshot });
+    },
+    1500,
+  );
+
+  const unlisten = editor.store.listen(() => {
+    debounceUpdateSnapshot(editor.getSnapshot());
+  });
+
+  useEffect(() => {
+    return () => unlisten();
+  }, [unlisten]);
+
+  return null;
+}
 
 export default EncounterPrep;
 
@@ -141,31 +299,6 @@ export function EncounterNameInput() {
   );
 }
 
-interface EncounterDetailsTopBarProps {
-  children?: React.ReactNode;
-}
-
-function EncounterDetailsTopBar(props: EncounterDetailsTopBarProps) {
-  const { children } = props;
-  const [encounter] = useEncounter();
-  const runLink = useEncounterLink("run");
-  return (
-    <div className="flex items-center gap-1 flex-wrap md:hidden">
-      {encounter?.started_at ? (
-        <Link href={runLink}>
-          <Button>
-            <Play />
-            Continue the battle!
-          </Button>
-        </Link>
-      ) : (
-        <EncounterStartButton />
-      )}
-      {children}
-    </div>
-  );
-}
-
 export function EncounterStartButton() {
   const id = useEncounterId();
   const campaignId = useCampaignId();
@@ -198,78 +331,11 @@ export function EncounterStartButton() {
   );
 }
 
-function EncounterParticipantRow() {
-  const id = useEncounterId();
-  const [encounter] = api.encounterById.useSuspenseQuery(id);
-
-  const monsters = EncounterUtils.monsters(encounter);
-  const players = EncounterUtils.allies(encounter);
-
-  return (
-    <>
-      <GroupBattleLayout
-        playerTitle={
-          <h1 className="flex gap-5 text-xl items-center">
-            Allies
-            <LidndPlusDialog text="Add ally">
-              <AllyUpload />
-            </LidndPlusDialog>
-          </h1>
-        }
-        monsterTitle={
-          <h1 className="flex gap-5 text-xl items-center">
-            Monsters
-            <LidndPlusDialog text="Add monster">
-              <MonsterUpload />
-            </LidndPlusDialog>
-          </h1>
-        }
-        monsters={[
-          ...monsters.map((participant, index) => (
-            <PrepParticipantCard
-              participant={participant}
-              key={participant.id + index}
-            />
-          )),
-          <Card
-            className="flex flex-col justify-center items-center w-32 h-60"
-            key="monster-placeholder"
-          >
-            <LidndDialog
-              trigger={
-                <ButtonWithTooltip
-                  text="Add monster"
-                  className="w-full h-full"
-                  variant="ghost"
-                >
-                  <Plus />
-                </ButtonWithTooltip>
-              }
-              content={<MonsterUpload />}
-            />
-          </Card>,
-        ]}
-        players={players.map((participant, index) => (
-          <PrepParticipantCard
-            key={participant.id + index}
-            participant={participant}
-          />
-        ))}
-      />
-      {encounter?.participants?.length === 0 && (
-        <h1 className={"text-2xl text-center"}>
-          No creatures in this encounter
-        </h1>
-      )}
-    </>
-  );
-}
-
 export interface ParticipantCreatureProps {
   participant: ParticipantWithData;
 }
 
-function PrepParticipantCard({ participant }: ParticipantCreatureProps) {
+export function PrepParticipantCard({ participant }: ParticipantCreatureProps) {
   return (
     <AnimationListItem key={participant.id}>
       <div className="flex flex-col items-center gap-3 h-full w-32">
@@ -598,7 +664,4 @@ export function EncounterReminderInput() {
       </form>
     </div>
   );
-}
-function useMsg() {
-  throw new Error("Function not implemented.");
 }

@@ -11,6 +11,7 @@ import {
   reminders,
   campaigns,
   campaignToPlayer,
+  canvas_snapshots,
 } from "@/server/api/db/schema";
 import { eq, and, ilike, is } from "drizzle-orm";
 import { db } from "@/server/api/db";
@@ -238,6 +239,12 @@ export const appRouter = t.router({
             message: "Failed to create encounter",
           });
         }
+
+        await tx.insert(canvas_snapshots).values({
+          encounter_id: result.id,
+          user_id: opts.ctx.user.id,
+          snapshot: "",
+        });
 
         return result;
       });
@@ -526,15 +533,22 @@ export const appRouter = t.router({
     }),
 
   updateCanvasSnapshot: protectedProcedure
-    .input(z.object({ encounter_id: z.string(), snapshot: z.string() }))
+    .input(
+      z.object({
+        encounter_id: z.string(),
+        snapshot: z.string(),
+      })
+    )
     .mutation(async (opts) => {
       const result = await db
-        .update(encounters)
-        .set({ canvas_snapshot: opts.input.snapshot })
+        .update(canvas_snapshots)
+        .set({
+          snapshot: opts.input.snapshot,
+        })
         .where(
           and(
-            eq(encounters.id, opts.input.encounter_id),
-            eq(encounters.user_id, opts.ctx.user.id)
+            eq(canvas_snapshots.encounter_id, opts.input.encounter_id),
+            eq(canvas_snapshots.user_id, opts.ctx.user.id)
           )
         )
         .returning();
@@ -547,6 +561,43 @@ export const appRouter = t.router({
       return result[0];
     }),
   //#endregion
+
+  //#region Canvas Snapshots
+
+  canvasSnapshots: protectedProcedure.input(z.string()).query(async (opts) => {
+    const snap = await db.query.canvas_snapshots.findFirst({
+      where: (canvas_snapshots, { eq, and }) =>
+        and(
+          eq(canvas_snapshots.user_id, opts.ctx.user.id),
+          eq(canvas_snapshots.encounter_id, opts.input)
+        ),
+    });
+    if (!snap) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "No canvas snapshot found",
+      });
+    }
+    return snap;
+  }),
+
+  initCanvasSnapshotShapes: protectedProcedure
+    .input(z.string())
+    .query(async (opts) => {
+      // this is the same as encouterById but we sometimes invalidate that query client-side, triggering re-renders.
+      // in theory this will be more stable for the canvas
+      const encounter = await ServerEncounter.encounterByIdThrows(
+        opts.ctx,
+        opts.input
+      );
+      return await db.query.canvas_snapshots.findFirst({
+        where: (canvas_snapshots, { eq, and }) =>
+          and(
+            eq(canvas_snapshots.user_id, opts.ctx.user.id),
+            eq(canvas_snapshots.encounter_id, opts.input)
+          ),
+      });
+    }),
 
   //#region Encounter Participants
 

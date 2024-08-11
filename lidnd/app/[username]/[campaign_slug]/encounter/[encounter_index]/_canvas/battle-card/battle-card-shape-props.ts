@@ -5,9 +5,7 @@ import type { BattleCardShape } from "./battle-card-shape-types";
 export const battleCardShapeProps: RecordProps<BattleCardShape> = {
   w: T.number,
   h: T.number,
-  props: T.object({
-    participantId: T.string,
-  }),
+  participantId: T.string,
 };
 
 // To generate your own custom styles, check out the custom styles example.

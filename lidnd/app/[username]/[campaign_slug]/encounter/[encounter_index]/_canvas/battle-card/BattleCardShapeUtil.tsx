@@ -1,17 +1,17 @@
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { battleCardShapeProps } from "@/encounters/[encounter_index]/_canvas/battle-card/battle-card-shape-props";
 import type { BattleCardShape } from "@/encounters/[encounter_index]/_canvas/battle-card/battle-card-shape-types";
 import { BattleCard } from "@/encounters/[encounter_index]/battle-ui";
-import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
+import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
+import { PrepParticipantCard } from "@/encounters/[encounter_index]/encounter-prep";
 import { useEncounter } from "@/encounters/[encounter_index]/hooks";
-import { api } from "@/trpc/react";
-import { useState } from "react";
+import { CreatureStatBlockImage } from "@/encounters/original-size-image";
+import { EncounterUtils } from "@/utils/encounters";
 import {
   HTMLContainer,
   Rectangle2d,
   ShapeUtil,
   type TLOnResizeHandler,
-  getDefaultColorTheme,
   resizeBox,
 } from "tldraw";
 
@@ -32,9 +32,7 @@ export class BattleCardShapeUtil extends ShapeUtil<BattleCardShape> {
     return {
       w: 300,
       h: 300,
-      props: {
-        participantId: "",
-      },
+      participantId: "",
     };
   }
 
@@ -49,22 +47,28 @@ export class BattleCardShapeUtil extends ShapeUtil<BattleCardShape> {
 
   // [6]
   component(shape: BattleCardShape) {
-    const encounterId = useEncounterId();
-    const { data: encounter } = api.encounterById.useQuery(encounterId);
+    const [encounter] = useEncounter();
+    const participant = EncounterUtils.participantFor(
+      encounter,
+      shape.props.participantId,
+    );
+
+    if (!participant) {
+      console.log("missing participant for id:", shape.props.participantId);
+      return null;
+    }
 
     return (
       <HTMLContainer
         id={shape.id}
-        style={{
-          border: "1px solid black",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "all",
-        }}
+        className="w-full h-full flex pointer-events-auto"
       >
-        {encounter?.participants.length}
+        <BattleCard
+          participant={participant}
+          extraContent={
+            <CreatureStatBlockImage creature={participant.creature} />
+          }
+        />
       </HTMLContainer>
     );
   }
@@ -120,3 +124,8 @@ Indicator — used when hovering over a shape or when it's selected; must return
 Resize handler — called when the shape is resized. Sometimes you'll want to do some 
 custom logic here, but for our purposes, this is fine.
 */
+
+function TestCard() {
+  const [encounter] = useEncounter();
+  return <Card>{encounter?.participants.length}</Card>;
+}

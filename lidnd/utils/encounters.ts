@@ -175,10 +175,6 @@ export const EncounterUtils = {
       (p) => p.is_active
     );
 
-    if (activeIndex === -1) {
-      throw new Error("No active participant found, this should never happen");
-    }
-
     return activeIndex;
   },
 

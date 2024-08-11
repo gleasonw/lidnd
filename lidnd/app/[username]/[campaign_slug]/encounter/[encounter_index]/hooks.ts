@@ -15,6 +15,8 @@ import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { useUser } from "@/app/[username]/user-provider";
 import { appRoutes } from "@/app/routes";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
+import { useEditor } from "tldraw";
+import { EditorUtils } from "@/encounters/[encounter_index]/_canvas/editor-utils";
 
 export function useEncounterLink(status: EncounterStatus) {
   const [encounter] = useEncounter();
@@ -88,6 +90,7 @@ export function useSelectedCreature() {
 export function useCreateCreatureInEncounter() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
+  const tldrawEditor = useEditor();
 
   const { data: encounter } = api.encounterById.useQuery(id);
 
@@ -139,6 +142,7 @@ export function useCreateCreatureInEncounter() {
           old,
         );
       });
+
       return { previousEncounterData };
     },
     onError: (err, variables, context) => {
@@ -147,7 +151,10 @@ export function useCreateCreatureInEncounter() {
         encounterById.setData(id, context.previousEncounterData);
       }
     },
-    onSettled: async () => {
+    onSettled: async (participant) => {
+      if (participant?.id) {
+        EditorUtils.createShapeForParticipant(participant.id, tldrawEditor);
+      }
       return await encounterById.invalidate(id);
     },
   });
@@ -335,6 +342,7 @@ export function useAddExistingCreatureToEncounter() {
   const id = useEncounterId();
   const { encounterById } = api.useUtils();
   const { data: creatures } = api.getUserCreatures.useQuery({ name: "" });
+  const tldrawEditor = useEditor();
   return api.addExistingCreatureToEncounter.useMutation({
     onMutate: async ({ creature_id, is_ally }) => {
       await encounterById.cancel(id);
@@ -372,8 +380,12 @@ export function useAddExistingCreatureToEncounter() {
         encounterById.setData(id, context.previousEncounterData);
       }
     },
-    onSettled: () => {
-      encounterById.invalidate(id);
+    onSettled: async (participant) => {
+      if (participant?.id) {
+        EditorUtils.createShapeForParticipant(participant.id, tldrawEditor);
+      }
+
+      return await encounterById.invalidate(id);
     },
   });
 }

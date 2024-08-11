@@ -18,7 +18,7 @@ import {
   useEncounter,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { EncounterUtils } from "@/utils/encounters";
-import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
+import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 
 const AllyContext = createContext<boolean | null>(null);
 
@@ -65,7 +65,8 @@ export const ParticipantUpload = function ParticipantUpload({
 }: ParticipantUploadProps) {
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
   const [encounter] = useEncounter();
-  const [campaign] = useCampaign();
+  const campaignId = useCampaignId();
+  const { data: campaign } = api.campaignById.useQuery(campaignId);
 
   return (
     <div className="flex flex-col gap-3">
@@ -109,7 +110,7 @@ export const ParticipantUpload = function ParticipantUpload({
   );
 };
 
-function ExistingMonster() {
+export function ExistingMonster() {
   const [name, setName] = useState("");
   const { data: creatures } = api.getUserCreatures.useQuery({
     name,
