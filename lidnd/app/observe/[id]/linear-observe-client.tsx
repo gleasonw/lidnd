@@ -53,9 +53,12 @@ export function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
           </div>
           <ul>
             {p.status_effects.map((effect) => (
-              <li key={effect.id} className="flex gap-2">
+              <li key={effect.id} className="flex gap-2 items-center">
                 <EffectIcon effect={effect.effect} />
                 {effect.effect.name}
+                {effect.save_ends_dc ? (
+                  <span>({effect.save_ends_dc})</span>
+                ) : null}
               </li>
             ))}
           </ul>
