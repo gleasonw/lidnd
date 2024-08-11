@@ -147,7 +147,7 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
           </Button>
         </div>
       </div>
-      <Carousel setApi={setEmblaApi} opts={{ slidesToScroll: monstersPerPage }}>
+      <Carousel setApi={setEmblaApi} opts={{ slidesToScroll: monstersPerPage, duration: 20 }}>
         <CarouselContent>
           {dmCreatures
             ?.filter((p) => !ParticipantUtils.isPlayer(p))
