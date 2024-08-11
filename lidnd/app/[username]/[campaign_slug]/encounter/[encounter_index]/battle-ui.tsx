@@ -9,7 +9,7 @@ import { motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
 import type { Participant, ParticipantWithData } from "@/server/api/router";
-import { BasePopover } from "@/encounters/base-popover";
+import { LidndPopover } from "@/encounters/base-popover";
 import { EffectIcon, StatusInput } from "./status-input";
 import { LinearBattleUI } from "./linear-battle-ui";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
@@ -117,7 +117,6 @@ export function BattleCard({
         key={participant.id}
         data-active={participant.id === selectedId}
       >
-        <BattleCardStatusEffects participant={participant} />
         <BattleCardCreatureName participant={participant} />
         <BattleCardContent>
           <LidndTextArea editor={editor} />
@@ -188,7 +187,7 @@ export function BattleCardStatusEffects({
   return (
     <span className={"h-12 flex gap-1 flex-wrap items-center"}>
       {participant.status_effects?.map((se) => (
-        <BasePopover
+        <LidndPopover
           key={se.id}
           trigger={
             <button>
@@ -200,7 +199,7 @@ export function BattleCardStatusEffects({
           {ParticipantEffectUtils.description(se)}
           {!!se.save_ends_dc && <span>Save ends ({se.save_ends_dc})</span>}
           <Button onClick={() => removeStatusEffect(se)}>Remove</Button>
-        </BasePopover>
+        </LidndPopover>
       ))}
     </span>
   );
@@ -232,7 +231,7 @@ export function BattleCardCreatureName({
       <CardTitle className="text-2xl  truncate max-w-full">
         {ParticipantUtils.name(participant)}
       </CardTitle>
-      <BasePopover
+      <LidndPopover
         trigger={
           <Button
             style={{
@@ -257,7 +256,7 @@ export function BattleCardCreatureName({
             />
           ))}
         </div>
-      </BasePopover>
+      </LidndPopover>
     </span>
   );
 }

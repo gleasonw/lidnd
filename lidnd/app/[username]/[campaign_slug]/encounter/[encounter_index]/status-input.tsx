@@ -78,18 +78,19 @@ export function StatusInput({
               <EffectIcon effect={effect} />
               <span>{effect.name}</span>
             </ButtonWithTooltip>
-            <LidndTextInput
-              type="number"
-              variant="ghost"
-              value={save_ends_dc}
-              onChange={(e) => {
-                setSaveEndsDC(e.target.value ?? "");
-              }}
-              placeholder="DC save"
-            />
           </CommandItem>
         ))}
       </Combobox>
+      <LidndTextInput
+        type="number"
+        variant="ghost"
+        className="w-24"
+        value={save_ends_dc}
+        onChange={(e) => {
+          setSaveEndsDC(e.target.value ?? "");
+        }}
+        placeholder="DC save"
+      />
     </div>
   );
 }
@@ -97,7 +98,7 @@ export function StatusInput({
 export function EffectIcon({ effect }: { effect: StatusEffect }) {
   return (
     <div
-      className={`bg-${effectColorMap[effect.name as keyof typeof effectIconMap]}-500 text-white h-10 w-10 flex justify-center items-center`}
+      className={`h-10 w-10 flex justify-center items-center text-${effectColorMap[effect.name as keyof typeof effectIconMap]}-500`}
     >
       {effectIconMap[effect.name as keyof typeof effectIconMap]}
     </div>

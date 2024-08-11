@@ -19,7 +19,9 @@ export function Tip({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent className={"bg-transparent bg-gray-800 text-white"}>
+        <TooltipContent
+          className={"bg-transparent z-50 bg-gray-800 text-white"}
+        >
           {text}
         </TooltipContent>
       </Tooltip>

@@ -1,16 +1,15 @@
 import { Suspense } from "react";
-import { PageRefresher } from "@/app/observe/[id]/page-refresher";
 import React from "react";
 import type { ParticipantWithData } from "@/server/api/router";
 import { Card } from "@/components/ui/card";
 import clsx from "clsx";
 import { EncounterUtils } from "@/utils/encounters";
 import { ServerEncounter, type ObserveEncounter } from "@/server/encounters";
-import { ParticipantUtils } from "@/utils/participants";
 import { HealthMeterOverlay } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/battle-ui";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/group-battle-ui";
-import { EffectIcon } from "@/encounters/[encounter_index]/status-input";
+import { PageRefresher } from "@/app/observe/[id]/page-refresher";
+import { LinearObserve } from "@/app/observe/[id]/linear-observe-client";
 
 export default function ObservePage({ params }: { params: { id: string } }) {
   return (
@@ -21,6 +20,7 @@ export default function ObservePage({ params }: { params: { id: string } }) {
 }
 
 async function EncounterObserverView({ id }: { id?: string }) {
+  console.log("rendering observer view");
   if (!id) {
     return <div>Provide an id in the url.</div>;
   }
@@ -41,45 +41,6 @@ async function EncounterObserverView({ id }: { id?: string }) {
         <GroupObserve encounter={encounter} />
       )}
     </section>
-  );
-}
-
-async function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
-  const participants = EncounterUtils.participants(encounter);
-  const activeIndex = participants.findIndex(
-    (participant) => participant.is_active,
-  );
-  return (
-    <div
-      className={"flex margin-auto gap-0.5 lg:gap-3 overflow-auto max-w-full"}
-    >
-      {participants.map((p, index) => (
-        <div key={p.id}>
-          <div
-            className={clsx(
-              "w-32 border-8 flex-grow-0 flex justify-center items-center transition-all h-32 relative",
-              p.is_active && "h-48",
-              index < activeIndex
-                ? "opacity-60 hover:opacity-100"
-                : "hover:opacity-60",
-            )}
-            style={{ borderColor: ParticipantUtils.iconHexColor(p) }}
-            key={p.id}
-          >
-            <HealthMeterOverlay participant={p} />
-            <CreatureIcon creature={p.creature} size="medium" />
-          </div>
-          <ul>
-            {p.status_effects.map((effect) => (
-              <li key={effect.id} className="flex gap-2">
-                <EffectIcon effect={effect.effect} />
-                {effect.effect.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </div>
   );
 }
 

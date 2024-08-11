@@ -4,7 +4,7 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 
-export function BasePopover({
+export function LidndPopover({
   children,
   trigger,
   className,

@@ -19,7 +19,7 @@ import React, { createContext, useContext, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
 import type { ParticipantWithData } from "@/server/api/router";
-import { BasePopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
+import { LidndPopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
 import { CreatureStatBlockImage } from "@/app/[username]/[campaign_slug]/encounter/original-size-image";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
@@ -433,7 +433,7 @@ export function EncounterStats() {
 
   return (
     <>
-      <BasePopover
+      <LidndPopover
         trigger={
           <Button
             className="flex text-xl items-center gap-2 w-44"
@@ -460,8 +460,8 @@ export function EncounterStats() {
             onChange={(e) => setPlayerLevel(parseInt(e.target.value))}
           />
         </label>
-      </BasePopover>
-      <BasePopover
+      </LidndPopover>
+      <LidndPopover
         className="flex flex-col items-center gap-5"
         trigger={
           <Button
@@ -496,7 +496,7 @@ export function EncounterStats() {
             />
           </label>
         </div>
-      </BasePopover>
+      </LidndPopover>
     </>
   );
 }
