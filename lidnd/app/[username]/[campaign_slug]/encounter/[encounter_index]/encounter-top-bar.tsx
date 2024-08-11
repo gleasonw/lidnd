@@ -16,7 +16,10 @@ import {
 } from "@/encounters/[encounter_index]/hooks";
 import InitiativeInput from "@/encounters/[encounter_index]/InitiativeInput";
 import { ParticipantUpload } from "@/encounters/[encounter_index]/participant-add-form";
-import { StatusInput } from "@/encounters/[encounter_index]/status-input";
+import {
+  EffectIcon,
+  StatusInput,
+} from "@/encounters/[encounter_index]/status-input";
 import { LidndPopover } from "@/encounters/base-popover";
 import type { ParticipantWithData } from "@/server/api/router";
 import { EncounterUtils } from "@/utils/encounters";
@@ -230,8 +233,11 @@ function TopBarParticipantCard({
             key={se.id}
             className="flex flex-col gap-5 items-center"
             trigger={
-              <Button className="flex gap-2 items-center px-0" variant="ghost">
-                {ParticipantEffectUtils.name(se)}
+              <Button className="flex gap-4 px-0" variant="ghost">
+                <span className="mr-auto flex gap-2 items-center">
+                  <EffectIcon effect={se.effect} />
+                  {ParticipantEffectUtils.name(se)}
+                </span>
                 {!!se.save_ends_dc && <span>({se.save_ends_dc})</span>}
               </Button>
             }
