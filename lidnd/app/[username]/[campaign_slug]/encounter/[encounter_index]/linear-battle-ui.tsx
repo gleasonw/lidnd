@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import React from "react";
+import React, { useEffect } from "react";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
 import { BattleCard } from "./battle-ui";
@@ -16,7 +16,8 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
 
-  const { setSelectedParticipantId } = useEncounterUIStore();
+  const { setSelectedParticipantId, selectedParticipantId } =
+    useEncounterUIStore();
 
   const { mutate: removeCreatureFromEncounter } =
     useRemoveParticipantFromEncounter();
@@ -24,6 +25,32 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
   const dmCreatures = EncounterUtils.participants(encounter)
     .filter((p) => !PU.isPlayer(p))
     .sort((a, b) => PU.statBlockAspectRatio(a) - PU.statBlockAspectRatio(b));
+
+  useEffect(() => {
+    if (selectedParticipantId) {
+      const selectedParticipant = document.querySelector(
+        `[data-is-selected="true"]`,
+      );
+      if (selectedParticipant) {
+        selectedParticipant.scrollIntoView({
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [selectedParticipantId]);
+
+  useEffect(() => {
+    const active = EncounterUtils.activeParticipant(encounter);
+    if (active) {
+      const activeElement = document.querySelector(`[data-is-active="true"]`);
+      if (!activeElement) {
+        return;
+      }
+      activeElement.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  }, [encounter]);
 
   return (
     <div className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -35,6 +62,8 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
             "col-span-1": PU.statBlockAspectRatio(participant) < 0.6,
             "col-span-2": PU.statBlockAspectRatio(participant) >= 0.6,
           })}
+          data-is-active={participant.is_active}
+          data-is-selected={selectedParticipantId === participant.id}
           key={participant.id}
           battleCardExtraContent={
             <>

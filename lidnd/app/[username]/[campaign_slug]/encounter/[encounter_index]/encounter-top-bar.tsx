@@ -204,7 +204,7 @@ function TopBarParticipantCard({
 }: CardProps) {
   const { mutate: removeStatusEffect } = useRemoveStatusEffect();
   return (
-    <div className="relative">
+    <div className="relative cursor-pointer">
       <Tip text={ParticipantUtils.name(participant)}>
         <div
           className={clsx(
