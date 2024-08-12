@@ -22,6 +22,13 @@ export const ParticipantUtils = {
     return participant.hex_color ?? "#dc2626";
   },
 
+  statBlockAspectRatio(participant: ParticipantWithCreature) {
+    return (
+      participant.creature.stat_block_width /
+      participant.creature.stat_block_height
+    );
+  },
+
   isDead(participant: ParticipantWithCreature) {
     return participant.hp <= 0;
   },
