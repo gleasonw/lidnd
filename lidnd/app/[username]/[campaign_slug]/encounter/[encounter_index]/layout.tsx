@@ -87,84 +87,87 @@ export default async function EncounterLayout({
         <EncounterId value={encounter.id}>
           <EncounterCanvasEditor>
             <section className="flex h-full overflow-hidden">
-              <section className="flex flex-col flex-grow min-w-0 gap-3">
-                <div className="flex flex-wrap justify-between px-2 pt-2">
-                  <Breadcrumb>
-                    <BreadcrumbList>
-                      <BreadcrumbItem>
+              <section className="flex flex-col flex-grow min-w-0 gap-3 relative">
+                <div className="absolute top-0 left-0 right-0 z-10">
+                  <div className="flex flex-wrap justify-between px-2 pt-2">
+                    <Breadcrumb>
+                      <BreadcrumbList>
+                        <BreadcrumbItem>
+                          <BreadcrumbLink
+                            href={appRoutes.campaign(campaign, user)}
+                          >
+                            {campaign.name}
+                          </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
                         <BreadcrumbLink
-                          href={appRoutes.campaign(campaign, user)}
+                          href={appRoutes.encounter(campaign, encounter, user)}
                         >
-                          {campaign.name}
+                          <BreadcrumbItem>{encounter.name}</BreadcrumbItem>
                         </BreadcrumbLink>
-                      </BreadcrumbItem>
-                      <BreadcrumbSeparator />
-                      <BreadcrumbLink
-                        href={appRoutes.encounter(campaign, encounter, user)}
-                      >
-                        <BreadcrumbItem>{encounter.name}</BreadcrumbItem>
-                      </BreadcrumbLink>
-                    </BreadcrumbList>
-                  </Breadcrumb>
-                  <div className="flex gap-2">
-                    <span>
-                      {indexForDisplay + 1} / {campaign.encounters.length}
-                    </span>
-                    <span>
-                      {priorEncounter ? (
-                        <Link
-                          href={appRoutes.encounter(
-                            campaign,
-                            priorEncounter,
-                            user,
-                          )}
-                        >
+                      </BreadcrumbList>
+                    </Breadcrumb>
+                    <div className="flex gap-2">
+                      <span>
+                        {indexForDisplay + 1} / {campaign.encounters.length}
+                      </span>
+                      <span>
+                        {priorEncounter ? (
+                          <Link
+                            href={appRoutes.encounter(
+                              campaign,
+                              priorEncounter,
+                              user,
+                            )}
+                          >
+                            <Button
+                              variant="ghost"
+                              className="p-0 h-6 w-6"
+                              size="icon"
+                            >
+                              <ChevronUp />
+                            </Button>
+                          </Link>
+                        ) : (
                           <Button
                             variant="ghost"
-                            className="p-0 h-6 w-6"
-                            size="icon"
+                            disabled
+                            className="h-6 w-6 p-0"
                           >
                             <ChevronUp />
                           </Button>
-                        </Link>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          disabled
-                          className="h-6 w-6 p-0"
-                        >
-                          <ChevronUp />
-                        </Button>
-                      )}
-                      {nextEncounter ? (
-                        <Link
-                          href={appRoutes.encounter(
-                            campaign,
-                            nextEncounter,
-                            user,
-                          )}
-                        >
+                        )}
+                        {nextEncounter ? (
+                          <Link
+                            href={appRoutes.encounter(
+                              campaign,
+                              nextEncounter,
+                              user,
+                            )}
+                          >
+                            <Button
+                              variant="ghost"
+                              className="p-0 h-6 w-6"
+                              size="icon"
+                            >
+                              <ChevronDown />
+                            </Button>
+                          </Link>
+                        ) : (
                           <Button
                             variant="ghost"
-                            className="p-0 h-6 w-6"
-                            size="icon"
+                            disabled
+                            className="h-6 w-6 p-0"
                           >
                             <ChevronDown />
                           </Button>
-                        </Link>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          disabled
-                          className="h-6 w-6 p-0"
-                        >
-                          <ChevronDown />
-                        </Button>
-                      )}
-                    </span>
+                        )}
+                      </span>
+                    </div>
                   </div>
+                  <EncounterTopBar />
                 </div>
-                <EncounterTopBar />
+
                 {children}
               </section>
             </section>

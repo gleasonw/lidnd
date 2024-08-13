@@ -18,7 +18,7 @@ import {
   EffectIcon,
   StatusInput,
 } from "@/encounters/[encounter_index]/status-input";
-import { BasePopover } from "@/encounters/base-popover";
+import { LidndPopover } from "@/encounters/base-popover";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import clsx from "clsx";
@@ -104,7 +104,7 @@ function StatusEffectSidebar() {
                         key={se.id}
                         className="flex gap-2 items-center w-full"
                       >
-                        <BasePopover
+                        <LidndPopover
                           trigger={
                             <button className="flex gap-2 items-center">
                               <EffectIcon effect={se.effect} />
@@ -118,7 +118,7 @@ function StatusEffectSidebar() {
                           }
                         >
                           {ParticipantEffectUtils.description(se)}
-                        </BasePopover>
+                        </LidndPopover>
                         <Button
                           onClick={() => removeStatusEffect(se)}
                           variant="ghost"

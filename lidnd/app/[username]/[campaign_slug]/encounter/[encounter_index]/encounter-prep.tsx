@@ -24,7 +24,7 @@ import React, {
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
 import type { ParticipantWithData } from "@/server/api/router";
-import { BasePopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
+import { LidndPopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { ButtonWithTooltip } from "@/components/ui/tip";
@@ -40,7 +40,6 @@ import {
   useUpdateEncounterParticipant,
   useEncounterLink,
   useUpdateEncounter,
-  useCreateCreatureInEncounter,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { AnimationListItem } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/battle-ui";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
@@ -66,13 +65,6 @@ import {
   uiOverrides,
   overrideComponents,
 } from "@/encounters/[encounter_index]/_canvas/ui-overrides";
-import { LidndDialog } from "@/components/ui/lidnd_dialog";
-import {
-  ExistingMonster,
-  MonsterUpload,
-  ParticipantUpload,
-} from "@/encounters/[encounter_index]/participant-add-form";
-import { MonsterUploadForm } from "@/encounters/full-creature-add-form";
 import { customShapeTypes } from "@/encounters/[encounter_index]/_canvas/encounter-canvas-editor";
 
 class EncounterPrepStore {
@@ -156,25 +148,7 @@ function EncounterCanvasMainContent() {
   );
 }
 
-function EncounterCanvasTopPanel() {
-  return (
-    <div>
-      <Card className="flex gap-5 p-3 items-center">
-        <LidndDialog
-          trigger={
-            <Button className="pointer-events-auto z-10">
-              Add creature to encounter
-            </Button>
-          }
-          content={<MonsterUpload />}
-        />
-      </Card>
-    </div>
-  );
-}
-
 const customUiComponents: TLUiComponents = {
-  TopPanel: EncounterCanvasTopPanel,
   ...overrideComponents,
 };
 
@@ -481,7 +455,7 @@ export function EncounterStats() {
 
   return (
     <>
-      <BasePopover
+      <LidndPopover
         trigger={
           <Button
             className="flex text-xl items-center gap-2 w-44"
@@ -508,8 +482,8 @@ export function EncounterStats() {
             onChange={(e) => setPlayerLevel(parseInt(e.target.value))}
           />
         </label>
-      </BasePopover>
-      <BasePopover
+      </LidndPopover>
+      <LidndPopover
         className="flex flex-col items-center gap-5"
         trigger={
           <Button
@@ -544,7 +518,7 @@ export function EncounterStats() {
             />
           </label>
         </div>
-      </BasePopover>
+      </LidndPopover>
     </>
   );
 }
