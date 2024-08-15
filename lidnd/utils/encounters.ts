@@ -2,6 +2,7 @@ import type { Reminder } from "@/app/[username]/types";
 import { appRoutes } from "@/app/routes";
 import type { UpdateTurnOrderReturn } from "@/app/[username]/[campaign_slug]/encounter/utils";
 import type {
+  Creature,
   Encounter,
   Participant,
   ParticipantWithData,
@@ -13,6 +14,7 @@ import * as R from "remeda";
 import { ParticipantUtils } from "@/utils/participants";
 import type { LidndUser } from "@/app/authentication";
 import _ from "lodash";
+import { CreatureUtils } from "@/utils/creatures";
 
 export const ESTIMATED_TURN_SECONDS = 180;
 export const ESTIMATED_ROUNDS = 2;
@@ -271,6 +273,22 @@ export const EncounterUtils = {
             ...newParticipant,
             creature: p.creature,
             status_effects: p.status_effects,
+          };
+        }
+        return p;
+      }),
+    };
+  },
+
+  updateCreature(c: Partial<Creature>, encounter: EncounterWithData) {
+    const creatureWithPlaceholders = CreatureUtils.placeholder(c);
+    return {
+      ...encounter,
+      participants: encounter.participants.map((p) => {
+        if (p.creature.id === c.id) {
+          return {
+            ...p,
+            creature: creatureWithPlaceholders,
           };
         }
         return p;

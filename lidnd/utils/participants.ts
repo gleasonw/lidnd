@@ -29,52 +29,64 @@ export const ParticipantUtils = {
     );
   },
 
-  isDead(participant: ParticipantWithCreature) {
-    return participant.hp <= 0;
+  colSpan(p: ParticipantWithCreature) {
+    if (p.creature.col_span) {
+      return p.creature.col_span;
+    }
+    const ratio = this.statBlockAspectRatio(p);
+    if (ratio < 0.6) {
+      return 1;
+    }
+    if (ratio >= 0.6) {
+      return 2;
+    }
+    return 1;
   },
 
-  isFriendly(participant: ParticipantWithCreature) {
-    return this.isPlayer(participant) || participant.is_ally;
+  isDead(p: ParticipantWithCreature) {
+    return p.hp <= 0;
   },
 
-  name(participant: ParticipantWithCreature) {
-    return participant.creature.name;
+  isFriendly(p: ParticipantWithCreature) {
+    return this.isPlayer(p) || p.is_ally;
   },
 
-  creatureId(participant: ParticipantWithCreature) {
-    return participant.creature.id;
+  name(p: ParticipantWithCreature) {
+    return p.creature.name;
   },
 
-  isMinion(
-    participant: ParticipantWithCreature
-  ): participant is MinionParticipant {
-    return participant.minion_count !== undefined;
+  creatureId(p: ParticipantWithCreature) {
+    return p.creature.id;
   },
 
-  maxHp(participant: ParticipantWithCreature) {
-    return participant.creature.max_hp;
+  isMinion(p: ParticipantWithCreature): p is MinionParticipant {
+    return p.minion_count !== undefined;
   },
 
-  percentDamage(participant: ParticipantWithCreature) {
-    const maxHP = this.maxHp(participant);
-    const missingHP = maxHP - participant.hp;
+  maxHp(p: ParticipantWithCreature) {
+    return p.creature.max_hp;
+  },
+
+  percentDamage(p: ParticipantWithCreature) {
+    const maxHP = this.maxHp(p);
+    const missingHP = maxHP - p.hp;
     return (missingHP / maxHP) * 100;
   },
 
-  challengeRating(participant: ParticipantWithCreature) {
-    return participant.creature.challenge_rating;
+  challengeRating(p: ParticipantWithCreature) {
+    return p.creature.challenge_rating;
   },
 
   placeholderParticipantWithData(
-    participant: AddParticipant,
+    p: AddParticipant,
     creature: AddCreature
   ): ParticipantWithData {
     const randomId = Math.random().toString();
     const placeholderCreature = CreatureUtils.placeholder(creature);
     return {
       ...defaultParticipant({
-        ...participant,
-        id: participant.id ?? randomId,
+        ...p,
+        id: p.id ?? randomId,
       }),
       creature: placeholderCreature,
       status_effects: [],
@@ -82,28 +94,28 @@ export const ParticipantUtils = {
   },
 
   addStatusEffect(
-    participant: ParticipantWithData,
+    p: ParticipantWithData,
     participantEffect: ParticipantWithData["status_effects"][number]
   ): ParticipantWithData {
     return {
-      ...participant,
-      status_effects: [...participant.status_effects, participantEffect],
+      ...p,
+      status_effects: [...p.status_effects, participantEffect],
     };
   },
 
   updateMinionCount(
-    participant: ParticipantWithCreature & { minion_count: number },
+    p: ParticipantWithCreature & { minion_count: number },
     minions_in_overkill_range: number,
     damage: number
   ): number {
     // assume input minions does not include the current minion
     const slayableMinionCount = minions_in_overkill_range + 1;
     if (damage <= 0) {
-      return participant.minion_count;
+      return p.minion_count;
     }
-    const maximumSlainMinions = Math.ceil(damage / this.maxHp(participant));
+    const maximumSlainMinions = Math.ceil(damage / this.maxHp(p));
     const slainMinions = Math.min(slayableMinionCount, maximumSlainMinions);
-    const newMinionCount = participant.minion_count - slainMinions;
+    const newMinionCount = p.minion_count - slainMinions;
     return Math.max(newMinionCount, 0);
   },
 

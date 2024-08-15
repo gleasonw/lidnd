@@ -13,13 +13,28 @@ import { createContext, useContext } from "react";
 class EncounterUIStore {
   selectedParticipantId: string | null = null;
   remindersToDisplay: Reminder[] = [];
+  editingColSpan: boolean = false;
+
+  onSelectParticipant: ((id: string) => void)[] = [];
 
   constructor() {
     makeAutoObservable(this);
   }
 
+  subscribeToSelectedParticipant = (cb: (id: string) => void) => {
+    if (this.onSelectParticipant.includes(cb)) {
+      return;
+    }
+    this.onSelectParticipant.push(cb);
+  };
+
+  unsubscribeToSelectedParticipant = (cb: (id: string) => void) => {
+    this.onSelectParticipant = this.onSelectParticipant.filter((c) => c !== cb);
+  };
+
   setSelectedParticipantId = (id: string) => {
     this.selectedParticipantId = id;
+    this.onSelectParticipant.forEach((cb) => cb(id));
   };
 
   displayReminders = (encounter: EncounterWithData) => {
@@ -30,6 +45,10 @@ class EncounterUIStore {
     } else {
       this.remindersToDisplay = [];
     }
+  };
+
+  toggleEditingColSpan = () => {
+    this.editingColSpan = !this.editingColSpan;
   };
 
   hideReminders = () => {

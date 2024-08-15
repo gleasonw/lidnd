@@ -378,6 +378,27 @@ export function useAddExistingCreatureToEncounter() {
   });
 }
 
+export function useUpdateCreature() {
+  const { encounterById } = api.useUtils();
+  const id = useEncounterId();
+  return api.updateCreature.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(id);
+    },
+    onMutate: async (newCreature) => {
+      await encounterById.cancel(id);
+      const previousEncounter = encounterById.getData(id);
+      encounterById.setData(id, (old) => {
+        if (!old) {
+          return;
+        }
+        return EncounterUtils.updateCreature(newCreature, old);
+      });
+      return { previousEncounter };
+    },
+  });
+}
+
 export function useStartEncounter() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();

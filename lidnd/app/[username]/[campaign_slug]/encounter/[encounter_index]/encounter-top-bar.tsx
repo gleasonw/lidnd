@@ -47,7 +47,8 @@ function BattleTopBar() {
   const [encounter] = useEncounter();
   const [isEditingInitiative, setIsEditingInitiative] = React.useState(false);
 
-  const { setSelectedParticipantId } = useEncounterUIStore();
+  const { setSelectedParticipantId, toggleEditingColSpan } =
+    useEncounterUIStore();
 
   const { mutate: cycleNextMutation, isPending: isLoadingNextTurn } =
     useCycleNextTurn();
@@ -85,7 +86,7 @@ function BattleTopBar() {
           <ChevronLeftIcon />
           Previous turn
         </Button>
-        <h1 className="text-xl">{roundText}</h1>
+        <h1 className="text-2xl font-bold">{roundText}</h1>
         <EncounterTime time={encounter.started_at ?? undefined} />
         <ButtonWithTooltip
           onClick={() => {
@@ -104,6 +105,9 @@ function BattleTopBar() {
           onClick={() => setIsEditingInitiative(!isEditingInitiative)}
         >
           Edit initiative
+        </Button>
+        <Button variant="ghost" onClick={() => toggleEditingColSpan()}>
+          Edit block col span
         </Button>
         <Button
           className="ml-auto w-48 shadow-lg"
@@ -204,7 +208,7 @@ function TopBarParticipantCard({
 }: CardProps) {
   const { mutate: removeStatusEffect } = useRemoveStatusEffect();
   return (
-    <div className="relative cursor-pointer">
+    <div className="relative cursor-pointer shadow-md">
       <Tip text={ParticipantUtils.name(participant)}>
         <div
           className={clsx(
