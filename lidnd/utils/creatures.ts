@@ -30,6 +30,7 @@ export const CreatureUtils = {
       stat_block_width: creature.stat_block_width ?? 250,
       icon_height: creature.icon_height ?? 250,
       icon_width: creature.icon_width ?? 250,
+      col_span: creature.col_span ?? 1,
     };
   },
 };

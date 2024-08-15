@@ -18,6 +18,7 @@ import { DataTable } from "@/app/[username]/creatures/creatures-table";
 import { columns } from "@/app/[username]/creatures/columns";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { postCreature } from "@/app/[username]/actions";
+import { CreatureUtils } from "@/utils/creatures";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");
@@ -69,20 +70,7 @@ export default function CreaturesPage() {
         if (!old) {
           return old;
         }
-        return [
-          ...old,
-          {
-            ...data,
-            user_id: "",
-            id: data.id ?? "",
-            created_at: new Date(),
-            initiative_bonus: 0,
-            stat_block_height: 250,
-            stat_block_width: 250,
-            icon_height: 250,
-            icon_width: 250,
-          },
-        ];
+        return [...old, CreatureUtils.placeholder(data)];
       });
       return { previous };
     },
