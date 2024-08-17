@@ -177,10 +177,6 @@ export const EncounterUtils = {
       (p) => p.is_active
     );
 
-    if (activeIndex === -1) {
-      throw new Error("No active participant found, this should never happen");
-    }
-
     return activeIndex;
   },
 
@@ -607,7 +603,7 @@ type CycleTurnArgs = {
   encounter: Cyclable;
 };
 
-const encounterCRPerCharacter = [
+export const encounterCRPerCharacter = [
   { level: 1, easy: 0.125, standard: 0.125, hard: 0.25, cap: 1 },
   { level: 2, easy: 0.125, standard: 0.25, hard: 0.5, cap: 3 },
   { level: 3, easy: 0.25, standard: 0.5, hard: 0.75, cap: 4 },

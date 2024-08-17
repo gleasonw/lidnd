@@ -14,12 +14,17 @@ class EncounterUIStore {
   selectedParticipantId: string | null = null;
   remindersToDisplay: Reminder[] = [];
   editingColSpan: boolean = false;
+  isEditingInitiative: boolean = false;
 
   onSelectParticipant: ((id: string) => void)[] = [];
 
   constructor() {
     makeAutoObservable(this);
   }
+
+  toggleEditingInitiative = () => {
+    this.isEditingInitiative = !this.isEditingInitiative;
+  };
 
   subscribeToSelectedParticipant = (cb: (id: string) => void) => {
     if (this.onSelectParticipant.includes(cb)) {

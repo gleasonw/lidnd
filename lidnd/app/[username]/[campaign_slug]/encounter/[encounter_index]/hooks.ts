@@ -415,10 +415,12 @@ export function useStartEncounter() {
         const [firstActive, firstRoundNumber] =
           EncounterUtils.firstActiveAndRoundNumber(old);
 
-        return EncounterUtils.updateParticipant(
+        const newEncounter = EncounterUtils.updateParticipant(
           { ...firstActive, is_active: true },
           { ...old, current_round: firstRoundNumber },
         );
+
+        return { ...newEncounter, status: "run" };
       });
       return { previousEncounter };
     },

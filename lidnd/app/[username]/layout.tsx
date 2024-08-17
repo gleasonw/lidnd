@@ -128,7 +128,7 @@ export default async function CampaignsLayout({
                     </form>
                   </nav>
                 )}
-                <div className="w-full shadow-sm border p-[var(--main-content-padding)] pr-0 pt-2 bg-white min-w-0 overflow-auto h-screen">
+                <div className="w-full shadow-sm border pt-2 bg-white min-w-0 overflow-auto h-screen px-3">
                   {children}
                 </div>
               </div>

@@ -1,8 +1,8 @@
 import { LidndAuth } from "@/app/authentication";
 import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
-import EncounterPrep from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-prep";
+import { BattleUI } from "@/encounters/[encounter_index]/battle-ui";
 
-export default async function EncounterPage({ params }: { params: unknown }) {
+export default async function EncounterPage() {
   const user = await LidndAuth.getUser();
 
   if (!user) {
@@ -15,7 +15,7 @@ export default async function EncounterPage({ params }: { params: unknown }) {
       fallback={<div>Loading encounter...</div>}
       wrapperClassName="flex gap-[var(--main-content-padding)]"
     >
-      <EncounterPrep />
+      <BattleUI />
     </FadeInSuspense>
   );
 }

@@ -1,59 +1,95 @@
 "use client";
 import * as R from "remeda";
-import { FadePresenceItem } from "@/components/ui/animate/FadePresenceItem";
 import { Button } from "@/components/ui/button";
 import type { ParticipantWithData } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { ParticipantUtils } from "@/utils/participants";
-import { AnimatePresence } from "framer-motion";
 import { Swords, Zap } from "lucide-react";
-import Link from "next/link";
-import { appRoutes } from "@/app/routes";
-import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
-import { useUser } from "@/app/[username]/user-provider";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
-import { useStartEncounter } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
+import {
+  useStartEncounter,
+  useUpdateEncounterParticipant,
+} from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import InitiativeInput from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/InitiativeInput";
+import React from "react";
+import { useLidndDialog } from "@/components/ui/lidnd_dialog";
 
 export function GroupInitiativeInput() {
   const id = useEncounterId();
+  const [inputState, setInputState] = React.useState<"surprise" | "initiative">(
+    "initiative",
+  );
+  const { close } = useLidndDialog();
 
   const [encounter] = api.encounterById.useSuspenseQuery(id);
-  const [campaign] = useCampaign();
-  const user = useUser();
   const { mutate: startEncounter } = useStartEncounter();
-  return (
-    <AnimatePresence>
-      <FadePresenceItem className="flex flex-col gap-10 items-center">
-        <div className="flex justify-between gap-10">
-          <Link href={appRoutes.encounter(campaign, encounter, user)}>
-            <Button variant="ghost">Back to prep</Button>
-          </Link>
-          <Link href={`surprise`}>
-            <Button variant="outline">
-              <Zap />
-              Assign surprise
-            </Button>
-          </Link>
-          <Link href={`run`} onClick={() => encounter && startEncounter(id)}>
-            <Button>
-              <Swords />
-              Commence the battle
-            </Button>
-          </Link>
-        </div>
+  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
+
+  const sortedParticipants = R.sort(encounter.participants, (a, b) =>
+    a.id > b.id ? 1 : -1,
+  );
+
+  function start() {
+    startEncounter(id);
+    close();
+  }
+
+  if (inputState === "surprise") {
+    return (
+      <div>
         <PreBattleInputsList>
-          {R.sort(encounter.participants, (a, b) => (a.id > b.id ? 1 : -1)).map(
-            (participant) => (
-              <PreBattleInput key={participant.id} participant={participant}>
-                <InitiativeInput participant={participant} />
-              </PreBattleInput>
-            ),
-          )}
+          {sortedParticipants.map((p) => (
+            <PreBattleInput key={p.id} participant={p}>
+              <Button
+                variant={p.has_surprise ? "default" : "outline"}
+                onClick={() =>
+                  updateParticipant({
+                    ...p,
+                    has_surprise: !p.has_surprise,
+                  })
+                }
+                className="flex gap-5"
+              >
+                <Zap />
+                Has surprise
+              </Button>
+            </PreBattleInput>
+          ))}
         </PreBattleInputsList>
-      </FadePresenceItem>
-    </AnimatePresence>
+        <div className="flex justify-between gap-10">
+          <Button variant="ghost" onClick={() => setInputState("initiative")}>
+            Back to initiative
+          </Button>
+          <Button onClick={start}>
+            <Swords />
+            Commence the battle
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <PreBattleInputsList>
+        {sortedParticipants.map((p) => (
+          <PreBattleInput key={p.id} participant={p}>
+            <InitiativeInput participant={p} />
+          </PreBattleInput>
+        ))}
+      </PreBattleInputsList>
+      <div className="flex justify-between gap-10">
+        <Button variant="outline" onClick={() => setInputState("surprise")}>
+          <Zap />
+          Assign surprise
+        </Button>
+        <Button onClick={start}>
+          <Swords />
+          Commence the battle
+        </Button>
+      </div>
+    </div>
   );
 }
 

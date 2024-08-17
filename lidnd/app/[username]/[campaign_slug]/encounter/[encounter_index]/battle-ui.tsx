@@ -16,13 +16,13 @@ import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { observer } from "mobx-react-lite";
 import { ParticipantUtils } from "@/utils/participants";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
-import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { ParticipantHealthForm } from "@/encounters/[encounter_index]/creature-health-form";
 import { DescriptionTextArea } from "@/encounters/[encounter_index]/description-text-area";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { GroupBattleUI } from "@/encounters/[encounter_index]/group-battle-ui";
 import {
+  useRemoveParticipantFromEncounter,
   useRemoveStatusEffect,
   useUpdateEncounterParticipant,
 } from "@/encounters/[encounter_index]/hooks";
@@ -34,14 +34,7 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-
-export function BattleUILoader() {
-  return (
-    <FadeInSuspense fallback={<div>Loading...</div>}>
-      <BattleUI />
-    </FadeInSuspense>
-  );
-}
+import { X } from "lucide-react";
 
 export const BattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -49,7 +42,7 @@ export const BattleUI = observer(function BattleUI() {
   return (
     <>
       <ReminderDialog />
-      <div className="flex gap-8 flex-col w-full">
+      <div className="flex gap-8 flex-col w-full pt-10">
         <DescriptionTextArea
           tiptapReadyGate={
             campaign.system?.initiative_type === "linear" ? (
@@ -104,7 +97,8 @@ export function BattleCard({
   const { selectedParticipantId: dmSelectedCreature } = useEncounterUIStore();
 
   const selectedId = dmSelectedCreature ?? activeParticipant?.id ?? null;
-
+  const { mutate: removeCreatureFromEncounter } =
+    useRemoveParticipantFromEncounter();
   return (
     <div
       className={`relative flex-col gap-6 items-center justify-between flex`}
@@ -117,6 +111,18 @@ export function BattleCard({
         key={participant.id}
         data-active={participant.id === selectedId}
       >
+        <Button
+          variant="ghost"
+          className="opacity-25 absolute top-2 right-2"
+          onClick={() =>
+            removeCreatureFromEncounter({
+              encounter_id: id,
+              participant_id: participant.id,
+            })
+          }
+        >
+          <X />
+        </Button>
         <BattleCardCreatureName participant={participant} />
         <BattleCardContent>
           <LidndTextArea editor={editor} />
@@ -164,7 +170,7 @@ export function BattleCardContent({
 }) {
   return (
     <CardContent
-      className={clsx("flex flex-col gap-4 px-3 items-center", className)}
+      className={clsx("flex flex-col gap-4 items-center", className)}
     >
       {children}
     </CardContent>

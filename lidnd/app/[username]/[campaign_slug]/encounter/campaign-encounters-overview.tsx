@@ -634,7 +634,7 @@ function DraggableEncounterCard(props: {
           >
             <Card
               className={clsx(
-                "flex flex-col transition-all cursor-grab h-32 w-64 sm:w-80 p-4 gap-3 justify-between",
+                "flex flex-col transition-all h-32 w-64 sm:w-80 p-4 gap-3 justify-between",
               )}
               draggable
               onDragStart={(e) => {

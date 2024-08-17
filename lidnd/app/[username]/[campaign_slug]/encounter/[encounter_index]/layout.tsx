@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
-import { EncounterSidebar } from "@/encounters/[encounter_index]/encounter-sidebar";
-import { EncounterTopBar } from "@/encounters/[encounter_index]/encounter-top-bar";
+import { EncounterTopBar } from "@/encounters/[encounter_index]/battle-bar";
 import { EncounterUI } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { db } from "@/server/api/db";
 import { isEncounterPathParams } from "@/server/utils";
@@ -19,6 +18,7 @@ import _ from "lodash";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import * as R from "remeda";
+import { EncounterPrepBar } from "@/encounters/[encounter_index]/prep-bar";
 
 export default async function EncounterLayout({
   children,
@@ -86,8 +86,8 @@ export default async function EncounterLayout({
       <CampaignId value={campaign.id}>
         <EncounterId value={encounter.id}>
           <section className="flex h-full overflow-hidden">
-            <section className="flex flex-col flex-grow min-w-0 gap-3">
-              <div className="flex flex-wrap justify-between">
+            <section className="flex flex-col flex-grow min-w-0 relative">
+              <div className="grid grid-cols-3">
                 <Breadcrumb>
                   <BreadcrumbList>
                     <BreadcrumbItem>
@@ -103,7 +103,8 @@ export default async function EncounterLayout({
                     </BreadcrumbLink>
                   </BreadcrumbList>
                 </Breadcrumb>
-                <div className="flex gap-2">
+                <EncounterTopBar />
+                <div className="ml-auto flex gap-2">
                   <span>
                     {indexForDisplay + 1} / {campaign.encounters.length}
                   </span>
@@ -153,12 +154,11 @@ export default async function EncounterLayout({
                   </span>
                 </div>
               </div>
-              <EncounterTopBar />
+              <EncounterPrepBar />
               <section className="flex flex-col overflow-y-auto">
                 {children}
               </section>
             </section>
-            <EncounterSidebar />
           </section>
         </EncounterId>
       </CampaignId>

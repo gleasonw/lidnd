@@ -303,6 +303,7 @@ export const appRouter = t.router({
             .set({
               started_at: new Date(),
               current_round: firstRoundNumber,
+              status: "run",
             })
             .where(eq(encounters.id, opts.input)),
         ]);

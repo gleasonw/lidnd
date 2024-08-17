@@ -1,5 +1,4 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import React, { useEffect } from "react";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
@@ -8,10 +7,7 @@ import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils as PU } from "@/utils/participants";
 import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
-import {
-  useRemoveParticipantFromEncounter,
-  useUpdateCreature,
-} from "@/encounters/[encounter_index]/hooks";
+import { useUpdateCreature } from "@/encounters/[encounter_index]/hooks";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { observer } from "mobx-react-lite";
 import { Input } from "@/components/ui/input";
@@ -37,8 +33,6 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
     editingColSpan,
   } = useEncounterUIStore();
 
-  const { mutate: removeCreatureFromEncounter } =
-    useRemoveParticipantFromEncounter();
   const { mutate: updateCreature } = useUpdateCreature();
 
   const dmCreatures = EncounterUtils.participants(encounter)
@@ -100,17 +94,6 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
                 />
               )}
               <CreatureStatBlockImage creature={participant.creature} />
-              <Button
-                variant="destructive"
-                onClick={() =>
-                  removeCreatureFromEncounter({
-                    encounter_id: id,
-                    participant_id: participant.id,
-                  })
-                }
-              >
-                Remove from encounter
-              </Button>
             </>
           }
         />

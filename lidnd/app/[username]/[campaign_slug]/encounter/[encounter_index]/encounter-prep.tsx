@@ -553,8 +553,7 @@ export function EncounterReminderInput() {
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <h2 className="text-xl">Round reminders</h2>
+    <div className="flex gap-5">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -564,9 +563,9 @@ export function EncounterReminderInput() {
             reminder: reminder,
           });
         }}
-        className="flex flex-col gap-3"
+        className="flex gap-3"
       >
-        <section className="flex gap-3 flex-wrap items-center">
+        <section className="flex gap-3 items-center shadow-md border p-3">
           <LidndTextInput
             variant="ghost"
             placeholder="Reminder text"
@@ -588,7 +587,7 @@ export function EncounterReminderInput() {
             className="w-72"
           />
           <Button type="submit">
-            <Plus /> Add{" "}
+            <Plus />
           </Button>
         </section>
         {encounter?.reminders.map((reminder) => (
