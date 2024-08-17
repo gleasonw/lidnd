@@ -590,28 +590,31 @@ export function EncounterReminderInput() {
             <Plus />
           </Button>
         </section>
-        {encounter?.reminders.map((reminder) => (
-          <div
-            className="flex gap-1 shadow-md border items-center p-3"
-            key={reminder.id}
-          >
-            <span className="flex-grow">{reminder.reminder}</span>
-            <span>after round {reminder.alert_after_round}</span>
-            <ButtonWithTooltip
-              text="Remove reminder"
-              variant="ghost"
-              onClick={(e) => {
-                e.preventDefault();
-                removeReminder({
-                  reminder_id: reminder.id,
-                  encounter_id: encounter.id,
-                });
-              }}
+        {encounter?.reminders
+          .slice()
+          .sort((a, b) => a.alert_after_round - b.alert_after_round)
+          .map((reminder) => (
+            <div
+              className="flex gap-1 shadow-md border items-center p-3"
+              key={reminder.id}
             >
-              <X />
-            </ButtonWithTooltip>
-          </div>
-        ))}
+              <span className="flex-grow">{reminder.reminder}</span>
+              <span>after round {reminder.alert_after_round}</span>
+              <ButtonWithTooltip
+                text="Remove reminder"
+                variant="ghost"
+                onClick={(e) => {
+                  e.preventDefault();
+                  removeReminder({
+                    reminder_id: reminder.id,
+                    encounter_id: encounter.id,
+                  });
+                }}
+              >
+                <X />
+              </ButtonWithTooltip>
+            </div>
+          ))}
       </form>
     </div>
   );
