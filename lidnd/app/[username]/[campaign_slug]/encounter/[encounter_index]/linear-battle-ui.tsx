@@ -18,7 +18,7 @@ function onSelectParticipant(id: string) {
   );
   if (selectedCardElement) {
     selectedCardElement.scrollIntoView({
-      behavior: "smooth",
+      behavior: "instant",
     });
   }
 }
@@ -47,22 +47,22 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
       unsubscribeToSelectedParticipant(onSelectParticipant);
     };
   }, []);
+  const active = EncounterUtils.activeParticipant(encounter);
 
   useEffect(() => {
-    const active = EncounterUtils.activeParticipant(encounter);
     if (active) {
       const activeElement = document.querySelector(`[data-is-active="true"]`);
       if (!activeElement) {
         return;
       }
       activeElement.scrollIntoView({
-        behavior: "smooth",
+        behavior: "instant",
       });
     }
-  }, [encounter]);
+  }, [active]);
 
   return (
-    <div className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+    <div className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {dmCreatures.map((participant) => (
         <BattleCard
           participant={participant}

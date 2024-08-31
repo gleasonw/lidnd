@@ -55,7 +55,7 @@ function BattleTopBar() {
   }
 
   return (
-    <div className="flex flex-col items-center relative p-5">
+    <div className="flex flex-col items-center relative p-5 pt-0">
       <div className="flex gap-10 justify-center w-full items-center">
         <h1 className="text-2xl font-bold whitespace-nowrap">{roundText}</h1>
         <ButtonWithTooltip
@@ -81,7 +81,7 @@ function BattleTopBar() {
   );
 }
 
-export const ParticipantIcons = observer(function ParticipantIcons() {
+export const InitiativeTracker = observer(function ParticipantIcons() {
   const { setSelectedParticipantId, isEditingInitiative } =
     useEncounterUIStore();
   const { mutate: cycleNextMutation, isPending: isLoadingNextTurn } =
@@ -107,8 +107,14 @@ export const ParticipantIcons = observer(function ParticipantIcons() {
   const [encounter] = useEncounter();
   const activeIndex = EncounterUtils.activeParticipantIndex(encounter);
 
+  if (encounter.status !== "run") {
+    return null;
+  }
+
   return (
-    <div className={`flex flex-grow-0 gap-0.5 h-20 z-10 justify-center`}>
+    <div
+      className={`flex flex-grow-0 h-20 z-10 justify-center absolute w-full mx-auto bottom-0 translate-y-full`}
+    >
       <ButtonWithTooltip
         className="h-full shadow-lg"
         variant="outline"

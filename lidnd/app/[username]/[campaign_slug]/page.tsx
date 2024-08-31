@@ -38,21 +38,33 @@ export default async function CampaignPage({
           </div>
         }
         deleteCampaignButton={
-          <CampaignDeleteButton campaignId={params.campaign_slug} />
+          <CampaignDeleteButton campaignSlug={params.campaign_slug} />
         }
       />
     </CampaignId>
   );
 }
 
-async function CampaignDeleteButton(props: { campaignId: string }) {
+async function CampaignDeleteButton(props: { campaignSlug: string }) {
   const user = await LidndAuth.getUser();
 
   if (!user) {
     return <div>No user found</div>;
   }
 
-  const deleteUserCampaign = deleteCampaign.bind(null, user, props.campaignId);
+  const campaignForSlug = await ServerCampaign.campaignFromSlug(
+    UserUtils.context(user),
+    props.campaignSlug,
+  );
+  if (!campaignForSlug) {
+    return <div>No campaign found</div>;
+  }
+
+  const deleteUserCampaign = deleteCampaign.bind(
+    null,
+    user,
+    campaignForSlug.id,
+  );
 
   return (
     <form action={deleteUserCampaign}>

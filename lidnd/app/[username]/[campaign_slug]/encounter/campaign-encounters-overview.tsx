@@ -60,7 +60,7 @@ export interface CampaignEncountersProps {
 export default function CampaignEncountersOverview(
   props: CampaignEncountersProps,
 ) {
-  const { campaignHeader } = props;
+  const { campaignHeader, deleteCampaignButton } = props;
 
   return (
     <FadeInSuspense
@@ -72,7 +72,10 @@ export default function CampaignEncountersOverview(
       wrapperClassName="flex h-full overflow-hidden"
     >
       <div className="flex flex-col gap-5 h-full overflow-auto w-full">
-        {campaignHeader}
+        <div className="flex justify-between">
+          {campaignHeader}
+          {deleteCampaignButton}
+        </div>
         <CampaignDescriptionArea
           tiptapReadyGate={
             <>

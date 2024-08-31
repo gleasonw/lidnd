@@ -3,7 +3,6 @@
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { Button } from "@/components/ui/button";
 import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
-import { ParticipantIcons } from "@/encounters/[encounter_index]/battle-bar";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { EncounterReminderInput } from "@/encounters/[encounter_index]/encounter-prep";
 import { GroupInitiativeInput } from "@/encounters/[encounter_index]/group-initiative-input";
@@ -22,9 +21,11 @@ import { Swords } from "lucide-react";
 export function EncounterPrepBar() {
   const [encounter] = useEncounter();
   const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
-  if (encounter.status === "run") {
-    return <ParticipantIcons />;
+
+  if (encounter.status !== "roll") {
+    return null;
   }
+
   return (
     <div className="w-full p-10 flex flex-col gap-5">
       <div className="grid grid-cols-3">

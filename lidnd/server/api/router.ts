@@ -223,9 +223,11 @@ export const appRouter = t.router({
 
         if (campaignToPlayers) {
           await tx.insert(participants).values(
-            campaignToPlayers.map(({ player }) => ({
+            campaignToPlayers.map(({ player: creature }) => ({
               encounter_id: encounterResult.id,
-              creature_id: player.id,
+              creature_id: creature.id,
+              is_ally: !creature.is_player,
+              hp: creature.is_player ? 1 : creature.max_hp,
             }))
           );
         }

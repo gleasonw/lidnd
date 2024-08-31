@@ -10,7 +10,10 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
-import { EncounterTopBar } from "@/encounters/[encounter_index]/battle-bar";
+import {
+  EncounterTopBar,
+  InitiativeTracker,
+} from "@/encounters/[encounter_index]/battle-bar";
 import { EncounterUI } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { db } from "@/server/api/db";
 import { isEncounterPathParams } from "@/server/utils";
@@ -86,8 +89,9 @@ export default async function EncounterLayout({
       <CampaignId value={campaign.id}>
         <EncounterId value={encounter.id}>
           <section className="flex h-full overflow-hidden">
-            <section className="flex flex-col flex-grow min-w-0 relative">
-              <div className="grid grid-cols-3">
+            <section className="flex flex-col flex-grow min-w-0">
+              <div className="grid grid-cols-3 relative">
+                <InitiativeTracker />
                 <Breadcrumb>
                   <BreadcrumbList>
                     <BreadcrumbItem>

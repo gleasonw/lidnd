@@ -11,6 +11,8 @@ import { CreateCampaignButton } from "@/app/[username]/create-campaign-button";
 import { LidndAuth, type LidndUser, UserUtils } from "@/app/authentication";
 import { ServerCampaign } from "@/server/campaigns";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
+import * as R from "remeda";
+import { CampaignUtils } from "@/utils/campaigns";
 
 export default async function Page({
   params,
@@ -38,23 +40,18 @@ export default async function Page({
   return (
     <div className="flex w-full flex-col">
       <div className="flex flex-col gap-10 ">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-7xl gap-5">
-          {userCampaigns.map((campaign) => (
+        <CreateCampaignButton
+          trigger={
+            <Button className="flex items-center w-full h-full">
+              <CardTitle>New campaign</CardTitle>
+              <Plus />
+            </Button>
+          }
+        />
+        <div className="flex flex-col gap-3 w-full items-center">
+          {R.sort(userCampaigns, CampaignUtils.sortRecent).map((campaign) => (
             <CampaignCard key={campaign.id} campaign={campaign} user={user} />
           ))}
-          <CreateCampaignButton
-            trigger={
-              <Card className="flex items-center justify-center w-full h-full">
-                <Button
-                  variant="ghost"
-                  className="flex items-center w-full h-full"
-                >
-                  <CardTitle>New campaign</CardTitle>
-                  <Plus />
-                </Button>
-              </Card>
-            }
-          />
         </div>
       </div>
     </div>
@@ -75,8 +72,11 @@ async function CampaignCard(props: CampaignCardProps) {
   );
 
   return (
-    <Link href={appRoutes.campaign(campaign, user)}>
-      <Card className="flex flex-col transition-all hover:bg-gray-200 max-w-lg h-96">
+    <Link
+      href={appRoutes.campaign(campaign, user)}
+      className="w-full max-w-2xl m-auto"
+    >
+      <Card className="flex flex-col transition-all hover:bg-gray-200 w-full ">
         <CardHeader className="flex gap-2 flex-col">
           <CardTitle>
             {isStringMeaningful(campaign.name) ? campaign.name : "Unnamed"}

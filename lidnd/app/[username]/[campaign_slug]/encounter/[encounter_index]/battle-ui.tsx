@@ -22,6 +22,7 @@ import { DescriptionTextArea } from "@/encounters/[encounter_index]/description-
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { GroupBattleUI } from "@/encounters/[encounter_index]/group-battle-ui";
 import {
+  useEncounter,
   useRemoveParticipantFromEncounter,
   useRemoveStatusEffect,
   useUpdateEncounterParticipant,
@@ -38,11 +39,14 @@ import { X } from "lucide-react";
 
 export const BattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
+  const [encounter] = useEncounter();
 
   return (
     <>
       <ReminderDialog />
-      <div className="flex gap-8 flex-col w-full pt-10">
+      <div className="flex gap-8 flex-col w-full">
+        {/**create space for the overlaid initiative tracker */}
+        {encounter.status === "run" && <div className="my-12" />}
         <DescriptionTextArea
           tiptapReadyGate={
             campaign.system?.initiative_type === "linear" ? (
@@ -72,7 +76,6 @@ export function BattleCard({
   ...props
 }: BattleCardProps) {
   const id = useEncounterId();
-  const [encounter] = api.encounterById.useSuspenseQuery(id);
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
 
   const debouncedUpdate = useDebouncedCallback((participant: Participant) => {
@@ -92,11 +95,6 @@ export function BattleCard({
     },
   });
 
-  const activeParticipant = EncounterUtils.activeParticipant(encounter);
-
-  const { selectedParticipantId: dmSelectedCreature } = useEncounterUIStore();
-
-  const selectedId = dmSelectedCreature ?? activeParticipant?.id ?? null;
   const { mutate: removeCreatureFromEncounter } =
     useRemoveParticipantFromEncounter();
   return (
@@ -107,10 +105,7 @@ export function BattleCard({
       {participant?.minion_count && participant.minion_count > 1 ? (
         <MinionCardStack minionCount={participant.minion_count} />
       ) : null}
-      <BattleCardLayout
-        key={participant.id}
-        data-active={participant.id === selectedId}
-      >
+      <BattleCardLayout key={participant.id} participant={participant}>
         <Button
           variant="ghost"
           className="opacity-25 absolute top-2 right-2"
@@ -143,15 +138,25 @@ export function BattleCard({
 export function BattleCardLayout({
   className,
   children,
+  participant,
   ...props
 }: {
   className?: string;
   children: React.ReactNode;
+  participant: ParticipantWithData;
 } & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <Card
       className={clsx(
-        "bg-white shadow-lg flex flex-col justify-between transition-all group",
+        "bg-white shadow-sm flex flex-col justify-between transition-all group",
+        {
+          "shadow-lg shadow-red-800":
+            !ParticipantUtils.isFriendly(participant) && participant.is_active,
+        },
+        {
+          "shadow-lg shadow-blue-800":
+            ParticipantUtils.isFriendly(participant) && participant.is_active,
+        },
         className,
       )}
       {...props}
