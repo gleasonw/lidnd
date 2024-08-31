@@ -22,7 +22,7 @@ export function EncounterPrepBar() {
   const [encounter] = useEncounter();
   const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
 
-  if (encounter.status !== "roll") {
+  if (encounter.status === "run") {
     return null;
   }
 

@@ -22,6 +22,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import * as R from "remeda";
 import { EncounterPrepBar } from "@/encounters/[encounter_index]/prep-bar";
+import { EncounterSidebar } from "@/encounters/[encounter_index]/encounter-sidebar";
 
 export default async function EncounterLayout({
   children,
@@ -163,6 +164,7 @@ export default async function EncounterLayout({
                 {children}
               </section>
             </section>
+            <EncounterSidebar />
           </section>
         </EncounterId>
       </CampaignId>

@@ -15,10 +15,7 @@ import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[enco
 import {
   useCreateCreatureInEncounter,
   useAddExistingCreatureToEncounter,
-  useEncounter,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
-import { EncounterUtils } from "@/utils/encounters";
-import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 
 const AllyContext = createContext<boolean | null>(null);
 
@@ -64,8 +61,6 @@ export const ParticipantUpload = function ParticipantUpload({
   existingCreatures,
 }: ParticipantUploadProps) {
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
-  const [encounter] = useEncounter();
-  const [campaign] = useCampaign();
 
   return (
     <div className="flex flex-col gap-3">
@@ -98,13 +93,6 @@ export const ParticipantUpload = function ParticipantUpload({
           {existingCreatures ?? <ExistingCreature />}
         </TabsContent>
       </Tabs>
-
-      <section className="flex flex-wrap gap-5 items-center text-xl font-medium">
-        <span>Total CR: {EncounterUtils.totalCr(encounter)}</span>
-        <span>
-          {EncounterUtils.difficulty(encounter, campaign?.party_level)}
-        </span>
-      </section>
     </div>
   );
 };
