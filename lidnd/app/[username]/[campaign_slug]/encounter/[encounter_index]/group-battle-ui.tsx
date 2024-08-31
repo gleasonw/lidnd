@@ -148,6 +148,7 @@ export function GroupBattleCard({
       ) : null}
 
       <BattleCardLayout
+        participant={participant}
         {...props}
         className={clsx(
           {

@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import React from "react";
 import { motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
-import { api } from "@/trpc/react";
 import type { Participant, ParticipantWithData } from "@/server/api/router";
 import { LidndPopover } from "@/encounters/base-popover";
 import { EffectIcon, StatusInput } from "./status-input";
@@ -29,8 +28,6 @@ import {
 } from "@/encounters/[encounter_index]/hooks";
 import { ReminderDialog } from "@/encounters/[encounter_index]/reminder-dialog";
 import { useDebouncedCallback } from "use-debounce";
-import { EncounterUtils } from "@/utils/encounters";
-import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
