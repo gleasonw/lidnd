@@ -96,7 +96,7 @@ export function BattleCard({
     useRemoveParticipantFromEncounter();
   return (
     <div
-      className={`relative flex-col gap-6 items-center justify-between flex`}
+      className={`relative flex-col gap-6 items-center justify-between flex w-[${participant.creature.icon_width}px]`}
       {...props}
     >
       {participant?.minion_count && participant.minion_count > 1 ? (
@@ -115,14 +115,15 @@ export function BattleCard({
         >
           <X />
         </Button>
-        <BattleCardCreatureName participant={participant} />
+        <div className="flex gap-4 items-center justify-center w-full">
+          <BattleCardCreatureIcon participant={participant} />
+          <BattleCardCreatureName participant={participant} />
+        </div>
         <BattleCardContent>
           <LidndTextArea editor={editor} />
-          <div className="flex w-full gap-2 md:gap-6 justify-center h-36">
-            <BattleCardCreatureIcon
-              participant={participant}
-              className="max-h-full max-w-full"
-            />
+          <div
+            className={`flex w-full gap-2 md:gap-6 justify-center max-w-[${participant.creature.stat_block_width}px]`}
+          >
             <BattleCardHealthAndStatus participant={participant} />
           </div>
         </BattleCardContent>
@@ -281,10 +282,9 @@ export function BattleCardCreatureIcon({
     <div className={clsx("relative", className)}>
       <CreatureIcon
         creature={participant.creature}
-        size="medium"
+        size="small"
         objectFit="contain"
       />
-      <HealthMeterOverlay participant={participant} />
     </div>
   );
 }
@@ -293,11 +293,15 @@ export function BattleCardHealthAndStatus({
   participant,
 }: BattleCardParticipantProps) {
   return (
-    <div className="flex flex-col gap-3">
-      {!ParticipantUtils.isPlayer(participant) && (
-        <ParticipantHealthForm participant={participant} />
+    <div className="flex flex-wrap gap-5 w-full">
+      {!ParticipantUtils.isPlayer(participant) ? (
+        <ParticipantHealthForm
+          participant={participant}
+          healthExtra={<StatusInput participant={participant} />}
+        />
+      ) : (
+        <StatusInput participant={participant} />
       )}
-      <StatusInput participant={participant} />
     </div>
   );
 }

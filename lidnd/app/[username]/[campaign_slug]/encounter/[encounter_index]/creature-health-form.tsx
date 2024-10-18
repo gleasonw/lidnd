@@ -12,14 +12,18 @@ import {
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { useDebouncedCallback } from "use-debounce";
 import React from "react";
+import { Minus, Plus } from "lucide-react";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 
 export function ParticipantHealthForm({
   participant,
+  healthExtra,
 }: {
   participant: ParticipantWithData;
+  healthExtra: React.ReactNode;
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
-  const [tempHp, setTempHp] = useState<number>(participant.temporary_hp);
+  const [tempHpDiff, setTempHpDiff] = useState<number | string>("");
 
   const { mutate: edit, isPending: isLoading } =
     useUpdateEncounterParticipant();
@@ -29,6 +33,10 @@ export function ParticipantHealthForm({
   }
 
   function handleHPChange(updatedHp: number) {
+    if (isLoading) {
+      return;
+    }
+
     const hpDiff = participant.hp - updatedHp;
 
     if (participant.temporary_hp === 0 || hpDiff <= 0) {
@@ -55,7 +63,7 @@ export function ParticipantHealthForm({
     });
   }
 
-  const handleTempHpChange = useDebouncedCallback((tempHp: number) => {
+  const setTempHp = useDebouncedCallback((tempHp: number) => {
     edit({
       ...participant,
       temporary_hp: tempHp,
@@ -63,73 +71,111 @@ export function ParticipantHealthForm({
   }, 300);
 
   return (
-    <div className="grid grid-cols-3 gap-1">
-      <div className="flex flex-col gap-1">
-        <Button
-          disabled={isLoading}
-          variant="default"
-          className={"bg-lime-800 h-7"}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleHPChange(
-              typeof hpDiff === "number"
-                ? participant.hp + hpDiff
-                : participant.hp,
-            );
-          }}
-        >
-          Heal
-        </Button>
-        <Input
-          placeholder="HP"
-          type="number"
-          value={hpDiff}
-          onChange={(e) => {
-            if (!isNaN(parseInt(e.target.value))) {
-              setHpDiff(parseInt(e.target.value));
-            } else {
-              setHpDiff("");
-            }
-          }}
-        />
-        <Button
-          disabled={isLoading}
-          variant="default"
-          className={"bg-rose-800 h-7"}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleHPChange(
-              typeof hpDiff === "number"
-                ? participant.hp - hpDiff
-                : participant.hp,
-            );
-          }}
-        >
-          Damage
-        </Button>
-      </div>
+    <div className="flex flex-wrap gap-5 w-full">
       {!ParticipantUtils.isPlayer(participant) && (
-        <span className="whitespace-nowrap text-xl text-center flex justify-center items-center">
-          {participant.hp} / {ParticipantUtils.maxHp(participant)}
+        <span className="w-full h-10 shadow-md relative border bg-red-100">
+          <span
+            className={`absolute bg-green-500 h-full transition-all`}
+            style={{
+              width: `${(participant.hp / ParticipantUtils.maxHp(participant)) * 100}%`,
+            }}
+          />
+          <span
+            className={`absolute bg-blue-500 h-full transition-all`}
+            style={{
+              width: `${(participant.temporary_hp / ParticipantUtils.maxHp(participant)) * 100}%`,
+            }}
+          />
         </span>
       )}
-      <label>
-        Temp
-        <Input
-          placeholder="Temp hp"
-          type="number"
-          value={tempHp}
-          onChange={(e) => {
-            if (!isNaN(parseInt(e.target.value))) {
-              setTempHp(parseInt(e.target.value));
-              handleTempHpChange(parseInt(e.target.value));
-            } else {
-              setTempHp(0);
-              handleTempHpChange(0);
-            }
-          }}
-        />
-      </label>
+      <div className="flex flex-wrap gap-10">
+        <div className="flex gap-4 text-2xl">
+          <Button
+            variant="outline"
+            className={"bg-red-600 text-white"}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleHPChange(
+                typeof hpDiff === "number"
+                  ? participant.hp - hpDiff
+                  : participant.hp,
+              );
+            }}
+          >
+            <Minus />
+          </Button>
+          <Input
+            placeholder="HP"
+            type="number"
+            className="w-32"
+            value={hpDiff}
+            onChange={(e) => {
+              if (!isNaN(parseInt(e.target.value))) {
+                setHpDiff(parseInt(e.target.value));
+              } else {
+                setHpDiff("");
+              }
+            }}
+          />
+          <Button
+            variant="outline"
+            className={"bg-green-600 text-white"}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleHPChange(
+                typeof hpDiff === "number"
+                  ? participant.hp + hpDiff
+                  : participant.hp,
+              );
+            }}
+          >
+            <Plus />
+          </Button>
+        </div>
+        <div className="flex gap-4">
+          <Button
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation();
+              setTempHp(
+                typeof tempHpDiff === "number"
+                  ? participant.temporary_hp - tempHpDiff
+                  : participant.temporary_hp,
+              );
+            }}
+          >
+            <Minus />
+          </Button>
+          <LidndTextInput
+            variant="ghost"
+            placeholder="Temp HP"
+            type="number"
+            className="w-32 text-sm"
+            value={tempHpDiff}
+            onChange={(e) => {
+              if (!isNaN(parseInt(e.target.value))) {
+                setTempHpDiff(parseInt(e.target.value));
+              } else {
+                setTempHpDiff("");
+              }
+            }}
+          />
+          <Button
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation();
+              setTempHp(
+                typeof tempHpDiff === "number"
+                  ? participant.temporary_hp + tempHpDiff
+                  : participant.temporary_hp,
+              );
+            }}
+          >
+            <Plus />
+          </Button>
+        </div>
+        {healthExtra}
+      </div>
     </div>
   );
 }

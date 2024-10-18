@@ -62,14 +62,10 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
   }, [active]);
 
   return (
-    <div className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="flex flex-wrap">
       {dmCreatures.map((participant) => (
         <BattleCard
           participant={participant}
-          className={clsx("relative", {
-            "col-span-1": PU.colSpan(participant) === 1,
-            "col-span-2": PU.colSpan(participant) === 2,
-          })}
           data-is-active={participant.is_active}
           data-participant-id={participant.id}
           key={participant.id}

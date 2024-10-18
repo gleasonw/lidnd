@@ -56,7 +56,7 @@ export function StatusInput({
   const [save_ends_dc, setSaveEndsDC] = React.useState<string | undefined>();
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 max-w-sm">
       <Combobox
         triggerPlaceholder="Add status effect"
         emptyResultText="No status effects"

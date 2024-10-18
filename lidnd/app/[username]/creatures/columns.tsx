@@ -19,7 +19,7 @@ function valueIsCreature(value: unknown): value is Creature {
 
 export const columns: ColumnDef<Creature>[] = [
   {
-    accessorFn: (data) => ({ id: data.id, name: data.name }),
+    accessorFn: (data) => data,
     header: "Icon",
     cell: (row) => {
       const data = row.getValue();
