@@ -9,6 +9,8 @@ import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { Combobox } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/resistance-selector";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 export function StatusInput({
   participant,
@@ -56,11 +58,11 @@ export function StatusInput({
   const [save_ends_dc, setSaveEndsDC] = React.useState<string | undefined>();
 
   return (
-    <div className="flex gap-2 max-w-sm">
+    <div className="flex gap-2 max-w-sm whitespace-nowrap">
       <Combobox
-        triggerPlaceholder="Add status effect"
+        triggerPlaceholder="Status effect"
         emptyResultText="No status effects"
-        className="max-h-80 overflow-auto"
+        className="max-h-80 overflow-auto whitespace-nowrap"
       >
         {effects?.map((effect) => (
           <CommandItem key={effect.id} className="w-full flex justify-between">
@@ -83,14 +85,15 @@ export function StatusInput({
       </Combobox>
       <LidndTextInput
         type="number"
-        variant="ghost"
-        className="w-24"
         value={save_ends_dc}
         onChange={(e) => {
           setSaveEndsDC(e.target.value ?? "");
         }}
         placeholder="DC save"
       />
+      <Button variant="outline">
+        Apply <Plus />
+      </Button>
     </div>
   );
 }

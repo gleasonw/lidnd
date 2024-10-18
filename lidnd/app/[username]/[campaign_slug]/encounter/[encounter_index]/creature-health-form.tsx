@@ -12,8 +12,9 @@ import {
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { useDebouncedCallback } from "use-debounce";
 import React from "react";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Shield } from "lucide-react";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
+import { LidndPopover } from "@/encounters/base-popover";
 
 export function ParticipantHealthForm({
   participant,
@@ -132,48 +133,56 @@ export function ParticipantHealthForm({
             <Plus />
           </Button>
         </div>
-        <div className="flex gap-4">
-          <Button
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              setTempHp(
-                typeof tempHpDiff === "number"
-                  ? participant.temporary_hp - tempHpDiff
-                  : participant.temporary_hp,
-              );
-            }}
-          >
-            <Minus />
-          </Button>
-          <LidndTextInput
-            variant="ghost"
-            placeholder="Temp HP"
-            type="number"
-            className="w-32 text-sm"
-            value={tempHpDiff}
-            onChange={(e) => {
-              if (!isNaN(parseInt(e.target.value))) {
-                setTempHpDiff(parseInt(e.target.value));
-              } else {
-                setTempHpDiff("");
-              }
-            }}
-          />
-          <Button
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              setTempHp(
-                typeof tempHpDiff === "number"
-                  ? participant.temporary_hp + tempHpDiff
-                  : participant.temporary_hp,
-              );
-            }}
-          >
-            <Plus />
-          </Button>
-        </div>
+        <LidndPopover
+          trigger={
+            <Button variant="outline">
+              <Shield />
+            </Button>
+          }
+        >
+          <div className="flex gap-4">
+            <Button
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                setTempHp(
+                  typeof tempHpDiff === "number"
+                    ? participant.temporary_hp - tempHpDiff
+                    : participant.temporary_hp,
+                );
+              }}
+            >
+              <Minus />
+            </Button>
+            <LidndTextInput
+              variant="ghost"
+              placeholder="Temp HP"
+              type="number"
+              className="w-32 text-sm"
+              value={tempHpDiff}
+              onChange={(e) => {
+                if (!isNaN(parseInt(e.target.value))) {
+                  setTempHpDiff(parseInt(e.target.value));
+                } else {
+                  setTempHpDiff("");
+                }
+              }}
+            />
+            <Button
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                setTempHp(
+                  typeof tempHpDiff === "number"
+                    ? participant.temporary_hp + tempHpDiff
+                    : participant.temporary_hp,
+                );
+              }}
+            >
+              <Plus />
+            </Button>
+          </div>
+        </LidndPopover>
         {healthExtra}
       </div>
     </div>
