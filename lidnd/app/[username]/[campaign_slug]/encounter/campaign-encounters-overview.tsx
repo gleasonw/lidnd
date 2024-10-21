@@ -634,6 +634,7 @@ function DraggableEncounterCard(props: {
           <Link
             href={appRoutes.encounter(campaign, encounter, user)}
             className=""
+            prefetch={true}
           >
             <Card
               className={clsx(
