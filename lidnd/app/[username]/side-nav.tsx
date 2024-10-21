@@ -68,7 +68,7 @@ export interface AppLinkProps {
 export function AppLink(props: AppLinkProps) {
   const { route, children } = props;
   return (
-    <Link key={route} href={route}>
+    <Link key={route} href={route} prefetch={true}>
       <Button variant="ghost" className="items-center gap-3 flex p-3 w-full">
         {children}
       </Button>
