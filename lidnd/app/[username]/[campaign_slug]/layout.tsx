@@ -2,7 +2,7 @@ import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { ServerCampaign } from "@/server/campaigns";
 import { isCampaignSlug } from "@/server/utils";
-import React from "react";
+import React, { Suspense } from "react";
 
 export default async function CampaignLayout({
   children,
@@ -32,5 +32,9 @@ export default async function CampaignLayout({
     return <div>No campaign found -- bug!</div>;
   }
 
-  return <CampaignId value={campaign.id}>{children}</CampaignId>;
+  return (
+    <Suspense fallback={"Loading campaign"}>
+      <CampaignId value={campaign.id}>{children}</CampaignId>
+    </Suspense>
+  );
 }

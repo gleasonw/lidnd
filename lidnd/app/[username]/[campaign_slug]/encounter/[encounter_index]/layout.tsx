@@ -31,6 +31,7 @@ export default async function EncounterLayout({
   children: React.ReactNode;
   params: { id: string; campaign_slug: string };
 }) {
+  const start = performance.now();
   const user = await LidndAuth.getUser();
 
   if (!user) {
@@ -83,6 +84,10 @@ export default async function EncounterLayout({
   const nextEncounter = _.minBy(
     campaign.encounters.filter((e) => e.index_in_campaign > currentIndex),
     (e) => e.index_in_campaign,
+  );
+
+  console.log(
+    `rendered encounter index layout in ${performance.now() - start}`,
   );
 
   return (

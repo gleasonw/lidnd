@@ -71,6 +71,8 @@ export function ParticipantHealthForm({
     });
   }, 300);
 
+  const hpPercent = ParticipantUtils.healthPercent(participant);
+
   return (
     <div className="flex flex-wrap gap-5 w-full">
       {!ParticipantUtils.isPlayer(participant) && (
@@ -78,15 +80,20 @@ export function ParticipantHealthForm({
           <span
             className={`absolute bg-green-500 h-full transition-all`}
             style={{
-              width: `${(participant.hp / ParticipantUtils.maxHp(participant)) * 100}%`,
+              width: `${hpPercent}%`,
             }}
           />
           <span
             className={`absolute bg-blue-500 h-full transition-all`}
             style={{
-              width: `${(participant.temporary_hp / ParticipantUtils.maxHp(participant)) * 100}%`,
+              width: `${ParticipantUtils.tempHpPercent(participant)}%`,
             }}
           />
+          <span className="flex w-full items-center justify-center h-full">
+            <span className="z-10 text-xl text-white">
+              {participant.hp} / {ParticipantUtils.maxHp(participant)}
+            </span>
+          </span>
         </span>
       )}
       <div className="flex flex-wrap gap-10">

@@ -115,7 +115,7 @@ export function BattleCard({
         >
           <X />
         </Button>
-        <div className="flex gap-4 items-center justify-center w-full">
+        <div className="flex gap-4 py-2 items-center justify-center w-full">
           <BattleCardCreatureIcon participant={participant} />
           <BattleCardCreatureName participant={participant} />
         </div>
@@ -282,7 +282,7 @@ export function BattleCardCreatureIcon({
     <div className={clsx("relative", className)}>
       <CreatureIcon
         creature={participant.creature}
-        size="small"
+        size="small2"
         objectFit="contain"
       />
     </div>

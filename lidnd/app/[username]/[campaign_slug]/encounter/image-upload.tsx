@@ -17,7 +17,7 @@ export function ImageUpload({
   dropContainerClassName,
   dropIcon,
 }: {
-  onUpload: (file?: File) => void;
+  onUpload: () => void;
   image?: File;
   clearImage: () => void;
   previewSize?: number;

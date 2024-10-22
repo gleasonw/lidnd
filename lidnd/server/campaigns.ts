@@ -3,6 +3,7 @@ import { campaigns } from "@/server/api/db/schema";
 import type { LidndContext } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
+import { cache } from "react";
 
 export const ServerCampaign = {
   userCampaigns: async function (ctx: LidndContext) {
@@ -12,7 +13,10 @@ export const ServerCampaign = {
       .where(eq(campaigns.user_id, ctx.user.id));
   },
 
-  campaignFromSlug: async function (ctx: LidndContext, campaignSlug: string) {
+  campaignFromSlug: cache(async function (
+    ctx: LidndContext,
+    campaignSlug: string
+  ) {
     return await db.query.campaigns.findFirst({
       where: (campaigns, { eq, and }) =>
         and(
@@ -20,7 +24,7 @@ export const ServerCampaign = {
           eq(campaigns.slug, campaignSlug)
         ),
     });
-  },
+  }),
 
   campaignById: async function (
     ctx: LidndContext,
