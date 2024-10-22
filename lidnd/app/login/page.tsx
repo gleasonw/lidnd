@@ -2,11 +2,12 @@ import { DiscordIcon } from "@/app/login/discord";
 import "@/app/globals.css";
 import Link from "next/link";
 
-export default function Login({
-  searchParams,
-}: {
-  searchParams: { redirect: string };
-}) {
+export default async function Login(
+  props: {
+    searchParams: Promise<{ redirect: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="flex flex-col gap-20">

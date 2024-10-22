@@ -38,7 +38,7 @@ export const LidndAuth = {
   createSession: async (user_id: string) => {
     const session = await auth.createSession(user_id, {});
     const sessionCookie = auth.createSessionCookie(session.id);
-    cookies().set(
+    (await cookies()).set(
       sessionCookie.name,
       sessionCookie.value,
       sessionCookie.attributes,
@@ -50,13 +50,13 @@ export const LidndAuth = {
   },
 
   getUserSession: cache(async () => {
-    const sessionId = cookies().get(auth.sessionCookieName)?.value ?? null;
+    const sessionId = (await cookies()).get(auth.sessionCookieName)?.value ?? null;
     if (!sessionId) return null;
     const { user, session } = await auth.validateSession(sessionId);
     try {
       if (session && session.fresh) {
         const sessionCookie = auth.createSessionCookie(session.id);
-        cookies().set(
+        (await cookies()).set(
           sessionCookie.name,
           sessionCookie.value,
           sessionCookie.attributes,
@@ -64,7 +64,7 @@ export const LidndAuth = {
       }
       if (!session) {
         const sessionCookie = auth.createBlankSessionCookie();
-        cookies().set(
+        (await cookies()).set(
           sessionCookie.name,
           sessionCookie.value,
           sessionCookie.attributes,

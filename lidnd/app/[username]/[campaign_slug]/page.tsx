@@ -7,11 +7,12 @@ import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 
-export default async function CampaignPage({
-  params,
-}: {
-  params: { campaign_slug: string; user_id: string };
-}) {
+export default async function CampaignPage(
+  props: {
+    params: Promise<{ campaign_slug: string; user_id: string }>;
+  }
+) {
+  const params = await props.params;
   const user = await LidndAuth.getUser();
 
   if (!user) {

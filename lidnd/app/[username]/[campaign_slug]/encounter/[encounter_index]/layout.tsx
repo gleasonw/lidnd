@@ -24,13 +24,18 @@ import * as R from "remeda";
 import { EncounterPrepBar } from "@/encounters/[encounter_index]/prep-bar";
 import { EncounterSidebar } from "@/encounters/[encounter_index]/encounter-sidebar";
 
-export default async function EncounterLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: { id: string; campaign_slug: string };
-}) {
+export default async function EncounterLayout(
+  props: {
+    children: React.ReactNode;
+    params: Promise<{ id: string; campaign_slug: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    children
+  } = props;
+
   const start = performance.now();
   const user = await LidndAuth.getUser();
 

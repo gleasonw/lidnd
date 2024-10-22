@@ -4,13 +4,18 @@ import { ServerCampaign } from "@/server/campaigns";
 import { isCampaignSlug } from "@/server/utils";
 import React, { Suspense } from "react";
 
-export default async function CampaignLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: unknown;
-}) {
+export default async function CampaignLayout(
+  props: {
+    children: React.ReactNode;
+    params: Promise<unknown>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    children
+  } = props;
+
   const user = await LidndAuth.getUser();
 
   if (!user) {

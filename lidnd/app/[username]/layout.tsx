@@ -32,7 +32,7 @@ export default async function CampaignsLayout({
   const user = await LidndAuth.getUser();
 
   if (!user) {
-    const headersList = headers();
+    const headersList = await headers();
     const previousLocation = headersList.get("x-pathname");
 
     if (previousLocation) {
@@ -55,7 +55,7 @@ export default async function CampaignsLayout({
   // I'm preferring to server-render to avoid layout shift while loading in the sidebar...
   // maybe I could somehow override the css with a data attribute?
   return (
-    <TRPCReactProvider cookies={cookies().toString()}>
+    (<TRPCReactProvider cookies={(await cookies()).toString()}>
       <UserProvider value={user}>
         <UIStoreProvider>
           <ClientOverlays>
@@ -136,7 +136,7 @@ export default async function CampaignsLayout({
           </ClientOverlays>
         </UIStoreProvider>
       </UserProvider>
-    </TRPCReactProvider>
+    </TRPCReactProvider>)
   );
 }
 

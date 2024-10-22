@@ -11,7 +11,8 @@ import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[e
 import { PageRefresher } from "@/app/observe/[id]/page-refresher";
 import { LinearObserve } from "@/app/observe/[id]/linear-observe-client";
 
-export default function ObservePage({ params }: { params: { id: string } }) {
+export default async function ObservePage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <EncounterObserverView id={params.id} />

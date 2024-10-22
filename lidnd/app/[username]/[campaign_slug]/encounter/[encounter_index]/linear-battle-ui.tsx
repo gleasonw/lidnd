@@ -62,7 +62,7 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
   }, [active]);
 
   return (
-    <div className="grid grid-cols-2">
+    <div className="flex flex-wrap">
       {dmCreatures.map((participant) => (
         <BattleCard
           participant={participant}

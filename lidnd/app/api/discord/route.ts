@@ -8,7 +8,7 @@ import { OAuth2RequestError } from "arctic";
 import { generateIdFromEntropySize } from "lucia";
 
 export const GET = async (request: NextRequest) => {
-  const storedState = cookies().get("discord_oauth_state")?.value;
+  const storedState = (await cookies()).get("discord_oauth_state")?.value;
   const url = new URL(request.url);
   const state = url.searchParams.get("state");
   const code = url.searchParams.get("code");
@@ -61,7 +61,7 @@ export const GET = async (request: NextRequest) => {
 
     await LidndAuth.createSession(newUser.id);
 
-    const redirectUrl = cookies().get("redirect")?.value;
+    const redirectUrl = (await cookies()).get("redirect")?.value;
     const redirectLocation =
       redirectUrl && redirectUrl !== "undefined"
         ? redirectUrl

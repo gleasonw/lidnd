@@ -14,11 +14,12 @@ import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import * as R from "remeda";
 import { CampaignUtils } from "@/utils/campaigns";
 
-export default async function Page({
-  params,
-}: {
-  params: { username: string };
-}) {
+export default async function Page(
+  props: {
+    params: Promise<{ username: string }>;
+  }
+) {
+  const params = await props.params;
   const user = await LidndAuth.getUser();
 
   if (!user || user.username !== params.username) {
