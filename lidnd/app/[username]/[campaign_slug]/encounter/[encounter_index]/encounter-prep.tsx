@@ -76,40 +76,6 @@ const useEncounterPrepStore = () => {
   return store;
 };
 
-const EncounterPrep = observer(function EncounterPrep() {
-  const { selectedeParticipantId: selectedCreatureId } = encounterPrepStore;
-  const [encounter] = useEncounter();
-  const selectedCreature = selectedCreatureId
-    ? EncounterUtils.participantFor(encounter, selectedCreatureId)?.creature
-    : null;
-  return (
-    <EncounterPrepContext.Provider value={encounterPrepStore}>
-      <div className="flex flex-col gap-5 flex-grow ml-auto mr-auto max-w-[860px] min-w-0">
-        <EncounterDetailsTopBar>
-          <EncounterStats />
-        </EncounterDetailsTopBar>
-        <EncounterNameInput />
-        <DescriptionTextArea
-          tiptapReadyGate={
-            <>
-              <Separator />
-              <EncounterParticipantRow />
-              {selectedCreature && (
-                <CreatureStatBlockImage creature={selectedCreature} />
-              )}
-              <div className="flex md:hidden">
-                <EncounterReminderInput />
-              </div>
-            </>
-          }
-        />
-      </div>
-    </EncounterPrepContext.Provider>
-  );
-});
-
-export default EncounterPrep;
-
 export function EncounterNameInput() {
   const id = useEncounterId();
   const { encounterById } = api.useUtils();
