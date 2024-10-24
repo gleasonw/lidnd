@@ -207,6 +207,7 @@ export const participants = pgTable(
     hex_color: text("hex_color"),
     notes: text("notes"),
     temporary_hp: integer("temporary_hp").default(0).notNull(),
+    grid_column_id: uuid("grid_column_id"),
     has_played_this_round: boolean("has_played_this_round")
       .default(false)
       .notNull(),

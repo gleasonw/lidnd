@@ -49,6 +49,7 @@ export function CreatureIcon({
   return (
     <Image
       quality={100}
+      className="select-none"
       src={CreatureUtils.awsURL(creature, "icon")}
       alt={creature.name}
       priority

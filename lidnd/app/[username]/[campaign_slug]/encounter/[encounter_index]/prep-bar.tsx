@@ -81,7 +81,6 @@ export function EncounterPrepBar() {
           </LidndPlusDialog>
         </ParticipantsContainer>
       </div>
-      <EncounterReminderInput />
     </div>
   );
 }

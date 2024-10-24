@@ -221,7 +221,7 @@ export const appRouter = t.router({
           });
         }
 
-        if (campaignToPlayers) {
+        if (campaignToPlayers && campaignToPlayers.length > 0) {
           await tx.insert(participants).values(
             campaignToPlayers.map(({ player: creature }) => ({
               encounter_id: encounterResult.id,
