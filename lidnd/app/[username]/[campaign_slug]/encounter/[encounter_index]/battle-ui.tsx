@@ -96,7 +96,7 @@ export function BattleCard({
     useRemoveParticipantFromEncounter();
   return (
     <div
-      className={`relative flex-col gap-6 items-center justify-between flex w-[${participant.creature.icon_width}px]`}
+      className={`relative flex-col gap-6 items-center justify-between flex `}
       {...props}
     >
       {participant?.minion_count && participant.minion_count > 1 ? (
