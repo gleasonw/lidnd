@@ -9,7 +9,7 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 import { observer } from "mobx-react-lite";
 import type { stat_columns } from "@/server/api/db/schema";
 import { Button } from "@/components/ui/button";
-import { ColumnsIcon, Plus } from "lucide-react";
+import { ColumnsIcon, Plus, X } from "lucide-react";
 import { StatColumnUtils } from "@/utils/stat-columns";
 
 function onSelectParticipant(id: string) {
@@ -119,7 +119,7 @@ function CreateNewColumnButton() {
       const previousColumns = getColumns.getData(newColumn.encounter_id);
       getColumns.setData(newColumn.encounter_id, (old) => {
         if (!old || !columns) return old;
-        return StatColumnUtils.addColumn(columns, {
+        return StatColumnUtils.add(columns, {
           ...newColumn,
           id: Math.random.toString(),
         });
@@ -152,6 +152,23 @@ function StatColumn({
 }) {
   // todo: setup join in db instead of here
   const [encounter] = useEncounter();
+  const { getColumns } = api.useUtils();
+  const { mutate: deleteColumn } = api.deleteColumn.useMutation({
+    onSettled: async () => {
+      return await getColumns.invalidate();
+    },
+    onMutate: async (column) => {
+      await getColumns.cancel(column.encounter_id);
+      const previousColumns = getColumns.getData(column.encounter_id);
+      getColumns.setData(column.encounter_id, (old) => {
+        if (!previousColumns) {
+          return old;
+        }
+        return StatColumnUtils.remove(previousColumns, column.id);
+      });
+      return { previousColumns };
+    },
+  });
   const participantsInColumn = encounter.participants.filter(
     (p) => p.column_id === column.id,
   );
@@ -169,6 +186,9 @@ function StatColumn({
             key={p.id}
           />
         ))}
+        <Button variant="ghost" onClick={() => deleteColumn(column)}>
+          <X />
+        </Button>
       </div>
       {splitter}
     </>
