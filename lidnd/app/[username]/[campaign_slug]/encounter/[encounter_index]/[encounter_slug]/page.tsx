@@ -13,7 +13,7 @@ export default async function EncounterPage() {
   return (
     <FadeInSuspense
       fallback={<div>Loading encounter...</div>}
-      wrapperClassName="flex gap-[var(--main-content-padding)]"
+      wrapperClassName="flex h-full"
     >
       <BattleUI />
     </FadeInSuspense>

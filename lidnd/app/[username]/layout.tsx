@@ -29,6 +29,7 @@ export default async function CampaignsLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const now = performance.now();
   const user = await LidndAuth.getUser();
 
   if (!user) {
@@ -51,19 +52,21 @@ export default async function CampaignsLayout({
     return redirect("/login");
   }
 
+  console.log(`app/[username] layout rendered in ${performance.now() - now}ms`);
+
   // TODO: these sidebar updates should be made optimistic. but it's a rare mutation and I'm lazy.
   // I'm preferring to server-render to avoid layout shift while loading in the sidebar...
   // maybe I could somehow override the css with a data attribute?
   return (
-    (<TRPCReactProvider cookies={(await cookies()).toString()}>
+    <TRPCReactProvider cookies={(await cookies()).toString()}>
       <UserProvider value={user}>
         <UIStoreProvider>
           <ClientOverlays>
-            <div className="flex flex-col max-h-screen">
+            <div className="flex flex-col h-full">
               <SmallSideNav>
                 <SideNavBody />
               </SmallSideNav>
-              <div className="flex flex-grow overflow-hidden relative">
+              <div className="flex flex-grow overflow-hidden relative h-full">
                 {userSettings.collapse_sidebar ? (
                   <nav className="flex-col gap-10 h-screen hidden w-12 xl:flex items-center flex-shrink-0">
                     <AppLinkTooltip
@@ -128,7 +131,7 @@ export default async function CampaignsLayout({
                     </form>
                   </nav>
                 )}
-                <div className="w-full shadow-sm border pt-2 bg-white min-w-0 overflow-auto h-screen px-3">
+                <div className="w-full shadow-sm border pt-2 bg-white min-w-0 overflow-auto px-3">
                   {children}
                 </div>
               </div>
@@ -136,7 +139,7 @@ export default async function CampaignsLayout({
           </ClientOverlays>
         </UIStoreProvider>
       </UserProvider>
-    </TRPCReactProvider>)
+    </TRPCReactProvider>
   );
 }
 

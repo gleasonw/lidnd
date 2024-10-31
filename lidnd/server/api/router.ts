@@ -1,5 +1,4 @@
-import { createContext } from "@/server/api/context";
-import { TRPCError, initTRPC } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import {
   encounters,
   participants,
@@ -14,8 +13,7 @@ import {
 } from "@/server/api/db/schema";
 import { eq, and, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
-import superjson from "superjson";
-import { ZodError, z } from "zod";
+import { z } from "zod";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
   getEncounterCreature,
@@ -30,43 +28,8 @@ import { ParticipantUtils } from "@/utils/participants";
 import { EncounterUtils } from "@/utils/encounters";
 import { insertCreatureSchema } from "@/app/[username]/[campaign_slug]/encounter/types";
 import _ from "lodash";
-import type { LidndUser } from "@/app/authentication";
-
-const t = initTRPC.context<typeof createContext>().create({
-  transformer: superjson,
-  errorFormatter({ shape, error }) {
-    return {
-      ...shape,
-      data: {
-        ...shape.data,
-        zodError:
-          error.cause instanceof ZodError ? error.cause.flatten() : null,
-      },
-    };
-  },
-});
-
-export type LidndContext = { user: LidndUser };
-
-const isAuthed = t.middleware((opts) => {
-  const { ctx } = opts;
-
-  if (!ctx.user || !ctx) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "You are not on the whitelist.",
-    });
-  }
-
-  return opts.next({
-    ctx: {
-      user: ctx.user,
-    } satisfies LidndContext,
-  });
-});
-
-export const protectedProcedure = t.procedure.use(isAuthed);
-export const publicProcedure = t.procedure;
+import { columnsRouter } from "@/server/api/columns-router";
+import { protectedProcedure, publicProcedure, t } from "@/server/api/base-trpc";
 
 export type Encounter = typeof encounters.$inferSelect;
 export type Creature = typeof creatures.$inferSelect;
@@ -943,6 +906,7 @@ export const appRouter = t.router({
       }
       return result[0];
     }),
+  ...columnsRouter,
 
   //#endregion
 });

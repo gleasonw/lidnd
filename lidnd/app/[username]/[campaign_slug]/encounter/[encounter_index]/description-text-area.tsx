@@ -33,6 +33,7 @@ export function DescriptionTextArea({
   const editor = useEditor({
     extensions: [StarterKit, configuredPlaceholder],
     content: encounter.description,
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const content = editor.getHTML();
       debouncedUpdate(content);

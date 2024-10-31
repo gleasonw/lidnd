@@ -1,23 +1,16 @@
 "use client";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import clsx from "clsx";
+import React, { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import { BattleCard } from "./battle-ui";
 import { EncounterUtils } from "@/utils/encounters";
-import { ParticipantUtils as PU } from "@/utils/participants";
-import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
-import { useUpdateCreature } from "@/encounters/[encounter_index]/hooks";
+import { useEncounter } from "@/encounters/[encounter_index]/hooks";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { observer } from "mobx-react-lite";
-import { Input } from "@/components/ui/input";
-import * as R from "remeda";
+import type { stat_columns } from "@/server/api/db/schema";
+import { Button } from "@/components/ui/button";
+import { ColumnsIcon, Plus } from "lucide-react";
+import { StatColumnUtils } from "@/utils/stat-columns";
 
 function onSelectParticipant(id: string) {
   const selectedCardElement = document.querySelector(
@@ -34,17 +27,8 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
 
-  const {
-    subscribeToSelectedParticipant,
-    unsubscribeToSelectedParticipant,
-    editingColSpan,
-  } = useEncounterUIStore();
-
-  const { mutate: updateCreature } = useUpdateCreature();
-
-  const dmCreatures = EncounterUtils.participants(encounter)
-    .filter((p) => !PU.isPlayer(p))
-    .sort((a, b) => PU.statBlockAspectRatio(a) - PU.statBlockAspectRatio(b));
+  const { subscribeToSelectedParticipant, unsubscribeToSelectedParticipant } =
+    useEncounterUIStore();
 
   useEffect(() => {
     // not sure this is the best way to apply a callback from a click on a distant element.
@@ -95,133 +79,179 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
     };
   }, []);
 
-  const firstHalf = Math.floor(dmCreatures.length / 2);
-
-  const [columns, setColumns] = React.useState<Record<string, Column>>({
-    test1: { id: "test1", percentWidth: 50 },
-    test2: { id: "test2", percentWidth: 50 },
-  });
-
-  const setColumnWidth = useCallback((id: string, newWidth: number) => {
-    setColumns((prevColumns) => ({
-      ...prevColumns,
-      [id]: { ...prevColumns[id]!, percentWidth: newWidth },
-    }));
-  }, []);
+  // todo: just fetch this in the encounter
+  const { data: columns } = api.getColumns.useQuery(encounter.id);
 
   return (
-    <div className="flex relative" ref={containerRef}>
+    <div className="flex relative gap-5 h-full" ref={containerRef}>
       <div className="absolute top-0 right-0 text-xl z-10">{parentWidth}</div>
-      <StatColumn column={columns["test1"]}>
-        {dmCreatures.slice(0, firstHalf).map((participant) => (
-          <BattleCard
-            participant={participant}
-            data-is-active={participant.is_active}
-            data-participant-id={participant.id}
-            key={participant.id}
-            battleCardExtraContent={
-              <>
-                {editingColSpan && (
-                  <Input
-                    type="number"
-                    min={1}
-                    max={2}
-                    value={PU.colSpan(participant)}
-                    onChange={(e) => {
-                      const parsedInt = parseInt(e.target.value);
-                      if (isNaN(parsedInt)) {
-                        return;
-                      }
-                      updateCreature({
-                        ...participant.creature,
-                        col_span: parsedInt,
-                      });
-                    }}
-                  />
-                )}
-                <CreatureStatBlockImage creature={participant.creature} />
-              </>
-            }
-          />
-        ))}
-      </StatColumn>
-      {parentWidth !== null ? (
-        <DraggableSplitter
-          leftColumn={columns["test1"]}
-          rightColumn={columns["test2"]}
-          setColumnWidth={setColumnWidth}
-          parentWidth={parentWidth}
+      {columns?.map((c, index) => (
+        <StatColumn
+          column={c}
+          key={c.id}
+          splitter={
+            index < columns.length - 1 ? (
+              <StatColumnSplitter
+                rightColumnId={columns[index + 1]!.id}
+                leftColumnId={c.id}
+                parentWidth={parentWidth}
+                key={index}
+              />
+            ) : null
+          }
         />
-      ) : null}
-      <StatColumn column={columns["test2"]}>
-        {dmCreatures.slice(firstHalf, dmCreatures.length).map((participant) => (
-          <BattleCard
-            participant={participant}
-            data-is-active={participant.is_active}
-            data-participant-id={participant.id}
-            key={participant.id}
-            battleCardExtraContent={
-              <>
-                {editingColSpan && (
-                  <Input
-                    type="number"
-                    min={1}
-                    max={2}
-                    value={PU.colSpan(participant)}
-                    onChange={(e) => {
-                      const parsedInt = parseInt(e.target.value);
-                      if (isNaN(parsedInt)) {
-                        return;
-                      }
-                      updateCreature({
-                        ...participant.creature,
-                        col_span: parsedInt,
-                      });
-                    }}
-                  />
-                )}
-                <CreatureStatBlockImage creature={participant.creature} />
-              </>
-            }
-          />
-        ))}
-      </StatColumn>
+      ))}
+      <CreateNewColumnButton />
     </div>
   );
 });
 
-type Column = {
-  percentWidth: number;
-  id: string;
-};
+function CreateNewColumnButton() {
+  const { getColumns } = api.useUtils();
+  const [encounter] = useEncounter();
+  const { data: columns } = api.getColumns.useQuery(encounter.id);
+  const { mutate: createColumn } = api.createColumn.useMutation({
+    onSettled: async () => {
+      return await getColumns.invalidate();
+    },
+    onMutate: async (newColumn) => {
+      await getColumns.cancel(newColumn.encounter_id);
+      const previousColumns = getColumns.getData(newColumn.encounter_id);
+      getColumns.setData(newColumn.encounter_id, (old) => {
+        if (!old || !columns) return old;
+        return StatColumnUtils.addColumn(columns, {
+          ...newColumn,
+          id: Math.random.toString(),
+        });
+      });
+      return { previousColumns };
+    },
+  });
+  return (
+    <Button
+      variant="outline"
+      onClick={() =>
+        createColumn({ encounter_id: encounter.id, percent_width: 50 })
+      }
+      className="absolute"
+    >
+      <ColumnsIcon />
+      <Plus />
+    </Button>
+  );
+}
 
-function DraggableSplitter({
-  rightColumn,
-  leftColumn,
-  setColumnWidth,
+type Column = typeof stat_columns.$inferSelect;
+
+function StatColumn({
+  column,
+  splitter,
+}: {
+  column: Column;
+  splitter: React.ReactNode | null;
+}) {
+  // todo: setup join in db instead of here
+  const [encounter] = useEncounter();
+  const participantsInColumn = encounter.participants.filter(
+    (p) => p.column_id === column.id,
+  );
+  return (
+    <>
+      <div
+        className="flex flex-col items-start relative border-4 h-full"
+        style={{ width: `${column.percent_width}%` }}
+      >
+        {participantsInColumn.map((p) => (
+          <BattleCard
+            participant={p}
+            data-is-active={p.is_active}
+            data-participant-id={p.id}
+            key={p.id}
+          />
+        ))}
+      </div>
+      {splitter}
+    </>
+  );
+}
+
+function StatColumnSplitter({
+  rightColumnId,
+  leftColumnId,
   parentWidth,
 }: {
-  rightColumn: Column;
-  leftColumn: Column;
-  setColumnWidth: (id: string, newWidth: number) => void;
-  parentWidth: number;
+  rightColumnId: string;
+  leftColumnId: string;
+  parentWidth: number | null;
 }) {
+  const { getColumns } = api.useUtils();
+  const [encounter] = useEncounter();
+  const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
   const handleMouseDown = (e: React.MouseEvent) => {
     const startX = e.clientX;
+    const currentColumns = getColumns.getData(encounter.id);
+    const leftColumnStart = currentColumns?.find((c) => c.id === leftColumnId);
+    const rightColumnStart = currentColumns?.find(
+      (c) => c.id === rightColumnId,
+    );
+    if (!leftColumnStart || !rightColumnStart) {
+      throw new Error(
+        "no columns found when attempting to update percent width",
+      );
+    }
+    let isPendingSetStateForFrame: number | null = null;
+
+    document.body.style.userSelect = "none";
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (isPendingSetStateForFrame) {
+        return;
+      }
       if (parentWidth === null) {
         throw new Error(`null parent width`);
       }
       const deltaX = moveEvent.clientX - startX;
       const deltaPercent = (deltaX / parentWidth) * 100;
-      setColumnWidth(leftColumn.id, leftColumn.percentWidth + deltaPercent);
-      setColumnWidth(rightColumn.id, rightColumn.percentWidth - deltaPercent);
+      isPendingSetStateForFrame = requestAnimationFrame(() => {
+        const newLeftColumn = {
+          ...leftColumnStart,
+          percent_width: leftColumnStart.percent_width + deltaPercent,
+        };
+        const newRightColumn = {
+          ...rightColumnStart,
+          percent_width: rightColumnStart.percent_width - deltaPercent,
+        };
+        getColumns.setData(encounter.id, (old) => {
+          if (!old) return old;
+          return old.map((c) => {
+            if (c.id === leftColumnId) {
+              return newLeftColumn;
+            }
+            if (c.id === rightColumnId) {
+              return newRightColumn;
+            }
+            return c;
+          });
+        });
+        console.log(
+          `set left Column ${leftColumnId} and right column ${rightColumnId}`,
+        );
+        isPendingSetStateForFrame = null;
+      });
     };
 
     const handleMouseUp = () => {
+      document.body.style.userSelect = "auto";
+      const updatedColumns = getColumns.getData(encounter.id);
+      if (!updatedColumns) {
+        throw new Error("no columns found when updating");
+      }
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
+      updateColumnBatch({
+        columns: updatedColumns,
+        encounter_id: encounter.id,
+      });
     };
 
     document.addEventListener("mousemove", handleMouseMove);
@@ -230,25 +260,8 @@ function DraggableSplitter({
   return (
     <div
       onMouseDown={handleMouseDown}
-      className="w-2 bg-gray-300 hover:bg-gray-500"
+      className="w-2 h-full bg-gray-300 hover:bg-gray-500 right-0"
       style={{ cursor: "ew-resize" }}
     />
-  );
-}
-
-function StatColumn({
-  children,
-  column,
-}: {
-  children: React.ReactNode;
-  column: Column;
-}) {
-  return (
-    <div
-      className="flex flex-col relative"
-      style={{ width: `${column.percentWidth}%` }}
-    >
-      {children}
-    </div>
   );
 }

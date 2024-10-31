@@ -11,7 +11,6 @@ import {
   uuid,
   varchar,
   pgEnum,
-  unique,
   doublePrecision,
 } from "drizzle-orm/pg-core";
 
@@ -100,7 +99,8 @@ export const campaigns = pgTable(
   (t) => {
     return {
       userIndex: index("user_index_campaigns").on(t.user_id),
-      unq: unique().on(t.user_id, t.name),
+      // unq: unique().on(t.user_id, t.name),
+      // TODO: can we make this unique again?
     };
   }
 );
@@ -207,7 +207,7 @@ export const participants = pgTable(
     hex_color: text("hex_color"),
     notes: text("notes"),
     temporary_hp: integer("temporary_hp").default(0).notNull(),
-    grid_column_id: uuid("grid_column_id"),
+    column_id: uuid("stat_column_id"),
     has_played_this_round: boolean("has_played_this_round")
       .default(false)
       .notNull(),
@@ -219,6 +219,14 @@ export const participants = pgTable(
     };
   }
 );
+
+export const stat_columns = pgTable("stat_columns", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  percent_width: doublePrecision("percent_width").notNull(),
+  encounter_id: uuid("encounter_id")
+    .references(() => encounters.id)
+    .notNull(),
+});
 
 export const participantRelations = relations(
   participants,
