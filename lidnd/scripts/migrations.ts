@@ -4,11 +4,15 @@ import {
   creatures,
   encounters,
   participants,
+  stat_columns,
 } from "@/server/api/db/schema";
 import { CreatureUtils } from "@/utils/creatures";
 import { eq, isNull } from "drizzle-orm";
 import _ from "lodash";
 import sharp from "sharp";
+import * as R from "remeda";
+import type { Participant } from "@/server/api/router";
+import type { StatColumn } from "@/server/api/columns-router";
 
 // @ts-expect-error - unused unused
 async function addImageDimensions() {
@@ -128,3 +132,61 @@ async function add_campaign_slug() {
 
   return process.exit(0);
 }
+
+async function assign_columns() {
+  const encounters = await db.query.encounters.findMany({
+    with: {
+      columns: true,
+      participants: true,
+    },
+  });
+
+  for (const encounter of encounters) {
+    const numColumns = encounter.columns.length;
+    if (numColumns) {
+      const result = await db
+        .insert(stat_columns)
+        .values({
+          encounter_id: encounter.id,
+          percent_width: 100,
+        })
+        .returning();
+      if (result[0] === undefined) {
+        throw new Error(
+          `failed to create initial column for encounter with no columns`
+        );
+      }
+      await assign_participants_to_column(encounter.participants, result[0]);
+    } else {
+      // need to assign participants to columns
+      const chunkedParticipants = R.chunk(encounter.participants, numColumns);
+      await Promise.all(
+        chunkedParticipants.map((c, i) => {
+          const matchingColumn = encounter.columns[i];
+          if (!matchingColumn) {
+            throw new Error(`failed to find column based on participant chunk`);
+          }
+          return assign_participants_to_column(c, matchingColumn);
+        })
+      );
+    }
+  }
+  return process.exit(0);
+}
+
+async function assign_participants_to_column(
+  pBatch: Participant[],
+  column: StatColumn
+) {
+  await db
+    .insert(participants)
+    .values(pBatch)
+    .onConflictDoUpdate({
+      target: participants.id,
+      set: {
+        column_id: column.id,
+      },
+    });
+}
+
+assign_columns();

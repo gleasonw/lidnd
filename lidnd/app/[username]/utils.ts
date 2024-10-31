@@ -1,4 +1,4 @@
-import type { Encounter } from "@/server/api/router";
+import type { Encounter, Participant } from "@/server/api/router";
 import { z } from "zod";
 
 export function isStringMeaningful(str: string | null) {
@@ -17,10 +17,15 @@ export const booleanSchema = z
 export const dragTypes = {
   encounter: "encounter",
   nonsense: "nonsense",
+  participant: "participant",
 } as const;
 
 export type DragTypeData = {
-  [key in keyof typeof dragTypes]: key extends "encounter" ? Encounter : never;
+  [key in keyof typeof dragTypes]: key extends "encounter"
+    ? Encounter
+    : key extends "participant"
+      ? Participant
+      : never;
 };
 
 type DragKey = keyof typeof dragTypes;

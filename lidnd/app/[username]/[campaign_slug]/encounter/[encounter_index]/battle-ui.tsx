@@ -33,6 +33,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { X } from "lucide-react";
+import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 
 export const BattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -63,13 +64,12 @@ export type BattleCardProps = {
   children?: React.ReactNode;
   className?: string;
   isSelected?: boolean;
-  header?: React.ReactNode;
-  battleCardExtraContent?: React.ReactNode;
+  extraHeaderButtons?: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export function BattleCard({
   participant,
-  battleCardExtraContent,
+  extraHeaderButtons,
   ...props
 }: BattleCardProps) {
   const id = useEncounterId();
@@ -103,18 +103,21 @@ export function BattleCard({
         <MinionCardStack minionCount={participant.minion_count} />
       ) : null}
       <BattleCardLayout key={participant.id} participant={participant}>
-        <Button
-          variant="ghost"
-          className="opacity-25 absolute top-2 right-2"
-          onClick={() =>
-            removeCreatureFromEncounter({
-              encounter_id: id,
-              participant_id: participant.id,
-            })
-          }
-        >
-          <X />
-        </Button>
+        <div className="absolute top-2 right-2 flex gap-2 items-center">
+          {extraHeaderButtons}
+          <Button
+            variant="ghost"
+            className="opacity-25"
+            onClick={() =>
+              removeCreatureFromEncounter({
+                encounter_id: id,
+                participant_id: participant.id,
+              })
+            }
+          >
+            <X />
+          </Button>
+        </div>
         <div className="flex gap-4 py-2 items-center justify-center w-full">
           <BattleCardCreatureIcon participant={participant} />
           <BattleCardCreatureName participant={participant} />
@@ -127,7 +130,7 @@ export function BattleCard({
             <BattleCardHealthAndStatus participant={participant} />
           </div>
         </BattleCardContent>
-        {battleCardExtraContent}
+        <CreatureStatBlockImage creature={participant.creature} />
       </BattleCardLayout>
     </div>
   );

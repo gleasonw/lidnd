@@ -182,6 +182,7 @@ export const encountersRelations = relations(encounters, ({ many, one }) => ({
     fields: [encounters.campaign_id],
     references: [campaigns.id],
   }),
+  columns: many(stat_columns),
 }));
 
 //todo: there are system-specific fields in here...
@@ -227,6 +228,13 @@ export const stat_columns = pgTable("stat_columns", {
     .references(() => encounters.id)
     .notNull(),
 });
+
+export const statColumnRelations = relations(stat_columns, ({ one }) => ({
+  encounter: one(encounters, {
+    fields: [stat_columns.encounter_id],
+    references: [encounters.id],
+  }),
+}));
 
 export const participantRelations = relations(
   participants,

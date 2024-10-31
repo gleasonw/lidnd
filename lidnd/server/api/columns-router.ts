@@ -1,11 +1,12 @@
 import { protectedProcedure } from "@/server/api/base-trpc";
 import { db } from "@/server/api/db";
-import { stat_columns } from "@/server/api/db/schema";
+import { participants, stat_columns } from "@/server/api/db/schema";
 import { ServerEncounter } from "@/server/encounters";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { TRPCError } from "@trpc/server";
 import { and, eq, sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { Server } from "lucide-react";
 import { z } from "zod";
 
 const columnInsertSchema = createInsertSchema(stat_columns);
@@ -153,5 +154,23 @@ export const columnsRouter = {
         throw new Error("Failed to delete column");
       }
       return result;
+    }),
+  assignParticipantToColumn: protectedProcedure
+    .input(
+      z.object({
+        participant_id: z.string(),
+        column_id: z.string(),
+        encounter_id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      await ServerEncounter.encounterByIdThrows(
+        opts.ctx,
+        opts.input.encounter_id
+      );
+      await db
+        .update(participants)
+        .set({ column_id: opts.input.column_id })
+        .where(eq(participants.id, opts.input.participant_id));
     }),
 };

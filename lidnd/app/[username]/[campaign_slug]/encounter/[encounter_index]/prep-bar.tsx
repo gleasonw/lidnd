@@ -27,7 +27,7 @@ export function EncounterPrepBar() {
   }
 
   return (
-    <div className="w-full py-10 flex flex-col gap-5">
+    <div className="w-full py-5 flex flex-col gap-5">
       <div className="grid grid-cols-3">
         <ParticipantsContainer role="allies">
           {EncounterUtils.allies(encounter).map((p) => (
