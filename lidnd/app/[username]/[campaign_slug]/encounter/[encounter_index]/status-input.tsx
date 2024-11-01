@@ -54,28 +54,27 @@ export function StatusInput({
     },
   });
 
-  const [save_ends_dc, setSaveEndsDC] = React.useState<string | undefined>();
+  const [save_ends_dc, setSaveEndsDC] = React.useState<string>("");
+  const [selectedStatus, setSelectedStatus] = React.useState<string | null>(
+    null,
+  );
 
   return (
-    <div className="flex  max-w-sm whitespace-nowrap border rounded-sm">
+    <div className="flex w-72 whitespace-nowrap">
       <Combobox
-        triggerPlaceholder="Status"
         emptyResultText="No status effects"
         className="max-h-80 overflow-auto whitespace-nowrap border-none outline-none"
+        triggerPlaceholder={
+          effects?.find((e) => e.id === selectedStatus)?.name ?? "Status"
+        }
       >
         {effects?.map((effect) => (
-          <CommandItem key={effect.id} className="w-full flex justify-between">
-            <ButtonWithTooltip
-              text={"Add effect"}
-              variant="ghost"
-              onClick={() =>
-                updateStatus({
-                  encounter_participant_id: participant.id,
-                  status_effect_id: effect.id,
-                  save_ends_dc: (save_ends_dc && parseInt(save_ends_dc)) || 0,
-                })
-              }
-            >
+          <CommandItem
+            key={effect.id}
+            className="w-32 flex justify-between"
+            onSelect={() => setSelectedStatus(effect.id)}
+          >
+            <ButtonWithTooltip text={"Add effect"} variant="ghost">
               <EffectIcon effect={effect} />
               <span>{effect.name}</span>
             </ButtonWithTooltip>
@@ -92,7 +91,21 @@ export function StatusInput({
         placeholder="DC"
         className="w-16 ml-2"
       />
-      <ButtonWithTooltip variant="ghost" text={"Apply status effect"}>
+      <ButtonWithTooltip
+        variant="ghost"
+        text={"Apply status effect"}
+        onClick={() =>
+          selectedStatus
+            ? updateStatus({
+                encounter_participant_id: participant.id,
+                status_effect_id: selectedStatus,
+                save_ends_dc: isNaN(parseInt(save_ends_dc ?? ""))
+                  ? 0
+                  : parseInt(save_ends_dc ?? ""),
+              })
+            : null
+        }
+      >
         <Plus />
       </ButtonWithTooltip>
     </div>

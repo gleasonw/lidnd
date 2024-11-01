@@ -183,6 +183,7 @@ export async function createCreatureInEncounter(formData: CreaturePostData) {
       encounter_id: creature.value.encounter_id,
       creature_id: newCreature.id,
       hp: newCreature.max_hp,
+      creature: newCreature,
     },
   );
 

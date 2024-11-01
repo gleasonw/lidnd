@@ -89,7 +89,7 @@ export function ResistanceSelector({
           <Check
             className={cn(
               "mr-2 h-4 w-4",
-              value.includes(damage.value) ? "opacity-100" : "opacity-0"
+              value.includes(damage.value) ? "opacity-100" : "opacity-0",
             )}
           />
           {damage.label}
@@ -125,7 +125,7 @@ export function Combobox({
           aria-expanded={open}
           className="w-full justify-between"
         >
-          <span className={"opacity-50"}>{triggerPlaceholder}</span>
+          <span>{triggerPlaceholder}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

@@ -1,6 +1,7 @@
 "use client";
 import { appRoutes } from "@/app/routes";
 import { Button } from "@/components/ui/button";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import { ButtonWithTooltip, Tip } from "@/components/ui/tip";
@@ -12,19 +13,14 @@ import {
   useCycleNextTurn,
   useCyclePreviousTurn,
   useEncounter,
-  useRemoveStatusEffect,
+  useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import InitiativeInput from "@/encounters/[encounter_index]/InitiativeInput";
 import { ParticipantUpload } from "@/encounters/[encounter_index]/participant-add-form";
-import {
-  EffectIcon,
-  StatusInput,
-} from "@/encounters/[encounter_index]/status-input";
-import { LidndPopover } from "@/encounters/base-popover";
+import { StatusInput } from "@/encounters/[encounter_index]/status-input";
 import type { ParticipantWithData } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { EncounterUtils } from "@/utils/encounters";
-import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import { ParticipantUtils } from "@/utils/participants";
 import { PopoverTrigger } from "@radix-ui/react-popover";
 import clsx from "clsx";
@@ -39,6 +35,7 @@ import {
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React from "react";
+import { useDebouncedCallback } from "use-debounce";
 
 export const EncounterTopBar = observer(function EncounterTopBar() {
   return <BattleTopBar />;
@@ -47,24 +44,18 @@ export const EncounterTopBar = observer(function EncounterTopBar() {
 function BattleTopBar() {
   const [encounter] = useEncounter();
   const { encounterById } = api.useUtils();
-  const { mutate: setEditingColumns } =
-    api.setEditingEncounterColumns.useMutation({
-      onSettled: async () => {
-        return await encounterById.invalidate(encounter.id);
-      },
-      onMutate: async (newEncounter) => {
-        await encounterById.cancel(encounter.id);
-        const previousEncounter = encounterById.getData(encounter.id);
-        encounterById.setData(encounter.id, (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            is_editing_columns: newEncounter.is_editing_columns,
-          };
-        });
-        return { previousEncounter };
-      },
+  const { mutate: editEncounter } = api.updateEncounter.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(encounter.id);
+    },
+  });
+  const setEncounterName = useDebouncedCallback((name: string) => {
+    editEncounter({
+      ...encounter,
+      name,
     });
+  }, 500);
+  const [localName, setLocalName] = React.useState(encounter.name);
 
   const { toggleEditingInitiative } = useEncounterUIStore();
   const roundText =
@@ -73,7 +64,20 @@ function BattleTopBar() {
       : `Round ${encounter?.current_round}`;
 
   if (encounter.status !== "run") {
-    return <h1 className="text-3xl font-bold text-center">{encounter.name}</h1>;
+    return (
+      <div className="flex items-center justify-center pt-3">
+        <LidndTextInput
+          placeholder="Name"
+          className="text-3xl font-bold"
+          value={localName}
+          onChange={(e) => {
+            setLocalName(e.target.value);
+            setEncounterName(e.target.value);
+          }}
+        />
+        <ToggleEditingMode />
+      </div>
+    );
   }
 
   return (
@@ -97,26 +101,52 @@ function BattleTopBar() {
         <Button variant="outline" onClick={toggleEditingInitiative}>
           Edit initiative
         </Button>
-        <Toggle
-          onClick={(e) =>
-            setEditingColumns({
-              encounter_id: encounter.id,
-              is_editing_columns: !encounter.is_editing_columns,
-            })
-          }
-        >
-          {encounter?.is_editing_columns ? (
-            <Tip text={"Current view: editing columns"}>
-              <Pen />
-            </Tip>
-          ) : (
-            <Tip text={"Current view: run encounter (no column edit)"}>
-              <BookOpen />
-            </Tip>
-          )}
-        </Toggle>
+        <ToggleEditingMode />
       </div>
     </div>
+  );
+}
+
+function ToggleEditingMode() {
+  const [encounter] = useEncounter();
+  const { encounterById } = api.useUtils();
+  const { mutate: setEditingColumns } =
+    api.setEditingEncounterColumns.useMutation({
+      onSettled: async () => {
+        return await encounterById.invalidate(encounter.id);
+      },
+      onMutate: async (newEncounter) => {
+        await encounterById.cancel(encounter.id);
+        const previousEncounter = encounterById.getData(encounter.id);
+        encounterById.setData(encounter.id, (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            is_editing_columns: newEncounter.is_editing_columns,
+          };
+        });
+        return { previousEncounter };
+      },
+    });
+  return (
+    <Toggle
+      onClick={(e) =>
+        setEditingColumns({
+          encounter_id: encounter.id,
+          is_editing_columns: !encounter.is_editing_columns,
+        })
+      }
+    >
+      {encounter?.is_editing_columns ? (
+        <Tip text={"Current view: editing columns"}>
+          <Pen />
+        </Tip>
+      ) : (
+        <Tip text={"Current view: run encounter (no column edit)"}>
+          <BookOpen />
+        </Tip>
+      )}
+    </Toggle>
   );
 }
 
@@ -152,7 +182,7 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
 
   return (
     <div
-      className={`flex flex-grow-0 h-20 z-10 justify-center absolute w-full mx-auto bottom-0 translate-y-full`}
+      className={`flex flex-grow-0 h-20 z-20 gap-2 justify-center absolute w-full mx-auto bottom-0 translate-y-full`}
     >
       <ButtonWithTooltip
         className="h-full shadow-lg"
@@ -190,7 +220,7 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
           <ButtonWithTooltip
             variant="ghost"
             text="Add creature"
-            className="flex flex-col items-center gap-2 w-20 h-20"
+            className="flex bg-white flex-col items-center gap-2 w-20 h-20"
           >
             <UserIcon />
             <Plus />
@@ -258,7 +288,6 @@ function TopBarParticipantCard({
   children,
   overrideIcon,
 }: CardProps) {
-  const { mutate: removeStatusEffect } = useRemoveStatusEffect();
   return (
     <div className="relative cursor-pointer shadow-md bg-white">
       <Tip text={ParticipantUtils.name(participant)}>
@@ -282,33 +311,6 @@ function TopBarParticipantCard({
           )}
         </div>
       </Tip>
-
-      <div className="flex flex-col">
-        {participant.status_effects?.map((se) => (
-          <LidndPopover
-            key={se.id}
-            className="flex flex-col gap-5 items-center"
-            trigger={
-              <Button className="flex gap-4 px-0 bg-white" variant="ghost">
-                <span className="mr-auto flex gap-2 items-center">
-                  <EffectIcon effect={se.effect} />
-                  {ParticipantEffectUtils.name(se)}
-                </span>
-                {!!se.save_ends_dc && <span>({se.save_ends_dc})</span>}
-              </Button>
-            }
-          >
-            {ParticipantEffectUtils.description(se)}
-            <Button
-              onClick={() => removeStatusEffect(se)}
-              variant="ghost"
-              className="text-red-500"
-            >
-              Remove
-            </Button>
-          </LidndPopover>
-        ))}
-      </div>
     </div>
   );
 }

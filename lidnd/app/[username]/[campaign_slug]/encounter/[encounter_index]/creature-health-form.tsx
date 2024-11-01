@@ -9,12 +9,15 @@ import { ParticipantUtils } from "@/utils/participants";
 import {
   useUpdateEncounterParticipant,
   useUpdateEncounterMinionParticipant,
+  useRemoveStatusEffect,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { useDebouncedCallback } from "use-debounce";
 import React from "react";
 import { Minus, Plus, Shield } from "lucide-react";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { LidndPopover } from "@/encounters/base-popover";
+import { EffectIcon } from "@/encounters/[encounter_index]/status-input";
+import { ParticipantEffectUtils } from "@/utils/participantEffects";
 
 export function ParticipantHealthForm({
   participant,
@@ -25,6 +28,13 @@ export function ParticipantHealthForm({
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
   const [tempHpDiff, setTempHpDiff] = useState<number | string>("");
+  const { mutate: removeStatusEffect } = useRemoveStatusEffect();
+  const setTempHp = useDebouncedCallback((tempHp: number) => {
+    edit({
+      ...participant,
+      temporary_hp: tempHp,
+    });
+  }, 300);
 
   const { mutate: edit, isPending: isLoading } =
     useUpdateEncounterParticipant();
@@ -64,13 +74,6 @@ export function ParticipantHealthForm({
     });
   }
 
-  const setTempHp = useDebouncedCallback((tempHp: number) => {
-    edit({
-      ...participant,
-      temporary_hp: tempHp,
-    });
-  }, 300);
-
   const hpPercent = ParticipantUtils.healthPercent(participant);
 
   return (
@@ -84,9 +87,9 @@ export function ParticipantHealthForm({
             }}
           />
           <span
-            className={`absolute bg-blue-500 h-full transition-all`}
+            className={`absolute bg-blue-500 h-full transition-all z-10`}
             style={{
-              width: `${ParticipantUtils.tempHpPercent(participant)}%`,
+              width: `${ParticipantUtils.tempHpPercent(participant) * 100}%`,
             }}
           />
           <span className="flex w-full items-center justify-center h-full">
@@ -96,6 +99,32 @@ export function ParticipantHealthForm({
           </span>
         </span>
       )}
+      <div className="flex flex-wrap gap-3 items-center">
+        {participant.status_effects?.map((se) => (
+          <LidndPopover
+            key={se.id}
+            className="flex flex-col gap-5 items-center"
+            trigger={
+              <Button className="flex gap-4 px-0 bg-white" variant="ghost">
+                <span className="mr-auto flex gap-2 items-center">
+                  <EffectIcon effect={se.effect} />
+                  {ParticipantEffectUtils.name(se)}
+                </span>
+                {!!se.save_ends_dc && <span>({se.save_ends_dc})</span>}
+              </Button>
+            }
+          >
+            {ParticipantEffectUtils.description(se)}
+            <Button
+              onClick={() => removeStatusEffect(se)}
+              variant="ghost"
+              className="text-red-500"
+            >
+              Remove
+            </Button>
+          </LidndPopover>
+        ))}
+      </div>
       <div className="flex flex-wrap gap-2">
         <div className="flex gap-4 text-2xl">
           <Button

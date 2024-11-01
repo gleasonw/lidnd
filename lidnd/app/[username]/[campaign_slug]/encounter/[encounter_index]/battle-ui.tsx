@@ -82,6 +82,7 @@ export function BattleCard({
   const editor = useEditor({
     extensions: [StarterKit, configuredPlaceholder],
     content: participant.notes,
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const content = editor.getHTML();
       debouncedUpdate({ ...participant, notes: content });

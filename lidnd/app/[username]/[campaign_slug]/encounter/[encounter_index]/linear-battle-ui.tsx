@@ -20,8 +20,6 @@ import { ButtonWithTooltip } from "@/components/ui/tip";
 import type { StatColumn } from "@/server/api/columns-router";
 
 // todo: add optimistic ui for adding a creature flow (add to column, etc)
-// todo: fix status effects
-//todo: give participants stable order within column
 //todo: custom margin when in editing layout mode
 
 function onSelectParticipant(id: string) {
@@ -314,7 +312,7 @@ function BattleCards({ columnId }: { columnId: string }) {
             </Button>
             <Button
               variant="ghost"
-              className="opacity-25"
+              className="opacity-25 z-10"
               onClick={() =>
                 removeCreatureFromEncounter({
                   encounter_id: encounter.id,

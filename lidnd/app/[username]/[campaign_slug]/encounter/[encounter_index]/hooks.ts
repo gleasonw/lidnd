@@ -264,7 +264,7 @@ export function useUpdateEncounter() {
   const updateEncounter = (
     encounter: Omit<
       UpsertEncounter,
-      "user_id" | "campaign_id" | "index_in_campaign" | "name"
+      "user_id" | "campaign_id" | "index_in_campaign"
     > & {
       id: string;
     },
@@ -333,11 +333,12 @@ export function useRemoveStatusEffect() {
 
 export function useAddExistingCreatureToEncounter() {
   const id = useEncounterId();
-  const { encounterById } = api.useUtils();
+  const { encounterById, getColumns } = api.useUtils();
   const { data: creatures } = api.getUserCreatures.useQuery({ name: "" });
   return api.addExistingCreatureToEncounter.useMutation({
     onMutate: async ({ creature_id, is_ally }) => {
       await encounterById.cancel(id);
+      await getColumns.cancel(id);
       const previousEncounterData = encounterById.getData(id);
       encounterById.setData(id, (old) => {
         if (!old) {
@@ -372,8 +373,9 @@ export function useAddExistingCreatureToEncounter() {
         encounterById.setData(id, context.previousEncounterData);
       }
     },
-    onSettled: () => {
-      encounterById.invalidate(id);
+    onSettled: async () => {
+      await getColumns.invalidate(id);
+      return await encounterById.invalidate(id);
     },
   });
 }

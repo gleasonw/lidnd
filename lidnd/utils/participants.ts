@@ -19,7 +19,7 @@ function healthPercent(participant: ParticipantWithCreature) {
 }
 
 function tempHpPercent(p: ParticipantWithCreature) {
-  return (p.temporary_hp / maxHp(p)).toFixed(2);
+  return p.temporary_hp / maxHp(p);
 }
 
 function iconHexColor(participant: ParticipantWithCreature) {

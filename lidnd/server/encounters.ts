@@ -14,7 +14,7 @@ import { eq, and, sql } from "drizzle-orm";
 // todo: allow callers to pass in an encounter they've already fetched
 async function addParticipant(
   ctx: LidndContext,
-  participant: InsertParticipant,
+  participant: InsertParticipant & { creature?: { is_player: boolean } },
   dbObject = db
 ) {
   return await dbObject.transaction(async (tx) => {
@@ -28,6 +28,28 @@ async function addParticipant(
         message: "Failed to add participant",
       });
     }
+
+    // don't add player creatures to columns
+    if (participant.creature?.is_player) {
+      return;
+    }
+
+    if (participant.creature?.is_player === undefined) {
+      // fetch the creature to check if this is a player
+      const creature = await tx.query.creatures.findFirst({
+        where: (creatures, { eq }) => eq(creatures.id, participant.creature_id),
+      });
+      if (!creature) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to add participant",
+        });
+      }
+      if (creature.is_player) {
+        return;
+      }
+    }
+
     const columnToAssign = e.columns.at(0);
     if (columnToAssign) {
       const pWithColumn = await tx

@@ -212,6 +212,7 @@ export const appRouter = t.router({
                   creature_id: creature.id,
                   is_ally: !creature.is_player,
                   hp: creature.is_player ? 1 : creature.max_hp,
+                  creature,
                 },
                 tx
               )
@@ -503,6 +504,7 @@ export const appRouter = t.router({
         creature_id: opts.input.creature_id,
         hp: userCreature[0].max_hp,
         is_ally: opts.input.is_ally,
+        creature: userCreature[0],
       });
     }),
   //#endregion
