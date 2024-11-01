@@ -21,24 +21,23 @@ export const SmallSideNav = observer(function SmallSideNav(
   const navRef = React.useRef<HTMLDivElement>(null);
   const buttonRef = React.useRef<HTMLButtonElement>(null);
 
-  function handleClickOutside(e: MouseEvent) {
-    if (
-      navRef.current &&
-      !navRef.current.contains(e.target as Node) &&
-      buttonRef.current &&
-      !buttonRef.current.contains(e.target as Node)
-    ) {
-      closeSideNav();
-    }
-  }
-
   React.useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        navRef.current &&
+        !navRef.current.contains(e.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(e.target as Node)
+      ) {
+        closeSideNav();
+      }
+    }
     window.addEventListener("click", handleClickOutside);
 
     return () => {
       window.removeEventListener("click", handleClickOutside);
     };
-  }, []);
+  }, [closeSideNav]);
 
   return (
     <div className="flex xl:hidden relative">

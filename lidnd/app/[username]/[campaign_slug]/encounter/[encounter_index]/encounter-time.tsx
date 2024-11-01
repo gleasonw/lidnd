@@ -15,14 +15,13 @@ export function EncounterTime({ time }: { time?: Date }) {
     };
   }, []);
 
-  if (!time) return <div></div>;
-
   const timeString = React.useSyncExternalStore(
     emptySubscribe,
     () => timeToDisplay(time, now),
     () => null,
   );
 
+  if (!time) return null;
   return (
     <div className={"flex gap-3 justify-center items-center text-gray-500"}>
       <Timer />
@@ -31,8 +30,9 @@ export function EncounterTime({ time }: { time?: Date }) {
   );
 }
 
-function timeToDisplay(startedAtUTC: Date, now: Date) {
+function timeToDisplay(startedAtUTC: Date | undefined, now: Date) {
   // time is in UTC, so we need to convert it to local time
+  if (!startedAtUTC) return "0:00";
   const startedAtLocal = new Date(
     startedAtUTC.getTime() - startedAtUTC.getTimezoneOffset() * 60000,
   );
