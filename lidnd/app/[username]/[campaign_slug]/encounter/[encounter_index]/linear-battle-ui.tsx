@@ -16,6 +16,7 @@ import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import type { StatColumn } from "@/server/api/columns-router";
 
+//todo: give participants stable order within column
 //todo: custom margin when in editing layout mode
 
 function onSelectParticipant(id: string) {
@@ -282,9 +283,9 @@ function StatColumnComponent({
 
 function BattleCards({ columnId }: { columnId: string }) {
   const [encounter] = useEncounter();
-  const participantsInColumn = encounter.participants.filter(
-    (p) => p.column_id === columnId && !ParticipantUtils.isPlayer(p),
-  );
+  const participantsInColumn = encounter.participants
+    .filter((p) => p.column_id === columnId && !ParticipantUtils.isPlayer(p))
+    .sort(ParticipantUtils.sortLinearly);
   return participantsInColumn.map((p) => (
     <BattleCard
       participant={p}
