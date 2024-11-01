@@ -160,9 +160,7 @@ export function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
                 <Input
                   placeholder="Challenge rating"
                   {...field}
-                  onChange={(e) =>
-                    field.onChange(Math.max(1, parseInt(e.target.value)))
-                  }
+                  onChange={(e) => field.onChange(e.target.value)}
                   type="number"
                 />
               </CreatureFormItems>

@@ -86,7 +86,7 @@ export function useSelectedCreature() {
 }
 
 export function useCreateCreatureInEncounter() {
-  const { encounterById } = api.useUtils();
+  const { encounterById, getColumns } = api.useUtils();
   const id = useEncounterId();
 
   const { data: encounter } = api.encounterById.useQuery(id);
@@ -148,6 +148,7 @@ export function useCreateCreatureInEncounter() {
       }
     },
     onSettled: async () => {
+      await getColumns.invalidate(id);
       return await encounterById.invalidate(id);
     },
   });

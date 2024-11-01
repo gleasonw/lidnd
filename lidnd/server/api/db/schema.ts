@@ -226,7 +226,7 @@ export const stat_columns = pgTable("stat_columns", {
   id: uuid("id").primaryKey().defaultRandom(),
   percent_width: doublePrecision("percent_width").notNull(),
   encounter_id: uuid("encounter_id")
-    .references(() => encounters.id)
+    .references(() => encounters.id, { onDelete: "cascade" })
     .notNull(),
 });
 
