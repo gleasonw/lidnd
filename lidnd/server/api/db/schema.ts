@@ -162,6 +162,7 @@ export const encounters = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     current_round: integer("current_round").default(1).notNull(),
+    is_editing_columns: boolean("is_editing_columns").default(true).notNull(),
     ended_at: timestamp("ended_at"),
     status: encounter_status_enum("status").default("prep").notNull(),
     label: encounter_label_enum("label").default("active").notNull(),

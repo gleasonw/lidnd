@@ -9,11 +9,14 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 import { observer } from "mobx-react-lite";
 import type { stat_columns } from "@/server/api/db/schema";
 import { Button } from "@/components/ui/button";
-import { ColumnsIcon, Grip, Plus, X } from "lucide-react";
+import { Grip, Plus, X } from "lucide-react";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { ParticipantUtils } from "@/utils/participants";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ButtonWithTooltip } from "@/components/ui/tip";
+import type { StatColumn } from "@/server/api/columns-router";
+
+//todo: custom margin when in editing layout mode
 
 function onSelectParticipant(id: string) {
   const selectedCardElement = document.querySelector(
@@ -43,19 +46,20 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
       unsubscribeToSelectedParticipant(onSelectParticipant);
     };
   }, [subscribeToSelectedParticipant, unsubscribeToSelectedParticipant]);
-  const active = EncounterUtils.activeParticipant(encounter);
+  const activeParticipantID = EncounterUtils.activeParticipant(encounter)?.id;
 
   useEffect(() => {
-    if (active) {
-      const activeElement = document.querySelector(`[data-is-active="true"]`);
-      if (!activeElement) {
-        return;
-      }
-      activeElement.scrollIntoView({
-        behavior: "instant",
-      });
+    if (!activeParticipantID) {
+      return;
     }
-  }, [active]);
+    const activeElement = document.querySelector(`[data-is-active="true"]`);
+    if (!activeElement) {
+      return;
+    }
+    activeElement.scrollIntoView({
+      behavior: "instant",
+    });
+  }, [activeParticipantID]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [parentWidth, setParentWidth] = useState<number | null>(null);
@@ -85,23 +89,46 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
   }, []);
 
   return (
-    <div className="flex relative" ref={containerRef}>
-      <div className="absolute -top-10 h-10 right-0 text-xl z-10">
-        <CreateNewColumnButton />
-      </div>
-      <ParentWidthContext.Provider value={parentWidth}>
-        <StatColumns />
-      </ParentWidthContext.Provider>
+    <div className="flex relative gap-5" ref={containerRef}>
+      {encounter.is_editing_columns ? (
+        <>
+          <div className="absolute -top-10 h-10 right-0 text-xl z-10">
+            <CreateNewColumnButton />
+          </div>
+          <ParentWidthContext.Provider value={parentWidth}>
+            <StatColumns />
+          </ParentWidthContext.Provider>
+        </>
+      ) : (
+        <ReadOnlyStatColumns />
+      )}
     </div>
   );
 });
+
+function ReadOnlyStatColumns() {
+  const [encounter] = useEncounter();
+  const { data: columns } = api.getColumns.useQuery(encounter.id);
+  return columns?.map((c) => <ReadOnlyStatColumn column={c} key={c.id} />);
+}
+
+function ReadOnlyStatColumn({ column }: { column: StatColumn }) {
+  return (
+    <div
+      className="flex flex-col gap-10"
+      style={{ width: `${column.percent_width}%` }}
+    >
+      <BattleCards columnId={column.id} />
+    </div>
+  );
+}
 
 function StatColumns() {
   const [encounter] = useEncounter();
   // todo: just fetch this in the encounter
   const { data: columns } = api.getColumns.useQuery(encounter.id);
   return columns?.map((c, index) => (
-    <StatColumn
+    <StatColumnComponent
       column={c}
       key={c.id}
       splitter={
@@ -146,7 +173,6 @@ function CreateNewColumnButton() {
         createColumn({ encounter_id: encounter.id, percent_width: 50 })
       }
     >
-      <ColumnsIcon />
       <Plus />
     </ButtonWithTooltip>
   );
@@ -154,7 +180,7 @@ function CreateNewColumnButton() {
 
 type Column = typeof stat_columns.$inferSelect;
 
-function StatColumn({
+function StatColumnComponent({
   column,
   splitter,
 }: {
@@ -245,7 +271,6 @@ function StatColumn({
           variant="ghost"
           onClick={() => deleteColumn(column)}
         >
-          <ColumnsIcon />
           <X />
         </ButtonWithTooltip>
         <BattleCards columnId={column.id} />
@@ -260,7 +285,6 @@ function BattleCards({ columnId }: { columnId: string }) {
   const participantsInColumn = encounter.participants.filter(
     (p) => p.column_id === columnId && !ParticipantUtils.isPlayer(p),
   );
-  console.log("render");
   return participantsInColumn.map((p) => (
     <BattleCard
       participant={p}
@@ -268,15 +292,18 @@ function BattleCards({ columnId }: { columnId: string }) {
       data-participant-id={p.id}
       key={p.id}
       extraHeaderButtons={
-        <Button
-          variant="ghost"
-          onDragStart={(e) => {
-            typedDrag.set(e.dataTransfer, dragTypes.participant, p);
-          }}
-          draggable
-        >
-          <Grip />
-        </Button>
+        encounter?.is_editing_columns ? (
+          <Button
+            variant="ghost"
+            className="z-10"
+            onDragStart={(e) => {
+              typedDrag.set(e.dataTransfer, dragTypes.participant, p);
+            }}
+            draggable
+          >
+            <Grip />
+          </Button>
+        ) : null
       }
     />
   ));

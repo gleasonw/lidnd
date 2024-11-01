@@ -30,7 +30,6 @@ import { insertCreatureSchema } from "@/app/[username]/[campaign_slug]/encounter
 import _ from "lodash";
 import { columnsRouter } from "@/server/api/columns-router";
 import { protectedProcedure, publicProcedure, t } from "@/server/api/base-trpc";
-import { LidndAuth } from "@/app/authentication";
 
 export type Encounter = typeof encounters.$inferSelect;
 export type Creature = typeof creatures.$inferSelect;
@@ -119,6 +118,22 @@ export const appRouter = t.router({
       }
 
       return encounter;
+    }),
+
+  setEditingEncounterColumns: protectedProcedure
+    .input(
+      z.object({ encounter_id: z.string(), is_editing_columns: z.boolean() })
+    )
+    .mutation(async (opts) => {
+      return await db
+        .update(encounters)
+        .set({ is_editing_columns: opts.input.is_editing_columns })
+        .where(
+          and(
+            eq(encounters.id, opts.input.encounter_id),
+            eq(encounters.user_id, opts.ctx.user.id)
+          )
+        );
     }),
 
   deleteEncounter: protectedProcedure

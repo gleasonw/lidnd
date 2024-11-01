@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import { ButtonWithTooltip, Tip } from "@/components/ui/tip";
+import { Toggle } from "@/components/ui/toggle";
 import { HealthMeterOverlay } from "@/encounters/[encounter_index]/battle-ui";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
@@ -21,14 +22,17 @@ import {
 } from "@/encounters/[encounter_index]/status-input";
 import { LidndPopover } from "@/encounters/base-popover";
 import type { ParticipantWithData } from "@/server/api/router";
+import { api } from "@/trpc/react";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import { ParticipantUtils } from "@/utils/participants";
 import { PopoverTrigger } from "@radix-ui/react-popover";
 import clsx from "clsx";
 import {
+  BookOpen,
   ChevronLeftIcon,
   ChevronRightIcon,
+  Pen,
   Plus,
   Share,
   UserIcon,
@@ -42,9 +46,27 @@ export const EncounterTopBar = observer(function EncounterTopBar() {
 
 function BattleTopBar() {
   const [encounter] = useEncounter();
+  const { encounterById } = api.useUtils();
+  const { mutate: setEditingColumns } =
+    api.setEditingEncounterColumns.useMutation({
+      onSettled: async () => {
+        return await encounterById.invalidate(encounter.id);
+      },
+      onMutate: async (newEncounter) => {
+        await encounterById.cancel(encounter.id);
+        const previousEncounter = encounterById.getData(encounter.id);
+        encounterById.setData(encounter.id, (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            is_editing_columns: newEncounter.is_editing_columns,
+          };
+        });
+        return { previousEncounter };
+      },
+    });
 
-  const { toggleEditingColSpan, toggleEditingInitiative } =
-    useEncounterUIStore();
+  const { toggleEditingInitiative } = useEncounterUIStore();
   const roundText =
     encounter?.current_round === 0
       ? "Surprise round"
@@ -57,7 +79,9 @@ function BattleTopBar() {
   return (
     <div className="flex flex-col items-center relative p-5 pt-0">
       <div className="flex gap-10 justify-center w-full items-center">
-        <h1 className="text-2xl font-bold whitespace-nowrap">{roundText}</h1>
+        <h1 className="text-2xl p-3 shadow-lg rounded-md font-bold whitespace-nowrap">
+          {roundText}
+        </h1>
         <ButtonWithTooltip
           onClick={() => {
             navigator.clipboard.writeText(
@@ -73,9 +97,24 @@ function BattleTopBar() {
         <Button variant="outline" onClick={toggleEditingInitiative}>
           Edit initiative
         </Button>
-        <Button variant="ghost" onClick={() => toggleEditingColSpan()}>
-          Edit block col span
-        </Button>
+        <Toggle
+          onClick={(e) =>
+            setEditingColumns({
+              encounter_id: encounter.id,
+              is_editing_columns: !encounter.is_editing_columns,
+            })
+          }
+        >
+          {encounter?.is_editing_columns ? (
+            <Tip text={"Current view: editing columns"}>
+              <Pen />
+            </Tip>
+          ) : (
+            <Tip text={"Current view: run encounter (no column edit)"}>
+              <BookOpen />
+            </Tip>
+          )}
+        </Toggle>
       </div>
     </div>
   );

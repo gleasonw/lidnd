@@ -119,17 +119,18 @@ export function BattleCard({
           </Button>
         </div>
         <div className="flex gap-4 py-2 items-center justify-center w-full">
-          <BattleCardCreatureIcon participant={participant} />
-          <BattleCardCreatureName participant={participant} />
-        </div>
-        <BattleCardContent>
-          <LidndTextArea editor={editor} />
-          <div
-            className={`flex w-full gap-2 md:gap-6 justify-center max-w-[${participant.creature.stat_block_width}px]`}
-          >
-            <BattleCardHealthAndStatus participant={participant} />
+          <div>
+            <BattleCardCreatureIcon participant={participant} />
           </div>
-        </BattleCardContent>
+          <BattleCardContent>
+            <LidndTextArea editor={editor} />
+            <div
+              className={`flex w-full gap-2 md:gap-6 justify-center max-w-[${participant.creature.stat_block_width}px]`}
+            >
+              <BattleCardHealthAndStatus participant={participant} />
+            </div>
+          </BattleCardContent>
+        </div>
         <CreatureStatBlockImage creature={participant.creature} />
       </BattleCardLayout>
     </div>

@@ -13,7 +13,6 @@ import { createContext, useContext } from "react";
 class EncounterUIStore {
   selectedParticipantId: string | null = null;
   remindersToDisplay: Reminder[] = [];
-  editingColSpan: boolean = false;
   isEditingInitiative: boolean = false;
 
   onSelectParticipant: ((id: string) => void)[] = [];
@@ -50,10 +49,6 @@ class EncounterUIStore {
     } else {
       this.remindersToDisplay = [];
     }
-  };
-
-  toggleEditingColSpan = () => {
-    this.editingColSpan = !this.editingColSpan;
   };
 
   hideReminders = () => {
