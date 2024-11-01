@@ -13,7 +13,6 @@ import {
   useCycleNextTurn,
   useCyclePreviousTurn,
   useEncounter,
-  useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import InitiativeInput from "@/encounters/[encounter_index]/InitiativeInput";
 import { ParticipantUpload } from "@/encounters/[encounter_index]/participant-add-form";
