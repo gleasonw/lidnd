@@ -32,7 +32,7 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-import { X } from "lucide-react";
+import { Trash, X } from "lucide-react";
 import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 
 export const BattleUI = observer(function BattleUI() {
@@ -92,8 +92,6 @@ export function BattleCard({
     },
   });
 
-  const { mutate: removeCreatureFromEncounter } =
-    useRemoveParticipantFromEncounter();
   return (
     <div
       className={`relative flex-col gap-6 items-center justify-between flex `}
@@ -105,18 +103,6 @@ export function BattleCard({
       <BattleCardLayout key={participant.id} participant={participant}>
         <div className="absolute top-2 right-2 flex gap-2 items-center">
           {extraHeaderButtons}
-          <Button
-            variant="ghost"
-            className="opacity-25"
-            onClick={() =>
-              removeCreatureFromEncounter({
-                encounter_id: id,
-                participant_id: participant.id,
-              })
-            }
-          >
-            <X />
-          </Button>
         </div>
         <div className="flex gap-4 py-2 items-center justify-center w-full">
           <div>
@@ -150,7 +136,7 @@ export function BattleCardLayout({
   return (
     <Card
       className={clsx(
-        "bg-white shadow-sm flex flex-col justify-between transition-all group",
+        "bg-white shadow-sm border-none flex flex-col justify-between transition-all group",
         {
           "shadow-lg shadow-red-800":
             !ParticipantUtils.isFriendly(participant) && participant.is_active,

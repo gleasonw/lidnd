@@ -4,18 +4,22 @@ import { api } from "@/trpc/react";
 import { BattleCard } from "./battle-ui";
 import { EncounterUtils } from "@/utils/encounters";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
-import { useEncounter } from "@/encounters/[encounter_index]/hooks";
+import {
+  useEncounter,
+  useRemoveParticipantFromEncounter,
+} from "@/encounters/[encounter_index]/hooks";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { observer } from "mobx-react-lite";
 import type { stat_columns } from "@/server/api/db/schema";
 import { Button } from "@/components/ui/button";
-import { Grip, Plus, X } from "lucide-react";
+import { Grip, Plus, Trash, X } from "lucide-react";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { ParticipantUtils } from "@/utils/participants";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import type { StatColumn } from "@/server/api/columns-router";
 
+// todo: fix status effects
 //todo: give participants stable order within column
 //todo: custom margin when in editing layout mode
 
@@ -283,6 +287,8 @@ function StatColumnComponent({
 
 function BattleCards({ columnId }: { columnId: string }) {
   const [encounter] = useEncounter();
+  const { mutate: removeCreatureFromEncounter } =
+    useRemoveParticipantFromEncounter();
   const participantsInColumn = encounter.participants
     .filter((p) => p.column_id === columnId && !ParticipantUtils.isPlayer(p))
     .sort(ParticipantUtils.sortLinearly);
@@ -294,16 +300,30 @@ function BattleCards({ columnId }: { columnId: string }) {
       key={p.id}
       extraHeaderButtons={
         encounter?.is_editing_columns ? (
-          <Button
-            variant="ghost"
-            className="z-10"
-            onDragStart={(e) => {
-              typedDrag.set(e.dataTransfer, dragTypes.participant, p);
-            }}
-            draggable
-          >
-            <Grip />
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              className="z-10"
+              onDragStart={(e) => {
+                typedDrag.set(e.dataTransfer, dragTypes.participant, p);
+              }}
+              draggable
+            >
+              <Grip />
+            </Button>
+            <Button
+              variant="ghost"
+              className="opacity-25"
+              onClick={() =>
+                removeCreatureFromEncounter({
+                  encounter_id: encounter.id,
+                  participant_id: p.id,
+                })
+              }
+            >
+              <Trash />
+            </Button>
+          </>
         ) : null
       }
     />
