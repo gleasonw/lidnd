@@ -99,6 +99,7 @@ export default function CreaturesPage() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-[900px] w-full overflow-auto">
+                <DialogTitle>Add creature</DialogTitle>
                 <FullCreatureAddForm uploadCreature={createCreature} />
               </DialogContent>
             </Dialog>

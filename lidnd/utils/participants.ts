@@ -29,6 +29,22 @@ function iconHexColor(participant: ParticipantWithCreature) {
   return participant.hex_color ?? "#dc2626";
 }
 
+function assignColumn<T extends Pick<Participant, "id" | "column_id">>(
+  participants: T[],
+  columnId: string,
+  participantId: string
+) {
+  return participants.map((p) => {
+    if (p.id === participantId) {
+      return {
+        ...p,
+        column_id: columnId,
+      };
+    }
+    return p;
+  });
+}
+
 function statBlockAspectRatio(participant: ParticipantWithCreature) {
   return (
     participant.creature.stat_block_width /
@@ -176,4 +192,5 @@ export const ParticipantUtils = {
   isActivatable,
   healthPercent,
   tempHpPercent,
+  assignColumn,
 };

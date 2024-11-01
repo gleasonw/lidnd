@@ -1,5 +1,4 @@
-import { createContext } from "@/server/api/context";
-import { TRPCError, initTRPC } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import {
   encounters,
   participants,
@@ -14,8 +13,7 @@ import {
 } from "@/server/api/db/schema";
 import { eq, and, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
-import superjson from "superjson";
-import { ZodError, z } from "zod";
+import { z } from "zod";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import {
   getEncounterCreature,
@@ -30,43 +28,8 @@ import { ParticipantUtils } from "@/utils/participants";
 import { EncounterUtils } from "@/utils/encounters";
 import { insertCreatureSchema } from "@/app/[username]/[campaign_slug]/encounter/types";
 import _ from "lodash";
-import type { LidndUser } from "@/app/authentication";
-
-const t = initTRPC.context<typeof createContext>().create({
-  transformer: superjson,
-  errorFormatter({ shape, error }) {
-    return {
-      ...shape,
-      data: {
-        ...shape.data,
-        zodError:
-          error.cause instanceof ZodError ? error.cause.flatten() : null,
-      },
-    };
-  },
-});
-
-export type LidndContext = { user: LidndUser };
-
-const isAuthed = t.middleware((opts) => {
-  const { ctx } = opts;
-
-  if (!ctx.user || !ctx) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "You are not on the whitelist.",
-    });
-  }
-
-  return opts.next({
-    ctx: {
-      user: ctx.user,
-    } satisfies LidndContext,
-  });
-});
-
-export const protectedProcedure = t.procedure.use(isAuthed);
-export const publicProcedure = t.procedure;
+import { columnsRouter } from "@/server/api/columns-router";
+import { protectedProcedure, publicProcedure, t } from "@/server/api/base-trpc";
 
 export type Encounter = typeof encounters.$inferSelect;
 export type Creature = typeof creatures.$inferSelect;
@@ -80,6 +43,8 @@ export type ParticipantWithData = EncounterWithData["participants"][number];
 export type EncounterWithParticipants = Encounter & {
   participants: ParticipantWithData[];
 };
+
+export type InsertParticipant = typeof participants.$inferInsert;
 
 export const participantSchema = createSelectSchema(participants);
 export const insertSettingsSchema = createInsertSchema(settings);
@@ -155,6 +120,22 @@ export const appRouter = t.router({
       return encounter;
     }),
 
+  setEditingEncounterColumns: protectedProcedure
+    .input(
+      z.object({ encounter_id: z.string(), is_editing_columns: z.boolean() })
+    )
+    .mutation(async (opts) => {
+      return await db
+        .update(encounters)
+        .set({ is_editing_columns: opts.input.is_editing_columns })
+        .where(
+          and(
+            eq(encounters.id, opts.input.encounter_id),
+            eq(encounters.user_id, opts.ctx.user.id)
+          )
+        );
+    }),
+
   deleteEncounter: protectedProcedure
     .input(z.string())
     .mutation(async (opts) => {
@@ -221,14 +202,20 @@ export const appRouter = t.router({
           });
         }
 
-        if (campaignToPlayers) {
-          await tx.insert(participants).values(
-            campaignToPlayers.map(({ player: creature }) => ({
-              encounter_id: encounterResult.id,
-              creature_id: creature.id,
-              is_ally: !creature.is_player,
-              hp: creature.is_player ? 1 : creature.max_hp,
-            }))
+        if (campaignToPlayers && campaignToPlayers.length > 0) {
+          await Promise.all(
+            campaignToPlayers.map(({ player: creature }) =>
+              ServerEncounter.addParticipant(
+                opts.ctx,
+                {
+                  encounter_id: encounterResult.id,
+                  creature_id: creature.id,
+                  is_ally: !creature.is_player,
+                  hp: creature.is_player ? 1 : creature.max_hp,
+                },
+                tx
+              )
+            )
           );
         }
 
@@ -511,22 +498,12 @@ export const appRouter = t.router({
           message: "No creature found",
         });
       }
-      const encounterParticipant = await db
-        .insert(participants)
-        .values({
-          encounter_id: opts.input.encounter_id,
-          creature_id: opts.input.creature_id,
-          hp: userCreature[0].max_hp,
-          is_ally: opts.input.is_ally,
-        })
-        .returning();
-      if (encounterParticipant.length === 0) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to add creature to encounter",
-        });
-      }
-      return encounterParticipant[0];
+      return await ServerEncounter.addParticipant(opts.ctx, {
+        encounter_id: opts.input.encounter_id,
+        creature_id: opts.input.creature_id,
+        hp: userCreature[0].max_hp,
+        is_ally: opts.input.is_ally,
+      });
     }),
   //#endregion
 
@@ -943,6 +920,7 @@ export const appRouter = t.router({
       }
       return result[0];
     }),
+  ...columnsRouter,
 
   //#endregion
 });

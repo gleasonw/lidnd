@@ -1,6 +1,6 @@
+import type { LidndContext } from "@/server/api/base-trpc";
 import { db } from "@/server/api/db";
 import { campaigns } from "@/server/api/db/schema";
-import type { LidndContext } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { cache } from "react";

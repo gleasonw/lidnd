@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Clock,
   Dices,
-  Play,
   Skull,
   X,
   Swords,
@@ -13,25 +12,18 @@ import {
   Plus,
   FileText,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import React, { createContext, useContext, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
 import type { ParticipantWithData } from "@/server/api/router";
 import { LidndPopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
-import { CreatureStatBlockImage } from "@/app/[username]/[campaign_slug]/encounter/original-size-image";
 import { EncounterUtils } from "@/utils/encounters";
-import { ParticipantUtils } from "@/utils/participants";
-import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { isStringMeaningful } from "@/app/[username]/utils";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
-import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
-import { DescriptionTextArea } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/description-text-area";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
-import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/group-battle-ui";
 import {
   useStartEncounter,
   useRemoveParticipantFromEncounter,
@@ -39,18 +31,11 @@ import {
   useUpdateEncounterParticipant,
   useEncounterLink,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
-import {
-  AllyUpload,
-  MonsterUpload,
-} from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/participant-add-form";
-import { AnimationListItem } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/battle-ui";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import Link from "next/link";
-import { Separator } from "@/components/ui/separator";
 import { makeAutoObservable } from "mobx";
-import { observer } from "mobx-react-lite";
 
 class EncounterPrepStore {
   selectedeParticipantId: string | null = null;
@@ -64,7 +49,6 @@ class EncounterPrepStore {
   };
 }
 
-const encounterPrepStore = new EncounterPrepStore();
 const EncounterPrepContext = createContext<EncounterPrepStore | null>(null);
 const useEncounterPrepStore = () => {
   const store = useContext(EncounterPrepContext);
@@ -75,40 +59,6 @@ const useEncounterPrepStore = () => {
   }
   return store;
 };
-
-const EncounterPrep = observer(function EncounterPrep() {
-  const { selectedeParticipantId: selectedCreatureId } = encounterPrepStore;
-  const [encounter] = useEncounter();
-  const selectedCreature = selectedCreatureId
-    ? EncounterUtils.participantFor(encounter, selectedCreatureId)?.creature
-    : null;
-  return (
-    <EncounterPrepContext.Provider value={encounterPrepStore}>
-      <div className="flex flex-col gap-5 flex-grow ml-auto mr-auto max-w-[860px] min-w-0">
-        <EncounterDetailsTopBar>
-          <EncounterStats />
-        </EncounterDetailsTopBar>
-        <EncounterNameInput />
-        <DescriptionTextArea
-          tiptapReadyGate={
-            <>
-              <Separator />
-              <EncounterParticipantRow />
-              {selectedCreature && (
-                <CreatureStatBlockImage creature={selectedCreature} />
-              )}
-              <div className="flex md:hidden">
-                <EncounterReminderInput />
-              </div>
-            </>
-          }
-        />
-      </div>
-    </EncounterPrepContext.Provider>
-  );
-});
-
-export default EncounterPrep;
 
 export function EncounterNameInput() {
   const id = useEncounterId();
@@ -159,31 +109,6 @@ export function EncounterNameInput() {
   );
 }
 
-interface EncounterDetailsTopBarProps {
-  children?: React.ReactNode;
-}
-
-function EncounterDetailsTopBar(props: EncounterDetailsTopBarProps) {
-  const { children } = props;
-  const [encounter] = useEncounter();
-  const runLink = useEncounterLink("run");
-  return (
-    <div className="flex items-center gap-1 flex-wrap md:hidden">
-      {encounter?.started_at ? (
-        <Link href={runLink}>
-          <Button>
-            <Play />
-            Continue the battle!
-          </Button>
-        </Link>
-      ) : (
-        <EncounterStartButton />
-      )}
-      {children}
-    </div>
-  );
-}
-
 export function EncounterStartButton() {
   const id = useEncounterId();
   const campaignId = useCampaignId();
@@ -216,111 +141,8 @@ export function EncounterStartButton() {
   );
 }
 
-function EncounterParticipantRow() {
-  const id = useEncounterId();
-  const [encounter] = api.encounterById.useSuspenseQuery(id);
-
-  const monsters = EncounterUtils.monsters(encounter);
-  const players = EncounterUtils.allies(encounter);
-
-  return (
-    <>
-      <GroupBattleLayout
-        playerTitle={
-          <h1 className="flex gap-5 text-xl items-center">
-            Allies
-            <LidndPlusDialog text="Add ally">
-              <AllyUpload />
-            </LidndPlusDialog>
-          </h1>
-        }
-        monsterTitle={
-          <h1 className="flex gap-5 text-xl items-center">
-            Monsters
-            <LidndPlusDialog text="Add monster">
-              <MonsterUpload />
-            </LidndPlusDialog>
-          </h1>
-        }
-        monsters={[
-          ...monsters.map((participant, index) => (
-            <PrepParticipantCard
-              participant={participant}
-              key={participant.id + index}
-            />
-          )),
-          <Card
-            className="flex flex-col justify-center items-center w-32 h-60"
-            key="monster-placeholder"
-          >
-            <LidndDialog
-              trigger={
-                <ButtonWithTooltip
-                  text="Add monster"
-                  className="w-full h-full"
-                  variant="ghost"
-                >
-                  <Plus />
-                </ButtonWithTooltip>
-              }
-              content={<MonsterUpload />}
-            />
-          </Card>,
-        ]}
-        players={players.map((participant, index) => (
-          <PrepParticipantCard
-            key={participant.id + index}
-            participant={participant}
-          />
-        ))}
-      />
-      {encounter?.participants?.length === 0 && (
-        <h1 className={"text-2xl text-center"}>
-          No creatures in this encounter
-        </h1>
-      )}
-    </>
-  );
-}
-
 export interface ParticipantCreatureProps {
   participant: ParticipantWithData;
-}
-
-function PrepParticipantCard({ participant }: ParticipantCreatureProps) {
-  return (
-    <AnimationListItem key={participant.id}>
-      <div className="flex flex-col items-center gap-3 h-full w-32">
-        <Card className="flex flex-col w-32 h-full">
-          <CardHeader className="p-3">
-            <CardTitle className="text-xl text-center">
-              {ParticipantUtils.name(participant)}
-            </CardTitle>
-          </CardHeader>
-          <div className="mt-auto">
-            <CreatureIcon
-              creature={participant.creature}
-              size="medium"
-              objectFit="contain"
-            />
-          </div>
-        </Card>
-        <ParticipantActions participant={participant} />
-      </div>
-    </AnimationListItem>
-  );
-}
-
-function ParticipantActions({
-  participant,
-}: {
-  participant: ParticipantWithData;
-}) {
-  if (ParticipantUtils.isPlayer(participant)) {
-    return <RemoveCreatureFromEncounterButton participant={participant} />;
-  }
-
-  return <MonsterParticipantActions participant={participant} />;
 }
 
 export interface RemoveCreatureFromEncounterButtonProps {

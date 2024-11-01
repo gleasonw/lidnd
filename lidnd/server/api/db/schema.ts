@@ -11,7 +11,6 @@ import {
   uuid,
   varchar,
   pgEnum,
-  unique,
   doublePrecision,
 } from "drizzle-orm/pg-core";
 
@@ -100,7 +99,8 @@ export const campaigns = pgTable(
   (t) => {
     return {
       userIndex: index("user_index_campaigns").on(t.user_id),
-      unq: unique().on(t.user_id, t.name),
+      // unq: unique().on(t.user_id, t.name),
+      // TODO: can we make this unique again?
     };
   }
 );
@@ -162,6 +162,7 @@ export const encounters = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     current_round: integer("current_round").default(1).notNull(),
+    is_editing_columns: boolean("is_editing_columns").default(true).notNull(),
     ended_at: timestamp("ended_at"),
     status: encounter_status_enum("status").default("prep").notNull(),
     label: encounter_label_enum("label").default("active").notNull(),
@@ -182,6 +183,7 @@ export const encountersRelations = relations(encounters, ({ many, one }) => ({
     fields: [encounters.campaign_id],
     references: [campaigns.id],
   }),
+  columns: many(stat_columns),
 }));
 
 //todo: there are system-specific fields in here...
@@ -207,6 +209,7 @@ export const participants = pgTable(
     hex_color: text("hex_color"),
     notes: text("notes"),
     temporary_hp: integer("temporary_hp").default(0).notNull(),
+    column_id: uuid("stat_column_id"),
     has_played_this_round: boolean("has_played_this_round")
       .default(false)
       .notNull(),
@@ -218,6 +221,21 @@ export const participants = pgTable(
     };
   }
 );
+
+export const stat_columns = pgTable("stat_columns", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  percent_width: doublePrecision("percent_width").notNull(),
+  encounter_id: uuid("encounter_id")
+    .references(() => encounters.id)
+    .notNull(),
+});
+
+export const statColumnRelations = relations(stat_columns, ({ one }) => ({
+  encounter: one(encounters, {
+    fields: [stat_columns.encounter_id],
+    references: [encounters.id],
+  }),
+}));
 
 export const participantRelations = relations(
   participants,

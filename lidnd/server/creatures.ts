@@ -1,12 +1,12 @@
 import { creatureUploadSchema } from "@/encounters/types";
 import { db } from "@/server/api/db";
 import { creatures } from "@/server/api/db/schema";
-import type { LidndContext } from "@/server/api/router";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import sharp from "sharp";
 import { CreatureUtils } from "@/utils/creatures";
+import type { LidndContext } from "@/server/api/base-trpc";
 
 export const ServerCreature = {
   create: async function (

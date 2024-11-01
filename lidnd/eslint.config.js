@@ -22,6 +22,8 @@ export default [
       "react-hooks/rules-of-hooks": "error", // Checks rules of Hooks
       "react-hooks/exhaustive-deps": "warn", // Checks effect dependencies
       "react-compiler/react-compiler": "error",
+      "no-undef": "off",
+      "no-unused-vars": "off",
     },
     ignores: ["**/*.d.ts", ".next/**"],
   },

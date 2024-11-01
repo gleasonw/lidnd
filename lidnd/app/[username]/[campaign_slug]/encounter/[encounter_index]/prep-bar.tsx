@@ -4,7 +4,6 @@ import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { Button } from "@/components/ui/button";
 import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
-import { EncounterReminderInput } from "@/encounters/[encounter_index]/encounter-prep";
 import { GroupInitiativeInput } from "@/encounters/[encounter_index]/group-initiative-input";
 import {
   useEncounter,
@@ -27,8 +26,8 @@ export function EncounterPrepBar() {
   }
 
   return (
-    <div className="w-full p-10 flex flex-col gap-5">
-      <div className="grid grid-cols-3">
+    <div className="w-full py-5 flex flex-col gap-5">
+      <div className="grid grid-cols-3 gap-5">
         <ParticipantsContainer role="allies">
           {EncounterUtils.allies(encounter).map((p) => (
             <button
@@ -48,10 +47,12 @@ export function EncounterPrepBar() {
             <AllyUpload />
           </LidndPlusDialog>
         </ParticipantsContainer>
-        <div className="p-5 flex flex-col gap-3 items-center">
+        <div className=" flex flex-col gap-3 items-center">
           <LidndDialog
+            title={"Roll initiative"}
             trigger={
-              <Button className="w-full h-full max-w-sm text-xl flex flex-col gap-3">
+              <Button className="w-full h-full max-w-sm text-xl flex gap-3 py-5 shadow-lg">
+                <Swords />
                 Roll initiative
                 <Swords />
               </Button>
@@ -81,7 +82,6 @@ export function EncounterPrepBar() {
           </LidndPlusDialog>
         </ParticipantsContainer>
       </div>
-      <EncounterReminderInput />
     </div>
   );
 }
@@ -100,7 +100,7 @@ function ParticipantsContainer({
           "border-blue-500": role === "allies",
           "border-red-500": role === "monsters",
         },
-        `flex flex-wrap gap-4 p-5  items-center border-4 shadow-md`,
+        `flex gap-4 px-5  items-center border-4 shadow-md`,
       )}
     >
       {children}
@@ -128,21 +128,21 @@ function EncounterDifficulty() {
 
   return (
     <div className="w-full max-w-sm">
-      <div className="border rounded h-10 relative">
+      <div className="border rounded h-10 relative flex items-start">
         <div
           className={clsx(
             {
               "bg-green-500": difficulty === "Easy",
               "bg-yellow-500": difficulty === "Standard",
               "bg-red-500": difficulty === "Hard",
-              "bg-gray-500": difficulty === "Deadly",
+              "bg-rose-700": difficulty === "Deadly",
             },
             `absolute top-0 left-0 h-full transition-all`,
           )}
           style={{ width: `${percentFull * 100}%` }}
         />
+        <span className="text-lg text-white z-10">{difficulty}</span>
       </div>
-      {difficulty}
     </div>
   );
 }

@@ -50,7 +50,8 @@ export const LidndAuth = {
   },
 
   getUserSession: cache(async () => {
-    const sessionId = (await cookies()).get(auth.sessionCookieName)?.value ?? null;
+    const sessionId =
+      (await cookies()).get(auth.sessionCookieName)?.value ?? null;
     if (!sessionId) return null;
     const { user, session } = await auth.validateSession(sessionId);
     try {
@@ -83,11 +84,13 @@ export const LidndAuth = {
   }),
 
   getUser: async function (): Promise<LidndUser | null> {
+    const start = performance.now();
     const session = await this.getUserSession();
     if (!session) {
       return null;
     }
     // cast for branding
+    console.log(`getUser took ${performance.now() - start}ms`);
     return session.user as LidndUser;
   },
 

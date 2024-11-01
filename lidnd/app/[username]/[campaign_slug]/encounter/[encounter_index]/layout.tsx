@@ -24,17 +24,13 @@ import * as R from "remeda";
 import { EncounterPrepBar } from "@/encounters/[encounter_index]/prep-bar";
 import { EncounterSidebar } from "@/encounters/[encounter_index]/encounter-sidebar";
 
-export default async function EncounterLayout(
-  props: {
-    children: React.ReactNode;
-    params: Promise<{ id: string; campaign_slug: string }>;
-  }
-) {
+export default async function EncounterLayout(props: {
+  children: React.ReactNode;
+  params: Promise<{ id: string; campaign_slug: string }>;
+}) {
   const params = await props.params;
 
-  const {
-    children
-  } = props;
+  const { children } = props;
 
   const start = performance.now();
   const user = await LidndAuth.getUser();
@@ -100,7 +96,7 @@ export default async function EncounterLayout(
       <CampaignId value={campaign.id}>
         <EncounterId value={encounter.id}>
           <section className="flex h-full overflow-hidden">
-            <section className="flex flex-col flex-grow min-w-0">
+            <section className="flex flex-col flex-grow h-full min-w-0">
               <div className="grid grid-cols-3 relative">
                 <InitiativeTracker />
                 <Breadcrumb>
@@ -170,7 +166,7 @@ export default async function EncounterLayout(
                 </div>
               </div>
               <EncounterPrepBar />
-              <section className="flex flex-col overflow-y-auto">
+              <section className="flex flex-col overflow-y-auto h-full">
                 {children}
               </section>
             </section>

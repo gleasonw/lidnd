@@ -29,5 +29,12 @@ export const LidndTextInput = React.forwardRef<
     );
   }
 
-  return <Input ref={ref} placeholder={placeholder} {...props} />;
+  return (
+    <Input
+      ref={ref}
+      className={className}
+      placeholder={placeholder}
+      {...props}
+    />
+  );
 });

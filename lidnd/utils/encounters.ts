@@ -257,6 +257,7 @@ export const EncounterUtils = {
       label: encounter.label ?? "active",
       order: encounter.order ?? 0,
       index_in_campaign: encounter.index_in_campaign ?? 0,
+      is_editing_columns: encounter.is_editing_columns ?? true,
     };
   },
 

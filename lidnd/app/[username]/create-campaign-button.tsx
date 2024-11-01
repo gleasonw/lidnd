@@ -12,6 +12,7 @@ import React from "react";
 import { getSystems } from "@/server/api/utils";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { CampaignDescriptionForm } from "@/app/[username]/campaign-description-area";
+import { DialogTitle } from "@radix-ui/react-dialog";
 
 export interface CreateCampaignButtonProps {
   trigger?: React.ReactNode;
@@ -24,6 +25,7 @@ export async function CreateCampaignButton(props: CreateCampaignButtonProps) {
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
+        <DialogTitle>Create a new campaign</DialogTitle>
         <form action={createCampaign} className="flex flex-col gap-5 w-full">
           <div className="flex gap-2 flex-col">
             <LidndTextInput

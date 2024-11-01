@@ -12,7 +12,7 @@ import { useEncounter } from "@/app/[username]/[campaign_slug]/encounter/[encoun
 export function DescriptionTextArea({
   tiptapReadyGate,
 }: {
-  tiptapReadyGate: React.ReactNode;
+  tiptapReadyGate?: React.ReactNode;
 }) {
   const [encounter] = useEncounter();
   const [isTipTapReady, setIsTipTapReady] = React.useState(false);
@@ -33,6 +33,7 @@ export function DescriptionTextArea({
   const editor = useEditor({
     extensions: [StarterKit, configuredPlaceholder],
     content: encounter.description,
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const content = editor.getHTML();
       debouncedUpdate(content);

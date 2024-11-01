@@ -18,11 +18,9 @@ import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { ParticipantHealthForm } from "@/encounters/[encounter_index]/creature-health-form";
 import { DescriptionTextArea } from "@/encounters/[encounter_index]/description-text-area";
-import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { GroupBattleUI } from "@/encounters/[encounter_index]/group-battle-ui";
 import {
   useEncounter,
-  useRemoveParticipantFromEncounter,
   useRemoveStatusEffect,
   useUpdateEncounterParticipant,
 } from "@/encounters/[encounter_index]/hooks";
@@ -32,7 +30,7 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-import { X } from "lucide-react";
+import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 
 export const BattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -63,16 +61,14 @@ export type BattleCardProps = {
   children?: React.ReactNode;
   className?: string;
   isSelected?: boolean;
-  header?: React.ReactNode;
-  battleCardExtraContent?: React.ReactNode;
+  extraHeaderButtons?: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export function BattleCard({
   participant,
-  battleCardExtraContent,
+  extraHeaderButtons,
   ...props
 }: BattleCardProps) {
-  const id = useEncounterId();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
 
   const debouncedUpdate = useDebouncedCallback((participant: Participant) => {
@@ -92,42 +88,32 @@ export function BattleCard({
     },
   });
 
-  const { mutate: removeCreatureFromEncounter } =
-    useRemoveParticipantFromEncounter();
   return (
     <div
-      className={`relative flex-col gap-6 items-center justify-between flex w-[${participant.creature.icon_width}px]`}
+      className={`relative flex-col gap-6 items-center justify-between flex `}
       {...props}
     >
       {participant?.minion_count && participant.minion_count > 1 ? (
         <MinionCardStack minionCount={participant.minion_count} />
       ) : null}
       <BattleCardLayout key={participant.id} participant={participant}>
-        <Button
-          variant="ghost"
-          className="opacity-25 absolute top-2 right-2"
-          onClick={() =>
-            removeCreatureFromEncounter({
-              encounter_id: id,
-              participant_id: participant.id,
-            })
-          }
-        >
-          <X />
-        </Button>
-        <div className="flex gap-4 py-2 items-center justify-center w-full">
-          <BattleCardCreatureIcon participant={participant} />
-          <BattleCardCreatureName participant={participant} />
+        <div className="absolute top-2 right-2 flex gap-2 items-center">
+          {extraHeaderButtons}
         </div>
-        <BattleCardContent>
-          <LidndTextArea editor={editor} />
-          <div
-            className={`flex w-full gap-2 md:gap-6 justify-center max-w-[${participant.creature.stat_block_width}px]`}
-          >
-            <BattleCardHealthAndStatus participant={participant} />
+        <div className="flex gap-4 py-2 items-center justify-center w-full">
+          <div>
+            <BattleCardCreatureIcon participant={participant} />
           </div>
-        </BattleCardContent>
-        {battleCardExtraContent}
+          <BattleCardContent>
+            <LidndTextArea editor={editor} />
+            <div
+              className={`flex w-full gap-2 md:gap-6 justify-center max-w-[${participant.creature.stat_block_width}px]`}
+            >
+              <BattleCardHealthAndStatus participant={participant} />
+            </div>
+          </BattleCardContent>
+        </div>
+        <CreatureStatBlockImage creature={participant.creature} />
       </BattleCardLayout>
     </div>
   );
@@ -146,7 +132,7 @@ export function BattleCardLayout({
   return (
     <Card
       className={clsx(
-        "bg-white shadow-sm flex flex-col justify-between transition-all group",
+        "bg-white shadow-sm border-none flex flex-col justify-between transition-all group",
         {
           "shadow-lg shadow-red-800":
             !ParticipantUtils.isFriendly(participant) && participant.is_active,

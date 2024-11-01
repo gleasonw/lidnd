@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import {
   campaigns,
   campaignToPlayer,
-  participants,
   encounters,
 } from "@/server/api/db/schema";
 import { z } from "zod";
@@ -22,6 +21,7 @@ import type { LidndUser } from "@/app/authentication";
 import _ from "lodash";
 import { ServerCreature } from "@/server/creatures";
 import { creatureUploadSchema } from "@/encounters/types";
+import { ServerEncounter } from "@/server/encounters";
 
 export async function logOut() {
   const session = await getPageSession();
@@ -177,11 +177,14 @@ export async function createCreatureInEncounter(formData: CreaturePostData) {
 
   const newCreature = await createCreature({ user }, creature.value);
 
-  await db.insert(participants).values({
-    encounter_id: creature.value.encounter_id,
-    creature_id: newCreature.id,
-    hp: newCreature.max_hp,
-  });
+  await ServerEncounter.addParticipant(
+    { user },
+    {
+      encounter_id: creature.value.encounter_id,
+      creature_id: newCreature.id,
+      hp: newCreature.max_hp,
+    },
+  );
 
   return {
     message: "Success",
