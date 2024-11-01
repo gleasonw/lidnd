@@ -12,7 +12,7 @@ export function CreatureStatBlockImage({ creature }: OriginalSizeImageProps) {
   return (
     <Image
       src={CreatureUtils.awsURL(creature, "stat_block")}
-      className="select-none"
+      className="select-none object-contain"
       alt={creature.name}
       width={creature.stat_block_width}
       height={creature.stat_block_height}

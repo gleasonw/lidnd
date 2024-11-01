@@ -96,7 +96,7 @@ export function ParticipantHealthForm({
           </span>
         </span>
       )}
-      <div className="flex flex-wrap gap-10">
+      <div className="flex flex-wrap gap-2">
         <div className="flex gap-4 text-2xl">
           <Button
             variant="outline"

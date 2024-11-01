@@ -139,17 +139,19 @@ export const columnsRouter = {
         encounterColumns,
         result[0].id
       );
-      //TODO: extract into a SDK function to dedupe with updateColumnBatch
-      await db
-        .insert(stat_columns)
-        .values(updatedColumns)
-        .onConflictDoUpdate({
-          target: stat_columns.id,
-          set: {
-            percent_width: sql.raw(`excluded.percent_width`),
-          },
-        })
-        .returning();
+      if (updatedColumns.length > 0) {
+        //TODO: extract into a SDK function to dedupe with updateColumnBatch
+        await db
+          .insert(stat_columns)
+          .values(updatedColumns)
+          .onConflictDoUpdate({
+            target: stat_columns.id,
+            set: {
+              percent_width: sql.raw(`excluded.percent_width`),
+            },
+          })
+          .returning();
+      }
       if (result.length === 0) {
         throw new Error("Failed to delete column");
       }

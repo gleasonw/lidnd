@@ -143,7 +143,7 @@ async function assign_columns() {
 
   for (const encounter of encounters) {
     const numColumns = encounter.columns.length;
-    if (numColumns) {
+    if (numColumns === 0) {
       const result = await db
         .insert(stat_columns)
         .values({

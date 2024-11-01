@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { createContext, useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import { BattleCard } from "./battle-ui";
 import { EncounterUtils } from "@/utils/encounters";
@@ -13,6 +13,7 @@ import { ColumnsIcon, Grip, Plus, X } from "lucide-react";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { ParticipantUtils } from "@/utils/participants";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
+import { ButtonWithTooltip } from "@/components/ui/tip";
 
 function onSelectParticipant(id: string) {
   const selectedCardElement = document.querySelector(
@@ -24,6 +25,8 @@ function onSelectParticipant(id: string) {
     });
   }
 }
+
+const ParentWidthContext = createContext<number | null>(null);
 
 export const LinearBattleUI = observer(function LinearBattleUI() {
   const id = useEncounterId();
@@ -81,33 +84,39 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
     };
   }, []);
 
-  // todo: just fetch this in the encounter
-  const { data: columns } = api.getColumns.useQuery(encounter.id);
-
   return (
-    <div className="flex relative gap-2 h-full" ref={containerRef}>
-      <div className="absolute top-0 right-0 text-xl z-10">
+    <div className="flex relative" ref={containerRef}>
+      <div className="absolute -top-10 h-10 right-0 text-xl z-10">
         <CreateNewColumnButton />
       </div>
-      {columns?.map((c, index) => (
-        <StatColumn
-          column={c}
-          key={c.id}
-          splitter={
-            index < columns.length - 1 ? (
-              <StatColumnSplitter
-                rightColumnId={columns[index + 1]!.id}
-                leftColumnId={c.id}
-                parentWidth={parentWidth}
-                key={index}
-              />
-            ) : null
-          }
-        />
-      ))}
+      <ParentWidthContext.Provider value={parentWidth}>
+        <StatColumns />
+      </ParentWidthContext.Provider>
     </div>
   );
 });
+
+function StatColumns() {
+  const [encounter] = useEncounter();
+  // todo: just fetch this in the encounter
+  const { data: columns } = api.getColumns.useQuery(encounter.id);
+  console.log("render columns");
+  return columns?.map((c, index) => (
+    <StatColumn
+      column={c}
+      key={c.id}
+      splitter={
+        index < columns.length - 1 ? (
+          <StatColumnSplitter
+            rightColumnId={columns[index + 1]!.id}
+            leftColumnId={c.id}
+            key={index}
+          />
+        ) : null
+      }
+    />
+  ));
+}
 
 function CreateNewColumnButton() {
   const { getColumns } = api.useUtils();
@@ -131,15 +140,16 @@ function CreateNewColumnButton() {
     },
   });
   return (
-    <Button
-      variant="outline"
+    <ButtonWithTooltip
+      text={"Create new column"}
+      variant="ghost"
       onClick={() =>
         createColumn({ encounter_id: encounter.id, percent_width: 50 })
       }
     >
       <ColumnsIcon />
       <Plus />
-    </Button>
+    </ButtonWithTooltip>
   );
 }
 
@@ -153,6 +163,7 @@ function StatColumn({
   splitter: React.ReactNode | null;
 }) {
   // todo: setup join in db instead of here
+  //todo: when adding a participant, put them in the shortest column
   const [encounter] = useEncounter();
   const [acceptDrop, setAcceptDrop] = React.useState(false);
   const { getColumns, encounterById } = api.useUtils();
@@ -205,15 +216,11 @@ function StatColumn({
       return { previousColumns };
     },
   });
-  const participantsInColumn = encounter.participants.filter(
-    (p) => p.column_id === column.id && !ParticipantUtils.isPlayer(p),
-  );
-  const widthToSet = Math.round(column.percent_width * 100) / 100;
   return (
     <>
       <div
-        className={`flex flex-col items-start relative border-4 h-full ${acceptDrop && "border-blue-500"}`}
-        style={{ width: `${widthToSet}%` }}
+        className={`flex flex-col items-start relative border-4 ${acceptDrop && "border-blue-500"}`}
+        style={{ width: `${column.percent_width}%` }}
         onDrop={(e) => {
           const droppedParticipant = typedDrag.get(
             e.dataTransfer,
@@ -244,43 +251,57 @@ function StatColumn({
         }}
         onDragLeave={() => setAcceptDrop(false)}
       >
-        {participantsInColumn.map((p) => (
-          <BattleCard
-            participant={p}
-            data-is-active={p.is_active}
-            data-participant-id={p.id}
-            key={p.id}
-            extraHeaderButtons={
-              <Button
-                variant="ghost"
-                onDragStart={(e) => {
-                  typedDrag.set(e.dataTransfer, dragTypes.participant, p);
-                }}
-                draggable
-              >
-                <Grip />
-              </Button>
-            }
-          />
-        ))}
-        <Button variant="ghost" onClick={() => deleteColumn(column)}>
+        <ButtonWithTooltip
+          text="Delete column"
+          className="h-10 absolute -top-10 z-10 left-0"
+          variant="ghost"
+          onClick={() => deleteColumn(column)}
+        >
+          <ColumnsIcon />
           <X />
-        </Button>
+        </ButtonWithTooltip>
+        <BattleCards columnId={column.id} />
       </div>
       {splitter}
     </>
   );
 }
 
+function BattleCards({ columnId }: { columnId: string }) {
+  const [encounter] = useEncounter();
+  const participantsInColumn = encounter.participants.filter(
+    (p) => p.column_id === columnId && !ParticipantUtils.isPlayer(p),
+  );
+  console.log("render");
+  return participantsInColumn.map((p) => (
+    <BattleCard
+      participant={p}
+      data-is-active={p.is_active}
+      data-participant-id={p.id}
+      key={p.id}
+      extraHeaderButtons={
+        <Button
+          variant="ghost"
+          onDragStart={(e) => {
+            typedDrag.set(e.dataTransfer, dragTypes.participant, p);
+          }}
+          draggable
+        >
+          <Grip />
+        </Button>
+      }
+    />
+  ));
+}
+
 function StatColumnSplitter({
   rightColumnId,
   leftColumnId,
-  parentWidth,
 }: {
   rightColumnId: string;
   leftColumnId: string;
-  parentWidth: number | null;
 }) {
+  const parentWidth = React.useContext(ParentWidthContext);
   const { getColumns } = api.useUtils();
   const [encounter] = useEncounter();
   const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
@@ -357,7 +378,7 @@ function StatColumnSplitter({
   return (
     <div
       onMouseDown={handleMouseDown}
-      className="w-2 h-full bg-gray-300 hover:bg-gray-500 right-0"
+      className="w-2 bg-gray-300 hover:bg-gray-500 right-0"
       style={{ cursor: "ew-resize" }}
     />
   );
