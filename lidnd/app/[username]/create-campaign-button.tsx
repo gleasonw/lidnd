@@ -36,7 +36,7 @@ export async function CreateCampaignButton(props: CreateCampaignButtonProps) {
               placeholder="Name"
             />
             <CampaignDescriptionForm />
-            <Select name="system_id">
+            <Select name="system_id" defaultValue={systems.at(0)?.id}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select a system" />
               </SelectTrigger>
