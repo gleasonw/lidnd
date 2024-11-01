@@ -46,6 +46,7 @@ function SpellSearcher() {
   return (
     <Dialog open={showSearch} onOpenChange={(isOpen) => setShowSearch(isOpen)}>
       <DialogContent className="max-w-3xl h-[500px] overflow-auto">
+        <DialogTitle>Spellbook</DialogTitle>
         <Input
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}

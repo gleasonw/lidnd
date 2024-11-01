@@ -1,13 +1,69 @@
+import type { LidndContext } from "@/server/api/base-trpc";
 import { db } from "@/server/api/db";
 import {
   reminders,
   encounters,
   participants,
   type EncounterStatus,
+  stat_columns,
 } from "@/server/api/db/schema";
-import type { LidndContext, Participant } from "@/server/api/router";
+import type { InsertParticipant, Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql } from "drizzle-orm";
+
+// todo: allow callers to pass in an encounter they've already fetched
+async function addParticipant(
+  ctx: LidndContext,
+  participant: InsertParticipant,
+  dbObject = db
+) {
+  return await dbObject.transaction(async (tx) => {
+    const [newParticipant, e] = await Promise.all([
+      tx.insert(participants).values(participant).returning(),
+      ServerEncounter.encounterByIdThrows(ctx, participant.encounter_id, tx),
+    ]);
+    if (!newParticipant[0]) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to add participant",
+      });
+    }
+    const columnToAssign = e.columns.at(0);
+    if (columnToAssign) {
+      const pWithColumn = await tx
+        .update(participants)
+        .set({ column_id: columnToAssign.id })
+        .where(eq(participants.id, newParticipant[0].id))
+        .returning();
+      if (!pWithColumn[0]) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to assign column",
+        });
+      }
+      return pWithColumn[0];
+    }
+    // we need to create a new column for this new participant
+    const newColumn = await tx
+      .insert(stat_columns)
+      .values({
+        encounter_id: participant.encounter_id,
+        percent_width: 100,
+      })
+      .returning();
+    if (!newColumn[0]) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create column",
+      });
+    }
+    await tx
+      .update(participants)
+      .set({ column_id: newColumn[0].id })
+      .where(eq(participants.id, newParticipant[0].id));
+    return newParticipant[0];
+  });
+}
 
 export const ServerEncounter = {
   encountersInCampaign: async function (
@@ -88,6 +144,7 @@ export const ServerEncounter = {
           },
         },
         reminders: true,
+        columns: true,
       },
     });
   },
@@ -208,6 +265,7 @@ export const ServerEncounter = {
         .where(eq(encounters.id, encounter_id)),
     ]);
   },
+  addParticipant,
 };
 
 export type EncounterWithData = NonNullable<

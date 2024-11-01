@@ -100,7 +100,6 @@ function StatColumns() {
   const [encounter] = useEncounter();
   // todo: just fetch this in the encounter
   const { data: columns } = api.getColumns.useQuery(encounter.id);
-  console.log("render columns");
   return columns?.map((c, index) => (
     <StatColumn
       column={c}
@@ -177,26 +176,15 @@ function StatColumn({
         const previousEncounter = encounterById.getData(encounter.id);
         encounterById.setData(encounter.id, (old) => {
           if (!old) return old;
-          const participant = old.participants.find(
-            (p) => p.id === newColumn.participant_id,
-          );
-          if (!participant) {
-            throw new Error("No participant found");
-          }
           return {
             ...old,
-            participants: old.participants.map((p) => {
-              if (p.id === newColumn.participant_id) {
-                return {
-                  ...p,
-                  column_id: newColumn.column_id,
-                };
-              }
-              return p;
-            }),
+            participants: ParticipantUtils.assignColumn(
+              old.participants,
+              newColumn.column_id,
+              newColumn.participant_id,
+            ),
           };
         });
-        console.log("assigning", newColumn.participant_id);
         return { previousEncounter };
       },
     });
@@ -219,7 +207,7 @@ function StatColumn({
   return (
     <>
       <div
-        className={`flex flex-col items-start relative border-4 ${acceptDrop && "border-blue-500"}`}
+        className={`flex flex-col gap-3 items-start relative ${acceptDrop && "outline outline-blue-500"}`}
         style={{ width: `${column.percent_width}%` }}
         onDrop={(e) => {
           const droppedParticipant = typedDrag.get(
@@ -351,9 +339,6 @@ function StatColumnSplitter({
             return c;
           });
         });
-        console.log(
-          `set left Column ${leftColumnId} and right column ${rightColumnId}`,
-        );
         isPendingSetStateForFrame = null;
       });
     };

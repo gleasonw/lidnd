@@ -30,6 +30,7 @@ import { insertCreatureSchema } from "@/app/[username]/[campaign_slug]/encounter
 import _ from "lodash";
 import { columnsRouter } from "@/server/api/columns-router";
 import { protectedProcedure, publicProcedure, t } from "@/server/api/base-trpc";
+import { LidndAuth } from "@/app/authentication";
 
 export type Encounter = typeof encounters.$inferSelect;
 export type Creature = typeof creatures.$inferSelect;
@@ -43,6 +44,8 @@ export type ParticipantWithData = EncounterWithData["participants"][number];
 export type EncounterWithParticipants = Encounter & {
   participants: ParticipantWithData[];
 };
+
+export type InsertParticipant = typeof participants.$inferInsert;
 
 export const participantSchema = createSelectSchema(participants);
 export const insertSettingsSchema = createInsertSchema(settings);
@@ -185,13 +188,19 @@ export const appRouter = t.router({
         }
 
         if (campaignToPlayers && campaignToPlayers.length > 0) {
-          await tx.insert(participants).values(
-            campaignToPlayers.map(({ player: creature }) => ({
-              encounter_id: encounterResult.id,
-              creature_id: creature.id,
-              is_ally: !creature.is_player,
-              hp: creature.is_player ? 1 : creature.max_hp,
-            }))
+          await Promise.all(
+            campaignToPlayers.map(({ player: creature }) =>
+              ServerEncounter.addParticipant(
+                opts.ctx,
+                {
+                  encounter_id: encounterResult.id,
+                  creature_id: creature.id,
+                  is_ally: !creature.is_player,
+                  hp: creature.is_player ? 1 : creature.max_hp,
+                },
+                tx
+              )
+            )
           );
         }
 
@@ -474,22 +483,12 @@ export const appRouter = t.router({
           message: "No creature found",
         });
       }
-      const encounterParticipant = await db
-        .insert(participants)
-        .values({
-          encounter_id: opts.input.encounter_id,
-          creature_id: opts.input.creature_id,
-          hp: userCreature[0].max_hp,
-          is_ally: opts.input.is_ally,
-        })
-        .returning();
-      if (encounterParticipant.length === 0) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to add creature to encounter",
-        });
-      }
-      return encounterParticipant[0];
+      return await ServerEncounter.addParticipant(opts.ctx, {
+        encounter_id: opts.input.encounter_id,
+        creature_id: opts.input.creature_id,
+        hp: userCreature[0].max_hp,
+        is_ally: opts.input.is_ally,
+      });
     }),
   //#endregion
 

@@ -16,7 +16,7 @@ import {
 } from "../hooks";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { DialogTrigger } from "@radix-ui/react-dialog";
+import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 import {
   MonsterUploadForm,
   PlayerUploadForm,
@@ -162,6 +162,7 @@ function CampaignParty() {
       <span className="flex gap-5 items-center">
         <span className="py-2 text-xl">Party</span>
         <LidndDialog
+          title={"Add new party member"}
           trigger={
             <ButtonWithTooltip text="Add new party member" variant="ghost">
               <UserPlus />
@@ -488,6 +489,7 @@ export function CreateEncounterButton({
         </ButtonWithTooltip>
       </DialogTrigger>
       <DialogContent>
+        <DialogTitle>Create encounter</DialogTitle>
         <form
           onSubmit={(e) => {
             e.preventDefault();

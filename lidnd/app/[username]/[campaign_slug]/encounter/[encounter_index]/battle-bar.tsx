@@ -146,6 +146,7 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
         </div>
       ))}
       <LidndDialog
+        title={"Add creature"}
         trigger={
           <ButtonWithTooltip
             variant="ghost"

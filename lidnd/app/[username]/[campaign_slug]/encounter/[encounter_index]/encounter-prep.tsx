@@ -20,16 +20,14 @@ import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
 import type { ParticipantWithData } from "@/server/api/router";
 import { LidndPopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
-import { CreatureStatBlockImage } from "@/app/[username]/[campaign_slug]/encounter/original-size-image";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
-import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
+import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { isStringMeaningful } from "@/app/[username]/utils";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
-import { DescriptionTextArea } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/description-text-area";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
 import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/group-battle-ui";
 import {
@@ -48,9 +46,7 @@ import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import Link from "next/link";
-import { Separator } from "@/components/ui/separator";
 import { makeAutoObservable } from "mobx";
-import { observer } from "mobx-react-lite";
 
 class EncounterPrepStore {
   selectedeParticipantId: string | null = null;

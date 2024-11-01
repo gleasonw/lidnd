@@ -1,6 +1,11 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
 import { api } from "@/trpc/react";
 import { observer } from "mobx-react-lite";
@@ -24,7 +29,9 @@ export const ReminderDialog = observer(function ReminderDialog() {
     >
       <DialogContent className="max-w-3xl h-[500px] overflow-auto flex flex-col gap-5">
         <DialogHeader className="text-xl">
-          Reminders for Round {encounter?.current_round}
+          <DialogTitle>
+            Reminders for Round {encounter?.current_round}
+          </DialogTitle>
         </DialogHeader>
         {reminders.map(({ reminder, id }) => (
           <div key={id} className="flex flex-col gap-3">
