@@ -6,7 +6,6 @@ import { StatColumnUtils } from "@/utils/stat-columns";
 import { TRPCError } from "@trpc/server";
 import { and, eq, sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { Server } from "lucide-react";
 import { z } from "zod";
 
 const columnInsertSchema = createInsertSchema(stat_columns);

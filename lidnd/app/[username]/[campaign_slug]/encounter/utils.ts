@@ -53,6 +53,8 @@ export function defaultParticipant(
     notes: p.notes ?? "",
     temporary_hp: p.temporary_hp ?? 0,
     hex_color: p.hex_color ?? "#1890FF",
+
+    column_id: p.column_id ?? null,
     ...p,
   };
 }

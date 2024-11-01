@@ -19,6 +19,7 @@ import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import type { StatColumn } from "@/server/api/columns-router";
 
+// todo: add optimistic ui for adding a creature flow (add to column, etc)
 // todo: fix status effects
 //todo: give participants stable order within column
 //todo: custom margin when in editing layout mode

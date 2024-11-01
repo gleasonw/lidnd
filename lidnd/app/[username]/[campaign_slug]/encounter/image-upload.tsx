@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,7 +15,7 @@ export function ImageUpload({
   dropContainerClassName,
   dropIcon,
 }: {
-  onUpload: () => void;
+  onUpload: (file: any) => void;
   image?: File;
   clearImage: () => void;
   previewSize?: number;

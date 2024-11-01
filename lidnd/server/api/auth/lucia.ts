@@ -5,6 +5,7 @@ import { db } from "@/server/api/db";
 import { Discord } from "arctic";
 import { rerouteUrl } from "@/app/[username]/utils";
 
+//@ts-expect-error - some drizzle lucia type conflict?
 const lucia = new Lucia(new DrizzlePostgreSQLAdapter(db, session, users), {
   getUserAttributes: (attributes) => {
     return {

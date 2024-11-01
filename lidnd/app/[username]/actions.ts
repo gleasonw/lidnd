@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import {
   campaigns,
   campaignToPlayer,
-  participants,
   encounters,
 } from "@/server/api/db/schema";
 import { z } from "zod";

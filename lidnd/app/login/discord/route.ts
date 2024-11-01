@@ -11,7 +11,7 @@ export const GET = async (request: NextRequest) => {
     scopes: ["identify"],
   });
   // store state
-  context.cookies().set("discord_oauth_state", state, {
+  (await context.cookies()).set("discord_oauth_state", state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     path: "/",
@@ -20,7 +20,7 @@ export const GET = async (request: NextRequest) => {
   const redirectUrl = request.nextUrl.searchParams.get("redirect");
 
   if (redirectUrl && redirectUrl !== "undefined") {
-    context.cookies().set("redirect", redirectUrl);
+    (await context.cookies()).set("redirect", redirectUrl);
   }
 
   return new Response(null, {

@@ -516,7 +516,6 @@ export function CreateEncounterButton({
             <div className="ml-auto flex gap-2 items-center">
               <label className="flex gap-2">
                 <Switch
-                  placeholder="Create more"
                   defaultChecked={createMore}
                   onCheckedChange={(checked) => setCreateMore(checked)}
                 />

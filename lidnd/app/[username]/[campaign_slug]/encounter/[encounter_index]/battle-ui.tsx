@@ -18,11 +18,9 @@ import { ParticipantEffectUtils } from "@/utils/participantEffects";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { ParticipantHealthForm } from "@/encounters/[encounter_index]/creature-health-form";
 import { DescriptionTextArea } from "@/encounters/[encounter_index]/description-text-area";
-import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { GroupBattleUI } from "@/encounters/[encounter_index]/group-battle-ui";
 import {
   useEncounter,
-  useRemoveParticipantFromEncounter,
   useRemoveStatusEffect,
   useUpdateEncounterParticipant,
 } from "@/encounters/[encounter_index]/hooks";
@@ -32,7 +30,6 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-import { Trash, X } from "lucide-react";
 import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 
 export const BattleUI = observer(function BattleUI() {
@@ -72,7 +69,6 @@ export function BattleCard({
   extraHeaderButtons,
   ...props
 }: BattleCardProps) {
-  const id = useEncounterId();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
 
   const debouncedUpdate = useDebouncedCallback((participant: Participant) => {
