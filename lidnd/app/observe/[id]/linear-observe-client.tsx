@@ -38,7 +38,7 @@ export function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
           <div key={p.id} data-is-active={p.is_active}>
             <div
               className={clsx(
-                "w-32 flex-grow-0 flex flex-col p-1 text-white h-44 max-w-xs bg-white shadow-lg",
+                "w-32 flex-grow-0 flex flex-col p-1 text-white h-44 max-w-xs shadow-lg",
                 ParticipantUtils.isFriendly(p) ? `bg-blue-900` : `bg-red-900`,
                 p.is_active && "h-60",
                 index < activeIndex
