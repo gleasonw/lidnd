@@ -14,7 +14,11 @@ export function CreatureStatBlockImage({ creature }: OriginalSizeImageProps) {
       src={CreatureUtils.awsURL(creature, "stat_block")}
       className="select-none object-contain"
       alt={creature.name}
-      style={{ imageRendering: "crisp-edges", transform: "translateZ(0)" }}
+      style={{
+        imageRendering: "-webkit-optimize-contrast",
+        transform: "translateZ(0)",
+        willChange: "transform",
+      }}
       width={creature.stat_block_width}
       height={creature.stat_block_height}
     />

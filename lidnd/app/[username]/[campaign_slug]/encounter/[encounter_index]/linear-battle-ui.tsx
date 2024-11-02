@@ -93,7 +93,7 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
   }, []);
 
   return (
-    <div className="flex relative gap-5" ref={containerRef}>
+    <div className="flex relative gap-4" ref={containerRef}>
       {encounter.is_editing_columns ? (
         <>
           <div className="absolute -top-10 h-10 right-0 text-xl z-10">

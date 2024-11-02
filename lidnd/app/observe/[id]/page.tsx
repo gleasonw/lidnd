@@ -11,7 +11,9 @@ import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[e
 import { PageRefresher } from "@/app/observe/[id]/page-refresher";
 import { LinearObserve } from "@/app/observe/[id]/linear-observe-client";
 
-export default async function ObservePage(props: { params: Promise<{ id: string }> }) {
+export default async function ObservePage(props: {
+  params: Promise<{ id: string }>;
+}) {
   const params = await props.params;
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -33,7 +35,7 @@ async function EncounterObserverView({ id }: { id?: string }) {
   }
 
   return (
-    <section className="flex flex-col gap-10 lg:gap-20 w-screen pt-5 lg:pt-10 items-center px-1">
+    <section className="flex flex-col gap-10 lg:gap-20 w-screen pt-5 lg:pt-10 px-2">
       <h1 className="text-3xl font-bold">Round {encounter.current_round}</h1>
       <PageRefresher />
       {EncounterUtils.initiativeType(encounter) === "linear" ? (
