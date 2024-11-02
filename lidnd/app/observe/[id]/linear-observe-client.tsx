@@ -97,7 +97,7 @@ export function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
               </div>
 
               {/* Health Bar Container */}
-              <div className="h-4 bg-gray-700 rounded relative overflow-hidden">
+              <div className="h-4  rounded relative overflow-hidden">
                 {/* Red Health Bar (Animation) */}
                 <div
                   className="absolute h-full bg-red-600 duration-700"
