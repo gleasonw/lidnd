@@ -7,11 +7,9 @@ import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 
-export default async function CampaignPage(
-  props: {
-    params: Promise<{ campaign_slug: string; user_id: string }>;
-  }
-) {
+export default async function CampaignPage(props: {
+  params: Promise<{ campaign_slug: string; user_id: string }>;
+}) {
   const params = await props.params;
   const user = await LidndAuth.getUser();
 
@@ -32,16 +30,7 @@ export default async function CampaignPage(
 
   return (
     <CampaignId value={campaignData.id}>
-      <CampaignEncountersOverview
-        campaignHeader={
-          <div className="w-full flex flex-col gap-5">
-            <h1 className="text-2xl font-bold flex">{campaignData.name}</h1>
-          </div>
-        }
-        deleteCampaignButton={
-          <CampaignDeleteButton campaignSlug={params.campaign_slug} />
-        }
-      />
+      <CampaignEncountersOverview />
     </CampaignId>
   );
 }

@@ -52,16 +52,7 @@ import {
 } from "@/components/ui/context-menu";
 import { useDebouncedCallback } from "use-debounce";
 
-export interface CampaignEncountersProps {
-  deleteCampaignButton: React.ReactNode;
-  campaignHeader: React.ReactNode;
-}
-
-export default function CampaignEncountersOverview(
-  props: CampaignEncountersProps,
-) {
-  const { campaignHeader, deleteCampaignButton } = props;
-
+export default function CampaignEncountersOverview() {
   return (
     <FadeInSuspense
       fallback={
@@ -72,10 +63,6 @@ export default function CampaignEncountersOverview(
       wrapperClassName="flex h-full overflow-hidden"
     >
       <div className="flex flex-col gap-5 h-full overflow-auto w-full">
-        <div className="flex justify-between">
-          {campaignHeader}
-          {deleteCampaignButton}
-        </div>
         <CampaignDescriptionArea
           tiptapReadyGate={
             <>

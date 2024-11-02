@@ -42,6 +42,7 @@ export const ServerCampaign = {
             player: true,
           },
         },
+        encounters: true,
       },
     });
   },

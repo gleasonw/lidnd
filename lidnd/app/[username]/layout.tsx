@@ -2,13 +2,7 @@ import ClientOverlays from "@/app/[username]/overlays";
 import { TRPCReactProvider } from "@/trpc/react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  AppLink,
-  CloseSidebarButton,
-  OpenSidebarButton,
-  SmallSideNav,
-  User,
-} from "@/app/[username]/side-nav";
+import { AppLink, SmallSideNav, User } from "@/app/[username]/side-nav";
 import { UIStoreProvider } from "@/app/[username]/UIStore";
 import { CreateCampaignButton } from "@/app/[username]/create-campaign-button";
 import { Home, Plus, Rabbit, Settings } from "lucide-react";
@@ -19,9 +13,6 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/server/api/db";
 import { settings } from "@/server/api/db/schema";
 import { eq } from "drizzle-orm";
-import { ButtonWithTooltip } from "@/components/ui/tip";
-import Link from "next/link";
-import { revalidatePath } from "next/cache";
 
 // user must be logged in to view anything in this sub route.
 export default async function CampaignsLayout({
@@ -62,102 +53,13 @@ export default async function CampaignsLayout({
       <UserProvider value={user}>
         <UIStoreProvider>
           <ClientOverlays>
-            <div className="flex flex-col h-full">
-              <SmallSideNav>
-                <SideNavBody />
-              </SmallSideNav>
-              <div className="flex flex-grow overflow-hidden relative h-full">
-                {userSettings.collapse_sidebar ? (
-                  <nav className="flex-col gap-10 h-screen hidden w-12 xl:flex items-center flex-shrink-0">
-                    <AppLinkTooltip
-                      route={appRoutes.dashboard(user)}
-                      text="Home"
-                    >
-                      <Home />
-                    </AppLinkTooltip>
-                    <CreateCampaignButton
-                      trigger={
-                        <Button variant="ghost">
-                          <Plus />
-                        </Button>
-                      }
-                    />
-                    <AppLinkTooltip
-                      route={appRoutes.creatures(user)}
-                      text="Creatures"
-                    >
-                      <Rabbit />
-                    </AppLinkTooltip>
-                    <AppLinkTooltip
-                      route={appRoutes.settings(user)}
-                      text="Settings"
-                    >
-                      <Settings />
-                    </AppLinkTooltip>
-                    <User />
-                    <form
-                      action={async () => {
-                        "use server";
-                        await db
-                          .update(settings)
-                          .set({
-                            collapse_sidebar: false,
-                          })
-                          .where(eq(settings.user_id, user.id));
-                        revalidatePath(appRoutes.dashboard(user));
-                      }}
-                      className="mt-auto"
-                    >
-                      <OpenSidebarButton />
-                    </form>
-                  </nav>
-                ) : (
-                  <nav className="flex-col gap-10 h-screen hidden w-64 xl:flex items-center flex-shrink-0">
-                    <SideNavBody />
-                    <form
-                      action={async () => {
-                        "use server";
-                        await db
-                          .update(settings)
-                          .set({
-                            collapse_sidebar: true,
-                          })
-                          .where(eq(settings.user_id, user.id));
-                        revalidatePath(appRoutes.dashboard(user));
-                      }}
-                      className="mt-auto"
-                    >
-                      <CloseSidebarButton />
-                    </form>
-                  </nav>
-                )}
-                <div className="w-full shadow-sm border pt-2 bg-white min-w-0 overflow-auto px-3">
-                  {children}
-                </div>
-              </div>
+            <div className="w-full bg-white min-w-0 overflow-auto">
+              {children}
             </div>
           </ClientOverlays>
         </UIStoreProvider>
       </UserProvider>
     </TRPCReactProvider>
-  );
-}
-
-function AppLinkTooltip({
-  children,
-  route,
-  text,
-}: {
-  children: React.ReactNode;
-  route: string;
-  text: string;
-}) {
-  return (
-    <Link href={route}>
-      <ButtonWithTooltip variant="ghost" text={text}>
-        {children}
-      </ButtonWithTooltip>
-    </Link>
   );
 }
 

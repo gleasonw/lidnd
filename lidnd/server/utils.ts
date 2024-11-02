@@ -8,7 +8,7 @@ type CampaignSlug = {
 };
 
 type IndexPath = {
-  encounter_index: number;
+  encounter_index: string;
 };
 
 type Nested = CampaignSlug & IndexPath;
