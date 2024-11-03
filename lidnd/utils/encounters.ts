@@ -1,4 +1,4 @@
-import type { Reminder } from "@/app/[username]/types";
+import type { Campaign, Reminder } from "@/app/[username]/types";
 import { appRoutes } from "@/app/routes";
 import type { UpdateTurnOrderReturn } from "@/app/[username]/[campaign_slug]/encounter/utils";
 import type {
@@ -30,7 +30,24 @@ type Cyclable = {
   current_round: number;
 };
 
+function difficultyColor(e: EncounterWithParticipants, c: Campaign) {
+  const difficulty = EncounterUtils.difficulty(e, c?.party_level);
+  if (difficulty === "Deadly") {
+    return "bg-red-500";
+  }
+  if (difficulty === "Hard") {
+    return "bg-yellow-500";
+  }
+  if (difficulty === "Easy") {
+    return "bg-green-500";
+  }
+  if (difficulty === "Standard") {
+    return "bg-blue-500";
+  }
+}
+
 export const EncounterUtils = {
+  difficultyColor,
   byStatus(encounters: EncounterWithParticipants[]) {
     return R.groupBy(encounters, (e) => e.label);
   },

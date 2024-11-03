@@ -4,6 +4,8 @@ import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { useUser } from "@/app/[username]/user-provider";
 import { appRoutes } from "@/app/routes";
 import { Button } from "@/components/ui/button";
+import { ButtonWithTooltip } from "@/components/ui/tip";
+import { ToggleEditingMode } from "@/encounters/[encounter_index]/battle-bar";
 import _ from "lodash";
 import {
   Home,
@@ -23,7 +25,7 @@ export function TopNav() {
   const user = useUser();
   return (
     <div className="w-full bg-white text-gray-900 shadow-sm">
-      <div className="px-4 py-2 flex items-center justify-between border-b border-gray-200 h-16">
+      <div className="px-4 py-2 flex items-center justify-between border-b border-gray-200 h-16 bg-white">
         <div className="flex items-center space-x-4 w-full">
           <Link
             href={appRoutes.dashboard(user)}
@@ -39,6 +41,12 @@ export function TopNav() {
               {campaign.name}
             </Link>
             <EncounterTopNav />
+            <Link
+              href={appRoutes.settings(user)}
+              className="text-gray-500 hover:text-gray-700 transition-colors ml-auto"
+            >
+              <Settings className="h-5 w-5" />
+            </Link>
           </div>
         </div>
       </div>
@@ -111,6 +119,7 @@ export function EncounterTopNav() {
               </Button>
             )}
           </span>
+          <ToggleEditingMode encounter={encounter} />
         </div>
         <span className="text-2xl font-bold ml-auto">
           Round {encounter.current_round}
@@ -118,12 +127,18 @@ export function EncounterTopNav() {
       </div>
 
       <div className="flex items-center gap-5">
-        <button className="text-gray-500 hover:text-gray-700 transition-colors">
-          <Share className="h-5 w-5" />
-        </button>
-        <button className="text-gray-500 hover:text-gray-700 transition-colors">
-          <Settings className="h-5 w-5" />
-        </button>
+        <ButtonWithTooltip
+          onClick={() => {
+            navigator.clipboard.writeText(
+              `${window.location.origin}${appRoutes.observe(encounter.id)}`,
+            );
+          }}
+          className="flex gap-2 items-center"
+          variant="ghost"
+          text={"Get sharable link"}
+        >
+          <Share />
+        </ButtonWithTooltip>
       </div>
     </div>
   );

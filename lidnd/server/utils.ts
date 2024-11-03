@@ -49,7 +49,7 @@ async function _encounterFromPathParams(ctx: LidndContext, params: unknown) {
   const encounter = await ServerEncounter.encounterFromCampaignAndIndex(
     ctx,
     campaign.id,
-    params.encounter_index
+    parseInt(params.encounter_index)
   );
 
   if (!encounter) {

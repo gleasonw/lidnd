@@ -1,6 +1,6 @@
 import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { EncounterUI } from "@/encounters/[encounter_index]/EncounterUiStore";
-import { EncounterPrepBar } from "@/encounters/[encounter_index]/prep-bar";
+import { EncounterTopBar } from "@/encounters/[encounter_index]/encounter-top-bar";
 import { isEncounterPathParams } from "@/server/utils";
 
 export default async function EncounterLayout(props: {
@@ -15,8 +15,8 @@ export default async function EncounterLayout(props: {
   return (
     <EncounterUI>
       <EncounterId encounterIndex={param.encounter_index}>
-        <EncounterPrepBar />
-        <section className="flex flex-col overflow-y-auto h-full">
+        <EncounterTopBar />
+        <section className="flex flex-col overflow-y-auto max-h-full min-h-0 ">
           {props.children}
         </section>
       </EncounterId>

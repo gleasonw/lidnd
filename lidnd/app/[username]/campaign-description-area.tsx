@@ -38,7 +38,7 @@ export function CampaignDescriptionForm() {
 export function CampaignDescriptionArea({
   tiptapReadyGate,
 }: {
-  tiptapReadyGate: React.ReactNode;
+  tiptapReadyGate?: React.ReactNode;
 }) {
   const [isTipTapReady, setIsTipTapReady] = React.useState(false);
 

@@ -38,8 +38,10 @@ export default async function CampaignLayout(props: {
   return (
     <Suspense fallback={"Loading campaign"}>
       <CampaignId value={campaign.id}>
-        <TopNav campaignId={campaign.id} />
-        <div className="px-2">{children}</div>
+        <TopNav />
+        <div className="mx-2 flex flex-col overflow-hidden max-h-full">
+          {children}
+        </div>
       </CampaignId>
     </Suspense>
   );

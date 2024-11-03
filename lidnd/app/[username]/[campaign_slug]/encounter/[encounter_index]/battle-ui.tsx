@@ -39,18 +39,17 @@ export const BattleUI = observer(function BattleUI() {
   return (
     <>
       <ReminderDialog />
-      <div className="flex gap-8 flex-col w-full">
+      <div className="flex gap-4 flex-col w-full">
         {/**create space for the overlaid initiative tracker */}
-        {encounter.status === "run" && <div className="my-12" />}
-        <DescriptionTextArea
-          tiptapReadyGate={
-            campaign.system?.initiative_type === "linear" ? (
-              <LinearBattleUI />
-            ) : (
-              <GroupBattleUI />
-            )
-          }
-        />
+        {encounter.status === "run" && <div className="my-5" />}
+        <div className="bg-white p-5">
+          <DescriptionTextArea />
+        </div>
+        {campaign.system?.initiative_type === "linear" ? (
+          <LinearBattleUI />
+        ) : (
+          <GroupBattleUI />
+        )}
       </div>
     </>
   );

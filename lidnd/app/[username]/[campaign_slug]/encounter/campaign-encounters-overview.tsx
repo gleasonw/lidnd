@@ -3,8 +3,17 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import * as R from "remeda";
 import React, { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Plus, Smile, Trash, User, UserPlus, X } from "lucide-react";
+import { Card, CardDescription } from "@/components/ui/card";
+import {
+  Calendar,
+  Plus,
+  Smile,
+  Trash,
+  User,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
 import { api } from "@/trpc/react";
 import type { Encounter, EncounterWithParticipants } from "@/server/api/router";
 import {
@@ -22,14 +31,11 @@ import {
   PlayerUploadForm,
 } from "@/encounters/full-creature-add-form";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
-import { Separator } from "@/components/ui/separator";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
 import { Switch } from "@/components/ui/switch";
 import { EncounterUtils } from "@/utils/encounters";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
-import { CampaignDescriptionArea } from "@/app/[username]/campaign-description-area";
-import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useUser } from "@/app/[username]/user-provider";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
@@ -51,42 +57,9 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { useDebouncedCallback } from "use-debounce";
+import { compareCreatedAt } from "@/lib/utils";
 
-export default function CampaignEncountersOverview() {
-  return (
-    <FadeInSuspense
-      fallback={
-        <div className="w-full pt-10 flex justify-center">
-          Loading campaign...
-        </div>
-      }
-      wrapperClassName="flex h-full overflow-hidden"
-    >
-      <div className="flex flex-col gap-5 h-full overflow-auto w-full">
-        <CampaignDescriptionArea
-          tiptapReadyGate={
-            <>
-              <span className="flex gap-5 items-center">
-                <CampaignParty />
-              </span>
-              <Separator />
-              <h1 className={"text-2xl flex items-center"}>
-                <span className="py-2 text-xl">Encounters</span>
-                <CreateEncounterButton category={"active"} />
-              </h1>
-              <div className="flex flex-col gap-5">
-                <SessionEncounters />
-                <EncounterArchive />
-              </div>
-            </>
-          }
-        />
-      </div>
-    </FadeInSuspense>
-  );
-}
-
-function ExistingCreaturesForPartyAdd() {
+export function ExistingCreaturesForPartyAdd() {
   const [name, setName] = useState("");
   const { data: creatures } = api.getUserCreatures.useQuery({
     name,
@@ -123,7 +96,7 @@ function ExistingCreaturesForPartyAdd() {
   );
 }
 
-function CampaignParty() {
+export function CampaignParty() {
   const [campaign] = useCampaign();
   const playersInCampaign = campaign?.campaignToPlayers;
   const { mutate: removePlayer } = useRemoveFromParty();
@@ -147,7 +120,47 @@ function CampaignParty() {
   return (
     <div className="flex flex-col gap-5">
       <span className="flex gap-5 items-center">
+        <Users />
         <span className="py-2 text-xl">Party</span>
+
+        <label className="flex gap-2 items-center font-light whitespace-nowrap">
+          Level
+          <Input
+            type="number"
+            className="w-16"
+            value={partyLevel}
+            onChange={(e) => {
+              setPartyLevel(Math.max(1, parseInt(e.target.value)));
+              handlePartyLevelChange(e.target.value);
+            }}
+          />
+        </label>
+      </span>
+      <div className="flex flex-wrap gap-3">
+        {playersInCampaign.map(({ player }) => (
+          <Card
+            className="flex gap-2 h-12 pl-5 w-80 overflow-hidden max-h-full"
+            key={player.id}
+          >
+            <CreatureIcon
+              key={player.id}
+              creature={player}
+              size="small"
+              objectFit="contain"
+            />
+            <span className="flex gap-2 items-center w-full justify-between">
+              <span className="truncate">{player.name}</span>
+              <ButtonWithTooltip
+                variant="ghost"
+                text="Delete"
+                className="opacity-25"
+                onClick={() => removePlayer(player.id)}
+              >
+                <X />
+              </ButtonWithTooltip>
+            </span>
+          </Card>
+        ))}{" "}
         <LidndDialog
           title={"Add new party member"}
           trigger={
@@ -191,220 +204,263 @@ function CampaignParty() {
             </Tabs>
           }
         />
-        <label className="flex gap-2 items-center font-light whitespace-nowrap">
-          Level
-          <Input
-            type="number"
-            className="w-16"
-            value={partyLevel}
-            onChange={(e) => {
-              setPartyLevel(Math.max(1, parseInt(e.target.value)));
-              handlePartyLevelChange(e.target.value);
-            }}
-          />
-        </label>
-      </span>
-      <div className="flex flex-wrap gap-3">
-        {playersInCampaign.map(({ player }) => (
-          <Card
-            className="flex gap-2 h-12 pl-5 w-80 overflow-hidden max-h-full"
-            key={player.id}
-          >
-            <CreatureIcon
-              key={player.id}
-              creature={player}
-              size="small"
-              objectFit="contain"
-            />
-            <span className="flex gap-2 items-center w-full justify-between">
-              <span className="truncate">{player.name}</span>
-              <ButtonWithTooltip
-                variant="ghost"
-                text="Delete"
-                className="opacity-25"
-                onClick={() => removePlayer(player.id)}
-              >
-                <X />
-              </ButtonWithTooltip>
-            </span>
-          </Card>
-        ))}
       </div>
     </div>
   );
 }
 
-function SessionEncounters() {
+export function SessionEncounters() {
   const campaignId = useCampaignId();
   const [acceptDrop, setAcceptDrop] = useState(false);
   const { mutate: updateEncounter } = useUpdateEncounter();
   const { data: encounters } = api.encounters.useQuery(campaignId);
   const activeEncounters = encounters
-    ? R.sort(
-        EncounterUtils.byStatus(encounters).active ?? [],
-        (a, b) => a.order - b.order,
-      )
+    ? R.sort(EncounterUtils.byStatus(encounters).active ?? [], compareCreatedAt)
     : [];
 
+  const [campaign] = useCampaign();
+  const { data: settings } = api.settings.useQuery();
   const lastOrder = activeEncounters?.length
     ? (R.firstBy(activeEncounters, [(e) => e.order, "desc"])?.order ?? 1) + 1
     : 1;
 
   return (
-    <div>
-      <section
-        key={"active"}
-        onDrop={(e) => {
-          if (!acceptDrop) {
-            return;
-          }
-          const encounter = typedDrag.get(e.dataTransfer, dragTypes.encounter);
-          if (!encounter) {
-            console.error("No encounter found when dragging");
-            return;
-          }
-          updateEncounter({
-            id: encounter.id,
-            label: "active",
-            order: lastOrder,
-          });
-          setAcceptDrop(false);
-        }}
-        onDragEnter={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        onDragOver={(e) => {
-          if (!typedDrag.includes(e.dataTransfer, dragTypes.encounter)) {
-            return;
-          }
-          e.preventDefault();
-          e.stopPropagation();
-          setAcceptDrop(true);
-        }}
-        onDragLeave={() => {
-          setAcceptDrop(false);
-        }}
-        className={clsx(
-          {
-            "border-black": acceptDrop,
-            "border-transparent": !acceptDrop,
-          },
-          "border-2 border-dashed flex w-full flex-col transition-all rounded-md  bg-gray-100 ",
-        )}
-      >
-        <ul className="flex flex-wrap p-1 flex-col sm:flex-row items-center">
-          {activeEncounters?.length === 0 ? (
-            <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
-          ) : null}
-          {activeEncounters?.map((encounter, index) => {
-            const priorEncounter = activeEncounters[index - 1];
-            const nextEncounter = activeEncounters[index + 1];
+    <section
+      key={"active"}
+      onDrop={(e) => {
+        if (!acceptDrop) {
+          return;
+        }
+        const encounter = typedDrag.get(e.dataTransfer, dragTypes.encounter);
+        if (!encounter) {
+          console.error("No encounter found when dragging");
+          return;
+        }
+        updateEncounter({
+          id: encounter.id,
+          label: "active",
+          order: lastOrder,
+        });
+        setAcceptDrop(false);
+      }}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onDragOver={(e) => {
+        if (!typedDrag.includes(e.dataTransfer, dragTypes.encounter)) {
+          return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        setAcceptDrop(true);
+      }}
+      onDragLeave={() => {
+        setAcceptDrop(false);
+      }}
+      className={clsx(
+        {
+          "border-black": acceptDrop,
+          "border-transparent": !acceptDrop,
+        },
+        "border-2 border-dashed flex w-full flex-col transition-all rounded-md  bg-gray-100 ",
+      )}
+    >
+      <div className="flex items-center gap-5 justify-center">
+        <Calendar />
+        This session
+      </div>
 
-            return (
-              <DraggableEncounterCard
-                encounter={encounter}
-                category={"active"}
-                previousOrder={
-                  priorEncounter ? priorEncounter.order : encounter.order - 1
-                }
-                nextOrder={
-                  nextEncounter ? nextEncounter.order : encounter.order + 1
-                }
-                key={encounter.id}
-              />
-            );
-          })}
-        </ul>
-      </section>
-    </div>
+      <ul className="flex flex-wrap p-1 flex-col sm:flex-row items-center">
+        {activeEncounters?.length === 0 ? (
+          <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
+        ) : null}
+        {activeEncounters?.map((encounter, index) => {
+          const priorEncounter = activeEncounters[index - 1];
+          const nextEncounter = activeEncounters[index + 1];
+
+          return (
+            <DraggableEncounterCard
+              encounter={encounter}
+              category={"active"}
+              previousOrder={
+                priorEncounter ? priorEncounter.order : encounter.order - 1
+              }
+              nextOrder={
+                nextEncounter ? nextEncounter.order : encounter.order + 1
+              }
+              key={encounter.id}
+              encounterCard={
+                <Card
+                  className={clsx(
+                    "flex flex-col transition-all h-32 w-64 sm:w-80 p-4 gap-3 justify-between",
+                  )}
+                  draggable
+                  onDragStart={(e) => {
+                    typedDrag.set(
+                      e.dataTransfer,
+                      dragTypes.encounter,
+                      encounter,
+                    );
+                  }}
+                >
+                  <MonstersInEncounter id={encounter.id} />
+                  <h2 className={"w-full flex justify-between items-center"}>
+                    <span className="max-w-full truncate text-lg">
+                      {encounter.name ? encounter.name : "Unnamed"}
+                    </span>
+                    {settings && (
+                      <Badge
+                        className={EncounterUtils.difficultyColor(
+                          encounter,
+                          campaign,
+                        )}
+                      >
+                        {EncounterUtils.difficulty(
+                          encounter,
+                          campaign?.party_level,
+                        )}
+                      </Badge>
+                    )}
+                  </h2>
+                </Card>
+              }
+            />
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
-function EncounterArchive() {
+export function EncounterArchive() {
   const campaignId = useCampaignId();
   const [acceptDrop, setAcceptDrop] = useState(false);
+  const [campaign] = useCampaign();
   const { mutate: updateEncounter } = useUpdateEncounter();
   const { data: encounters } = api.encounters.useQuery(campaignId);
   const inactiveEncounters = encounters
     ? R.sort(
         EncounterUtils.byStatus(encounters).inactive ?? [],
-        (a, b) => a.order - b.order,
+        compareCreatedAt,
       )
     : [];
 
+  const { data: settings } = api.settings.useQuery();
   const lastOrder = inactiveEncounters?.length
     ? (R.firstBy(inactiveEncounters, [(e) => e.order, "desc"])?.order ?? 1) + 1
     : 1;
 
   return (
-    <div>
-      <section
-        key={"inactive"}
-        onDrop={(e) => {
-          if (!acceptDrop) {
-            return;
-          }
-          const encounter = typedDrag.get(e.dataTransfer, dragTypes.encounter);
-          if (!encounter) {
-            console.error("No encounter found when dragging");
-            return;
-          }
-          updateEncounter({
-            id: encounter.id,
-            label: "inactive",
-            order: lastOrder,
-          });
-          setAcceptDrop(false);
-        }}
-        onDragEnter={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        onDragOver={(e) => {
-          if (!typedDrag.includes(e.dataTransfer, dragTypes.encounter)) {
-            return;
-          }
-          e.preventDefault();
-          e.stopPropagation();
-          setAcceptDrop(true);
-        }}
-        onDragLeave={() => {
-          setAcceptDrop(false);
-        }}
-        className={clsx(
-          {
-            "border-black": acceptDrop,
-            "border-transparent": !acceptDrop,
-          },
-          "border-2 border-dashed flex flex-col w-full transition-all rounded-md ",
-        )}
-      >
-        <ul className="flex flex-wrap ">
-          {inactiveEncounters?.length === 0 ? (
-            <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
-          ) : null}
-          {inactiveEncounters?.map((encounter, index) => {
-            const priorEncounter = inactiveEncounters[index - 1];
-            const nextEncounter = inactiveEncounters[index + 1];
+    <section
+      key={"inactive"}
+      onDrop={(e) => {
+        if (!acceptDrop) {
+          return;
+        }
+        const encounter = typedDrag.get(e.dataTransfer, dragTypes.encounter);
+        if (!encounter) {
+          console.error("No encounter found when dragging");
+          return;
+        }
+        updateEncounter({
+          id: encounter.id,
+          label: "inactive",
+          order: lastOrder,
+        });
+        setAcceptDrop(false);
+      }}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onDragOver={(e) => {
+        if (!typedDrag.includes(e.dataTransfer, dragTypes.encounter)) {
+          return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        setAcceptDrop(true);
+      }}
+      onDragLeave={() => {
+        setAcceptDrop(false);
+      }}
+      className={clsx(
+        {
+          "border-black": acceptDrop,
+          "border-transparent": !acceptDrop,
+        },
+        "border-2 border-dashed flex flex-col w-full transition-all rounded-md ",
+      )}
+    >
+      <ul className="flex flex-col">
+        {inactiveEncounters?.length === 0 ? (
+          <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
+        ) : null}
+        {inactiveEncounters?.map((encounter, index) => {
+          const priorEncounter = inactiveEncounters[index - 1];
+          const nextEncounter = inactiveEncounters[index + 1];
 
-            return (
-              <DraggableEncounterCard
-                encounter={encounter}
-                category={"inactive"}
-                previousOrder={
-                  priorEncounter ? priorEncounter.order : encounter.order - 1
-                }
-                nextOrder={
-                  nextEncounter ? nextEncounter.order : encounter.order + 1
-                }
-                key={encounter.id}
-              />
-            );
-          })}
-        </ul>
-      </section>
-    </div>
+          return (
+            <DraggableEncounterCard
+              encounter={encounter}
+              category={"inactive"}
+              previousOrder={
+                priorEncounter ? priorEncounter.order : encounter.order - 1
+              }
+              nextOrder={
+                nextEncounter ? nextEncounter.order : encounter.order + 1
+              }
+              key={encounter.id}
+              encounterCard={
+                <Card
+                  className={clsx(
+                    "flex transition-all w-full p-4 h-20 gap-3 justify-between items-center",
+                  )}
+                  draggable
+                  onDragStart={(e) => {
+                    typedDrag.set(
+                      e.dataTransfer,
+                      dragTypes.encounter,
+                      encounter,
+                    );
+                  }}
+                >
+                  <h2 className={"flex items-center"}>
+                    <span className="max-w-full truncate text-lg">
+                      {encounter.name ? encounter.name : "Unnamed"}
+                    </span>
+                  </h2>
+                  {settings && (
+                    <Badge
+                      className={`${EncounterUtils.difficultyColor(
+                        encounter,
+                        campaign,
+                      )} flex-grow-0 h-5 rounded-sm`}
+                    >
+                      {EncounterUtils.difficulty(
+                        encounter,
+                        campaign?.party_level,
+                      )}
+                    </Badge>
+                  )}
+                  <CardDescription className="flex-grow-0 text-sm max-w-full truncate">
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: encounter.description ?? "",
+                      }}
+                    />
+                  </CardDescription>
+                  <div className="ml-auto">
+                    <MonstersInEncounter id={encounter.id} />
+                  </div>
+                </Card>
+              }
+            />
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
@@ -468,7 +524,7 @@ export function CreateEncounterButton({
     >
       <DialogTrigger asChild>
         <ButtonWithTooltip
-          variant="ghost"
+          variant="outline"
           text="Create encounter"
           onClick={() => setDialogIsOpen(true)}
         >
@@ -543,19 +599,15 @@ function DraggableEncounterCard(props: {
   category: Encounter["label"];
   previousOrder: number;
   nextOrder: number;
+  encounterCard: React.ReactNode;
 }) {
   const { encounter, category, previousOrder, nextOrder } = props;
-  const [acceptDrop, setAcceptDrop] = useState<"none" | "left" | "right">(
+  const [acceptDrop, setAcceptDrop] = useState<"none" | "top" | "bottom">(
     "none",
   );
   const { mutate: updateEncounter } = useUpdateEncounter();
   const user = useUser();
   const [campaign] = useCampaign();
-  const { data: settings } = api.settings.useQuery();
-  const encounterDifficulty = EncounterUtils.difficulty(
-    encounter,
-    campaign?.party_level,
-  );
   const { encounters: encountersQuery } = api.useUtils();
   const { mutate: deleteEncounter } = api.deleteEncounter.useMutation({
     onSettled: async () => {
@@ -581,7 +633,7 @@ function DraggableEncounterCard(props: {
           console.error("No encounter found when dragging");
           return;
         }
-        const updateOrder = acceptDrop === "right" ? nextOrder : previousOrder;
+        const updateOrder = acceptDrop === "bottom" ? nextOrder : previousOrder;
         updateEncounter({
           id: droppedEncounter.id,
           label: category,
@@ -589,33 +641,8 @@ function DraggableEncounterCard(props: {
         });
         setAcceptDrop("none");
       }}
-      onDragEnter={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      onDragOver={(e) => {
-        if (!typedDrag.includes(e.dataTransfer, dragTypes.encounter)) {
-          return;
-        }
-        e.preventDefault();
-        e.stopPropagation();
-        const currentBounds = e.currentTarget.getBoundingClientRect();
-        const midpoint = (currentBounds.left + currentBounds.right) / 2;
-        setAcceptDrop(e.clientX <= midpoint ? "left" : "right");
-      }}
-      onDragLeave={(e) => {
-        e.preventDefault();
-        setAcceptDrop("none");
-      }}
       key={encounter.id}
-      className={clsx(
-        {
-          "border-l-transparent border-r-gray-400": acceptDrop === "right",
-          "border-r-transparent border-l-gray-400": acceptDrop === "left",
-          "border-l-transparent border-r-transparent": acceptDrop === "none",
-        },
-        "transition-all border-l-2 border-r-2 -mb-[2px] p-4 flex-grow-0",
-      )}
+      className={clsx("transition-all -mb-[2px] p-4 flex-grow-0")}
     >
       <ContextMenu>
         <ContextMenuTrigger>
@@ -624,34 +651,7 @@ function DraggableEncounterCard(props: {
             className=""
             prefetch={true}
           >
-            <Card
-              className={clsx(
-                "flex flex-col transition-all h-32 w-64 sm:w-80 p-4 gap-3 justify-between",
-              )}
-              draggable
-              onDragStart={(e) => {
-                typedDrag.set(e.dataTransfer, dragTypes.encounter, encounter);
-              }}
-            >
-              <MonstersInEncounter id={encounter.id} />
-              <h2 className={"w-full flex justify-between items-center"}>
-                <span className="max-w-full truncate text-lg">
-                  {encounter.name ? encounter.name : "Unnamed"}
-                </span>
-                {settings && (
-                  <Badge
-                    className={clsx({
-                      "bg-red-500": encounterDifficulty === "Deadly",
-                      "bg-yellow-500": encounterDifficulty === "Hard",
-                      "bg-green-500": encounterDifficulty === "Easy",
-                      "bg-blue-500": encounterDifficulty === "Standard",
-                    })}
-                  >
-                    {encounterDifficulty}
-                  </Badge>
-                )}
-              </h2>
-            </Card>
+            {props?.encounterCard}
           </Link>
         </ContextMenuTrigger>
         <ContextMenuContent>
@@ -668,7 +668,7 @@ function DraggableEncounterCard(props: {
   );
 }
 
-function MonstersInEncounter({ id }: { id: string }) {
+export function MonstersInEncounter({ id }: { id: string }) {
   const campaignId = useCampaignId();
   const { data: encounters } = api.encounters.useQuery(campaignId);
 

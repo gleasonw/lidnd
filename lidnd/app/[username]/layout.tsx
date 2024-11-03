@@ -2,7 +2,7 @@ import ClientOverlays from "@/app/[username]/overlays";
 import { TRPCReactProvider } from "@/trpc/react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { AppLink, SmallSideNav, User } from "@/app/[username]/side-nav";
+import { AppLink, User } from "@/app/[username]/side-nav";
 import { UIStoreProvider } from "@/app/[username]/UIStore";
 import { CreateCampaignButton } from "@/app/[username]/create-campaign-button";
 import { Home, Plus, Rabbit, Settings } from "lucide-react";
@@ -53,9 +53,7 @@ export default async function CampaignsLayout({
       <UserProvider value={user}>
         <UIStoreProvider>
           <ClientOverlays>
-            <div className="w-full bg-white min-w-0 overflow-auto">
-              {children}
-            </div>
+            <div className="flex flex-col h-full ">{children}</div>
           </ClientOverlays>
         </UIStoreProvider>
       </UserProvider>
