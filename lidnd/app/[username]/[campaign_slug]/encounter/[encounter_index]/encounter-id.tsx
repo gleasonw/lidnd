@@ -1,10 +1,11 @@
 "use client";
 
+import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { createContext, useContext } from "react";
 
 interface EncounterIdProps {
   children: React.ReactNode;
-  value: string;
+  encounterIndex: string;
 }
 
 const EncounterIdContext = createContext<string | null>(null);
@@ -18,8 +19,18 @@ export const useEncounterId = () => {
 };
 
 export function EncounterId(props: EncounterIdProps) {
+  const [campaign] = useCampaign();
+  const encounter = campaign?.encounters.find(
+    (e) => e.index_in_campaign === parseInt(props.encounterIndex),
+  );
+  if (!encounter) {
+    throw new Error(
+      "No encounter found when trying to get id from encounter index",
+    );
+  }
+
   return (
-    <EncounterIdContext.Provider value={props.value}>
+    <EncounterIdContext.Provider value={encounter.id}>
       {props.children}
     </EncounterIdContext.Provider>
   );

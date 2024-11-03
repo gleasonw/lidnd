@@ -3,6 +3,7 @@
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { Button } from "@/components/ui/button";
 import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
+import { InitiativeTracker } from "@/encounters/[encounter_index]/battle-bar";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { GroupInitiativeInput } from "@/encounters/[encounter_index]/group-initiative-input";
 import {
@@ -17,12 +18,12 @@ import { EncounterUtils } from "@/utils/encounters";
 import clsx from "clsx";
 import { Swords } from "lucide-react";
 
-export function EncounterPrepBar() {
+export function EncounterTopBar() {
   const [encounter] = useEncounter();
   const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
 
   if (encounter.status === "run") {
-    return null;
+    return <InitiativeTracker />;
   }
 
   return (

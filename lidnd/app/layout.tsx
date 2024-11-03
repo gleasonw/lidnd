@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={clsx(inter.className, "bg-zinc-100")}>{children}</body>
+      <body className={clsx(inter.className, "")}>{children}</body>
     </html>
   );
 }

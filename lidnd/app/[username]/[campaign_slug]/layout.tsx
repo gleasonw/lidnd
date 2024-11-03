@@ -1,4 +1,5 @@
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
+import { TopNav } from "@/app/[username]/[campaign_slug]/TopNav";
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { ServerCampaign } from "@/server/campaigns";
 import { isCampaignSlug } from "@/server/utils";
@@ -36,7 +37,12 @@ export default async function CampaignLayout(props: {
   console.log(`loaded campaign layout in ${performance.now() - start}ms`);
   return (
     <Suspense fallback={"Loading campaign"}>
-      <CampaignId value={campaign.id}>{children}</CampaignId>
+      <CampaignId value={campaign.id}>
+        <TopNav />
+        <div className="mx-2 flex flex-col overflow-hidden max-h-full">
+          {children}
+        </div>
+      </CampaignId>
     </Suspense>
   );
 }
