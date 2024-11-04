@@ -12,7 +12,6 @@ import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { CampaignDescriptionArea } from "@/app/[username]/campaign-description-area";
-import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
 import { Skull } from "lucide-react";
 
 export default async function CampaignPage(props: {
