@@ -2,16 +2,52 @@
 import { api } from "@/trpc/react";
 import type { ParticipantWithData, StatusEffect } from "@/server/api/router";
 import { ButtonWithTooltip } from "@/components/ui/tip";
-import { CommandItem } from "@/components/ui/command";
+import {
+  Command,
+  CommandItem,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+} from "@/components/ui/command";
 import React from "react";
 import { effectColorMap, effectIconMap } from "./effectIconMap";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
-import { Combobox } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/resistance-selector";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
-import { Plus } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 export function StatusInput({
+  participant,
+}: {
+  participant: ParticipantWithData;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline">
+          {participant.status_effects?.length ? (
+            <Plus />
+          ) : (
+            <>
+              Status effect <Plus />
+            </>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 flex justify-between gap-5">
+        <StatusForm participant={participant} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export function StatusForm({
   participant,
 }: {
   participant: ParticipantWithData;
@@ -58,29 +94,44 @@ export function StatusInput({
   const [selectedStatus, setSelectedStatus] = React.useState<string | null>(
     null,
   );
+  const [statusDropdownOpen, setStatusDropdownOpen] = React.useState(false);
 
   return (
-    <div className="flex w-72 whitespace-nowrap">
-      <Combobox
-        emptyResultText="No status effects"
-        className="max-h-80 overflow-auto whitespace-nowrap border-none outline-none"
-        triggerPlaceholder={
-          effects?.find((e) => e.id === selectedStatus)?.name ?? "Status"
-        }
-      >
-        {effects?.map((effect) => (
-          <CommandItem
-            key={effect.id}
-            className="w-32 flex justify-between"
-            onSelect={() => setSelectedStatus(effect.id)}
+    <>
+      <Popover open={statusDropdownOpen} onOpenChange={setStatusDropdownOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            role="combobox"
+            aria-expanded={statusDropdownOpen}
+            className="w-40 flex items-start"
           >
-            <ButtonWithTooltip text={"Add effect"} variant="ghost">
-              <EffectIcon effect={effect} />
-              <span>{effect.name}</span>
-            </ButtonWithTooltip>
-          </CommandItem>
-        ))}
-      </Combobox>
+            <span>
+              {effects?.find((e) => e.id === selectedStatus)?.name ?? "Effect"}
+            </span>
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="max-h-80 overflow-hidden">
+          <Command className="w-full">
+            <CommandInput placeholder={"Search..."} />
+            <CommandEmpty>No status effects</CommandEmpty>
+            <CommandGroup>
+              {effects?.map((effect) => (
+                <CommandItem
+                  key={effect.id}
+                  className="flex justify-between hover:cursor-pointer"
+                  onSelect={() => setSelectedStatus(effect.id)}
+                >
+                  <span>{effect.name}</span>
+                  <EffectIcon effect={effect} />
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
       <LidndTextInput
         type="number"
         variant="ghost"
@@ -89,7 +140,7 @@ export function StatusInput({
           setSaveEndsDC(e.target.value ?? "");
         }}
         placeholder="DC"
-        className="w-16 ml-2"
+        className="w-16"
       />
       <ButtonWithTooltip
         variant="ghost"
@@ -108,7 +159,7 @@ export function StatusInput({
       >
         <Plus />
       </ButtonWithTooltip>
-    </div>
+    </>
   );
 }
 

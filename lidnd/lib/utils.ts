@@ -17,3 +17,17 @@ export function compareCreatedAt(
   }
   return a.created_at.getTime() - b.created_at.getTime();
 }
+
+export function formatSeconds(seconds: number) {
+  const hourTime = seconds / 60;
+  const hourCount = Math.floor(hourTime);
+  const minuteRemainder = seconds % 60;
+
+  if (hourTime >= 1) {
+    return `${hourCount} hour${hourCount > 1 ? "s" : ""} ${
+      minuteRemainder ? `${Math.floor(minuteRemainder)} minutes` : ""
+    }`;
+  }
+
+  return `${Math.floor(seconds % 60)} minutes`;
+}

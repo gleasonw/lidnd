@@ -30,6 +30,7 @@ import { insertCreatureSchema } from "@/app/[username]/[campaign_slug]/encounter
 import _ from "lodash";
 import { columnsRouter } from "@/server/api/columns-router";
 import { protectedProcedure, publicProcedure, t } from "@/server/api/base-trpc";
+import { encountersRouter } from "@/server/api/encounters-router";
 
 export type Encounter = typeof encounters.$inferSelect;
 export type Creature = typeof creatures.$inferSelect;
@@ -79,6 +80,7 @@ export const appRouter = t.router({
 
   //#region Encounters
 
+  ...encountersRouter,
   encounterById: protectedProcedure.input(z.string()).query(async (opts) => {
     const encounter = await ServerEncounter.encounterById(opts.ctx, opts.input);
     if (!encounter) {

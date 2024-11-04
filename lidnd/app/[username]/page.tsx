@@ -1,24 +1,20 @@
 import { isStringMeaningful } from "./utils";
 import type { Campaign } from "./types";
 import { appRoutes } from "@/app/routes";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUserCampaigns } from "@/server/api/utils";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus } from "lucide-react";
-import { CreateCampaignButton } from "@/app/[username]/create-campaign-button";
+import { ChevronRight } from "lucide-react";
 import { LidndAuth, type LidndUser, UserUtils } from "@/app/authentication";
 import { ServerCampaign } from "@/server/campaigns";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import * as R from "remeda";
 import { CampaignUtils } from "@/utils/campaigns";
 
-export default async function Page(
-  props: {
-    params: Promise<{ username: string }>;
-  }
-) {
+export default async function Page(props: {
+  params: Promise<{ username: string }>;
+}) {
   const params = await props.params;
   const user = await LidndAuth.getUser();
 
@@ -39,22 +35,10 @@ export default async function Page(
   }
 
   return (
-    <div className="flex w-full flex-col">
-      <div className="flex flex-col gap-10 ">
-        <CreateCampaignButton
-          trigger={
-            <Button className="flex items-center w-full h-full">
-              <CardTitle>New campaign</CardTitle>
-              <Plus />
-            </Button>
-          }
-        />
-        <div className="flex flex-col gap-3 w-full items-center">
-          {R.sort(userCampaigns, CampaignUtils.sortRecent).map((campaign) => (
-            <CampaignCard key={campaign.id} campaign={campaign} user={user} />
-          ))}
-        </div>
-      </div>
+    <div className="flex w-full flex-col gap-10 p-5">
+      {R.sort(userCampaigns, CampaignUtils.sortRecent).map((campaign) => (
+        <CampaignCard key={campaign.id} campaign={campaign} user={user} />
+      ))}
     </div>
   );
 }
@@ -73,11 +57,8 @@ async function CampaignCard(props: CampaignCardProps) {
   );
 
   return (
-    <Link
-      href={appRoutes.campaign(campaign, user)}
-      className="w-full max-w-2xl m-auto"
-    >
-      <Card className="flex flex-col transition-all hover:bg-gray-200 w-full ">
+    <Link href={appRoutes.campaign(campaign, user)} className="w-full">
+      <Card className=" flex flex-col relative transition-all border-2 shadow-lg hover:bg-gray-200 w-full ">
         <CardHeader className="flex gap-2 flex-col">
           <CardTitle>
             {isStringMeaningful(campaign.name) ? campaign.name : "Unnamed"}
@@ -94,6 +75,7 @@ async function CampaignCard(props: CampaignCardProps) {
             dangerouslySetInnerHTML={{ __html: campaign.description ?? "" }}
           />
         </CardContent>
+        <ChevronRight className="opacity-20 absolute top-0 right-0 h-20 w-20" />
       </Card>
     </Link>
   );

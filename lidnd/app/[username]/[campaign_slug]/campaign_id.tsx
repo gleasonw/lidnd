@@ -16,6 +16,14 @@ export const useCampaignId = () => {
   return id;
 };
 
+export const useMaybCampaignId = () => {
+  const id = useContext(CampaignIdContext);
+  if (!id) {
+    return null;
+  }
+  return id;
+};
+
 export function CampaignId(props: CampaignIdProps) {
   return (
     <CampaignIdContext.Provider value={props.value}>

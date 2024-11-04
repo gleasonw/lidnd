@@ -18,7 +18,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={clsx(inter.className, "")}>{children}</body>
+      <body className={clsx(inter.className)}>
+        <div className="h-screen max-h-full flex flex-col">{children}</div>
+      </body>
     </html>
   );
 }

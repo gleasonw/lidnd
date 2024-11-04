@@ -23,6 +23,9 @@ export const ServerCampaign = {
           eq(campaigns.user_id, ctx.user.id),
           eq(campaigns.slug, campaignSlug)
         ),
+      with: {
+        encounters: true,
+      },
     });
   }),
 

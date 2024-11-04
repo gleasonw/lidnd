@@ -6,7 +6,6 @@ import type {
   Encounter,
   Participant,
   ParticipantWithData,
-  Settings,
 } from "@/server/api/router";
 import type { EncounterWithData } from "@/server/encounters";
 import type { System } from "@/types";
@@ -115,16 +114,17 @@ export const EncounterUtils = {
     return { easyTier, standardTier, hardTier };
   },
 
-  durationEstimate(
+  durationSeconds(
     encounter: EncounterWithParticipants,
-    estimatedRounds?: number | null,
-    estimatedTurnSeconds?: number | null,
-    settings?: Settings,
-    playerLevel?: number | null
+    opts?: {
+      estimatedRounds?: number | null;
+      estimatedTurnSeconds?: number | null;
+      playerLevel?: number | null;
+    }
   ) {
-    const difficulty = this.difficulty(encounter, playerLevel);
+    const difficulty = this.difficulty(encounter, opts?.playerLevel);
     const finalEstimatedRounds =
-      estimatedRounds ?? difficulty === "Deadly"
+      opts?.estimatedRounds ?? difficulty === "Deadly"
         ? 9
         : difficulty === "Hard"
           ? 7
@@ -133,25 +133,14 @@ export const EncounterUtils = {
             : difficulty === "Easy"
               ? 2
               : 1;
-    const finalTurnSeconds =
-      estimatedTurnSeconds ?? settings?.average_turn_seconds ?? 180;
+    const finalTurnSeconds = opts?.estimatedTurnSeconds ?? 180;
     const estimateEncounterSeconds =
       (encounter.participants.length *
         finalEstimatedRounds *
         finalTurnSeconds) /
       60;
 
-    const hourTime = estimateEncounterSeconds / 60;
-    const hourCount = Math.floor(hourTime);
-    const minuteRemainder = estimateEncounterSeconds % 60;
-
-    if (hourTime >= 1) {
-      return `${hourCount} hour${hourCount > 1 ? "s" : ""} ${
-        minuteRemainder ? `${Math.floor(minuteRemainder)} minutes` : ""
-      }`;
-    }
-
-    return `${Math.floor(estimateEncounterSeconds % 60)} minutes`;
+    return estimateEncounterSeconds;
   },
 
   optimisticParticipants(

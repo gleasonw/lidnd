@@ -9,26 +9,20 @@ import { ParticipantUtils } from "@/utils/participants";
 import {
   useUpdateEncounterParticipant,
   useUpdateEncounterMinionParticipant,
-  useRemoveStatusEffect,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { useDebouncedCallback } from "use-debounce";
 import React from "react";
-import { Minus, Plus, Shield } from "lucide-react";
+import { Heart, Minus, Plus, Shield, Sword } from "lucide-react";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { LidndPopover } from "@/encounters/base-popover";
-import { EffectIcon } from "@/encounters/[encounter_index]/status-input";
-import { ParticipantEffectUtils } from "@/utils/participantEffects";
 
 export function ParticipantHealthForm({
   participant,
-  healthExtra,
 }: {
   participant: ParticipantWithData;
-  healthExtra: React.ReactNode;
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
   const [tempHpDiff, setTempHpDiff] = useState<number | string>("");
-  const { mutate: removeStatusEffect } = useRemoveStatusEffect();
   const setTempHp = useDebouncedCallback((tempHp: number) => {
     edit({
       ...participant,
@@ -78,7 +72,7 @@ export function ParticipantHealthForm({
 
   return (
     <div className="flex flex-wrap gap-5 w-full">
-      {!ParticipantUtils.isPlayer(participant) && (
+      <div className="flex max-w-full w-full gap-2">
         <span className="w-full h-10 shadow-md relative border bg-red-100">
           <span
             className={`absolute bg-green-500 h-full transition-all`}
@@ -98,81 +92,10 @@ export function ParticipantHealthForm({
             </span>
           </span>
         </span>
-      )}
-      <div className="flex flex-wrap gap-3 items-center">
-        {participant.status_effects?.map((se) => (
-          <LidndPopover
-            key={se.id}
-            className="flex flex-col gap-5 items-center"
-            trigger={
-              <Button className="flex gap-4 px-0 bg-white" variant="ghost">
-                <span className="mr-auto flex gap-2 items-center">
-                  <EffectIcon effect={se.effect} />
-                  {ParticipantEffectUtils.name(se)}
-                </span>
-                {!!se.save_ends_dc && <span>({se.save_ends_dc})</span>}
-              </Button>
-            }
-          >
-            {ParticipantEffectUtils.description(se)}
-            <Button
-              onClick={() => removeStatusEffect(se)}
-              variant="ghost"
-              className="text-red-500"
-            >
-              Remove
-            </Button>
-          </LidndPopover>
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <div className="flex gap-4 text-2xl">
-          <Button
-            variant="outline"
-            className={"bg-red-600 text-white"}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleHPChange(
-                typeof hpDiff === "number"
-                  ? participant.hp - hpDiff
-                  : participant.hp,
-              );
-            }}
-          >
-            <Minus />
-          </Button>
-          <Input
-            placeholder="HP"
-            type="number"
-            className="w-32"
-            value={hpDiff}
-            onChange={(e) => {
-              if (!isNaN(parseInt(e.target.value))) {
-                setHpDiff(parseInt(e.target.value));
-              } else {
-                setHpDiff("");
-              }
-            }}
-          />
-          <Button
-            variant="outline"
-            className={"bg-green-600 text-white"}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleHPChange(
-                typeof hpDiff === "number"
-                  ? participant.hp + hpDiff
-                  : participant.hp,
-              );
-            }}
-          >
-            <Plus />
-          </Button>
-        </div>
         <LidndPopover
           trigger={
-            <Button variant="outline">
-              <Shield />
+            <Button variant="outline" className="bg-blue-100 text-blue-700">
+              <Shield /> Temp
             </Button>
           }
         >
@@ -219,7 +142,51 @@ export function ParticipantHealthForm({
             </Button>
           </div>
         </LidndPopover>
-        {healthExtra}
+      </div>
+      <div className="flex flex-wrap gap-8">
+        <div className="flex gap-4 text-2xl">
+          <Input
+            placeholder="HP"
+            type="number"
+            className="w-32"
+            value={hpDiff}
+            onChange={(e) => {
+              if (!isNaN(parseInt(e.target.value))) {
+                setHpDiff(parseInt(e.target.value));
+              } else {
+                setHpDiff("");
+              }
+            }}
+          />
+          <Button
+            variant="outline"
+            className={"bg-red-100 text-red-700 gap-3 flex items-center"}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleHPChange(
+                typeof hpDiff === "number"
+                  ? participant.hp - hpDiff
+                  : participant.hp,
+              );
+            }}
+          >
+            <Sword /> Damage
+          </Button>
+          <Button
+            variant="outline"
+            className={"bg-green-100 text-green-700 gap-3 flex items-center"}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleHPChange(
+                typeof hpDiff === "number"
+                  ? participant.hp + hpDiff
+                  : participant.hp,
+              );
+            }}
+          >
+            <Heart /> Heal
+          </Button>
+        </div>
       </div>
     </div>
   );

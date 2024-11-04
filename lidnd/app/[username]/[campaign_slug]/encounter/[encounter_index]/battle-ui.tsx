@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -31,6 +31,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { CreatureStatBlockImage } from "@/encounters/original-size-image";
+import { Label } from "@/components/ui/label";
 
 export const BattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -39,7 +40,7 @@ export const BattleUI = observer(function BattleUI() {
   return (
     <>
       <ReminderDialog />
-      <div className="flex gap-4 flex-col w-full">
+      <div className="flex gap-4 flex-col w-full max-h-full overflow-auto">
         {/**create space for the overlaid initiative tracker */}
         {encounter.status === "run" && <div className="my-5" />}
         <div className="bg-white p-5">
@@ -78,6 +79,8 @@ export function BattleCard({
     placeholder: "Monster notes",
   });
 
+  const { mutate: removeStatusEffect } = useRemoveStatusEffect();
+
   const editor = useEditor({
     extensions: [StarterKit, configuredPlaceholder],
     content: participant.notes,
@@ -100,17 +103,50 @@ export function BattleCard({
         <div className="absolute top-2 right-2 flex gap-2 items-center">
           {extraHeaderButtons}
         </div>
-        <div className="flex gap-4 py-2 items-center justify-center w-full">
-          <div>
-            <BattleCardCreatureIcon participant={participant} />
-          </div>
+        <div className="flex gap-4 py-2 items-center w-full">
           <BattleCardContent>
-            <LidndTextArea editor={editor} />
-            <div
-              className={`flex w-full gap-2 md:gap-6 justify-center max-w-[${participant.creature.stat_block_width}px]`}
-            >
-              <BattleCardHealthAndStatus participant={participant} />
+            <div className="flex gap-2 items-center w-full justify-between">
+              <BattleCardCreatureIcon
+                participant={participant}
+                className="flex-shrink-0 flex-grow-0"
+              />
+              <div className="flex flex-col gap-3 w-full">
+                <div className="flex flex-wrap gap-3 items-center">
+                  {participant.status_effects?.map((se) => (
+                    <LidndPopover
+                      key={se.id}
+                      className="flex flex-col gap-5 items-center"
+                      trigger={
+                        <Label
+                          className={`flex items-center gap-2 hover:bg-gray-100 hover:cursor-pointer`}
+                        >
+                          <span className="mr-auto flex gap-2 items-center">
+                            <EffectIcon effect={se.effect} />
+                            {ParticipantEffectUtils.name(se)}
+                          </span>
+                          {!!se.save_ends_dc && (
+                            <span>({se.save_ends_dc})</span>
+                          )}
+                        </Label>
+                      }
+                    >
+                      {ParticipantEffectUtils.description(se)}
+                      <Button
+                        onClick={() => removeStatusEffect(se)}
+                        variant="ghost"
+                        className="text-red-500"
+                      >
+                        Remove
+                      </Button>
+                    </LidndPopover>
+                  ))}
+                  <StatusInput participant={participant} />
+                </div>
+                <LidndTextArea editor={editor} />
+              </div>
             </div>
+
+            <ParticipantHealthForm participant={participant} />
           </BattleCardContent>
         </div>
         <CreatureStatBlockImage creature={participant.creature} />
@@ -158,11 +194,9 @@ export function BattleCardContent({
   className?: string;
 }) {
   return (
-    <CardContent
-      className={clsx("flex flex-col gap-4 items-center", className)}
-    >
+    <div className={clsx("flex flex-col gap-4 w-full", className)}>
       {children}
-    </CardContent>
+    </div>
   );
 }
 
@@ -278,18 +312,7 @@ export function BattleCardCreatureIcon({
 export function BattleCardHealthAndStatus({
   participant,
 }: BattleCardParticipantProps) {
-  return (
-    <div className="flex flex-wrap gap-5 w-full">
-      {!ParticipantUtils.isPlayer(participant) ? (
-        <ParticipantHealthForm
-          participant={participant}
-          healthExtra={<StatusInput participant={participant} />}
-        />
-      ) : (
-        <StatusInput participant={participant} />
-      )}
-    </div>
-  );
+  return <div className="flex flex-col gap-9"></div>;
 }
 
 export function MinionCardStack({ minionCount }: { minionCount: number }) {

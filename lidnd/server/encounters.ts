@@ -9,7 +9,7 @@ import {
 } from "@/server/api/db/schema";
 import type { InsertParticipant, Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 
 // todo: allow callers to pass in an encounter they've already fetched
 async function addParticipant(
@@ -87,7 +87,17 @@ async function addParticipant(
   });
 }
 
+async function getEncounters(ctx: LidndContext, encounterIds: string[]) {
+  return await db.query.encounters.findMany({
+    where: and(
+      inArray(encounters.id, encounterIds),
+      eq(encounters.user_id, ctx.user.id)
+    ),
+  });
+}
+
 export const ServerEncounter = {
+  getEncounters,
   encountersInCampaign: async function (
     ctx: LidndContext,
     campaign_id: string

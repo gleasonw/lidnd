@@ -29,7 +29,7 @@ import {
   BookOpen,
   ChevronLeftIcon,
   ChevronRightIcon,
-  Pen,
+  ColumnsIcon,
   Plus,
   UserIcon,
 } from "lucide-react";
@@ -72,7 +72,7 @@ export function ToggleEditingMode({
     >
       {latestEncounter?.is_editing_columns ? (
         <Tip text={"Current view: editing columns"}>
-          <Pen />
+          <ColumnsIcon />
         </Tip>
       ) : (
         <Tip text={"Current view: run encounter (no column edit)"}>

@@ -62,7 +62,7 @@ export default async function CampaignPage(props: {
           </span>
           <div className="grid grid-cols-3 gap-5">
             <div className="col-span-2">
-              <h1 className={"text-2xl gap-8 flex items-center"}>
+              <h1 className={"text-2xl gap-5 flex items-center"}>
                 <Skull />
                 <span className="py-2 text-xl">Encounters</span>
                 <CreateEncounterButton category={"active"} />

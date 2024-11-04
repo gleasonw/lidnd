@@ -11,7 +11,7 @@ type IndexPath = {
   encounter_index: string;
 };
 
-type Nested = CampaignSlug & IndexPath;
+type EncounterPath = CampaignSlug & IndexPath;
 
 function isDefinedObject(
   obj: unknown
@@ -23,7 +23,7 @@ export function isCampaignSlug(param: unknown): param is CampaignSlug {
   return isDefinedObject(param) && "campaign_slug" in param;
 }
 
-export function isEncounterPathParams(param: unknown): param is Nested {
+export function isEncounterPathParams(param: unknown): param is EncounterPath {
   return (
     isCampaignSlug(param) &&
     "encounter_index" in param &&

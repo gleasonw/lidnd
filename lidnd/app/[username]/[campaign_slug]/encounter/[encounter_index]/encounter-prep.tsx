@@ -1,23 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Clock,
-  Dices,
-  Skull,
-  X,
-  Swords,
-  Users2,
-  Check,
-  Plus,
-  FileText,
-} from "lucide-react";
+import { Dices, X, Swords, Users2, Check, Plus, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import React, { createContext, useContext, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
 import type { ParticipantWithData } from "@/server/api/router";
-import { LidndPopover } from "@/app/[username]/[campaign_slug]/encounter/base-popover";
 import { EncounterUtils } from "@/utils/encounters";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
@@ -223,103 +212,6 @@ export function MonsterParticipantActions(props: ParticipantCreatureProps) {
         </Button>
       )}
     </span>
-  );
-}
-
-export function EncounterStats() {
-  const { data: settings } = api.settings.useQuery();
-  const [encounter] = useEncounter();
-  const [campaign] = useCampaign();
-
-  const [estimatedTurnSeconds, setEstimatedTurnSeconds] = React.useState<
-    number | null
-  >(null);
-  const [playerLevel, setPlayerLevel] = React.useState<number>(
-    campaign?.party_level ?? 1,
-  );
-  const [estimatedRounds, setEstimatedRounds] = React.useState<number | null>(
-    null,
-  );
-
-  const encounterTime = EncounterUtils.durationEstimate(
-    encounter,
-    estimatedRounds,
-    estimatedTurnSeconds,
-    settings,
-  );
-
-  const { easyTier, standardTier, hardTier } = EncounterUtils.findCRBudget(
-    encounter,
-    playerLevel,
-  );
-
-  return (
-    <>
-      <LidndPopover
-        trigger={
-          <Button
-            className="flex text-xl items-center gap-2 w-44"
-            variant="outline"
-            size="sm"
-          >
-            <Skull />
-            {EncounterUtils.difficulty(encounter, playerLevel)}
-          </Button>
-        }
-        className="flex flex-col items-center gap-5"
-      >
-        <span>Total CR: {EncounterUtils.totalCr(encounter)}</span>
-        <span>
-          Budget: {easyTier} / {standardTier} / {hardTier}
-        </span>
-        <label>
-          Player level
-          <Input
-            type={"number"}
-            min={1}
-            max={20}
-            value={playerLevel}
-            onChange={(e) => setPlayerLevel(parseInt(e.target.value))}
-          />
-        </label>
-      </LidndPopover>
-      <LidndPopover
-        className="flex flex-col items-center gap-5"
-        trigger={
-          <Button
-            className="flex gap-5 items-center text-xl whitespace-nowrap"
-            variant="outline"
-            size="sm"
-          >
-            <Clock className="flex-shrink-0" />
-            {encounterTime}
-          </Button>
-        }
-      >
-        <div className="flex flex-col gap-3">
-          <label>
-            Estimated turn seconds
-            <Input
-              type={"number"}
-              value={
-                estimatedTurnSeconds ?? settings?.average_turn_seconds ?? 180
-              }
-              onChange={(e) =>
-                setEstimatedTurnSeconds(parseInt(e.target.value))
-              }
-            />
-          </label>
-          <label>
-            Estimated rounds
-            <Input
-              type={"number"}
-              value={estimatedRounds ?? 2}
-              onChange={(e) => setEstimatedRounds(parseInt(e.target.value))}
-            />
-          </label>
-        </div>
-      </LidndPopover>
-    </>
   );
 }
 

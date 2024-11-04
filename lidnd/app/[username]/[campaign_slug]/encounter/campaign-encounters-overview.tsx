@@ -5,7 +5,8 @@ import * as R from "remeda";
 import React, { useState } from "react";
 import { Card, CardDescription } from "@/components/ui/card";
 import {
-  Calendar,
+  Clock,
+  GripVertical,
   Plus,
   Smile,
   Trash,
@@ -57,7 +58,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { useDebouncedCallback } from "use-debounce";
-import { compareCreatedAt } from "@/lib/utils";
+import { compareCreatedAt, formatSeconds } from "@/lib/utils";
 
 export function ExistingCreaturesForPartyAdd() {
   const [name, setName] = useState("");
@@ -213,9 +214,13 @@ export function SessionEncounters() {
   const campaignId = useCampaignId();
   const [acceptDrop, setAcceptDrop] = useState(false);
   const { mutate: updateEncounter } = useUpdateEncounter();
-  const { data: encounters } = api.encounters.useQuery(campaignId);
-  const activeEncounters = encounters
-    ? R.sort(EncounterUtils.byStatus(encounters).active ?? [], compareCreatedAt)
+  const { encounters } = api.useUtils();
+  const { data: campaignEncounters } = api.encounters.useQuery(campaignId);
+  const activeEncounters = campaignEncounters
+    ? R.sort(
+        EncounterUtils.byStatus(campaignEncounters).active ?? [],
+        compareCreatedAt,
+      )
     : [];
 
   const [campaign] = useCampaign();
@@ -223,6 +228,32 @@ export function SessionEncounters() {
   const lastOrder = activeEncounters?.length
     ? (R.firstBy(activeEncounters, [(e) => e.order, "desc"])?.order ?? 1) + 1
     : 1;
+  const { mutate: removeEncountersFromSession } =
+    api.removeEncountersFromSession.useMutation({
+      onSettled: async () => {
+        return await encounters.invalidate(campaignId);
+      },
+      onMutate: async (ids) => {
+        await encounters.cancel(campaignId);
+        const previous = encounters.getData(campaignId);
+        encounters.setData(campaignId, (old) => {
+          if (!old) return old;
+          return old.map((e) => {
+            if (ids.includes(e.id)) {
+              return { ...e, label: "inactive" };
+            }
+            return e;
+          });
+        });
+        return { previous };
+      },
+    });
+
+  const sumActiveDuration = R.sumBy(activeEncounters, (e) =>
+    EncounterUtils.durationSeconds(e, {
+      playerLevel: campaign?.party_level,
+    }),
+  );
 
   return (
     <section
@@ -261,14 +292,31 @@ export function SessionEncounters() {
       className={clsx(
         {
           "border-black": acceptDrop,
-          "border-transparent": !acceptDrop,
         },
-        "border-2 border-dashed flex w-full flex-col transition-all rounded-md  bg-gray-100 ",
+        "border-2 border-dashed shadow-lg flex w-full flex-col transition-all rounded-sm p-3 ",
       )}
     >
-      <div className="flex items-center gap-5 justify-center">
-        <Calendar />
-        This session
+      <div className="flex justify-between items-center">
+        <span className="text-lg text-gray-900">Session docket</span>
+        <Button
+          variant="ghost"
+          className="text-blue-500"
+          onClick={() =>
+            removeEncountersFromSession(activeEncounters.map((e) => e.id))
+          }
+        >
+          Remove all
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 gap-5">
+        <Card className="p-3 flex flex-col gap-2 text-sm">
+          <span className="opacity-50 flex items-center gap-2">
+            <Clock className="text-4xl" />
+            Est. duration
+          </span>
+          {formatSeconds(sumActiveDuration)}
+        </Card>
+        <Card></Card>
       </div>
 
       <ul className="flex flex-wrap p-1 flex-col sm:flex-row items-center">
@@ -426,6 +474,7 @@ export function EncounterArchive() {
                     );
                   }}
                 >
+                  <GripVertical className="flex-shrink-0 flex-grow-0 opacity-25" />
                   <h2 className={"flex items-center"}>
                     <span className="max-w-full truncate text-lg">
                       {encounter.name ? encounter.name : "Unnamed"}

@@ -19,10 +19,6 @@
     outline: none;
   }
 
-  body {
-    height: 100vh;
-  }
-
   :root {
     --main-content-padding: 1rem;
     --encounter-breadcrumb-height: 2rem;
@@ -88,12 +84,5 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-  }
-}
-
-@layer base {
-  body {
-    overflow: hidden;
-    @apply bg-background text-foreground;
   }
 }
