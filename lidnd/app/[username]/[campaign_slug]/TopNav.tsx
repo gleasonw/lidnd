@@ -3,9 +3,10 @@
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { useUser } from "@/app/[username]/user-provider";
 import { appRoutes } from "@/app/routes";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { ToggleEditingMode } from "@/encounters/[encounter_index]/battle-bar";
+import { api } from "@/trpc/react";
 import _ from "lodash";
 import {
   Home,
@@ -14,9 +15,11 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 import * as R from "remeda";
 
@@ -121,13 +124,11 @@ export function EncounterTopNav() {
           </span>
           <ToggleEditingMode encounter={encounter} />
         </div>
-        <span className="text-2xl font-bold ml-auto">
-          Round {encounter.current_round}
-        </span>
+        {encounter ? <EncounterRoundNumber encounterId={encounter.id} /> : null}
       </div>
 
       <div className="flex items-center gap-5">
-        <ButtonWithTooltip
+        <CheckmarkClicker
           onClick={() => {
             navigator.clipboard.writeText(
               `${window.location.origin}${appRoutes.observe(encounter.id)}`,
@@ -138,8 +139,39 @@ export function EncounterTopNav() {
           text={"Get sharable link"}
         >
           <Share />
-        </ButtonWithTooltip>
+        </CheckmarkClicker>
       </div>
     </div>
+  );
+}
+
+function EncounterRoundNumber({ encounterId }: { encounterId: string }) {
+  const { data: liveEncounter } = api.encounterById.useQuery(encounterId);
+  return (
+    <span className="text-2xl font-bold ml-auto">
+      Round {liveEncounter?.current_round}
+    </span>
+  );
+}
+
+function CheckmarkClicker({
+  children,
+  onClick,
+  ...props
+}: ButtonProps & { text: string }) {
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
+  return (
+    <ButtonWithTooltip
+      {...props}
+      onClick={(e) => {
+        setIsLinkCopied(true);
+        onClick?.(e);
+        setTimeout(() => {
+          setIsLinkCopied(false);
+        }, 2000);
+      }}
+    >
+      {isLinkCopied ? <Check /> : children}
+    </ButtonWithTooltip>
   );
 }
