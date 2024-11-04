@@ -293,7 +293,7 @@ export function SessionEncounters() {
         {
           "border-black": acceptDrop,
         },
-        "border-2 border-dashed shadow-lg flex w-full flex-col transition-all rounded-sm p-3 ",
+        "border-2 col-span-1 border-dashed shadow-lg flex w-full flex-col transition-all rounded-sm p-3 max-h-full",
       )}
     >
       <div className="flex justify-between items-center">
@@ -308,7 +308,7 @@ export function SessionEncounters() {
           Remove all
         </Button>
       </div>
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-2 gap-5 max-h-full">
         <Card className="p-3 flex flex-col gap-2 text-sm">
           <span className="opacity-50 flex items-center gap-2">
             <Clock className="text-4xl" />
@@ -316,10 +316,9 @@ export function SessionEncounters() {
           </span>
           {formatSeconds(sumActiveDuration)}
         </Card>
-        <Card></Card>
       </div>
 
-      <ul className="flex flex-wrap p-1 flex-col sm:flex-row items-center">
+      <ul className="flex flex-wrap p-1 flex-col sm:flex-row items-center overflow-auto max-h-full">
         {activeEncounters?.length === 0 ? (
           <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
         ) : null}
@@ -438,7 +437,7 @@ export function EncounterArchive() {
           "border-black": acceptDrop,
           "border-transparent": !acceptDrop,
         },
-        "border-2 border-dashed flex flex-col w-full transition-all rounded-md ",
+        "border-2 border-dashed flex flex-col w-full transition-all rounded-md max-h-full overflow-auto h-full",
       )}
     >
       <ul className="flex flex-col">

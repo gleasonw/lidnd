@@ -48,33 +48,22 @@ export default async function CampaignPage(props: {
           </Button>
         </form>
       </div>
-      <FadeInSuspense
-        fallback={
-          <div className="w-full pt-10 flex justify-center">
-            Loading campaign...
+      <div className="flex flex-col gap-10 h-full max-h-full w-full overflow-hidden">
+        <span className="flex gap-5 items-center">
+          <CampaignParty />
+        </span>
+        <div className="grid grid-cols-3 gap-5 max-h-full pb-8 overflow-hidden">
+          <div className="col-span-2 max-h-full flex flex-col overflow-hidden">
+            <h1 className={"text-2xl gap-5 flex items-center"}>
+              <Skull />
+              <span className="py-2 text-xl">Encounters</span>
+              <CreateEncounterButton category={"active"} />
+            </h1>
+            <EncounterArchive />
           </div>
-        }
-        wrapperClassName="flex h-full overflow-hidden"
-      >
-        <div className="flex flex-col gap-20 h-full overflow-auto w-full">
-          <span className="flex gap-5 items-center">
-            <CampaignParty />
-          </span>
-          <div className="grid grid-cols-3 gap-5">
-            <div className="col-span-2">
-              <h1 className={"text-2xl gap-5 flex items-center"}>
-                <Skull />
-                <span className="py-2 text-xl">Encounters</span>
-                <CreateEncounterButton category={"active"} />
-              </h1>
-              <EncounterArchive />
-            </div>
-            <div className="col-span-1">
-              <SessionEncounters />
-            </div>
-          </div>
+          <SessionEncounters />
         </div>
-      </FadeInSuspense>
+      </div>
     </CampaignId>
   );
 }
