@@ -492,11 +492,12 @@ export function EncounterArchive() {
                       )}
                     </Badge>
                   )}
-                  <CardDescription className="flex-grow-0 text-sm max-w-full truncate">
+                  <CardDescription className="flex-grow-0 text-sm max-w-full truncate overflow-hidden max-h-full">
                     <span
                       dangerouslySetInnerHTML={{
                         __html: encounter.description ?? "",
                       }}
+                      className="max-w-full truncate max-h-full"
                     />
                   </CardDescription>
                   <div className="ml-auto">
