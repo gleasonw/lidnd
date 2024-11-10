@@ -1,12 +1,16 @@
 "use client";
 
-import { useMaybeCampaignSlug } from "@/app/[username]/hooks";
+import {
+  useMaybeCampaignSlug,
+  useMaybeEncounterIndex,
+} from "@/app/[username]/hooks";
 import { useUser } from "@/app/[username]/user-provider";
 import type { LidndUser } from "@/app/authentication";
 import { appRoutes } from "@/app/routes";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { ToggleEditingMode } from "@/encounters/[encounter_index]/battle-bar";
+import { CampaignParty } from "@/encounters/campaign-encounters-overview";
 import { api } from "@/trpc/react";
 import _ from "lodash";
 import {
@@ -76,6 +80,8 @@ function CampaignGate({
 
 function CampaignTopNav({ user }: { user: LidndUser }) {
   const campaignSlug = useMaybeCampaignSlug();
+  const encounterIndex = useMaybeEncounterIndex();
+  const isOnEncounterRoute = encounterIndex !== null;
   const { data: campaign } = api.campaignFromUrl.useQuery(
     {
       campaign_name: campaignSlug ?? "",
@@ -87,12 +93,19 @@ function CampaignTopNav({ user }: { user: LidndUser }) {
   }
   return (
     <>
-      <Link
-        href={appRoutes.campaign(campaign, user)}
-        className="flex whitespace-nowrap items-center text-lg text-gray-600 hover:text-gray-800 transition-colors"
+      <div
+        className={`flex items-center gap-5 ${isOnEncounterRoute ? "" : "mr-auto"}`}
       >
-        {campaign.name}
-      </Link>
+        <Link
+          href={appRoutes.campaign(campaign, user)}
+          className="flex whitespace-nowrap items-center text-lg text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          {campaign.name}
+        </Link>
+        {/* this is a little cludgy. I'd like to know if there's a better way to hoist things into the top nav*/}
+        {isOnEncounterRoute ? null : <CampaignParty campaign={campaign} />}
+      </div>
+
       <EncounterTopNav />
     </>
   );

@@ -25,6 +25,11 @@ export const ServerCampaign = {
         ),
       with: {
         encounters: true,
+        campaignToPlayers: {
+          with: {
+            player: true,
+          },
+        },
       },
     });
   }),
@@ -67,3 +72,7 @@ export const ServerCampaign = {
     return campaign;
   },
 };
+
+export type CampaignWithData = NonNullable<
+  Awaited<ReturnType<typeof ServerCampaign.campaignFromSlug>>
+>;

@@ -15,8 +15,8 @@ export function useCampaign() {
   return api.campaignById.useSuspenseQuery(campaignId);
 }
 
-export function useUpdateCampaign() {
-  const campaignId = useCampaignId();
+export function useUpdateCampaign(campaign: { id: string }) {
+  const campaignId = campaign.id;
   const { campaignById } = api.useUtils();
   return api.updateCampaign.useMutation({
     onSettled: async () => {
@@ -72,8 +72,8 @@ export function useAddExistingToParty() {
   });
 }
 
-export function useAddNewToParty() {
-  const campaignId = useCampaignId();
+export function useAddNewToParty(campaign: { id: string }) {
+  const campaignId = campaign.id;
   const { campaignById } = api.useUtils();
 
   return useMutation({
@@ -116,8 +116,8 @@ export function useAddNewToParty() {
   });
 }
 
-export function useRemoveFromParty() {
-  const campaignId = useCampaignId();
+export function useRemoveFromParty(campaign: { id: string }) {
+  const campaignId = campaign.id;
   const { campaignById } = api.useUtils();
   const mutation = api.removeFromParty.useMutation({
     onSettled: async () => {

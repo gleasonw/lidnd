@@ -74,6 +74,10 @@ function isFriendly(p: ParticipantWithCreature) {
   return isPlayer(p) || p.is_ally;
 }
 
+function isAdversary(p: ParticipantWithCreature) {
+  return !isFriendly(p);
+}
+
 function name(p: ParticipantWithCreature) {
   return p.creature.name;
 }
@@ -96,7 +100,7 @@ function percentDamage(p: ParticipantWithCreature) {
   return (missingHP / maxHP) * 100;
 }
 
-function challengeRating(p: ParticipantWithCreature) {
+function challengeRating(p: { creature: { challenge_rating: number } }) {
   return p.creature.challenge_rating;
 }
 
@@ -173,6 +177,7 @@ function isActivatable(p: {
 }
 
 export const ParticipantUtils = {
+  isAdversary,
   isPlayer,
   iconHexColor,
   statBlockAspectRatio,

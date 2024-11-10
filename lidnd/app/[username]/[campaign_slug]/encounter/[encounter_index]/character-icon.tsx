@@ -3,12 +3,18 @@ import type { Creature } from "@/server/api/router";
 import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
 
+type IconSize = "v-small" | "small" | "small2" | "medium" | "large";
+
 function iconDimensions(
   creature: Creature,
-  size?: "small" | "small2" | "medium" | "large",
+  size?: IconSize,
 ): { width: number; height: number } {
   if (!size) {
     return { width: creature.icon_width, height: creature.icon_height };
+  }
+
+  if (size === "v-small") {
+    return { width: 40, height: 40 };
   }
 
   if (size === "small") {
@@ -32,7 +38,7 @@ export function CreatureIcon({
   objectFit,
 }: {
   creature: Creature;
-  size?: "small" | "small2" | "medium" | "large";
+  size?: IconSize;
   objectFit?: "contain" | "cover";
 }) {
   if (!creature.icon_width || !creature.icon_height) {
@@ -49,7 +55,7 @@ export function CreatureIcon({
   return (
     <Image
       quality={100}
-      className="select-none rounded-sm"
+      className="select-none rounded-full"
       src={CreatureUtils.awsURL(creature, "icon")}
       alt={creature.name}
       priority

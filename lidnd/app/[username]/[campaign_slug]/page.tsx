@@ -1,18 +1,13 @@
 import {
-  CampaignParty,
-  CreateEncounterButton,
+  EditingEncounterCard,
   EncounterArchive,
   SessionEncounters,
 } from "./encounter/campaign-encounters-overview";
-import { deleteCampaign } from "../actions";
-import { Button } from "@/components/ui/button";
 import { ServerCampaign } from "@/server/campaigns";
 import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
-import { CampaignDescriptionArea } from "@/app/[username]/campaign-description-area";
-import { Skull } from "lucide-react";
 
 export default async function CampaignPage(props: {
   params: Promise<{ campaign_slug: string; user_id: string }>;
@@ -35,32 +30,17 @@ export default async function CampaignPage(props: {
     return <div>No campaign found... this is a bug</div>;
   }
 
-  const deleteUserCampaign = deleteCampaign.bind(null, user, campaignData.id);
-
   return (
     <CampaignId value={campaignData.id}>
-      <div className="flex items-center justify-between py-4">
-        <CampaignDescriptionArea />
-        <form action={deleteUserCampaign}>
-          <Button variant="destructive" className="whitespace-nowrap">
-            Delete campaign
-          </Button>
-        </form>
-      </div>
-      <div className="flex flex-col gap-10 h-full max-h-full w-full overflow-hidden">
-        <span className="flex gap-5 items-center">
-          <CampaignParty />
-        </span>
-        <div className="grid grid-cols-3 gap-5 max-h-full pb-8 overflow-hidden">
-          <div className="col-span-2 max-h-full flex flex-col overflow-hidden">
-            <h1 className={"text-2xl gap-5 flex items-center"}>
-              <Skull />
-              <span className="py-2 text-xl">Encounters</span>
-              <CreateEncounterButton category={"active"} />
-            </h1>
-            <EncounterArchive />
-          </div>
+      <div className="flex h-full max-h-full w-full overflow-hidden gap-5 pt-5">
+        <div className="w-1/4">
+          <EncounterArchive />
+        </div>
+        <div className="flex flex-col w-3/4 gap-5">
           <SessionEncounters />
+          <div className="col-span-3 max-h-full flex flex-col overflow-hidden">
+            <EditingEncounterCard />
+          </div>
         </div>
       </div>
     </CampaignId>

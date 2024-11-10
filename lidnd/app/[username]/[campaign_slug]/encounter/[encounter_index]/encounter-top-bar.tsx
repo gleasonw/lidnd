@@ -14,9 +14,10 @@ import {
   AllyUpload,
   MonsterUpload,
 } from "@/encounters/[encounter_index]/participant-add-form";
+import type { EncounterWithParticipants } from "@/server/api/router";
 import { EncounterUtils } from "@/utils/encounters";
 import clsx from "clsx";
-import { Swords } from "lucide-react";
+import { HelpCircle, Swords } from "lucide-react";
 
 export function EncounterTopBar() {
   const [encounter] = useEncounter();
@@ -45,7 +46,7 @@ export function EncounterTopBar() {
             </button>
           ))}
           <LidndPlusDialog text="Add ally">
-            <AllyUpload />
+            <AllyUpload encounter={encounter} />
           </LidndPlusDialog>
         </ParticipantsContainer>
         <div className=" flex flex-col gap-3 items-center">
@@ -61,7 +62,7 @@ export function EncounterTopBar() {
             content={<GroupInitiativeInput />}
           />
 
-          <EncounterDifficulty />
+          <EncounterDifficulty encounter={encounter} />
         </div>
         <ParticipantsContainer role="monsters">
           {EncounterUtils.monsters(encounter).map((p) => (
@@ -79,7 +80,7 @@ export function EncounterTopBar() {
             </button>
           ))}
           <LidndPlusDialog text="Add monster">
-            <MonsterUpload />
+            <MonsterUpload encounter={encounter} />
           </LidndPlusDialog>
         </ParticipantsContainer>
       </div>
@@ -109,40 +110,67 @@ function ParticipantsContainer({
   );
 }
 
-function EncounterDifficulty() {
-  const [encounter] = useEncounter();
-
+export function EncounterDifficulty({
+  encounter,
+}: {
+  encounter: EncounterWithParticipants;
+}) {
   const [campaign] = useCampaign();
 
   const totalCr = EncounterUtils.totalCr(encounter);
 
-  const { hardTier } = EncounterUtils.findCRBudget(
+  const { hardTier, standardTier, easyTier } = EncounterUtils.findCRBudget(
     encounter,
     campaign?.party_level ?? 1,
   );
-  const difficulty = EncounterUtils.difficulty(
-    encounter,
-    campaign?.party_level,
-  );
 
   const percentFull = Math.min(1, totalCr / hardTier);
+  const easyCutoff = (easyTier / hardTier) * 100;
+  const standardCutoff = (standardTier / hardTier) * 100;
 
   return (
-    <div className="w-full max-w-sm">
-      <div className="border rounded h-10 relative flex items-start">
+    <div className="flex flex-col gap-3 pb-8 w-full">
+      <span className="flex justify-between">
+        <span className="text-sm">Challenge rating budget</span>
+        <span className="flex gap-2 items-center text-sm text-gray-700">
+          <span className=" flex gap-2 items-center">
+            Current cr: {EncounterUtils.totalCr(encounter)}
+          </span>
+          <span>Allowance: {hardTier}</span>
+          <HelpCircle className="h-4 w-4" />
+        </span>
+      </span>
+      <div className="border h-3 rounded-full relative flex items-start w-full">
         <div
           className={clsx(
-            {
-              "bg-green-500": difficulty === "Easy",
-              "bg-yellow-500": difficulty === "Standard",
-              "bg-red-500": difficulty === "Hard",
-              "bg-rose-700": difficulty === "Deadly",
-            },
-            `absolute top-0 left-0 h-full transition-all`,
+            `bg-${EncounterUtils.difficultyColor(encounter, campaign)}-500 absolute top-0 left-0 h-full transition-all rounded-full`,
           )}
           style={{ width: `${percentFull * 100}%` }}
         />
-        <span className="text-lg text-white z-10">{difficulty}</span>
+        <span style={{ left: "0%" }} className="absolute w-1 h-full">
+          <span className="absolute bottom-0 translate-y-full pt-3">Easy</span>
+        </span>
+        <span
+          className={`border w-1 h-full absolute  bg-green-500`}
+          style={{ left: `${easyCutoff}%` }}
+        >
+          <span className="absolute bottom-0 translate-y-full -translate-x-1/2 pt-3">
+            Standard
+          </span>
+        </span>
+        <span
+          className={`border w-1 h-full absolute bg-yellow-500`}
+          style={{ left: `${standardCutoff}%` }}
+        >
+          <span className="absolute bottom-0 translate-y-full -translate-x-1/2 pt-3">
+            Hard
+          </span>
+        </span>
+        <span style={{ left: "100%" }} className="w-1 h-full absolute ">
+          <span className="absolute bottom-0 translate-y-full -translate-x-full pt-3">
+            Deadly
+          </span>
+        </span>
       </div>
     </div>
   );

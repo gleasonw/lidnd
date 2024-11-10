@@ -77,71 +77,72 @@ export function ImageUpload({
   }
 
   return (
-    <span className="h-auto relative flex flex-col gap-5 group">
-      <span
-        onDragOver={(e) => {
-          e.preventDefault();
-          setStatus("hovering");
-        }}
-        onDragLeave={() => setStatus("idle")}
-        onDrop={(e) => {
-          e.preventDefault();
-          const dropItem = e.dataTransfer.items[0];
+    <span
+      onDragOver={(e) => {
+        e.preventDefault();
+        setStatus("hovering");
+      }}
+      onDragLeave={() => setStatus("idle")}
+      onDrop={(e) => {
+        e.preventDefault();
+        const dropItem = e.dataTransfer.items[0];
 
-          if (!dropItem) {
-            console.error("No item found when dropping image");
-            setStatus("idle");
-            return;
-          }
+        if (!dropItem) {
+          console.error("No item found when dropping image");
           setStatus("idle");
-          onImageInput(dropItem);
-        }}
-        className={clsx(
-          "border-2 border-dashed border-gray-200 rounded-md p-2 flex flex-col gap-2 items-center justify-center transition-all",
-          status === "hovering" && "border-gray-400",
-          dropContainerClassName,
-        )}
-      >
+          return;
+        }
+        setStatus("idle");
+        onImageInput(dropItem);
+      }}
+      className={clsx(
+        "border-2 border-dashed border-gray-200 p-2 flex flex-col gap-2 items-center justify-center transition-all w-full",
+        status === "hovering" && "border-gray-400",
+        dropContainerClassName,
+      )}
+    >
+      <span className="text-gray-600 flex flex-col justify-center items-center gap-3">
         {dropIcon}
         {dropText}
-        <span className="flex gap-3 items-center">
-          <input
-            ref={inputRef}
-            type="file"
-            className="hidden"
-            accept="image/png, image/jpeg, image/jpg"
-            onChange={(e) => {
-              if (e.target.files) {
-                onUpload(e.target.files[0]);
-              }
-            }}
-          />
-          <ButtonWithTooltip
-            variant="outline"
-            className="flex gap-1"
-            text="Choose image"
-            onClick={(e) => {
-              e.preventDefault();
-              inputRef.current?.click();
-            }}
-          >
-            <Upload />
-          </ButtonWithTooltip>
-          or
-          <Input
-            placeholder="Paste"
-            onPaste={(e) => {
-              const clipboardData = e.clipboardData;
-              const item = clipboardData.items[0];
+      </span>
 
-              if (!item) {
-                console.error("No item found when pasting image");
-                return;
-              }
-              onImageInput(item);
-            }}
-          />
-        </span>
+      <span className="flex gap-3 items-center">
+        <input
+          ref={inputRef}
+          type="file"
+          className="hidden"
+          accept="image/png, image/jpeg, image/jpg"
+          onChange={(e) => {
+            if (e.target.files) {
+              onUpload(e.target.files[0]);
+            }
+          }}
+        />
+        <ButtonWithTooltip
+          variant="outline"
+          className="flex gap-1"
+          text="Choose image"
+          onClick={(e) => {
+            e.preventDefault();
+            inputRef.current?.click();
+          }}
+        >
+          <Upload />
+        </ButtonWithTooltip>
+        or
+        <Input
+          placeholder="Paste"
+          onPaste={(e) => {
+            const clipboardData = e.clipboardData;
+            const item = clipboardData.items[0];
+
+            if (!item) {
+              console.error("No item found when pasting image");
+              return;
+            }
+            onImageInput(item);
+          }}
+        />
       </span>
     </span>
   );

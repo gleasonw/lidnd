@@ -159,7 +159,7 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
             <Plus />
           </ButtonWithTooltip>
         }
-        content={<ParticipantUpload />}
+        content={<ParticipantUpload encounter={encounter} />}
       />
       <ButtonWithTooltip
         className="h-full shadow-lg"

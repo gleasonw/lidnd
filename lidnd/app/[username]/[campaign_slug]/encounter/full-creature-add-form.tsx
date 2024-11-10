@@ -53,6 +53,126 @@ const monsterFormSchema = z.object({
   stat_block_image: z.instanceof(File),
 });
 
+export function CompactMonsterUploadForm({ uploadCreature }: CreatureAddProps) {
+  const form = useForm<z.infer<typeof monsterFormSchema>>({
+    resolver: zodResolver(monsterFormSchema),
+    defaultValues: {
+      icon_image: undefined,
+      stat_block_image: undefined,
+      is_player: false,
+    },
+  });
+  const [keyToResetFile, setKeyToResetFile] = React.useState(0);
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit((data) => {
+          uploadCreature(data);
+          form.reset();
+          setKeyToResetFile(keyToResetFile + 1);
+        })}
+        className="flex flex-col w-full h-full gap-6"
+      >
+        <div className="flex gap-6 items-center w-full h-full">
+          <FormField
+            control={form.control}
+            name="icon_image"
+            render={({ field }) => (
+              <FormItem className="flex flex-col gap-2">
+                <FormControl>
+                  <ImageUpload
+                    onUpload={(file) =>
+                      field.onChange({ target: { value: file } })
+                    }
+                    dropText="Drop an icon"
+                    dropIcon={<User />}
+                    dropContainerClassName="p-5"
+                    key={keyToResetFile}
+                    image={field.value}
+                    clearImage={() =>
+                      field.onChange({ target: { value: undefined } })
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />{" "}
+          <FormField
+            control={form.control}
+            name="stat_block_image"
+            render={({ field }) => (
+              <FormItem className="flex gap-2 w-full">
+                <FormControl>
+                  <ImageUpload
+                    onUpload={(file) =>
+                      field.onChange({ target: { value: file } })
+                    }
+                    dropText="Drop a stat block"
+                    dropContainerClassName="p-5 w-full"
+                    dropIcon={<FileText />}
+                    key={keyToResetFile}
+                    image={field.value}
+                    clearImage={() =>
+                      field.onChange({ target: { value: undefined } })
+                    }
+                    previewSize={700}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="flex gap-2 items-center w-full">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <CreatureFormItems name="Name">
+                <LidndTextInput placeholder="Creature name" {...field} />
+              </CreatureFormItems>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="max_hp"
+            render={({ field }) => (
+              <CreatureFormItems name="Max HP">
+                <Input
+                  placeholder="Max HP"
+                  {...field}
+                  type="number"
+                  onChange={(e) =>
+                    field.onChange(Math.max(1, parseInt(e.target.value)))
+                  }
+                />
+              </CreatureFormItems>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="challenge_rating"
+            render={({ field }) => (
+              <CreatureFormItems name="Challenge Rating">
+                <Input
+                  placeholder="Challenge rating"
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  type="number"
+                />
+              </CreatureFormItems>
+            )}
+          />
+          <Button type="submit">
+            <Plus /> Add creature
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
 export function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
   const form = useForm<z.infer<typeof monsterFormSchema>>({
     resolver: zodResolver(monsterFormSchema),
@@ -142,7 +262,7 @@ export function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
             render={({ field }) => (
               <CreatureFormItems name="Max HP">
                 <Input
-                  placeholder="Max hp"
+                  placeholder="HP"
                   {...field}
                   type="number"
                   onChange={(e) =>
@@ -158,7 +278,7 @@ export function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
             render={({ field }) => (
               <CreatureFormItems name="Challenge Rating">
                 <Input
-                  placeholder="Challenge rating"
+                  placeholder="CR"
                   {...field}
                   onChange={(e) => field.onChange(e.target.value)}
                   type="number"

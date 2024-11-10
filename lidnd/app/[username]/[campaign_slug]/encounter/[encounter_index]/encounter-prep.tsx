@@ -143,10 +143,10 @@ export function RemoveCreatureFromEncounterButton(
 ) {
   const { participant } = props;
 
-  const { mutate: removeCreatureFromEncounter } =
-    useRemoveParticipantFromEncounter();
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
+  const { mutate: removeCreatureFromEncounter } =
+    useRemoveParticipantFromEncounter();
   return (
     <ButtonWithTooltip
       text="Remove creature"

@@ -32,16 +32,16 @@ type Cyclable = {
 function difficultyColor(e: EncounterWithParticipants, c: Campaign) {
   const difficulty = EncounterUtils.difficulty(e, c?.party_level);
   if (difficulty === "Deadly") {
-    return "bg-red-500";
+    return "red";
   }
   if (difficulty === "Hard") {
-    return "bg-yellow-500";
+    return "yellow";
   }
   if (difficulty === "Easy") {
-    return "bg-green-500";
+    return "green";
   }
   if (difficulty === "Standard") {
-    return "bg-blue-500";
+    return "blue";
   }
 }
 

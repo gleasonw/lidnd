@@ -36,7 +36,7 @@ export default async function CampaignLayout(props: {
   console.log(`loaded campaign layout in ${performance.now() - start}ms`);
   return (
     <CampaignId value={campaign.id}>
-      <div className="mx-2 flex flex-col overflow-hidden max-h-full">
+      <div className="mx-2 flex flex-col overflow-hidden max-h-full h-full">
         {children}
       </div>
     </CampaignId>

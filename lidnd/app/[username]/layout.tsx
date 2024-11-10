@@ -65,7 +65,7 @@ export default async function CampaignsLayout({
                 />
               }
             />
-            <div className="flex flex-col max-h-full overflow-hidden">
+            <div className="flex flex-col max-h-full overflow-hidden h-full">
               {children}
             </div>
           </ClientOverlays>

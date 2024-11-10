@@ -90,6 +90,7 @@ export const campaigns = pgTable(
     slug: varchar("slug", { length: 256 }).notNull().default(""),
     description: text("description"),
     party_level: integer("party_level").notNull().default(1),
+    focused_encounter_id: uuid("focused_encounter_id"),
     started_at: timestamp("started_at"),
     created_at: timestamp("created_at").defaultNow(),
     user_id: text("user_id")

@@ -92,11 +92,13 @@ export const appRouter = t.router({
     return encounter;
   }),
 
-  encounters: protectedProcedure.input(z.string()).query(async (opts) => {
-    const campaignId = opts.input;
+  encountersInCampaign: protectedProcedure
+    .input(z.string())
+    .query(async (opts) => {
+      const campaignId = opts.input;
 
-    return await ServerEncounter.encountersInCampaign(opts.ctx, campaignId);
-  }),
+      return await ServerEncounter.encountersInCampaign(opts.ctx, campaignId);
+    }),
 
   encounterFromCampaignIndex: protectedProcedure
     .input(

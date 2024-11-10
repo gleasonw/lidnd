@@ -2,17 +2,21 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import * as R from "remeda";
-import React, { useState } from "react";
-import { Card, CardDescription } from "@/components/ui/card";
+import React, { createContext, useContext, useMemo, useState } from "react";
+import { Card } from "@/components/ui/card";
 import {
   Clock,
+  Eye,
   GripVertical,
+  MoreVertical,
+  Pencil,
+  Play,
   Plus,
+  Skull,
   Smile,
   Trash,
   User,
   UserPlus,
-  Users,
   X,
 } from "lucide-react";
 import { api } from "@/trpc/react";
@@ -25,24 +29,26 @@ import {
   useUpdateCampaign,
 } from "../hooks";
 import { ButtonWithTooltip } from "@/components/ui/tip";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 import {
+  CompactMonsterUploadForm,
   MonsterUploadForm,
   PlayerUploadForm,
 } from "@/encounters/full-creature-add-form";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
-import { Switch } from "@/components/ui/switch";
 import { EncounterUtils } from "@/utils/encounters";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useUser } from "@/app/[username]/user-provider";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
-import { useUpdateEncounter } from "@/encounters/[encounter_index]/hooks";
+import {
+  useCreateCreatureInEncounter,
+  useDeleteEncounter,
+  useEncounterQueryUtils,
+  useUpdateEncounter,
+} from "@/encounters/[encounter_index]/hooks";
 import { appRoutes } from "@/app/routes";
-import { useRouter } from "next/navigation";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useEditor } from "@tiptap/react";
@@ -51,14 +57,18 @@ import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
 import { useDebouncedCallback } from "use-debounce";
 import { compareCreatedAt, formatSeconds } from "@/lib/utils";
+import { EncounterDifficulty } from "@/encounters/[encounter_index]/encounter-top-bar";
+import { makeAutoObservable, runInAction } from "mobx";
+import { observer } from "mobx-react-lite";
+import { LidndPopover } from "@/encounters/base-popover";
+import type { Campaign } from "@/app/[username]/types";
+import {
+  ExistingMonster,
+  ParticipantUpload,
+} from "@/encounters/[encounter_index]/participant-add-form";
+import type { CampaignWithData } from "@/server/campaigns";
 
 export function ExistingCreaturesForPartyAdd() {
   const [name, setName] = useState("");
@@ -97,16 +107,16 @@ export function ExistingCreaturesForPartyAdd() {
   );
 }
 
-export function CampaignParty() {
-  const [campaign] = useCampaign();
+export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
   const playersInCampaign = campaign?.campaignToPlayers;
-  const { mutate: removePlayer } = useRemoveFromParty();
+  const { mutate: removePlayer } = useRemoveFromParty(campaign);
 
-  const { mutate: onPlayerUpload } = useAddNewToParty();
-  const { mutate: updateCampaign } = useUpdateCampaign();
+  const { mutate: onPlayerUpload } = useAddNewToParty(campaign);
+  const { mutate: updateCampaign } = useUpdateCampaign(campaign);
   const [partyLevel, setPartyLevel] = React.useState(
     campaign?.party_level ?? 1,
   );
+  const [isEditingParty, setIsEditingParty] = React.useState(false);
 
   const handlePartyLevelChange = useDebouncedCallback((level: string) => {
     const stringAsInt = parseInt(level);
@@ -119,93 +129,98 @@ export function CampaignParty() {
   });
 
   return (
-    <div className="flex flex-col gap-5">
-      <span className="flex gap-5 items-center">
-        <Users />
-        <span className="py-2 text-xl">Party</span>
-
-        <label className="flex gap-2 items-center font-light whitespace-nowrap">
-          Level
-          <Input
-            type="number"
-            className="w-16"
-            value={partyLevel}
-            onChange={(e) => {
-              setPartyLevel(Math.max(1, parseInt(e.target.value)));
-              handlePartyLevelChange(e.target.value);
-            }}
-          />
-        </label>
-      </span>
-      <div className="flex flex-wrap gap-3">
+    <div className="flex gap-5">
+      <div className="flex">
         {playersInCampaign.map(({ player }) => (
-          <Card
-            className="flex gap-2 h-12 pl-5 w-80 overflow-hidden max-h-full"
+          <div
             key={player.id}
+            className="flex flex-col justify-center items-center"
           >
             <CreatureIcon
               key={player.id}
               creature={player}
-              size="small"
+              size="v-small"
               objectFit="contain"
             />
-            <span className="flex gap-2 items-center w-full justify-between">
-              <span className="truncate">{player.name}</span>
-              <ButtonWithTooltip
-                variant="ghost"
-                text="Delete"
-                className="opacity-25"
-                onClick={() => removePlayer(player.id)}
-              >
-                <X />
-              </ButtonWithTooltip>
-            </span>
-          </Card>
-        ))}{" "}
-        <LidndDialog
-          title={"Add new party member"}
-          trigger={
-            <ButtonWithTooltip text="Add new party member" variant="ghost">
-              <UserPlus />
-            </ButtonWithTooltip>
-          }
-          content={
-            <Tabs defaultValue="new">
-              <span className="flex gap-1 flex-wrap pr-2">
-                <TabsList>
-                  <TabsTrigger value="new">
-                    <Plus /> Add new creature
-                  </TabsTrigger>
-                  <TabsTrigger value="existing">
-                    <UserPlus /> Existing creatures
-                  </TabsTrigger>
-                </TabsList>
+            {isEditingParty ? (
+              <span className="flex gap-2 items-center w-full justify-between">
+                <ButtonWithTooltip
+                  variant="ghost"
+                  text="Delete"
+                  className="opacity-25"
+                  onClick={() => removePlayer(player.id)}
+                >
+                  <X />
+                </ButtonWithTooltip>
               </span>
-              <TabsContent value="new">
-                <Tabs defaultValue="player">
+            ) : null}
+          </div>
+        ))}
+        <ButtonWithTooltip
+          text={isEditingParty ? "Done" : "Edit party"}
+          variant="ghost"
+          onClick={() => setIsEditingParty(!isEditingParty)}
+        >
+          {isEditingParty ? <Eye /> : <Pencil />}
+        </ButtonWithTooltip>
+        {isEditingParty ? (
+          <LidndDialog
+            title={"Add new party member"}
+            trigger={
+              <ButtonWithTooltip text="Add new party member" variant="ghost">
+                <UserPlus />
+              </ButtonWithTooltip>
+            }
+            content={
+              <Tabs defaultValue="new">
+                <span className="flex gap-1 flex-wrap pr-2">
                   <TabsList>
-                    <TabsTrigger value="player" className="flex gap-3">
-                      <User /> Player
+                    <TabsTrigger value="new">
+                      <Plus /> Add new creature
                     </TabsTrigger>
-                    <TabsTrigger value="npc" className="flex gap-3">
-                      <Smile /> NPC
+                    <TabsTrigger value="existing">
+                      <UserPlus /> Existing creatures
                     </TabsTrigger>
                   </TabsList>
-                  <TabsContent value="npc">
-                    <MonsterUploadForm uploadCreature={onPlayerUpload} />
-                  </TabsContent>
-                  <TabsContent value="player">
-                    <PlayerUploadForm uploadCreature={onPlayerUpload} />
-                  </TabsContent>
-                </Tabs>
-              </TabsContent>
-              <TabsContent value="existing">
-                <ExistingCreaturesForPartyAdd />
-              </TabsContent>
-            </Tabs>
-          }
-        />
+                </span>
+                <TabsContent value="new">
+                  <Tabs defaultValue="player">
+                    <TabsList>
+                      <TabsTrigger value="player" className="flex gap-3">
+                        <User /> Player
+                      </TabsTrigger>
+                      <TabsTrigger value="npc" className="flex gap-3">
+                        <Smile /> NPC
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="npc">
+                      <MonsterUploadForm uploadCreature={onPlayerUpload} />
+                    </TabsContent>
+                    <TabsContent value="player">
+                      <PlayerUploadForm uploadCreature={onPlayerUpload} />
+                    </TabsContent>
+                  </Tabs>
+                </TabsContent>
+                <TabsContent value="existing">
+                  <ExistingCreaturesForPartyAdd />
+                </TabsContent>
+              </Tabs>
+            }
+          />
+        ) : null}
       </div>
+      <label className="flex gap-2 items-center font-light whitespace-nowrap">
+        Level
+        <Input
+          type="number"
+          className="w-16"
+          value={partyLevel}
+          onChange={(e) => {
+            setPartyLevel(Math.max(1, parseInt(e.target.value)));
+            handlePartyLevelChange(e.target.value);
+          }}
+        />
+      </label>
     </div>
   );
 }
@@ -214,8 +229,9 @@ export function SessionEncounters() {
   const campaignId = useCampaignId();
   const [acceptDrop, setAcceptDrop] = useState(false);
   const { mutate: updateEncounter } = useUpdateEncounter();
-  const { encounters } = api.useUtils();
-  const { data: campaignEncounters } = api.encounters.useQuery(campaignId);
+  const { encountersInCampaign: encounters } = api.useUtils();
+  const { data: campaignEncounters } =
+    api.encountersInCampaign.useQuery(campaignId);
   const activeEncounters = campaignEncounters
     ? R.sort(
         EncounterUtils.byStatus(campaignEncounters).active ?? [],
@@ -224,7 +240,6 @@ export function SessionEncounters() {
     : [];
 
   const [campaign] = useCampaign();
-  const { data: settings } = api.settings.useQuery();
   const lastOrder = activeEncounters?.length
     ? (R.firstBy(activeEncounters, [(e) => e.order, "desc"])?.order ?? 1) + 1
     : 1;
@@ -256,7 +271,7 @@ export function SessionEncounters() {
   );
 
   return (
-    <section
+    <div
       key={"active"}
       onDrop={(e) => {
         if (!acceptDrop) {
@@ -290,14 +305,16 @@ export function SessionEncounters() {
         setAcceptDrop(false);
       }}
       className={clsx(
-        {
-          "border-black": acceptDrop,
-        },
-        "border-2 col-span-1 border-dashed shadow-lg flex w-full flex-col transition-all rounded-sm p-3 max-h-full",
+        "flex-col flex w-full gap-3 transition-all rounded-sm max-h-full p-5",
       )}
     >
-      <div className="flex justify-between items-center">
-        <span className="text-lg text-gray-900">Session docket</span>
+      <div className="flex justify-between items-center w-full">
+        <span className="text-lg text-gray-900 font-bold">Session docket</span>
+        <span className="opacity-50 flex items-center gap-2 text-sm ml-auto">
+          <Clock className="text-4xl" />
+          <span>Est. duration:</span>
+          {formatSeconds(sumActiveDuration)}
+        </span>
         <Button
           variant="ghost"
           className="text-blue-500"
@@ -308,20 +325,21 @@ export function SessionEncounters() {
           Remove all
         </Button>
       </div>
-      <div className="grid grid-cols-2 gap-5 max-h-full">
-        <Card className="p-3 flex flex-col gap-2 text-sm">
-          <span className="opacity-50 flex items-center gap-2">
-            <Clock className="text-4xl" />
-            Est. duration
-          </span>
-          {formatSeconds(sumActiveDuration)}
-        </Card>
-      </div>
 
-      <ul className="flex flex-wrap p-1 flex-col sm:flex-row items-center overflow-auto max-h-full">
-        {activeEncounters?.length === 0 ? (
-          <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
-        ) : null}
+      <ul
+        className={clsx(
+          "flex overflow-auto max-h-full p-2 gap-2 border-2 border-dashed h-32 items-center",
+
+          {
+            "border-black": acceptDrop,
+            "items-center justify-center": activeEncounters?.length === 0,
+            "border-transparent": activeEncounters?.length > 0 && !acceptDrop,
+          },
+        )}
+      >
+        {activeEncounters?.length === 0
+          ? "Drop encounters here to plan session"
+          : null}
         {activeEncounters?.map((encounter, index) => {
           const priorEncounter = activeEncounters[index - 1];
           const nextEncounter = activeEncounters[index + 1];
@@ -340,7 +358,7 @@ export function SessionEncounters() {
               encounterCard={
                 <Card
                   className={clsx(
-                    "flex flex-col transition-all h-32 w-64 sm:w-80 p-4 gap-3 justify-between",
+                    "flex transition-all p-4 gap-3 justify-between items-center max-w-sm",
                   )}
                   draggable
                   onDragStart={(e) => {
@@ -351,24 +369,13 @@ export function SessionEncounters() {
                     );
                   }}
                 >
-                  <MonstersInEncounter id={encounter.id} />
+                  <GripVertical className="text-gray-500" />
                   <h2 className={"w-full flex justify-between items-center"}>
                     <span className="max-w-full truncate text-lg">
                       {encounter.name ? encounter.name : "Unnamed"}
                     </span>
-                    {settings && (
-                      <Badge
-                        className={EncounterUtils.difficultyColor(
-                          encounter,
-                          campaign,
-                        )}
-                      >
-                        {EncounterUtils.difficulty(
-                          encounter,
-                          campaign?.party_level,
-                        )}
-                      </Badge>
-                    )}
+                    <MonstersInEncounter id={encounter.id} />
+                    <DifficultyBadge encounter={encounter} />
                   </h2>
                 </Card>
               }
@@ -376,182 +383,151 @@ export function SessionEncounters() {
           );
         })}
       </ul>
-    </section>
+    </div>
   );
 }
 
+class EncounterArchiveStore {
+  editingEncounters: Set<string> = new Set();
+
+  constructor() {
+    makeAutoObservable(this);
+  }
+
+  setEditingEncounter(encounterId: string) {
+    this.editingEncounters.add(encounterId);
+  }
+
+  setDoneEditingEncounter(encounterId: string) {
+    this.editingEncounters.delete(encounterId);
+  }
+}
+
+const EncounterArchiveContext = createContext<EncounterArchiveStore | null>(
+  null,
+);
+const useEncounterArchive = () => {
+  const store = useContext(EncounterArchiveContext);
+  if (!store) {
+    throw new Error(
+      "useEncounterArchive must be used within a EncounterArchiveProvider",
+    );
+  }
+  return store;
+};
+
 export function EncounterArchive() {
+  const archiveStore = useMemo(() => new EncounterArchiveStore(), []);
   const campaignId = useCampaignId();
   const [acceptDrop, setAcceptDrop] = useState(false);
-  const [campaign] = useCampaign();
   const { mutate: updateEncounter } = useUpdateEncounter();
-  const { data: encounters } = api.encounters.useQuery(campaignId);
+  const { data: encounters } = api.encountersInCampaign.useQuery(campaignId);
   const inactiveEncounters = encounters
-    ? R.sort(
-        EncounterUtils.byStatus(encounters).inactive ?? [],
-        compareCreatedAt,
-      )
+    ? R.sort(encounters, compareCreatedAt).reverse()
     : [];
 
-  const { data: settings } = api.settings.useQuery();
   const lastOrder = inactiveEncounters?.length
     ? (R.firstBy(inactiveEncounters, [(e) => e.order, "desc"])?.order ?? 1) + 1
     : 1;
 
   return (
-    <section
-      key={"inactive"}
-      onDrop={(e) => {
-        if (!acceptDrop) {
-          return;
-        }
-        const encounter = typedDrag.get(e.dataTransfer, dragTypes.encounter);
-        if (!encounter) {
-          console.error("No encounter found when dragging");
-          return;
-        }
-        updateEncounter({
-          id: encounter.id,
-          label: "inactive",
-          order: lastOrder,
-        });
-        setAcceptDrop(false);
-      }}
-      onDragEnter={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      onDragOver={(e) => {
-        if (!typedDrag.includes(e.dataTransfer, dragTypes.encounter)) {
-          return;
-        }
-        e.preventDefault();
-        e.stopPropagation();
-        setAcceptDrop(true);
-      }}
-      onDragLeave={() => {
-        setAcceptDrop(false);
-      }}
-      className={clsx(
-        {
-          "border-black": acceptDrop,
-          "border-transparent": !acceptDrop,
-        },
-        "border-2 border-dashed flex flex-col w-full transition-all rounded-md max-h-full overflow-auto h-full",
-      )}
-    >
-      <ul className="flex flex-col">
-        {inactiveEncounters?.length === 0 ? (
-          <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
-        ) : null}
-        {inactiveEncounters?.map((encounter, index) => {
-          const priorEncounter = inactiveEncounters[index - 1];
-          const nextEncounter = inactiveEncounters[index + 1];
-
-          return (
-            <DraggableEncounterCard
-              encounter={encounter}
-              category={"inactive"}
-              previousOrder={
-                priorEncounter ? priorEncounter.order : encounter.order - 1
-              }
-              nextOrder={
-                nextEncounter ? nextEncounter.order : encounter.order + 1
-              }
-              key={encounter.id}
-              encounterCard={
-                <Card
-                  className={clsx(
-                    "flex transition-all w-full p-4 h-20 gap-3 justify-between items-center",
-                  )}
-                  draggable
-                  onDragStart={(e) => {
-                    typedDrag.set(
-                      e.dataTransfer,
-                      dragTypes.encounter,
-                      encounter,
-                    );
-                  }}
-                >
-                  <GripVertical className="flex-shrink-0 flex-grow-0 opacity-25" />
-                  <h2 className={"flex items-center"}>
-                    <span className="max-w-full truncate text-lg">
-                      {encounter.name ? encounter.name : "Unnamed"}
-                    </span>
-                  </h2>
-                  {settings && (
-                    <Badge
-                      className={`${EncounterUtils.difficultyColor(
-                        encounter,
-                        campaign,
-                      )} flex-grow-0 h-5 rounded-sm`}
-                    >
-                      {EncounterUtils.difficulty(
-                        encounter,
-                        campaign?.party_level,
-                      )}
-                    </Badge>
-                  )}
-                  <CardDescription className="flex-grow-0 text-sm max-w-full truncate overflow-hidden max-h-full">
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: encounter.description ?? "",
-                      }}
-                      className="max-w-full truncate max-h-full"
-                    />
-                  </CardDescription>
-                  <div className="ml-auto">
-                    <MonstersInEncounter id={encounter.id} />
-                  </div>
-                </Card>
-              }
-            />
-          );
-        })}
-      </ul>
-    </section>
+    <div className="flex max-h-full h-full flex-col gap-5 overflow-hidden">
+      <EncounterArchiveContext.Provider value={archiveStore}>
+        <h1 className={"text-2xl gap-5 flex items-center"}>
+          <Skull />
+          <span className="py-2 text-xl">Encounters</span>
+          <CreateEncounterButton />
+        </h1>
+        <section
+          key={"inactive"}
+          onDrop={(e) => {
+            if (!acceptDrop) {
+              return;
+            }
+            const encounter = typedDrag.get(
+              e.dataTransfer,
+              dragTypes.encounter,
+            );
+            if (!encounter) {
+              console.error("No encounter found when dragging");
+              return;
+            }
+            updateEncounter({
+              id: encounter.id,
+              label: "inactive",
+              order: lastOrder,
+            });
+            setAcceptDrop(false);
+          }}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onDragOver={(e) => {
+            if (!typedDrag.includes(e.dataTransfer, dragTypes.encounter)) {
+              return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            setAcceptDrop(true);
+          }}
+          onDragLeave={() => {
+            setAcceptDrop(false);
+          }}
+          className={clsx(
+            {
+              "border-black": acceptDrop,
+              "border-transparent": !acceptDrop,
+            },
+            "border-2 border-dashed flex flex-col w-full transition-all rounded-md max-h-full overflow-auto h-full",
+          )}
+        >
+          <InactiveEncounterList />
+        </section>
+      </EncounterArchiveContext.Provider>
+    </div>
   );
 }
 
-export function CreateEncounterButton({
-  category,
-}: {
-  className?: string;
-  category: Encounter["label"];
-}) {
-  const { encounters } = api.useUtils();
+export function EditingEncounterCard() {
+  const campaignId = useCampaignId();
   const [campaign] = useCampaign();
+  const { data: encounters } = api.encountersInCampaign.useQuery(campaignId);
+  const focusedEncounter =
+    encounters?.find((e) => e.id === campaign.focused_encounter_id) ??
+    encounters?.[0] ??
+    null;
+  if (!focusedEncounter) {
+    return null;
+  }
+  return (
+    <EditEncounter key={focusedEncounter.id} encounter={focusedEncounter} />
+  );
+}
 
+function EditEncounter({
+  encounter,
+}: {
+  encounter: EncounterWithParticipants;
+}) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [createMore, setCreateMore] = useState(false);
-  const [dialogIsOpen, setDialogIsOpen] = useState(false);
-  const router = useRouter();
-  const user = useUser();
-
-  const { mutate: createDefaultEncounter, isPending } =
-    api.createEncounter.useMutation({
-      onMutate: async (newEncounter) => {
-        await encounters.cancel(campaign.id);
-        const previous = encounters.getData(campaign.id);
-        encounters.setData(campaign.id, (old) => {
-          if (!old) return [];
-          const placeholder = EncounterUtils.placeholder(newEncounter);
-          return [...old, { ...placeholder, participants: [] }];
-        });
-        return { previous };
-      },
-      onSuccess: async (encounter) => {
-        if (!createMore) {
-          router.push(appRoutes.encounter(campaign, encounter, user));
-        }
-
-        return await encounters.invalidate();
-      },
-      onError: (err, newEn, context) => {
-        encounters.setData(campaign.id, context?.previous);
-      },
+  const debouncedNameUpdate = useDebouncedCallback((name: string) => {
+    updateEncounter({
+      ...encounter,
+      name,
     });
+  }, 500);
+  const debouncedDescriptionUpdate = useDebouncedCallback(
+    (description: string) => {
+      updateEncounter({
+        ...encounter,
+        description,
+      });
+    },
+    500,
+  );
+  const { mutate: updateEncounter } = useUpdateEncounter();
 
   const configuredPlaceholder = Placeholder.configure({
     placeholder: "Objectives, monster tactics, etc...",
@@ -560,67 +536,256 @@ export function CreateEncounterButton({
   const editor = useEditor({
     extensions: [StarterKit, configuredPlaceholder],
     content: description,
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const content = editor.getHTML();
       setDescription(content);
+      debouncedDescriptionUpdate(content);
     },
+  });
+  const monsters = encounter.participants.filter((p) =>
+    ParticipantUtils.isAdversary(p),
+  );
+  const { mutate: deleteEncounter } = useDeleteEncounter();
+  const { encounterById } = api.useUtils();
+  const { invalidateAll, cancelAll } = useEncounterQueryUtils();
+  const { mutate: removeParticipant } =
+    api.removeParticipantFromEncounter.useMutation({
+      onMutate: async (data) => {
+        await cancelAll(encounter);
+        const previousEncounterData = encounterById.getData(encounter.id);
+        encounterById.setData(encounter.id, (old) => {
+          if (!old) {
+            return;
+          }
+
+          const removedParticipant = old.participants.find(
+            (p) => p.id === data.participant_id,
+          );
+
+          if (!removedParticipant) {
+            throw new Error("No participant found when removing");
+          }
+
+          return EncounterUtils.removeParticipant(data.participant_id, old);
+        });
+        return { previousEncounterData };
+      },
+      onSettled: async () => {
+        return await invalidateAll(encounter);
+      },
+    });
+  const { mutate: createCreatureInEncounter } = useCreateCreatureInEncounter({
+    encounter,
   });
 
   return (
-    <Dialog
-      open={dialogIsOpen}
-      onOpenChange={(isOpen) => setDialogIsOpen(isOpen)}
-    >
-      <DialogTrigger asChild>
-        <ButtonWithTooltip
-          variant="outline"
-          text="Create encounter"
-          onClick={() => setDialogIsOpen(true)}
-        >
-          <Plus />
-        </ButtonWithTooltip>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogTitle>Create encounter</DialogTitle>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            createDefaultEncounter({
-              name,
-              description,
-              campaign_id: campaign.id,
-              label: category,
-            });
-            setName("");
-            setDescription("");
+    <Card className="w-full h-full max-h-full flex flex-col gap-5 p-5 relative shadow-lg overflow-hidden">
+      <div className="flex w-full items-center gap-2 justify-between">
+        <LidndTextInput
+          value={name}
+          variant="ghost"
+          placeholder={encounter.name ?? "Unnamed encounter"}
+          className="max-w-sm text-lg"
+          onChange={(e) => {
+            setName(e.target.value);
+            debouncedNameUpdate(e.target.value);
           }}
-          className={"flex flex-col gap-5 pt-3"}
-        >
-          <LidndTextInput
-            placeholder="Encounter name"
-            value={name}
+        />
+        <LidndPopover trigger={<MoreVertical />}>
+          <Button
             variant="ghost"
-            className="text-2xl"
-            onChange={(e) => setName(e.target.value)}
-          />
-          <LidndTextArea placeholder="Encounter description" editor={editor} />
-          <div className="flex justify-between items-center">
-            <div className="ml-auto flex gap-2 items-center">
-              <label className="flex gap-2">
-                <Switch
-                  defaultChecked={createMore}
-                  onCheckedChange={(checked) => setCreateMore(checked)}
-                />
-                <span>Create more</span>
-              </label>
-              <Button type="submit">
-                {isPending ? "Creating..." : "Create"}
-              </Button>
-            </div>
+            className="text-red-500"
+            onClick={() => {
+              deleteEncounter(encounter.id);
+            }}
+          >
+            Delete encounter
+            <Trash />
+          </Button>
+        </LidndPopover>
+      </div>
+      <LidndTextArea placeholder="Encounter description" editor={editor} />
+      <EncounterDifficulty encounter={encounter} />
+      <div className="flex flex-wrap gap-3 items-center">
+        {monsters.map((m) => (
+          <div
+            key={m.id}
+            className=" flex flex-wrap items-center gap-5 h-12 p-1 rounded-full bg-gray-100 "
+          >
+            <CreatureIcon creature={m.creature} size={"v-small"} />
+            <span className="truncate">{m.creature.name}</span>
+            <span className="truncate text-gray-500">
+              CR {m.creature.challenge_rating}
+            </span>
+            <ButtonWithTooltip
+              text="Remove"
+              variant="ghost"
+              className="text-gray-300"
+            >
+              <Trash
+                onClick={() =>
+                  removeParticipant({
+                    encounter_id: encounter.id,
+                    participant_id: m.id,
+                  })
+                }
+              />
+            </ButtonWithTooltip>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        ))}
+      </div>
+      <ParticipantUpload
+        encounter={encounter}
+        form={
+          <CompactMonsterUploadForm
+            uploadCreature={(creature) =>
+              createCreatureInEncounter({
+                creature,
+                participant: { is_ally: false },
+              })
+            }
+          />
+        }
+        existingCreatures={<ExistingMonster encounter={encounter} />}
+      />
+    </Card>
+  );
+}
+
+export function DifficultyBadge({
+  encounter,
+}: {
+  encounter: EncounterWithParticipants;
+}) {
+  const [campaign] = useCampaign();
+  const diffColor = EncounterUtils.difficultyColor(encounter, campaign);
+  return (
+    <Badge
+      className={`bg-${diffColor}-100 text-${diffColor}-700 flex-grow-0 h-5 ml-auto rounded-sm`}
+    >
+      {EncounterUtils.difficulty(encounter, campaign?.party_level)}
+    </Badge>
+  );
+}
+
+const InactiveEncounterList = observer(function InactiveEncounterList() {
+  const campaignId = useCampaignId();
+  const { data: encounters } = api.encountersInCampaign.useQuery(campaignId);
+  const inactiveEncounters = encounters
+    ? R.sort(encounters, compareCreatedAt).reverse()
+    : [];
+
+  const [campaign] = useCampaign();
+  const user = useUser();
+  const { mutate: updateCampaign } = useUpdateCampaign(campaign);
+  return (
+    <ul className="flex flex-col gap-3">
+      {inactiveEncounters?.length === 0 ? (
+        <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
+      ) : null}
+      {inactiveEncounters?.map((encounter, index) => {
+        const priorEncounter = inactiveEncounters[index - 1];
+        const nextEncounter = inactiveEncounters[index + 1];
+
+        return (
+          <DraggableEncounterCard
+            encounter={encounter}
+            category={"inactive"}
+            previousOrder={
+              priorEncounter ? priorEncounter.order : encounter.order - 1
+            }
+            nextOrder={
+              nextEncounter ? nextEncounter.order : encounter.order + 1
+            }
+            key={encounter.id}
+            encounterCard={
+              <Card
+                className={clsx(
+                  "flex flex-col transition-all w-full p-3 gap-3",
+                )}
+                draggable
+                onDragStart={(e) => {
+                  typedDrag.set(e.dataTransfer, dragTypes.encounter, encounter);
+                }}
+                onClick={() => {
+                  updateCampaign({
+                    ...campaign,
+                    focused_encounter_id: encounter.id,
+                  });
+                }}
+              >
+                <div className="flex flex-col">
+                  <div className="flex items-center text-gray-500">
+                    <GripVertical className="flex-shrink-0 flex-grow-0" />
+                    <Link href={appRoutes.encounter(campaign, encounter, user)}>
+                      <ButtonWithTooltip
+                        text="View"
+                        variant="ghost"
+                        size={"sm"}
+                      >
+                        <Play />
+                      </ButtonWithTooltip>
+                    </Link>
+                    <DifficultyBadge encounter={encounter} />
+                  </div>
+                  <h2 className={"flex items-center"}>
+                    <span className="max-w-full truncate">
+                      {encounter.name ? encounter.name : "Unnamed"}
+                    </span>
+                  </h2>
+                </div>
+
+                <MonstersInEncounter id={encounter.id} />
+              </Card>
+            }
+          />
+        );
+      })}
+    </ul>
+  );
+});
+
+export function CreateEncounterButton() {
+  const { encountersInCampaign: encounters } = api.useUtils();
+  const [campaign] = useCampaign();
+  const { mutate: createDefaultEncounter } = api.createEncounter.useMutation({
+    onMutate: async (newEncounter) => {
+      await encounters.cancel(campaign.id);
+      const previous = encounters.getData(campaign.id);
+      encounters.setData(campaign.id, (old) => {
+        if (!old) return [];
+        const placeholder = EncounterUtils.placeholder(newEncounter);
+        return [...old, { ...placeholder, participants: [] }];
+      });
+      return { previous };
+    },
+    onSuccess: async (encounter) => {
+      return await encounters.invalidate();
+    },
+    onError: (err, newEn, context) => {
+      encounters.setData(campaign.id, context?.previous);
+    },
+  });
+  const encounterUuid = crypto.randomUUID();
+  const archiveStore = useEncounterArchive();
+  return (
+    <ButtonWithTooltip
+      text="Create encounter"
+      variant="ghost"
+      onClick={() => {
+        runInAction(() => archiveStore.setEditingEncounter(encounterUuid));
+        createDefaultEncounter({
+          name: "",
+          description: "",
+          campaign_id: campaign.id,
+          label: "inactive",
+          id: encounterUuid,
+        });
+      }}
+    >
+      <Plus />
+    </ButtonWithTooltip>
   );
 }
 
@@ -655,22 +820,6 @@ function DraggableEncounterCard(props: {
     "none",
   );
   const { mutate: updateEncounter } = useUpdateEncounter();
-  const user = useUser();
-  const [campaign] = useCampaign();
-  const { encounters: encountersQuery } = api.useUtils();
-  const { mutate: deleteEncounter } = api.deleteEncounter.useMutation({
-    onSettled: async () => {
-      await encountersQuery.invalidate();
-    },
-    onMutate: async (id) => {
-      await encountersQuery.cancel();
-      const previous = encountersQuery.getData();
-      encountersQuery.setData(campaign.id, (old) => {
-        return old?.filter((encounter) => encounter.id !== id);
-      });
-      return { previous };
-    },
-  });
   return (
     <li
       onDrop={(e) => {
@@ -691,45 +840,29 @@ function DraggableEncounterCard(props: {
         setAcceptDrop("none");
       }}
       key={encounter.id}
-      className={clsx("transition-all -mb-[2px] p-4 flex-grow-0")}
+      className={clsx("transition-all -mb-[2px] flex-grow-0 cursor-grab")}
     >
-      <ContextMenu>
-        <ContextMenuTrigger>
-          <Link
-            href={appRoutes.encounter(campaign, encounter, user)}
-            className=""
-            prefetch={true}
-          >
-            {props?.encounterCard}
-          </Link>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem
-            onClick={() => deleteEncounter(encounter.id)}
-            className="flex gap-2 items-center"
-          >
-            Delete encounter
-            <Trash className="opacity-50" />
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
+      {props.encounterCard}
     </li>
   );
 }
 
 export function MonstersInEncounter({ id }: { id: string }) {
   const campaignId = useCampaignId();
-  const { data: encounters } = api.encounters.useQuery(campaignId);
+  const { data: encounters } = api.encountersInCampaign.useQuery(campaignId);
 
   const participants = encounters
     ?.find((encounter) => encounter.id === id)
     ?.participants.filter((p) => !ParticipantUtils.isPlayer(p));
 
   return (
-    <div className={"flex gap-3 overflow-hidden pointer-events-none"}>
+    <div className={"flex overflow-hidden pointer-events-none"}>
       {participants?.map((p) => (
-        <div className={"rounded-full w-12 h-12 flex items-center"} key={p.id}>
-          <CreatureIcon creature={p.creature} size="small" objectFit="cover" />
+        <div
+          className={"rounded-full w-12 h-12 flex items-center overflow-hidden"}
+          key={p.id}
+        >
+          <CreatureIcon creature={p.creature} size="v-small" />
         </div>
       ))}
     </div>
