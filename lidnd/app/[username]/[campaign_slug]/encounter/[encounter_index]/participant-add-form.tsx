@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -15,6 +14,7 @@ import {
   useCreateCreatureInEncounter,
   useAddExistingCreatureToEncounter,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
+import { ButtonWithTooltip } from "@/components/ui/tip";
 
 const AllyContext = createContext<boolean | null>(null);
 
@@ -72,10 +72,7 @@ export const ParticipantUpload = function ParticipantUpload({
   });
 
   return (
-    <Tabs
-      defaultValue="new"
-      className="flex flex-col gap-5 max-h-full overflow-hidden"
-    >
+    <Tabs defaultValue="new" className="flex flex-col gap-5 min-h-0 flex-1">
       <span className="flex gap-1 flex-wrap pr-2">
         <TabsList>
           <TabsTrigger value="new">
@@ -100,7 +97,7 @@ export const ParticipantUpload = function ParticipantUpload({
           />
         )}
       </TabsContent>
-      <TabsContent value="existing" className="overflow-hidden max-h-full flex">
+      <TabsContent value="existing">
         {existingCreatures ?? <ExistingCreature encounter={encounter} />}
       </TabsContent>
     </Tabs>
@@ -115,7 +112,7 @@ export function ExistingMonster({ encounter }: { encounter: Encounter }) {
   });
 
   return (
-    <div className="flex flex-col gap-5 max-h-full overflow-hidden h-full">
+    <div className="flex flex-col max-h-full">
       <Input
         placeholder="Search..."
         type="text"
@@ -123,7 +120,11 @@ export function ExistingMonster({ encounter }: { encounter: Encounter }) {
         value={name}
       />
       <Suspense key={name} fallback={<div>Loading creatures</div>}>
-        <div className={"flex flex-wrap gap-5 h-96 overflow-auto"}>
+        <div
+          className={
+            "flex flex-wrap overflow-auto max-h-full gap-5 min-h-0 h-48"
+          }
+        >
           {creatures?.map((creature) => (
             <ListedCreature
               key={creature.id}
@@ -150,7 +151,7 @@ export function ExistingCreature({
   });
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 w-full">
       <Input
         placeholder="Search..."
         type="text"
@@ -158,7 +159,7 @@ export function ExistingCreature({
         value={name}
       />
       <Suspense key={name} fallback={<div>Loading creatures</div>}>
-        <div className={"flex flex-col gap-2 h-96 overflow-auto"}>
+        <div className={"flex flex-col gap-2 h-96 overflow-auto w-full"}>
           {creatures?.map((creature) => (
             <ListedCreature
               key={creature.id}
@@ -189,11 +190,11 @@ export const ListedCreature = observer<ListedCreatureProps>(
     return (
       <div className="flex items-center space-x-2 justify-between shadow-lg p-5">
         <div className="flex gap-5">
-          <CreatureIcon creature={creature} size="small" />
+          <CreatureIcon creature={creature} size="v-small" />
           <div className="flex flex-col">
-            <span className="font-semibold">{creature.name}</span>
+            <span>{creature.name}</span>
             {creature.challenge_rating ? (
-              <span className="flex gap-10 flex-wrap">
+              <span className="flex gap-10 flex-wrap text-gray-500">
                 <span className="flex gap-2 flex-wrap">
                   <Skull />
                   {creature.challenge_rating}
@@ -206,8 +207,9 @@ export const ListedCreature = observer<ListedCreatureProps>(
             ) : null}
           </div>
         </div>
-        <Button
+        <ButtonWithTooltip
           variant="outline"
+          text="Add"
           key={creature.id}
           onClick={(e) => {
             e.stopPropagation();
@@ -218,8 +220,8 @@ export const ListedCreature = observer<ListedCreatureProps>(
             });
           }}
         >
-          <Plus /> Add
-        </Button>
+          <Plus />
+        </ButtonWithTooltip>
       </div>
     );
   },

@@ -306,7 +306,7 @@ export function SessionEncounters() {
         setAcceptDrop(false);
       }}
       className={clsx(
-        "flex-col flex w-full gap-3 transition-all rounded-sm max-h-full p-5",
+        "flex-col flex w-full gap-3 transition-all rounded-sm max-h-full",
       )}
     >
       <div className="flex justify-between items-center w-full">
@@ -581,7 +581,7 @@ function EditEncounter({
   });
 
   return (
-    <Card className="w-full h-full max-h-full flex flex-col gap-5 p-5 relative shadow-lg overflow-hidden">
+    <Card className="w-full h-full max-h-full flex flex-col gap-8 p-5 relative shadow-lg overflow-auto">
       <div className="flex w-full items-center gap-2 justify-between">
         <LidndTextInput
           value={name}
@@ -636,20 +636,22 @@ function EditEncounter({
           </div>
         ))}
       </div>
-      <ParticipantUpload
-        encounter={encounter}
-        form={
-          <CompactMonsterUploadForm
-            uploadCreature={(creature) =>
-              createCreatureInEncounter({
-                creature,
-                participant: { is_ally: false },
-              })
-            }
-          />
-        }
-        existingCreatures={<ExistingMonster encounter={encounter} />}
-      />
+      <div className="flex-shrink-0 max-h-full overflow-hidden">
+        <ParticipantUpload
+          encounter={encounter}
+          form={
+            <CompactMonsterUploadForm
+              uploadCreature={(creature) =>
+                createCreatureInEncounter({
+                  creature,
+                  participant: { is_ally: false },
+                })
+              }
+            />
+          }
+          existingCreatures={<ExistingMonster encounter={encounter} />}
+        />
+      </div>
     </Card>
   );
 }
