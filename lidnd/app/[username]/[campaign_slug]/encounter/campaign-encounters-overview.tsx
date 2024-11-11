@@ -63,7 +63,6 @@ import { EncounterDifficulty } from "@/encounters/[encounter_index]/encounter-to
 import { makeAutoObservable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { LidndPopover } from "@/encounters/base-popover";
-import type { Campaign } from "@/app/[username]/types";
 import {
   ExistingMonster,
   ParticipantUpload,
