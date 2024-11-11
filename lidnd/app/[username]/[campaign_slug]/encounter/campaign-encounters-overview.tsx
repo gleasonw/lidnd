@@ -42,6 +42,8 @@ import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useUser } from "@/app/[username]/user-provider";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 import {
   useCreateCreatureInEncounter,
   useDeleteEncounter,
@@ -304,7 +306,7 @@ export function SessionEncounters() {
         setAcceptDrop(false);
       }}
       className={clsx(
-        "flex-col flex w-full gap-3 transition-all rounded-sm max-h-full",
+        "flex-col flex w-full gap-3 transition-all rounded-sm max-h-full p-5",
       )}
     >
       <div className="flex justify-between items-center w-full">
@@ -437,7 +439,7 @@ export function EncounterArchive() {
           <span className="py-2 text-xl">Encounters</span>
           <CreateEncounterButton />
         </h1>
-        <section
+        <ScrollArea
           key={"inactive"}
           onDrop={(e) => {
             if (!acceptDrop) {
@@ -482,7 +484,7 @@ export function EncounterArchive() {
           )}
         >
           <InactiveEncounterList />
-        </section>
+        </ScrollArea>
       </EncounterArchiveContext.Provider>
     </div>
   );
