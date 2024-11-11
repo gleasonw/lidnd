@@ -304,7 +304,7 @@ export function SessionEncounters() {
         setAcceptDrop(false);
       }}
       className={clsx(
-        "flex-col flex w-full gap-3 transition-all rounded-sm max-h-full p-5",
+        "flex-col flex w-full gap-3 transition-all rounded-sm max-h-full",
       )}
     >
       <div className="flex justify-between items-center w-full">
