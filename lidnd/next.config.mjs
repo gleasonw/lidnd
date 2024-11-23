@@ -16,6 +16,12 @@ const nextConfig = {
       },
     ],
   },
+  //todo: lower this once we just pass the client a aws signed url
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
 };
 
 export default nextConfig;
