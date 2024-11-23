@@ -30,8 +30,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ColumnsIcon,
-  Plus,
-  UserIcon,
+  ListOrdered,
+  UserPlus,
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React from "react";
@@ -84,8 +84,11 @@ export function ToggleEditingMode({
 }
 
 export const InitiativeTracker = observer(function ParticipantIcons() {
-  const { setSelectedParticipantId, isEditingInitiative } =
-    useEncounterUIStore();
+  const {
+    setSelectedParticipantId,
+    isEditingInitiative,
+    toggleEditingInitiative,
+  } = useEncounterUIStore();
   const { mutate: cycleNextMutation, isPending: isLoadingNextTurn } =
     useCycleNextTurn();
   const { mutate: cyclePreviousMutation, isPending: isLoadingPreviousTurn } =
@@ -153,16 +156,23 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
           <ButtonWithTooltip
             variant="ghost"
             text="Add creature"
-            className="flex bg-white flex-col items-center gap-2 w-20 h-20"
+            className="flex bg-white flex-col items-center gap-2 self-stretch h-full"
           >
-            <UserIcon />
-            <Plus />
+            <UserPlus />
           </ButtonWithTooltip>
         }
         content={<ParticipantUpload encounter={encounter} />}
       />
       <ButtonWithTooltip
-        className="h-full shadow-lg"
+        variant="ghost"
+        className="self-stretch h-full flex"
+        text="Edit initiative"
+        onClick={() => toggleEditingInitiative()}
+      >
+        <ListOrdered />
+      </ButtonWithTooltip>
+      <ButtonWithTooltip
+        className="h-full shadow-lg flex items-center"
         onClick={cycleNext}
         disabled={isTurnLoading}
         text="Next turn"
