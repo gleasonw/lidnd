@@ -1,5 +1,4 @@
 import {
-  EditingEncounterCard,
   EncounterArchive,
   SessionEncounters,
 } from "./encounter/campaign-encounters-overview";
@@ -32,15 +31,10 @@ export default async function CampaignPage(props: {
 
   return (
     <CampaignId value={campaignData.id}>
-      <div className="flex h-full max-h-full w-full overflow-hidden gap-5 pt-2 ">
-        <div className="w-1/4">
+      <div className="flex flex-col gap-5 max-h-full overflow-hidden ">
+        <SessionEncounters />
+        <div className="max-h-full flex flex-col overflow-auto">
           <EncounterArchive />
-        </div>
-        <div className="flex flex-col w-3/4 gap-5 max-h-full overflow-hidden ">
-          <SessionEncounters />
-          <div className="max-h-full flex flex-col overflow-auto">
-            <EditingEncounterCard />
-          </div>
         </div>
       </div>
     </CampaignId>

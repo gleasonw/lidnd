@@ -10,6 +10,7 @@ import {
   reminders,
   campaigns,
   campaignToPlayer,
+  stat_columns,
 } from "@/server/api/db/schema";
 import { eq, and, ilike } from "drizzle-orm";
 import { db } from "@/server/api/db";
@@ -186,6 +187,7 @@ export const appRouter = t.router({
             .insert(encounters)
             .values({
               ...opts.input,
+              name: opts.input.name ?? "Unnamed encounter",
               user_id: opts.ctx.user.id,
               index_in_campaign: newIndex,
             })
@@ -205,6 +207,17 @@ export const appRouter = t.router({
             message: "Failed to create encounter",
           });
         }
+        // add two columns
+        await tx.insert(stat_columns).values([
+          {
+            encounter_id: encounterResult.id,
+            percent_width: 50,
+          },
+          {
+            encounter_id: encounterResult.id,
+            percent_width: 50,
+          },
+        ]);
 
         if (campaignToPlayers && campaignToPlayers.length > 0) {
           await Promise.all(

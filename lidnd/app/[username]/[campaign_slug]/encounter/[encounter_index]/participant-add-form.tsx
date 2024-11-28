@@ -4,44 +4,55 @@ import {
   FullCreatureAddForm,
   MonsterUploadForm,
 } from "@/app/[username]/[campaign_slug]/encounter/full-creature-add-form";
-import type { Creature, Encounter } from "@/server/api/router";
+import type {
+  Creature,
+  Encounter,
+  EncounterWithParticipants,
+} from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { Heart, Plus, Skull, UserPlus } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { createContext, Suspense, useState } from "react";
-import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import {
   useCreateCreatureInEncounter,
   useAddExistingCreatureToEncounter,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
-import { ButtonWithTooltip } from "@/components/ui/tip";
+import { AddCreatureButton } from "@/encounters/add-creature-button";
+import { EncounterDifficulty } from "@/encounters/[encounter_index]/encounter-top-bar";
 
 const AllyContext = createContext<boolean | null>(null);
 
 const useAllyContext = () => React.useContext(AllyContext);
 
-export function MonsterUpload({ encounter }: { encounter: Encounter }) {
+export function MonsterUpload({
+  encounter,
+}: {
+  encounter: EncounterWithParticipants;
+}) {
   const { mutate: createCreatureInEncounter } = useCreateCreatureInEncounter({
     encounter,
   });
 
   return (
-    <ParticipantUpload
-      encounter={encounter}
-      form={
-        <MonsterUploadForm
-          uploadCreature={(c) =>
-            createCreatureInEncounter({
-              creature: c,
-              participant: {
-                is_ally: false,
-              },
-            })
-          }
-        />
-      }
-      existingCreatures={<ExistingMonster encounter={encounter} />}
-    />
+    <div className="h-[900px] flex flex-col gap-2">
+      <EncounterDifficulty encounter={encounter} />
+      <ParticipantUpload
+        encounter={encounter}
+        form={
+          <MonsterUploadForm
+            uploadCreature={(c) =>
+              createCreatureInEncounter({
+                creature: c,
+                participant: {
+                  is_ally: false,
+                },
+              })
+            }
+          />
+        }
+        existingCreatures={<ExistingMonster encounter={encounter} />}
+      />
+    </div>
   );
 }
 
@@ -104,7 +115,11 @@ export const ParticipantUpload = function ParticipantUpload({
   );
 };
 
-export function ExistingMonster({ encounter }: { encounter: Encounter }) {
+export function ExistingMonster({
+  encounter,
+}: {
+  encounter: EncounterWithParticipants;
+}) {
   const [name, setName] = useState("");
   const { data: creatures } = api.getUserCreatures.useQuery({
     name,
@@ -112,7 +127,7 @@ export function ExistingMonster({ encounter }: { encounter: Encounter }) {
   });
 
   return (
-    <div className="flex flex-col max-h-full">
+    <div className="flex flex-col max-h-full gap-5">
       <Input
         placeholder="Search..."
         type="text"
@@ -122,7 +137,7 @@ export function ExistingMonster({ encounter }: { encounter: Encounter }) {
       <Suspense key={name} fallback={<div>Loading creatures</div>}>
         <div
           className={
-            "flex flex-wrap overflow-auto max-h-full gap-5 min-h-0 h-48"
+            "flex flex-col overflow-auto max-h-full gap-5 min-h-0 h-96"
           }
         >
           {creatures?.map((creature) => (
@@ -188,28 +203,9 @@ export const ListedCreature = observer<ListedCreatureProps>(
     const id = encounter.id;
 
     return (
-      <div className="flex items-center space-x-2 justify-between shadow-lg p-5">
-        <div className="flex gap-5">
-          <CreatureIcon creature={creature} size="v-small" />
-          <div className="flex flex-col">
-            <span>{creature.name}</span>
-            {creature.challenge_rating ? (
-              <span className="flex gap-10 flex-wrap text-gray-500">
-                <span className="flex gap-2 flex-wrap">
-                  <Skull />
-                  {creature.challenge_rating}
-                </span>
-                <span className="flex gap-2">
-                  <Heart />
-                  {creature.max_hp}
-                </span>
-              </span>
-            ) : null}
-          </div>
-        </div>
-        <ButtonWithTooltip
-          variant="outline"
-          text="Add"
+      <div className="flex h-full flex-col">
+        <AddCreatureButton
+          creature={creature}
           key={creature.id}
           onClick={(e) => {
             e.stopPropagation();
@@ -220,8 +216,19 @@ export const ListedCreature = observer<ListedCreatureProps>(
             });
           }}
         >
-          <Plus />
-        </ButtonWithTooltip>
+          {creature.challenge_rating ? (
+            <span className="flex gap-10 flex-wrap text-gray-500">
+              <span className="flex gap-2 flex-wrap">
+                <Skull />
+                {creature.challenge_rating}
+              </span>
+              <span className="flex gap-2">
+                <Heart />
+                {creature.max_hp}
+              </span>
+            </span>
+          ) : null}
+        </AddCreatureButton>
       </div>
     );
   },

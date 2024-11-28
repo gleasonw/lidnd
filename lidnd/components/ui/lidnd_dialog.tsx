@@ -1,4 +1,9 @@
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogOverlay,
+} from "@/components/ui/dialog";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { Plus } from "lucide-react";
@@ -30,6 +35,7 @@ export function LidndDialog(props: LidndDialogProps) {
           <DialogTitle>{props.title}</DialogTitle>
           {content}
         </DialogContent>
+        <DialogOverlay />
       </Dialog>
     </DialogContext.Provider>
   );

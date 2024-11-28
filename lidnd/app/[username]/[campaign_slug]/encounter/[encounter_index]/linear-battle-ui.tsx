@@ -5,6 +5,7 @@ import { BattleCard } from "./battle-ui";
 import { EncounterUtils } from "@/utils/encounters";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import {
+  useCreateCreatureInEncounter,
   useEncounter,
   useRemoveParticipantFromEncounter,
 } from "@/encounters/[encounter_index]/hooks";
@@ -18,6 +19,11 @@ import { ParticipantUtils } from "@/utils/participants";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import type { StatColumn } from "@/server/api/columns-router";
+import {
+  ExistingMonster,
+  ParticipantUpload,
+} from "@/encounters/[encounter_index]/participant-add-form";
+import { MonsterUploadForm } from "@/encounters/full-creature-add-form";
 
 // todo: add optimistic ui for adding a creature flow (add to column, etc)
 //todo: custom margin when in editing layout mode
@@ -93,7 +99,7 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
   }, []);
 
   return (
-    <div className="flex relative gap-4" ref={containerRef}>
+    <div className="flex relative gap-4 h-full" ref={containerRef}>
       {encounter.is_editing_columns ? (
         <>
           <div className="absolute -top-10 h-10 right-0 text-xl z-10">
@@ -237,7 +243,7 @@ function StatColumnComponent({
   return (
     <>
       <div
-        className={`flex flex-col gap-3 items-start relative ${acceptDrop && "outline outline-blue-500"}`}
+        className={`flex flex-col h-full border gap-3 items-start relative ${acceptDrop && "outline outline-blue-500"}`}
         style={{ width: `${column.percent_width}%` }}
         onDrop={(e) => {
           const droppedParticipant = typedDrag.get(
@@ -291,6 +297,33 @@ function BattleCards({ columnId }: { columnId: string }) {
   const participantsInColumn = encounter.participants
     .filter((p) => p.column_id === columnId && !ParticipantUtils.isPlayer(p))
     .sort(ParticipantUtils.sortLinearly);
+  const { mutate: createCreatureInEncounter } = useCreateCreatureInEncounter({
+    encounter,
+  });
+
+  if (participantsInColumn?.length === 0) {
+    return (
+      <div className="p-4 w-full h-full">
+        <ParticipantUpload
+          encounter={encounter}
+          form={
+            <MonsterUploadForm
+              uploadCreature={(c) =>
+                createCreatureInEncounter({
+                  creature: c,
+                  participant: {
+                    is_ally: false,
+                    column_id: columnId,
+                  },
+                })
+              }
+            />
+          }
+          existingCreatures={<ExistingMonster encounter={encounter} />}
+        />
+      </div>
+    );
+  }
   return participantsInColumn.map((p) => (
     <BattleCard
       participant={p}

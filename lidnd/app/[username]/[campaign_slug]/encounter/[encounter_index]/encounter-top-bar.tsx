@@ -2,7 +2,15 @@
 
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogOverlay,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
+import { ButtonWithTooltip } from "@/components/ui/tip";
 import { InitiativeTracker } from "@/encounters/[encounter_index]/battle-bar";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { GroupInitiativeInput } from "@/encounters/[encounter_index]/group-initiative-input";
@@ -14,10 +22,13 @@ import {
   AllyUpload,
   MonsterUpload,
 } from "@/encounters/[encounter_index]/participant-add-form";
+import { LidndPopover } from "@/encounters/base-popover";
+import { DifficultyBadge } from "@/encounters/campaign-encounters-overview";
 import type { EncounterWithParticipants } from "@/server/api/router";
 import { EncounterUtils } from "@/utils/encounters";
+import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
-import { HelpCircle, Swords } from "lucide-react";
+import { HelpCircle, Plus, Swords } from "lucide-react";
 
 export function EncounterTopBar() {
   const [encounter] = useEncounter();
@@ -79,9 +90,43 @@ export function EncounterTopBar() {
               <CreatureIcon creature={p.creature} size="small2" />
             </button>
           ))}
-          <LidndPlusDialog text="Add monster">
-            <MonsterUpload encounter={encounter} />
-          </LidndPlusDialog>
+          <Dialog>
+            <DialogTrigger asChild>
+              <ButtonWithTooltip text="Add monster" variant="ghost">
+                <Plus />
+              </ButtonWithTooltip>
+            </DialogTrigger>
+            <DialogContent className="max-h-screen overflow-auto sm:max-w-[800px]">
+              <DialogTitle>
+                <div className="flex gap-5 items-center">
+                  Add monster
+                  <DifficultyBadge encounter={encounter} />
+                </div>
+              </DialogTitle>
+              <div className="flex -space-x-2">
+                {encounter?.participants
+                  ?.filter((p) => !ParticipantUtils.isPlayer(p))
+                  .map((p) => (
+                    <ButtonWithTooltip
+                      className="p-0 h-20 w-20 rounded-full flex items-center justify-center overflow-hidden border-2 border-white bg-white"
+                      key={p.id}
+                      variant="ghost"
+                      onClick={() =>
+                        removeParticipant({
+                          participant_id: p.id,
+                          encounter_id: encounter.id,
+                        })
+                      }
+                      text={`Remove ${p.creature.name}`}
+                    >
+                      <CreatureIcon creature={p.creature} size="small" />
+                    </ButtonWithTooltip>
+                  ))}
+              </div>
+              <MonsterUpload encounter={encounter} />
+            </DialogContent>
+            <DialogOverlay />
+          </Dialog>
         </ParticipantsContainer>
       </div>
     </div>
@@ -128,16 +173,32 @@ export function EncounterDifficulty({
   const easyCutoff = (easyTier / hardTier) * 100;
   const standardCutoff = (standardTier / hardTier) * 100;
 
+  const tiers = [totalCr, hardTier, standardTier, easyTier].sort();
+  const nextTierIndex = tiers.findIndex((t) => t === totalCr) + 1;
+  const nextTier =
+    nextTierIndex > tiers.length - 1
+      ? tiers[tiers.length - 1]
+      : tiers[nextTierIndex];
+  // why 0? doesn't really make sense
+  const distanceToNext = nextTier ? nextTier - totalCr : 0;
+
   return (
     <div className="flex flex-col gap-3 pb-8 w-full">
       <span className="flex justify-between">
         <span className="text-sm">Challenge rating budget</span>
         <span className="flex gap-2 items-center text-sm text-gray-700">
           <span className=" flex gap-2 items-center">
-            Current cr: {EncounterUtils.totalCr(encounter)}
+            CR to next: {distanceToNext}
           </span>
-          <span>Allowance: {hardTier}</span>
-          <HelpCircle className="h-4 w-4" />
+          <LidndPopover
+            trigger={
+              <ButtonWithTooltip text="info" variant="ghost">
+                <HelpCircle className="h-4 w-4" />
+              </ButtonWithTooltip>
+            }
+          >
+            hello
+          </LidndPopover>
         </span>
       </span>
       <div className="border h-3 rounded-full relative flex items-start w-full">
@@ -155,7 +216,7 @@ export function EncounterDifficulty({
           style={{ left: `${easyCutoff}%` }}
         >
           <span className="absolute bottom-0 translate-y-full -translate-x-1/2 pt-3">
-            Standard
+            {standardTier}
           </span>
         </span>
         <span
@@ -163,7 +224,7 @@ export function EncounterDifficulty({
           style={{ left: `${standardCutoff}%` }}
         >
           <span className="absolute bottom-0 translate-y-full -translate-x-1/2 pt-3">
-            Hard
+            {hardTier}
           </span>
         </span>
         <span style={{ left: "100%" }} className="w-1 h-full absolute ">

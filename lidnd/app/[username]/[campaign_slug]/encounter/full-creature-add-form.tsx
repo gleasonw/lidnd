@@ -12,10 +12,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import React from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Angry, FileText, Plus, Shield, Skull, User } from "lucide-react";
+import { Angry, FileText, Plus, Shield, Skull, User, X } from "lucide-react";
 import type { CreaturePost } from "./types";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
+import { LidndDialog } from "@/components/ui/lidnd_dialog";
 
 type CreatureAddProps = {
   uploadCreature: (data: CreaturePost) => void;
@@ -60,9 +62,11 @@ export function CompactMonsterUploadForm({ uploadCreature }: CreatureAddProps) {
       icon_image: undefined,
       stat_block_image: undefined,
       is_player: false,
+      name: "",
     },
   });
   const [keyToResetFile, setKeyToResetFile] = React.useState(0);
+
   return (
     <Form {...form}>
       <form
@@ -73,7 +77,7 @@ export function CompactMonsterUploadForm({ uploadCreature }: CreatureAddProps) {
         })}
         className="flex flex-col w-full h-full gap-6"
       >
-        <div className="flex gap-6 items-center w-full h-full">
+        <div className="grid grid-cols-4 gap-5 items-center w-full h-full">
           <FormField
             control={form.control}
             name="icon_image"
@@ -98,80 +102,122 @@ export function CompactMonsterUploadForm({ uploadCreature }: CreatureAddProps) {
               </FormItem>
             )}
           />{" "}
-          <div className="flex flex-col gap-2 w-full">
+          <FormField
+            control={form.control}
+            name="stat_block_image"
+            render={({ field }) => (
+              <FormItem className="flex gap-2 flex-col h-full">
+                <FormControl>
+                  <ImageUpload
+                    onUpload={(file) =>
+                      field.onChange({ target: { value: file } })
+                    }
+                    dropText="Drop a stat block"
+                    dropContainerClassName="p-5 w-full h-full"
+                    dropIcon={<FileText />}
+                    previewRender={(url) => (
+                      <div className="max-h-full overflow-hidden relative flex flex-col">
+                        <Button
+                          variant="destructive"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            field.onChange({ target: { value: undefined } });
+                          }}
+                          size="sm"
+                          className="absolute top-0 right-0"
+                        >
+                          <X />
+                        </Button>
+                        <span>{field.value?.name}</span>
+
+                        <LidndDialog
+                          title={"Preview"}
+                          trigger={
+                            <Image
+                              src={url}
+                              alt={`Preview image for ${field.value?.name}`}
+                              width={100}
+                              height={100}
+                              className="hover:cursor-pointer hover:outline-2"
+                            />
+                          }
+                          content={
+                            <Image
+                              src={url}
+                              alt={`Preview image for ${field.value?.name}`}
+                              width={700}
+                              height={700}
+                            />
+                          }
+                        />
+                      </div>
+                    )}
+                    key={keyToResetFile}
+                    image={field.value}
+                    clearImage={() =>
+                      field.onChange({ target: { value: undefined } })
+                    }
+                    previewSize={200}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex gap-2 flex-col h-full justify-between">
             <FormField
               control={form.control}
-              name="stat_block_image"
+              name="name"
               render={({ field }) => (
-                <FormItem className="flex gap-2 w-full">
-                  <FormControl>
-                    <ImageUpload
-                      onUpload={(file) =>
-                        field.onChange({ target: { value: file } })
-                      }
-                      dropText="Drop a stat block"
-                      dropContainerClassName="p-5 w-full"
-                      dropIcon={<FileText />}
-                      key={keyToResetFile}
-                      image={field.value}
-                      clearImage={() =>
-                        field.onChange({ target: { value: undefined } })
-                      }
-                      previewSize={700}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <CreatureFormItems name="Name">
+                  <LidndTextInput
+                    variant="ghost"
+                    placeholder="Creature name"
+                    className="text-xl"
+                    {...field}
+                  />
+                </CreatureFormItems>
               )}
             />
-            <div className="flex gap-2 items-center w-full">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <CreatureFormItems name="Name">
-                    <LidndTextInput placeholder="Creature name" {...field} />
-                  </CreatureFormItems>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="max_hp"
-                render={({ field }) => (
-                  <CreatureFormItems name="Max HP">
-                    <Input
-                      placeholder="Max HP"
-                      {...field}
-                      type="number"
-                      onChange={(e) =>
-                        field.onChange(Math.max(1, parseInt(e.target.value)))
-                      }
-                    />
-                  </CreatureFormItems>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="challenge_rating"
-                render={({ field }) => (
-                  <CreatureFormItems name="Challenge Rating">
-                    <Input
-                      placeholder="Challenge rating"
-                      {...field}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      type="number"
-                    />
-                  </CreatureFormItems>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="max_hp"
+              render={({ field }) => (
+                <CreatureFormItems name="Max HP">
+                  <Input
+                    placeholder="Max HP"
+                    {...field}
+                    type="number"
+                    onChange={(e) =>
+                      field.onChange(Math.max(1, parseInt(e.target.value)))
+                    }
+                  />
+                </CreatureFormItems>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="challenge_rating"
+              render={({ field }) => (
+                <CreatureFormItems name="Challenge Rating">
+                  <Input
+                    placeholder="Challenge rating"
+                    {...field}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    type="number"
+                  />
+                </CreatureFormItems>
+              )}
+            />
           </div>
-          <Button type="submit" className="h-full flex flex-col">
-            <Skull /> Add as adversary
-          </Button>
-          <Button variant="outline" className="h-full flex flex-col">
-            <Shield /> Add as ally
-          </Button>
+          <div className="h-full flex flex-col justify-between gap-4">
+            <Button type="submit" className="h-full flex flex-col">
+              <Skull /> Add as adversary
+            </Button>
+            <Button variant="outline" className="h-full flex flex-col">
+              <Shield /> Add as ally
+            </Button>
+          </div>
         </div>
       </form>
     </Form>
@@ -381,7 +427,7 @@ function CreatureFormItems({
   children: React.ReactNode;
 }) {
   return (
-    <FormItem className="flex flex-col gap-2">
+    <FormItem className="flex flex-col">
       <FormControl>{children}</FormControl>
       <FormMessage />
     </FormItem>

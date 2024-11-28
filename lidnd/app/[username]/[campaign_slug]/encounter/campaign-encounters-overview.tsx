@@ -10,7 +10,6 @@ import {
   GripVertical,
   MoreVertical,
   Pencil,
-  Play,
   Plus,
   Skull,
   Smile,
@@ -20,7 +19,11 @@ import {
   X,
 } from "lucide-react";
 import { api } from "@/trpc/react";
-import type { Encounter, EncounterWithParticipants } from "@/server/api/router";
+import type {
+  Encounter,
+  EncounterWithParticipants,
+  Participant,
+} from "@/server/api/router";
 import {
   useAddExistingToParty,
   useAddNewToParty,
@@ -30,7 +33,6 @@ import {
 } from "../hooks";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import {
-  CompactMonsterUploadForm,
   MonsterUploadForm,
   PlayerUploadForm,
 } from "@/encounters/full-creature-add-form";
@@ -45,39 +47,31 @@ import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import {
-  useCreateCreatureInEncounter,
   useDeleteEncounter,
-  useEncounterQueryUtils,
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import { appRoutes } from "@/app/routes";
-import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-import Placeholder from "@tiptap/extension-placeholder";
-import { useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useDebouncedCallback } from "use-debounce";
 import { compareCreatedAt, formatSeconds } from "@/lib/utils";
-import { EncounterDifficulty } from "@/encounters/[encounter_index]/encounter-top-bar";
 import { makeAutoObservable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { LidndPopover } from "@/encounters/base-popover";
-import {
-  ExistingMonster,
-  ParticipantUpload,
-} from "@/encounters/[encounter_index]/participant-add-form";
 import type { CampaignWithData } from "@/server/campaigns";
+import { AddCreatureButton } from "@/encounters/add-creature-button";
 
-export function ExistingCreaturesForPartyAdd() {
+export function ExistingCreaturesForPartyAdd({
+  campaignId,
+}: {
+  campaignId: string;
+}) {
   const [name, setName] = useState("");
   const { data: creatures } = api.getUserCreatures.useQuery({
     name,
   });
-  const campaignId = useCampaignId();
-  const { mutate: addCreature } = useAddExistingToParty();
+  const { mutate: addCreature } = useAddExistingToParty(campaignId);
   const creaturesPlayersFirst = R.sort(creatures ?? [], (a, b) =>
     a.is_player ? -1 : b.is_player ? 1 : 0,
   );
@@ -91,17 +85,13 @@ export function ExistingCreaturesForPartyAdd() {
       />
       <div className={"flex flex-col gap-2 h-96 overflow-auto"}>
         {creaturesPlayersFirst?.map((creature) => (
-          <Button
+          <AddCreatureButton
+            creature={creature}
             key={creature.id}
-            variant="ghost"
             onClick={() =>
               addCreature({ player: creature, campaign_id: campaignId })
             }
-            className="flex w-full items-center justify-between"
-          >
-            <span>{creature.name}</span>
-            <CreatureIcon creature={creature} size="small" />
-          </Button>
+          />
         ))}
       </div>
     </div>
@@ -109,8 +99,12 @@ export function ExistingCreaturesForPartyAdd() {
 }
 
 export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
-  const playersInCampaign = campaign?.campaignToPlayers;
   const { mutate: removePlayer } = useRemoveFromParty(campaign);
+
+  // kinda wonky, if we just use playersInCampaign it won't update correctly.
+  const { data: reactiveCampaign } = api.campaignById.useQuery(campaign.id, {
+    placeholderData: (prev) => prev,
+  });
 
   const { mutate: onPlayerUpload } = useAddNewToParty(campaign);
   const { mutate: updateCampaign } = useUpdateCampaign(campaign);
@@ -132,7 +126,7 @@ export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
   return (
     <div className="flex gap-5">
       <div className="flex">
-        {playersInCampaign.map(({ player }) => (
+        {reactiveCampaign?.campaignToPlayers.map(({ player }) => (
           <div
             key={player.id}
             className="flex flex-col justify-center items-center"
@@ -203,7 +197,7 @@ export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
                   </Tabs>
                 </TabsContent>
                 <TabsContent value="existing">
-                  <ExistingCreaturesForPartyAdd />
+                  <ExistingCreaturesForPartyAdd campaignId={campaign.id} />
                 </TabsContent>
               </Tabs>
             }
@@ -239,6 +233,7 @@ export function SessionEncounters() {
         compareCreatedAt,
       )
     : [];
+  const user = useUser();
 
   const [campaign] = useCampaign();
   const lastOrder = activeEncounters?.length
@@ -357,28 +352,30 @@ export function SessionEncounters() {
               }
               key={encounter.id}
               encounterCard={
-                <Card
-                  className={clsx(
-                    "flex transition-all p-4 gap-3 justify-between items-center max-w-sm",
-                  )}
-                  draggable
-                  onDragStart={(e) => {
-                    typedDrag.set(
-                      e.dataTransfer,
-                      dragTypes.encounter,
-                      encounter,
-                    );
-                  }}
-                >
-                  <GripVertical className="text-gray-500" />
-                  <h2 className={"w-full flex justify-between items-center"}>
-                    <span className="max-w-full truncate text-lg">
-                      {encounter.name ? encounter.name : "Unnamed"}
-                    </span>
-                    <MonstersInEncounter id={encounter.id} />
-                    <DifficultyBadge encounter={encounter} />
-                  </h2>
-                </Card>
+                <Link href={appRoutes.encounter(campaign, encounter, user)}>
+                  <Card
+                    className={clsx(
+                      "flex transition-all p-4 gap-3 justify-between items-center max-w-sm",
+                    )}
+                    draggable
+                    onDragStart={(e) => {
+                      typedDrag.set(
+                        e.dataTransfer,
+                        dragTypes.encounter,
+                        encounter,
+                      );
+                    }}
+                  >
+                    <GripVertical className="text-gray-500" />
+                    <h2 className={"w-full flex justify-between items-center"}>
+                      <span className="max-w-full truncate text-lg">
+                        {encounter.name ? encounter.name : "Unnamed"}
+                      </span>
+                      <MonstersInEncounter id={encounter.id} />
+                      <DifficultyBadge encounter={encounter} />
+                    </h2>
+                  </Card>
+                </Link>
               }
             />
           );
@@ -490,172 +487,6 @@ export function EncounterArchive() {
   );
 }
 
-export function EditingEncounterCard() {
-  const campaignId = useCampaignId();
-  const [campaign] = useCampaign();
-  const { data: encounters } = api.encountersInCampaign.useQuery(campaignId);
-  const focusedEncounter =
-    encounters?.find((e) => e.id === campaign.focused_encounter_id) ??
-    encounters?.[0] ??
-    null;
-  if (!focusedEncounter) {
-    return null;
-  }
-  return (
-    <EditEncounter key={focusedEncounter.id} encounter={focusedEncounter} />
-  );
-}
-
-function EditEncounter({
-  encounter,
-}: {
-  encounter: EncounterWithParticipants;
-}) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const debouncedNameUpdate = useDebouncedCallback((name: string) => {
-    updateEncounter({
-      ...encounter,
-      name,
-    });
-  }, 500);
-  const debouncedDescriptionUpdate = useDebouncedCallback(
-    (description: string) => {
-      updateEncounter({
-        ...encounter,
-        description,
-      });
-    },
-    500,
-  );
-  const { mutate: updateEncounter } = useUpdateEncounter();
-
-  const configuredPlaceholder = Placeholder.configure({
-    placeholder: "Objectives, monster tactics, etc...",
-  });
-
-  const editor = useEditor({
-    extensions: [StarterKit, configuredPlaceholder],
-    content: description,
-    immediatelyRender: false,
-    onUpdate: ({ editor }) => {
-      const content = editor.getHTML();
-      setDescription(content);
-      debouncedDescriptionUpdate(content);
-    },
-  });
-  const monsters = encounter.participants.filter((p) =>
-    ParticipantUtils.isAdversary(p),
-  );
-  const { mutate: deleteEncounter } = useDeleteEncounter();
-  const { encounterById } = api.useUtils();
-  const { invalidateAll, cancelAll } = useEncounterQueryUtils();
-  const { mutate: removeParticipant } =
-    api.removeParticipantFromEncounter.useMutation({
-      onMutate: async (data) => {
-        await cancelAll(encounter);
-        const previousEncounterData = encounterById.getData(encounter.id);
-        encounterById.setData(encounter.id, (old) => {
-          if (!old) {
-            return;
-          }
-
-          const removedParticipant = old.participants.find(
-            (p) => p.id === data.participant_id,
-          );
-
-          if (!removedParticipant) {
-            throw new Error("No participant found when removing");
-          }
-
-          return EncounterUtils.removeParticipant(data.participant_id, old);
-        });
-        return { previousEncounterData };
-      },
-      onSettled: async () => {
-        return await invalidateAll(encounter);
-      },
-    });
-  const { mutate: createCreatureInEncounter } = useCreateCreatureInEncounter({
-    encounter,
-  });
-
-  return (
-    <Card className="w-full h-full max-h-full flex flex-col gap-8 p-5 relative shadow-lg overflow-auto">
-      <div className="flex w-full items-center gap-2 justify-between">
-        <LidndTextInput
-          value={name}
-          variant="ghost"
-          placeholder={encounter.name ?? "Unnamed encounter"}
-          className="max-w-sm text-lg"
-          onChange={(e) => {
-            setName(e.target.value);
-            debouncedNameUpdate(e.target.value);
-          }}
-        />
-        <LidndPopover trigger={<MoreVertical />}>
-          <Button
-            variant="ghost"
-            className="text-red-500"
-            onClick={() => {
-              deleteEncounter(encounter.id);
-            }}
-          >
-            Delete encounter
-            <Trash />
-          </Button>
-        </LidndPopover>
-      </div>
-      <LidndTextArea placeholder="Encounter description" editor={editor} />
-      <EncounterDifficulty encounter={encounter} />
-      <div className="flex flex-wrap gap-3 items-center">
-        {monsters.map((m) => (
-          <div
-            key={m.id}
-            className=" flex flex-wrap items-center gap-5 h-12 p-1 rounded-full bg-gray-100 "
-          >
-            <CreatureIcon creature={m.creature} size={"v-small"} />
-            <span className="truncate">{m.creature.name}</span>
-            <span className="truncate text-gray-500">
-              CR {m.creature.challenge_rating}
-            </span>
-            <ButtonWithTooltip
-              text="Remove"
-              variant="ghost"
-              className="text-gray-300"
-            >
-              <Trash
-                onClick={() =>
-                  removeParticipant({
-                    encounter_id: encounter.id,
-                    participant_id: m.id,
-                  })
-                }
-              />
-            </ButtonWithTooltip>
-          </div>
-        ))}
-      </div>
-      <div className="flex-shrink-0 max-h-full overflow-hidden">
-        <ParticipantUpload
-          encounter={encounter}
-          form={
-            <CompactMonsterUploadForm
-              uploadCreature={(creature) =>
-                createCreatureInEncounter({
-                  creature,
-                  participant: { is_ally: false },
-                })
-              }
-            />
-          }
-          existingCreatures={<ExistingMonster encounter={encounter} />}
-        />
-      </div>
-    </Card>
-  );
-}
-
 export function DifficultyBadge({
   encounter,
 }: {
@@ -665,7 +496,7 @@ export function DifficultyBadge({
   const diffColor = EncounterUtils.difficultyColor(encounter, campaign);
   return (
     <Badge
-      className={`bg-${diffColor}-100 text-${diffColor}-700 flex-grow-0 h-5 ml-auto rounded-sm`}
+      className={`bg-${diffColor}-100 text-${diffColor}-700 flex-grow-0 h-5 rounded-sm`}
     >
       {EncounterUtils.difficulty(encounter, campaign?.party_level)}
     </Badge>
@@ -680,6 +511,7 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
     : [];
 
   const [campaign] = useCampaign();
+  const { mutate: deleteEncounter } = useDeleteEncounter();
   const user = useUser();
   const { mutate: updateCampaign } = useUpdateCampaign(campaign);
   return (
@@ -703,44 +535,56 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
             }
             key={encounter.id}
             encounterCard={
-              <Card
-                className={clsx(
-                  "flex flex-col transition-all w-full p-3 gap-3",
-                )}
-                draggable
-                onDragStart={(e) => {
-                  typedDrag.set(e.dataTransfer, dragTypes.encounter, encounter);
-                }}
-                onClick={() => {
-                  updateCampaign({
-                    ...campaign,
-                    focused_encounter_id: encounter.id,
-                  });
-                }}
-              >
-                <div className="flex flex-col">
+              <Link href={appRoutes.encounter(campaign, encounter, user)}>
+                <Card
+                  className={clsx("flex flextransition-all w-full p-3 gap-3")}
+                  draggable
+                  onDragStart={(e) => {
+                    typedDrag.set(
+                      e.dataTransfer,
+                      dragTypes.encounter,
+                      encounter,
+                    );
+                  }}
+                  onClick={() => {
+                    updateCampaign({
+                      ...campaign,
+                      focused_encounter_id: encounter.id,
+                    });
+                  }}
+                >
                   <div className="flex items-center text-gray-500">
                     <GripVertical className="flex-shrink-0 flex-grow-0" />
-                    <Link href={appRoutes.encounter(campaign, encounter, user)}>
-                      <ButtonWithTooltip
-                        text="View"
-                        variant="ghost"
-                        size={"sm"}
-                      >
-                        <Play />
-                      </ButtonWithTooltip>
-                    </Link>
-                    <DifficultyBadge encounter={encounter} />
                   </div>
                   <h2 className={"flex items-center"}>
                     <span className="max-w-full truncate">
                       {encounter.name ? encounter.name : "Unnamed"}
                     </span>
                   </h2>
-                </div>
 
-                <MonstersInEncounter id={encounter.id} />
-              </Card>
+                  <MonstersInEncounter id={encounter.id} />
+                  <LidndPopover
+                    trigger={
+                      <MoreVertical
+                        className="ml-auto"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    }
+                  >
+                    <Button
+                      variant="ghost"
+                      className="text-red-500"
+                      onClick={() => {
+                        deleteEncounter(encounter.id);
+                      }}
+                    >
+                      Delete encounter
+                      <Trash />
+                    </Button>
+                  </LidndPopover>
+                  <DifficultyBadge encounter={encounter} />
+                </Card>
+              </Link>
             }
           />
         );
@@ -779,7 +623,7 @@ export function CreateEncounterButton() {
       onClick={() => {
         runInAction(() => archiveStore.setEditingEncounter(encounterUuid));
         createDefaultEncounter({
-          name: "",
+          name: "Unnamed encounter",
           description: "",
           campaign_id: campaign.id,
           label: "inactive",
@@ -849,8 +693,13 @@ function DraggableEncounterCard(props: {
     </li>
   );
 }
-
-export function MonstersInEncounter({ id }: { id: string }) {
+export function MonstersInEncounter({
+  id,
+  onClick,
+}: {
+  id: string;
+  onClick?: (p: Participant) => void;
+}) {
   const campaignId = useCampaignId();
   const { data: encounters } = api.encountersInCampaign.useQuery(campaignId);
 
@@ -859,14 +708,15 @@ export function MonstersInEncounter({ id }: { id: string }) {
     ?.participants.filter((p) => !ParticipantUtils.isPlayer(p));
 
   return (
-    <div className={"flex overflow-hidden pointer-events-none"}>
+    <div className="flex -space-x-4">
       {participants?.map((p) => (
-        <div
-          className={"rounded-full w-12 h-12 flex items-center overflow-hidden"}
+        <button
+          className="rounded-full w-12 h-12 flex items-center justify-center overflow-hidden border-2 border-white bg-white"
           key={p.id}
+          onClick={() => onClick?.(p)}
         >
           <CreatureIcon creature={p.creature} size="v-small" />
-        </div>
+        </button>
       ))}
     </div>
   );

@@ -2,7 +2,7 @@
 
 import {
   type ColumnDef,
-  flexRender,
+  // flexRender,
   getCoreRowModel,
   type Row,
   useReactTable,
@@ -33,6 +33,7 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
   });
 
+  // todo: make this work again
   return (
     <div className="border">
       <Table>
@@ -42,12 +43,12 @@ export function DataTable<TData, TValue>({
               {headerGroup.headers.map((header) => {
                 return (
                   <TableHead key={header.id}>
-                    {header.isPlaceholder
+                    {/* {header.isPlaceholder
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
                           header.getContext(),
-                        )}
+                        )} */}
                   </TableHead>
                 );
               })}
@@ -65,7 +66,7 @@ export function DataTable<TData, TValue>({
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    {/* {flexRender(cell.column.columnDef.cell, cell.getContext())} */}
                   </TableCell>
                 ))}
               </TableRow>

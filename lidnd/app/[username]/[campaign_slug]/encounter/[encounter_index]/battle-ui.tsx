@@ -40,7 +40,7 @@ export const BattleUI = observer(function BattleUI() {
   return (
     <>
       <ReminderDialog />
-      <div className="flex gap-4 flex-col w-full max-h-full overflow-auto">
+      <div className="flex gap-4 flex-col w-full max-h-full overflow-auto h-full">
         {/**create space for the overlaid initiative tracker */}
         {encounter.status === "run" && <div className="my-5" />}
         <div className="bg-white p-5">
@@ -103,7 +103,7 @@ export function BattleCard({
         <div className="absolute top-2 right-2 flex gap-2 items-center">
           {extraHeaderButtons}
         </div>
-        <div className="flex gap-4 py-2 items-center w-full">
+        <div className="flex gap-4 p-5 items-center w-full">
           <BattleCardContent>
             <div className="flex gap-2 items-center w-full justify-between">
               <BattleCardCreatureIcon

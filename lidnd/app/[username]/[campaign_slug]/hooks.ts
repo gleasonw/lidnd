@@ -39,8 +39,7 @@ export function useUpdateCampaign(campaign: { id: string }) {
   });
 }
 
-export function useAddExistingToParty() {
-  const campaignId = useCampaignId();
+export function useAddExistingToParty(campaignId: string) {
   const { campaignById } = api.useUtils();
   return api.addToParty.useMutation({
     onSettled: async () => {

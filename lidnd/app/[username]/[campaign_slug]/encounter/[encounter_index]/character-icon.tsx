@@ -35,7 +35,7 @@ function iconDimensions(
 export function CreatureIcon({
   creature,
   size,
-  objectFit,
+  objectFit = "contain",
 }: {
   creature: Creature;
   size?: IconSize;
@@ -52,17 +52,27 @@ export function CreatureIcon({
     return <Skeleton />;
   }
 
+  const { width, height } = iconDimensions(creature, size);
+  const fitStyle = objectFit
+    ? { objectFit, maxWidth: "100%", maxHeight: "100%" }
+    : {};
+
+  const style = {
+    width: `${width}px`,
+    height: `${height}px`,
+    ...fitStyle,
+  };
+
   return (
     <Image
       quality={100}
-      className="select-none rounded-full"
+      className="select-none rounded-full overflow-hidden max-h-full max-w-full"
       src={CreatureUtils.awsURL(creature, "icon")}
       alt={creature.name}
       priority
-      style={
-        objectFit ? { objectFit, maxWidth: "100%", maxHeight: "100%" } : {}
-      }
-      {...iconDimensions(creature, size)}
+      style={style}
+      width={width}
+      height={height}
     />
   );
 }

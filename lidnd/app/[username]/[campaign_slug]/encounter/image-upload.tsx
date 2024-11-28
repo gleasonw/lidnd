@@ -14,6 +14,7 @@ export function ImageUpload({
   dropText,
   dropContainerClassName,
   dropIcon,
+  previewRender,
 }: {
   onUpload: (file: any) => void;
   image?: File;
@@ -22,6 +23,7 @@ export function ImageUpload({
   dropText: string;
   dropIcon?: React.ReactNode;
   dropContainerClassName?: string;
+  previewRender?: (url: string) => React.ReactNode;
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "hovering">("idle");
@@ -53,6 +55,9 @@ export function ImageUpload({
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   if (previewUrl) {
+    if (previewRender) {
+      return previewRender(previewUrl);
+    }
     return (
       <div className="relative w-fit">
         <Button

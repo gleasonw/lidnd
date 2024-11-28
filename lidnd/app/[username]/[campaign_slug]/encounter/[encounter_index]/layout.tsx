@@ -16,7 +16,7 @@ export default async function EncounterLayout(props: {
     <EncounterUI>
       <EncounterId encounterIndex={param.encounter_index}>
         <EncounterTopBar />
-        <section className="flex flex-col overflow-y-auto max-h-full min-h-0 ">
+        <section className="flex flex-col overflow-y-auto max-h-full min-h-0 h-full ">
           {props.children}
         </section>
       </EncounterId>

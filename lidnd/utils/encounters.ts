@@ -125,9 +125,9 @@ export const EncounterUtils = {
     const difficulty = this.difficulty(encounter, opts?.playerLevel);
     const finalEstimatedRounds =
       opts?.estimatedRounds ?? difficulty === "Deadly"
-        ? 9
+        ? 5
         : difficulty === "Hard"
-          ? 7
+          ? 4
           : difficulty === "Standard"
             ? 3
             : difficulty === "Easy"
