@@ -385,12 +385,12 @@ function StatColumnSplitter({
   leftColumnId: string;
 }) {
   const parentWidth = React.useContext(ParentWidthContext);
-  const { getColumns } = api.useUtils();
+  const { encounterById } = api.useUtils();
   const [encounter] = useEncounter();
   const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
   const handleMouseDown = (e: React.MouseEvent) => {
     const startX = e.clientX;
-    const currentColumns = getColumns.getData(encounter.id);
+    const currentColumns = encounterById.getData(encounter.id)?.columns;
     const leftColumnStart = currentColumns?.find((c) => c.id === leftColumnId);
     const rightColumnStart = currentColumns?.find(
       (c) => c.id === rightColumnId,
@@ -422,17 +422,20 @@ function StatColumnSplitter({
           ...rightColumnStart,
           percent_width: rightColumnStart.percent_width - deltaPercent,
         };
-        getColumns.setData(encounter.id, (old) => {
+        encounterById.setData(encounter.id, (old) => {
           if (!old) return old;
-          return old.map((c) => {
-            if (c.id === leftColumnId) {
-              return newLeftColumn;
-            }
-            if (c.id === rightColumnId) {
-              return newRightColumn;
-            }
-            return c;
-          });
+          return {
+            ...encounter,
+            columns: encounter.columns.map((c) => {
+              if (c.id === leftColumnId) {
+                return newLeftColumn;
+              }
+              if (c.id === rightColumnId) {
+                return newRightColumn;
+              }
+              return c;
+            }),
+          };
         });
         isPendingSetStateForFrame = null;
       });
@@ -440,7 +443,7 @@ function StatColumnSplitter({
 
     const handleMouseUp = () => {
       document.body.style.userSelect = "auto";
-      const updatedColumns = getColumns.getData(encounter.id);
+      const updatedColumns = encounterById.getData(encounter.id)?.columns;
       if (!updatedColumns) {
         throw new Error("no columns found when updating");
       }
