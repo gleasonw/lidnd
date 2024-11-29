@@ -4,10 +4,7 @@ export type ColumnWithParticipants = StatColumn & {
   participants: ParticipantWithData[];
 };
 
-function add(
-  columns: ColumnWithParticipants[],
-  newColumn: ColumnWithParticipants
-): ColumnWithParticipants[] {
+function add<C extends StatColumn>(columns: C[], newColumn: C): C[] {
   const numColumns = columns.length;
   if (numColumns === 0) {
     // first added column, take up the whole space
@@ -22,10 +19,7 @@ function add(
   return [...updatedColumns, { ...newColumn, percent_width: newPercentWidth }];
 }
 
-function remove(
-  columns: ColumnWithParticipants[],
-  columnId: string
-): ColumnWithParticipants[] {
+function remove<C extends StatColumn>(columns: C[], columnId: string): C[] {
   const columnToDelete = columns.find((c) => c.id === columnId);
   if (!columnToDelete) {
     throw new Error(`could not find target delete column inside columns`);
@@ -41,7 +35,7 @@ function remove(
       ...acc,
       { ...c, percent_width: c.percent_width + widthToRedistribute },
     ];
-  }, [] as ColumnWithParticipants[]);
+  }, [] as C[]);
   return removed;
 }
 
