@@ -5,6 +5,7 @@ import { BattleCard } from "./battle-ui";
 import { EncounterUtils } from "@/utils/encounters";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import {
+  useAddExistingCreatureAsParticipant,
   useCreateCreatureInEncounter,
   useEncounter,
   useRemoveParticipantFromEncounter,
@@ -294,12 +295,16 @@ function BattleCards({ columnId }: { columnId: string }) {
   const [encounter] = useEncounter();
   const { mutate: removeCreatureFromEncounter } =
     useRemoveParticipantFromEncounter();
+  // todo: i would like to just have column.participants, but gets a little wonky, since we end
+  // up duplicating the data on encounter?
   const participantsInColumn = encounter.participants
     .filter((p) => p.column_id === columnId && !ParticipantUtils.isPlayer(p))
     .sort(ParticipantUtils.sortLinearly);
   const { mutate: createCreatureInEncounter } = useCreateCreatureInEncounter({
     encounter,
   });
+  const { mutate: addParticipantFromExistingCreature } =
+    useAddExistingCreatureAsParticipant(encounter);
 
   if (participantsInColumn?.length === 0) {
     return (
@@ -319,7 +324,18 @@ function BattleCards({ columnId }: { columnId: string }) {
               }
             />
           }
-          existingCreatures={<ExistingMonster encounter={encounter} />}
+          existingCreatures={
+            <ExistingMonster
+              onUpload={(c) =>
+                addParticipantFromExistingCreature({
+                  encounter_id: encounter.id,
+                  creature_id: c.id,
+                  column_id: columnId,
+                })
+              }
+              encounter={encounter}
+            />
+          }
         />
       </div>
     );

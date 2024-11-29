@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import * as R from "remeda";
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import {
   Clock,
@@ -40,7 +40,7 @@ import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
 import { EncounterUtils } from "@/utils/encounters";
-import { LidndDialog } from "@/components/ui/lidnd_dialog";
+import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useUser } from "@/app/[username]/user-provider";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
@@ -56,11 +56,18 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useDebouncedCallback } from "use-debounce";
 import { compareCreatedAt, formatSeconds } from "@/lib/utils";
-import { makeAutoObservable, runInAction } from "mobx";
+import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { LidndPopover } from "@/encounters/base-popover";
 import type { CampaignWithData } from "@/server/campaigns";
 import { AddCreatureButton } from "@/encounters/add-creature-button";
+import { useRouter } from "next/navigation";
+import { Placeholder } from "@tiptap/extension-placeholder";
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
+import { LidndTextArea } from "@/components/ui/lidnd-text-area";
+import { Switch } from "@/components/ui/switch";
 
 export function ExistingCreaturesForPartyAdd({
   campaignId,
@@ -404,15 +411,6 @@ class EncounterArchiveStore {
 const EncounterArchiveContext = createContext<EncounterArchiveStore | null>(
   null,
 );
-const useEncounterArchive = () => {
-  const store = useContext(EncounterArchiveContext);
-  if (!store) {
-    throw new Error(
-      "useEncounterArchive must be used within a EncounterArchiveProvider",
-    );
-  }
-  return store;
-};
 
 export function EncounterArchive() {
   const archiveStore = useMemo(() => new EncounterArchiveStore(), []);
@@ -434,7 +432,7 @@ export function EncounterArchive() {
         <h1 className={"text-2xl gap-5 flex items-center"}>
           <Skull />
           <span className="py-2 text-xl">Encounters</span>
-          <CreateEncounterButton />
+          <CreateEncounterButton category="inactive" />
         </h1>
         <ScrollArea
           key={"inactive"}
@@ -496,7 +494,7 @@ export function DifficultyBadge({
   const diffColor = EncounterUtils.difficultyColor(encounter, campaign);
   return (
     <Badge
-      className={`bg-${diffColor}-100 text-${diffColor}-700 flex-grow-0 h-5 rounded-sm`}
+      className={`bg-${diffColor}-100 text-${diffColor}-700 flex-grow-0 h-8 text-sm rounded-sm`}
     >
       {EncounterUtils.difficulty(encounter, campaign?.party_level)}
     </Badge>
@@ -535,23 +533,22 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
             }
             key={encounter.id}
             encounterCard={
-              <Link href={appRoutes.encounter(campaign, encounter, user)}>
-                <Card
-                  className={clsx("flex flextransition-all w-full p-3 gap-3")}
-                  draggable
-                  onDragStart={(e) => {
-                    typedDrag.set(
-                      e.dataTransfer,
-                      dragTypes.encounter,
-                      encounter,
-                    );
-                  }}
-                  onClick={() => {
-                    updateCampaign({
-                      ...campaign,
-                      focused_encounter_id: encounter.id,
-                    });
-                  }}
+              <Card
+                className={clsx("flex w-full gap-3")}
+                draggable
+                onDragStart={(e) => {
+                  typedDrag.set(e.dataTransfer, dragTypes.encounter, encounter);
+                }}
+                onClick={() => {
+                  updateCampaign({
+                    ...campaign,
+                    focused_encounter_id: encounter.id,
+                  });
+                }}
+              >
+                <Link
+                  href={appRoutes.encounter(campaign, encounter, user)}
+                  className="flex gap-3 w-full hover:bg-gray-100 h-20 items-center"
                 >
                   <div className="flex items-center text-gray-500">
                     <GripVertical className="flex-shrink-0 flex-grow-0" />
@@ -563,12 +560,14 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
                   </h2>
 
                   <MonstersInEncounter id={encounter.id} />
+                </Link>
+
+                <div className="ml-auto flex gap-2 items-center pr-5">
                   <LidndPopover
                     trigger={
-                      <MoreVertical
-                        className="ml-auto"
-                        onClick={(e) => e.stopPropagation()}
-                      />
+                      <ButtonWithTooltip text="More" variant="ghost">
+                        <MoreVertical />
+                      </ButtonWithTooltip>
                     }
                   >
                     <Button
@@ -583,8 +582,8 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
                     </Button>
                   </LidndPopover>
                   <DifficultyBadge encounter={encounter} />
-                </Card>
-              </Link>
+                </div>
+              </Card>
             }
           />
         );
@@ -593,46 +592,104 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
   );
 });
 
-export function CreateEncounterButton() {
-  const { encountersInCampaign: encounters } = api.useUtils();
+export function CreateEncounterButton({
+  category,
+}: {
+  className?: string;
+  category: Encounter["label"];
+}) {
+  const { encountersInCampaign, campaignById } = api.useUtils();
   const [campaign] = useCampaign();
-  const { mutate: createDefaultEncounter } = api.createEncounter.useMutation({
-    onMutate: async (newEncounter) => {
-      await encounters.cancel(campaign.id);
-      const previous = encounters.getData(campaign.id);
-      encounters.setData(campaign.id, (old) => {
-        if (!old) return [];
-        const placeholder = EncounterUtils.placeholder(newEncounter);
-        return [...old, { ...placeholder, participants: [] }];
-      });
-      return { previous };
-    },
-    onSuccess: async (encounter) => {
-      return await encounters.invalidate();
-    },
-    onError: (err, newEn, context) => {
-      encounters.setData(campaign.id, context?.previous);
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [createMore, setCreateMore] = useState(false);
+  const router = useRouter();
+  const user = useUser();
+
+  const { mutate: createDefaultEncounter, isPending } =
+    api.createEncounter.useMutation({
+      onMutate: async (newEncounter) => {
+        await encountersInCampaign.cancel(campaign.id);
+        const previous = encountersInCampaign.getData(campaign.id);
+        encountersInCampaign.setData(campaign.id, (old) => {
+          if (!old) return [];
+          const placeholder = EncounterUtils.placeholder(newEncounter);
+          return [...old, { ...placeholder, participants: [] }];
+        });
+        return { previous };
+      },
+      onSuccess: async (encounter) => {
+        if (!createMore) {
+          router.push(appRoutes.encounter(campaign, encounter, user));
+        }
+
+        return await Promise.all([
+          encountersInCampaign.invalidate(),
+          campaignById.invalidate(campaign.id),
+        ]);
+      },
+      onError: (err, newEn, context) => {
+        encountersInCampaign.setData(campaign.id, context?.previous);
+      },
+    });
+
+  const configuredPlaceholder = Placeholder.configure({
+    placeholder: "Objectives, monster tactics, etc...",
+  });
+
+  const editor = useEditor({
+    extensions: [StarterKit, configuredPlaceholder],
+    content: description,
+    onUpdate: ({ editor }) => {
+      const content = editor.getHTML();
+      setDescription(content);
     },
   });
-  const encounterUuid = crypto.randomUUID();
-  const archiveStore = useEncounterArchive();
+
   return (
-    <ButtonWithTooltip
-      text="Create encounter"
-      variant="ghost"
-      onClick={() => {
-        runInAction(() => archiveStore.setEditingEncounter(encounterUuid));
-        createDefaultEncounter({
-          name: "Unnamed encounter",
-          description: "",
-          campaign_id: campaign.id,
-          label: "inactive",
-          id: encounterUuid,
-        });
-      }}
+    <LidndPlusDialog
+      text="Create new encounter"
+      dialogTitle="Create new encounter"
     >
-      <Plus />
-    </ButtonWithTooltip>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          createDefaultEncounter({
+            name,
+            description,
+            campaign_id: campaign.id,
+            label: category,
+          });
+          setName("");
+          setDescription("");
+        }}
+        className={"flex flex-col gap-5 pt-3"}
+      >
+        <LidndTextInput
+          placeholder="Encounter name"
+          value={name}
+          variant="ghost"
+          className="text-2xl"
+          onChange={(e) => setName(e.target.value)}
+        />
+        <LidndTextArea placeholder="Encounter description" editor={editor} />
+        <div className="flex justify-between items-center">
+          <div className="ml-auto flex gap-2 items-center">
+            <label className="flex gap-2">
+              <Switch
+                defaultChecked={createMore}
+                onCheckedChange={(checked) => setCreateMore(checked)}
+              />
+              <span>Create more</span>
+            </label>
+            <Button type="submit">
+              {isPending ? "Creating..." : "Create"}
+            </Button>
+          </div>
+        </div>
+      </form>
+    </LidndPlusDialog>
   );
 }
 

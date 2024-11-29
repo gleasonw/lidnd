@@ -27,7 +27,10 @@ import { ServerCampaign } from "@/server/campaigns";
 import { booleanSchema } from "@/app/[username]/utils";
 import { ParticipantUtils } from "@/utils/participants";
 import { EncounterUtils } from "@/utils/encounters";
-import { insertCreatureSchema } from "@/app/[username]/[campaign_slug]/encounter/types";
+import {
+  insertCreatureSchema,
+  participantInsertSchema,
+} from "@/app/[username]/[campaign_slug]/encounter/types";
 import _ from "lodash";
 import { columnsRouter } from "@/server/api/columns-router";
 import { protectedProcedure, publicProcedure, t } from "@/server/api/base-trpc";
@@ -489,12 +492,11 @@ export const appRouter = t.router({
       return result[0];
     }),
 
-  addExistingCreatureToEncounter: protectedProcedure
+  addExistingCreatureAsParticipant: protectedProcedure
     .input(
-      z.object({
-        encounter_id: z.string(),
+      participantInsertSchema.extend({
         creature_id: z.string(),
-        is_ally: booleanSchema,
+        encounter_id: z.string(),
       })
     )
     .mutation(async (opts) => {
@@ -517,11 +519,9 @@ export const appRouter = t.router({
         });
       }
       return await ServerEncounter.addParticipant(opts.ctx, {
-        encounter_id: opts.input.encounter_id,
-        creature_id: opts.input.creature_id,
         hp: userCreature[0].max_hp,
-        is_ally: opts.input.is_ally,
         creature: userCreature[0],
+        ...opts.input,
       });
     }),
   //#endregion

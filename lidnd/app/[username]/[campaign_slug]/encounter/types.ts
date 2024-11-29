@@ -12,6 +12,7 @@ export const creatureUploadSchema = insertCreatureSchema
     max_hp: z.coerce.number().gt(0),
     challenge_rating: z.coerce.number(),
     is_player: booleanSchema,
+    column_id: z.string().optional(),
   })
   .omit({ user_id: true });
 

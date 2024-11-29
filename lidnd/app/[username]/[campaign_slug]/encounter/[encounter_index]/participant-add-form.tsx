@@ -15,7 +15,7 @@ import { observer } from "mobx-react-lite";
 import React, { createContext, Suspense, useState } from "react";
 import {
   useCreateCreatureInEncounter,
-  useAddExistingCreatureToEncounter,
+  useAddExistingCreatureAsParticipant,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { AddCreatureButton } from "@/encounters/add-creature-button";
 import { EncounterDifficulty } from "@/encounters/[encounter_index]/encounter-top-bar";
@@ -117,8 +117,10 @@ export const ParticipantUpload = function ParticipantUpload({
 
 export function ExistingMonster({
   encounter,
+  onUpload,
 }: {
   encounter: EncounterWithParticipants;
+  onUpload?: (creature: Creature) => void;
 }) {
   const [name, setName] = useState("");
   const { data: creatures } = api.getUserCreatures.useQuery({
@@ -145,6 +147,7 @@ export function ExistingMonster({
               key={creature.id}
               creature={creature}
               encounter={encounter}
+              onSelect={onUpload}
             />
           ))}
         </div>
@@ -193,12 +196,13 @@ export function ExistingCreature({
 export interface ListedCreatureProps {
   creature: Creature;
   encounter: Encounter;
+  onSelect?: (creature: Creature) => void;
 }
 
 export const ListedCreature = observer<ListedCreatureProps>(
-  function ListedCreature({ creature, encounter }) {
+  function ListedCreature({ creature, encounter, onSelect }) {
     const { mutate: addCreatureToEncounter } =
-      useAddExistingCreatureToEncounter(encounter);
+      useAddExistingCreatureAsParticipant(encounter);
     const isAlly = useAllyContext();
     const id = encounter.id;
 
@@ -209,6 +213,9 @@ export const ListedCreature = observer<ListedCreatureProps>(
           key={creature.id}
           onClick={(e) => {
             e.stopPropagation();
+            if (onSelect) {
+              return onSelect(creature);
+            }
             addCreatureToEncounter({
               creature_id: creature.id,
               encounter_id: id,

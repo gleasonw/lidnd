@@ -10,6 +10,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
+import {
+  Select,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+} from "@/components/ui/select";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { InitiativeTracker } from "@/encounters/[encounter_index]/battle-bar";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
@@ -17,18 +24,17 @@ import { GroupInitiativeInput } from "@/encounters/[encounter_index]/group-initi
 import {
   useEncounter,
   useRemoveParticipantFromEncounter,
+  useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import {
   AllyUpload,
   MonsterUpload,
 } from "@/encounters/[encounter_index]/participant-add-form";
-import { LidndPopover } from "@/encounters/base-popover";
-import { DifficultyBadge } from "@/encounters/campaign-encounters-overview";
 import type { EncounterWithParticipants } from "@/server/api/router";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
-import { HelpCircle, Plus, Swords } from "lucide-react";
+import { Plus, Swords } from "lucide-react";
 
 export function EncounterTopBar() {
   const [encounter] = useEncounter();
@@ -60,11 +66,11 @@ export function EncounterTopBar() {
             <AllyUpload encounter={encounter} />
           </LidndPlusDialog>
         </ParticipantsContainer>
-        <div className=" flex flex-col gap-3 items-center">
+        <div className=" flex flex-col gap-5 items-center">
           <LidndDialog
             title={"Roll initiative"}
             trigger={
-              <Button className="w-full h-full max-w-sm text-xl flex gap-3 py-5 shadow-lg">
+              <Button className="w-full h-full max-w-sm text-xl flex gap-3 py-4 shadow-lg">
                 <Swords />
                 Roll initiative
                 <Swords />
@@ -98,10 +104,7 @@ export function EncounterTopBar() {
             </DialogTrigger>
             <DialogContent className="max-h-screen overflow-auto sm:max-w-[800px]">
               <DialogTitle>
-                <div className="flex gap-5 items-center">
-                  Add monster
-                  <DifficultyBadge encounter={encounter} />
-                </div>
+                <div className="flex gap-5 items-center">Add monster</div>
               </DialogTitle>
               <div className="flex -space-x-2">
                 {encounter?.participants
@@ -161,78 +164,76 @@ export function EncounterDifficulty({
   encounter: EncounterWithParticipants;
 }) {
   const [campaign] = useCampaign();
+  const { mutate, isPending, variables } = useUpdateEncounter();
+  const target = isPending
+    ? variables.target_difficulty
+    : encounter.target_difficulty;
 
   const totalCr = EncounterUtils.totalCr(encounter);
+  const partyLevel = campaign?.party_level ?? 1;
 
   const { hardTier, standardTier, easyTier } = EncounterUtils.findCRBudget(
     encounter,
-    campaign?.party_level ?? 1,
+    partyLevel,
   );
 
-  const percentFull = Math.min(1, totalCr / hardTier);
-  const easyCutoff = (easyTier / hardTier) * 100;
-  const standardCutoff = (standardTier / hardTier) * 100;
+  const remainingBudget =
+    target === "easy"
+      ? easyTier - totalCr
+      : target === "standard"
+        ? standardTier - totalCr
+        : hardTier - totalCr;
 
-  const tiers = [totalCr, hardTier, standardTier, easyTier].sort();
-  const nextTierIndex = tiers.findIndex((t) => t === totalCr) + 1;
-  const nextTier =
-    nextTierIndex > tiers.length - 1
-      ? tiers[tiers.length - 1]
-      : tiers[nextTierIndex];
-  // why 0? doesn't really make sense
-  const distanceToNext = nextTier ? nextTier - totalCr : 0;
+  const textColor = EncounterUtils.colorForDifficulty(
+    target === "easy" ? "Easy" : target === "standard" ? "Standard" : "Hard",
+  );
 
   return (
     <div className="flex flex-col gap-3 pb-8 w-full">
-      <span className="flex justify-between">
-        <span className="text-sm">Challenge rating budget</span>
-        <span className="flex gap-2 items-center text-sm text-gray-700">
-          <span className=" flex gap-2 items-center">
-            CR to next: {distanceToNext}
+      <span
+        className={`flex h-24 flex-col items-center justify-center p-3 gap-3 text-${textColor}-500`}
+      >
+        {remainingBudget === 0 ? (
+          <span className="text-3xl font-bold">
+            {EncounterUtils.difficulty(encounter, campaign?.party_level)}
           </span>
-          <LidndPopover
-            trigger={
-              <ButtonWithTooltip text="info" variant="ghost">
-                <HelpCircle className="h-4 w-4" />
-              </ButtonWithTooltip>
-            }
+        ) : (
+          <>
+            <span className="text-7xl font-bold">{remainingBudget}</span>
+            <span className="text-slate-500">CR remaining</span>
+          </>
+        )}
+      </span>
+      <span className="grid grid-cols-2 justify-between items-center">
+        <label className="flex flex-col gap-3">
+          <span className=" text-slate-500">Target</span>
+          <Select
+            onValueChange={(v) => {
+              console.log(v);
+              mutate({ ...encounter, target_difficulty: v as any });
+            }}
+            defaultValue={target}
           >
-            hello
-          </LidndPopover>
+            <SelectTrigger>
+              <SelectValue placeholder="Select difficulty" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="easy">Easy {`(${easyTier})`}</SelectItem>
+              <SelectItem value="standard">
+                Standard {`(${standardTier})`}
+              </SelectItem>
+              <SelectItem value="hard">Hard {`(${hardTier})`}</SelectItem>
+            </SelectContent>
+          </Select>
+        </label>
+
+        <span className="whitespace-nowrap flex flex-col gap-3 items-center justify-between text-slate-500">
+          <span>Current</span>
+          <span className={`font-bold text-xl text-${textColor}-500`}>
+            {totalCr}
+          </span>
         </span>
       </span>
-      <div className="border h-3 rounded-full relative flex items-start w-full">
-        <div
-          className={clsx(
-            `bg-${EncounterUtils.difficultyColor(encounter, campaign)}-500 absolute top-0 left-0 h-full transition-all rounded-full`,
-          )}
-          style={{ width: `${percentFull * 100}%` }}
-        />
-        <span style={{ left: "0%" }} className="absolute w-1 h-full">
-          <span className="absolute bottom-0 translate-y-full pt-3">Easy</span>
-        </span>
-        <span
-          className={`border w-1 h-full absolute  bg-green-500`}
-          style={{ left: `${easyCutoff}%` }}
-        >
-          <span className="absolute bottom-0 translate-y-full -translate-x-1/2 pt-3">
-            {standardTier}
-          </span>
-        </span>
-        <span
-          className={`border w-1 h-full absolute bg-yellow-500`}
-          style={{ left: `${standardCutoff}%` }}
-        >
-          <span className="absolute bottom-0 translate-y-full -translate-x-1/2 pt-3">
-            {hardTier}
-          </span>
-        </span>
-        <span style={{ left: "100%" }} className="w-1 h-full absolute ">
-          <span className="absolute bottom-0 translate-y-full -translate-x-full pt-3">
-            Deadly
-          </span>
-        </span>
-      </div>
     </div>
   );
 }

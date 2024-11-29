@@ -31,9 +31,9 @@ export default async function CampaignPage(props: {
 
   return (
     <CampaignId value={campaignData.id}>
-      <div className="flex flex-col gap-5 max-h-full overflow-hidden ">
+      <div className="flex flex-col gap-5 max-h-full overflow-hidden h-full">
         <SessionEncounters />
-        <div className="max-h-full flex flex-col overflow-auto">
+        <div className="max-h-full flex flex-col overflow-auto h-full">
           <EncounterArchive />
         </div>
       </div>

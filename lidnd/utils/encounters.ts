@@ -29,24 +29,69 @@ type Cyclable = {
   current_round: number;
 };
 
+const difficulties = {
+  Easy: "Easy",
+  Standard: "Standard",
+  Hard: "Hard",
+  Deadly: "Deadly",
+} as const;
+
+type Difficulty = keyof typeof difficulties;
+
 function difficultyColor(e: EncounterWithParticipants, c: Campaign) {
   const difficulty = EncounterUtils.difficulty(e, c?.party_level);
-  if (difficulty === "Deadly") {
+  return colorForDifficulty(difficulty);
+}
+
+function difficultyColorForCR(
+  cr: number,
+  e: EncounterWithParticipants,
+  c: { party_level?: number }
+) {
+  const difficulty = EncounterUtils.difficultyForCR(cr, e, c?.party_level ?? 1);
+  return colorForDifficulty(difficulty);
+}
+
+function colorForDifficulty(d: Difficulty) {
+  if (d === "Deadly") {
     return "red";
   }
-  if (difficulty === "Hard") {
+  if (d === "Hard") {
     return "yellow";
   }
-  if (difficulty === "Easy") {
+  if (d === "Easy") {
     return "green";
   }
-  if (difficulty === "Standard") {
+  if (d === "Standard") {
     return "blue";
   }
 }
 
+const DEFAULT_LEVEL = 1;
+
 export const EncounterUtils = {
   difficultyColor,
+  difficultyColorForCR,
+  colorForDifficulty,
+  nextTierAndDistance(
+    e: EncounterWithParticipants,
+    c: { party_level?: number }
+  ): [Difficulty, number] {
+    const difficulty = this.difficulty(e, c.party_level ?? DEFAULT_LEVEL);
+    const tiers = this.findCRBudget(e, c.party_level ?? DEFAULT_LEVEL);
+    const total = this.totalCr(e);
+    if (difficulty === "Easy") {
+      return [difficulties.Standard, tiers.standardTier - total] as const;
+    }
+    if (difficulty === "Standard") {
+      return [difficulties.Hard, tiers.hardTier - total] as const;
+    }
+    if (difficulty === "Hard") {
+      return [difficulties.Deadly, tiers.hardTier - total] as const;
+    }
+    return [difficulties.Hard, tiers.hardTier - total] as const;
+  },
+
   byStatus(encounters: EncounterWithParticipants[]) {
     return R.groupBy(encounters, (e) => e.label);
   },
@@ -197,19 +242,26 @@ export const EncounterUtils = {
     const finalPlayerLevel = playerLevel ?? 1;
     const totalCr = this.totalCr(encounter);
 
-    const { easyTier, standardTier, hardTier } = this.findCRBudget(
-      encounter,
-      finalPlayerLevel
-    );
+    return this.difficultyForCR(totalCr, encounter, finalPlayerLevel);
+  },
 
-    if (totalCr <= easyTier) {
-      return "Easy";
-    } else if (totalCr <= standardTier) {
-      return "Standard";
-    } else if (totalCr <= hardTier) {
-      return "Hard";
+  difficultyForCR(
+    cr: number,
+    encounter: EncounterWithParticipants,
+    playerLevel: number
+  ): Difficulty {
+    const { standardTier, hardTier } = this.findCRBudget(
+      encounter,
+      playerLevel
+    );
+    if (cr < standardTier) {
+      return difficulties.Easy;
+    } else if (cr < hardTier) {
+      return difficulties.Standard;
+    } else if (cr === hardTier) {
+      return difficulties.Hard;
     } else {
-      return "Deadly";
+      return difficulties.Deadly;
     }
   },
 
@@ -264,6 +316,7 @@ export const EncounterUtils = {
       order: encounter.order ?? 0,
       index_in_campaign: encounter.index_in_campaign ?? 0,
       is_editing_columns: encounter.is_editing_columns ?? true,
+      target_difficulty: encounter.target_difficulty ?? "standard",
     };
   },
 

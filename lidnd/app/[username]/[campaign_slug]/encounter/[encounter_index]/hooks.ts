@@ -1,7 +1,7 @@
 import { api } from "@/trpc/react";
 import { useMutation } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { createCreatureInEncounter } from "@/app/[username]/actions";
+import { createParticipantInEncounter } from "@/app/[username]/actions";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { removeUndefinedFields } from "@/app/[username]/utils";
@@ -106,8 +106,9 @@ export function useCreateCreatureInEncounter({
         "is_ally",
         rawData.participant?.is_ally ? "true" : "false",
       );
+      formData.append("column_id", rawData.participant?.column_id ?? "");
 
-      const response = await createCreatureInEncounter(formData);
+      const response = await createParticipantInEncounter(formData);
 
       if (response.error) {
         console.error(response.error);
@@ -254,38 +255,13 @@ export function useDeleteEncounter() {
 }
 
 export function useUpdateEncounter() {
-  const { encountersInCampaign: encounters } = api.useUtils();
+  const { invalidateAll } = useEncounterQueryUtils();
   const campaignId = useCampaignId();
 
   const mutation = api.updateEncounter.useMutation({
     onSettled: async (en) => {
       if (!en) return;
-      return await encounters.invalidate(campaignId);
-    },
-    onMutate: async (en) => {
-      if (!en) return;
-      await encounters.cancel(campaignId);
-      const previousEncounter = encounters
-        .getData(campaignId)
-        ?.find((e) => e.id === en.id);
-
-      if (!previousEncounter) {
-        throw new Error("No previous encounter found");
-      }
-
-      const filteredNewEncounter = removeUndefinedFields(en);
-      encounters.setData(campaignId, (old) => {
-        return old?.map((e) => {
-          if (e.id === en.id) {
-            return {
-              ...e,
-              ...filteredNewEncounter,
-            };
-          }
-          return e;
-        });
-      });
-      return { previousEncounter };
+      return await invalidateAll(en);
     },
   });
 
@@ -359,13 +335,13 @@ export function useRemoveStatusEffect() {
   });
 }
 
-export function useAddExistingCreatureToEncounter(encounter: Encounter) {
+export function useAddExistingCreatureAsParticipant(encounter: Encounter) {
   const id = encounter.id;
   const { cancelAll, invalidateAll } = useEncounterQueryUtils();
   const { encounterById } = api.useUtils();
   const { data: creatures } = api.getUserCreatures.useQuery({ name: "" });
-  return api.addExistingCreatureToEncounter.useMutation({
-    onMutate: async ({ creature_id, is_ally }) => {
+  return api.addExistingCreatureAsParticipant.useMutation({
+    onMutate: async (p) => {
       await cancelAll(encounter);
       const previousEncounterData = encounterById.getData(id);
       encounterById.setData(id, (old) => {
@@ -373,24 +349,17 @@ export function useAddExistingCreatureToEncounter(encounter: Encounter) {
           return;
         }
         const selectedCreature = creatures?.find(
-          (creature) => creature.id === creature_id,
+          (creature) => creature.id === p.creature_id,
         );
         if (!selectedCreature) return;
 
         // boolean wonkyness comes from the boolean parsing we have to do server side
         // we should always have pure booleans locally
         return EncounterUtils.addParticipant(
-          ParticipantUtils.placeholderParticipantWithData(
-            {
-              encounter_id: id,
-              creature_id: selectedCreature.id,
-              is_ally: is_ally === true || is_ally === "true" ? true : false,
-            },
-            {
-              ...selectedCreature,
-              user_id: "pending",
-            },
-          ),
+          ParticipantUtils.placeholderParticipantWithData(p, {
+            ...selectedCreature,
+            user_id: "pending",
+          }),
           old,
         );
       });
@@ -415,7 +384,7 @@ export function useEncounterQueryUtils() {
   const { encountersInCampaign, getColumns, encounterById, campaignById } =
     api.useUtils();
 
-  const cancelAll = async (encounter: Encounter) => {
+  const cancelAll = async (encounter: { id: string; campaign_id: string }) => {
     await Promise.all([
       encounterById.cancel(encounter.id),
       getColumns.cancel(encounter.id),
@@ -424,7 +393,10 @@ export function useEncounterQueryUtils() {
     ]);
   };
 
-  const invalidateAll = async (encounter: Encounter) => {
+  const invalidateAll = async (encounter: {
+    id: string;
+    campaign_id: string;
+  }) => {
     await Promise.all([
       encounterById.invalidate(encounter.id),
       getColumns.invalidate(encounter.id),
@@ -432,6 +404,7 @@ export function useEncounterQueryUtils() {
       campaignById.invalidate(encounter.campaign_id),
     ]);
   };
+
   return { cancelAll, invalidateAll };
 }
 

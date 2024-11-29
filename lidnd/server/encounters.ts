@@ -10,6 +10,7 @@ import {
 import type { InsertParticipant, Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql, inArray } from "drizzle-orm";
+import * as R from "remeda";
 
 // todo: allow callers to pass in an encounter they've already fetched
 async function addParticipant(
@@ -27,6 +28,10 @@ async function addParticipant(
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to add participant",
       });
+    }
+
+    if (newParticipant[0].column_id) {
+      return;
     }
 
     // don't add player creatures to columns
@@ -50,7 +55,7 @@ async function addParticipant(
       }
     }
 
-    const columnToAssign = e.columns.at(0);
+    const columnToAssign = R.firstBy(e.columns, (c) => c.participants.length);
     if (columnToAssign) {
       const pWithColumn = await tx
         .update(participants)
@@ -176,7 +181,20 @@ export const ServerEncounter = {
           },
         },
         reminders: true,
-        columns: true,
+        columns: {
+          with: {
+            participants: {
+              with: {
+                creature: true,
+                status_effects: {
+                  with: {
+                    effect: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
   },

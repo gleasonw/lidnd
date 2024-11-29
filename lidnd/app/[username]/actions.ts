@@ -156,17 +156,19 @@ export async function updateEncounterDescription(
     .where(and(eq(encounters.id, id), eq(encounters.user_id, user.id)));
 }
 
-export async function createCreatureInEncounter(formData: CreaturePostData) {
+export async function createParticipantInEncounter(formData: CreaturePostData) {
   const user = await LidndAuth.getUser();
 
   if (!user) {
     return { error: "No session found." };
   }
 
+  // maybe should just make a "flattened participant + creature zod schema..." man, formData sucks
   const creature = parse(formData, {
     schema: creatureUploadSchema.merge(
       z.object({
         encounter_id: z.string(),
+        column_id: z.string(),
       }),
     ),
   });
@@ -174,6 +176,10 @@ export async function createCreatureInEncounter(formData: CreaturePostData) {
   if (!creature.value) {
     return { error: creature.error };
   }
+
+  console.log(formData.entries());
+
+  console.log(creature.value.column_id);
 
   const newCreature = await createCreature({ user }, creature.value);
 
@@ -184,6 +190,7 @@ export async function createCreatureInEncounter(formData: CreaturePostData) {
       creature_id: newCreature.id,
       hp: newCreature.max_hp,
       creature: newCreature,
+      column_id: creature.value.column_id,
     },
   );
 

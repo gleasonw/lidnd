@@ -62,6 +62,11 @@ export const encounter_label_enum = pgEnum("encounter_label", [
   "active",
   "inactive",
 ]);
+export const target_difficulty_enum = pgEnum("difficulty", [
+  "easy",
+  "standard",
+  "hard",
+]);
 
 export const encounter_status = ["roll", "surprise", "prep", "run"] as const;
 export type EncounterStatus = (typeof encounter_status)[number];
@@ -153,6 +158,9 @@ export const encounters = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull().default("Unnamed encounter"),
+    target_difficulty: target_difficulty_enum("target_difficulty")
+      .default("standard")
+      .notNull(),
     description: text("description"),
     started_at: timestamp("started_at"),
     created_at: timestamp("created_at").defaultNow(),
@@ -231,11 +239,12 @@ export const stat_columns = pgTable("stat_columns", {
     .notNull(),
 });
 
-export const statColumnRelations = relations(stat_columns, ({ one }) => ({
+export const statColumnRelations = relations(stat_columns, ({ one, many }) => ({
   encounter: one(encounters, {
     fields: [stat_columns.encounter_id],
     references: [encounters.id],
   }),
+  participants: many(participants),
 }));
 
 export const participantRelations = relations(
@@ -250,6 +259,10 @@ export const participantRelations = relations(
       references: [creatures.id],
     }),
     status_effects: many(participant_status_effects),
+    column: one(stat_columns, {
+      fields: [participants.column_id],
+      references: [stat_columns.id],
+    }),
   })
 );
 
