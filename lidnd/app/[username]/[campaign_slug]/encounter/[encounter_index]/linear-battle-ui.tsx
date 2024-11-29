@@ -12,23 +12,22 @@ import {
 } from "@/encounters/[encounter_index]/hooks";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { observer } from "mobx-react-lite";
-import type { stat_columns } from "@/server/api/db/schema";
 import { Button } from "@/components/ui/button";
 import { Grip, Plus, Trash, X } from "lucide-react";
-import { StatColumnUtils } from "@/utils/stat-columns";
+import {
+  StatColumnUtils,
+  type ColumnWithParticipants,
+} from "@/utils/stat-columns";
 import { ParticipantUtils } from "@/utils/participants";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ButtonWithTooltip } from "@/components/ui/tip";
-import type { StatColumn } from "@/server/api/columns-router";
 import {
   ExistingMonster,
   ParticipantUpload,
 } from "@/encounters/[encounter_index]/participant-add-form";
 import { MonsterUploadForm } from "@/encounters/full-creature-add-form";
 
-// todo: add optimistic ui for adding a creature flow (add to column, etc)
 //todo: custom margin when in editing layout mode
-
 function onSelectParticipant(id: string) {
   const selectedCardElement = document.querySelector(
     `[data-participant-id="${id}"]`,
@@ -119,33 +118,32 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
 
 function ReadOnlyStatColumns() {
   const [encounter] = useEncounter();
-  const { data: columns } = api.getColumns.useQuery(encounter.id);
-  return columns?.map((c) => <ReadOnlyStatColumn column={c} key={c.id} />);
+  return encounter.columns?.map((c) => (
+    <ReadOnlyStatColumn column={c} key={c.id} />
+  ));
 }
 
-function ReadOnlyStatColumn({ column }: { column: StatColumn }) {
+function ReadOnlyStatColumn({ column }: { column: ColumnWithParticipants }) {
   return (
     <div
       className="flex flex-col gap-10"
       style={{ width: `${column.percent_width}%` }}
     >
-      <BattleCards columnId={column.id} />
+      <BattleCards column={column} />
     </div>
   );
 }
 
 function StatColumns() {
   const [encounter] = useEncounter();
-  // todo: just fetch this in the encounter
-  const { data: columns } = api.getColumns.useQuery(encounter.id);
-  return columns?.map((c, index) => (
+  return encounter.columns?.map((c, index) => (
     <StatColumnComponent
       column={c}
       key={c.id}
       splitter={
-        index < columns.length - 1 ? (
+        index < encounter.columns.length - 1 ? (
           <StatColumnSplitter
-            rightColumnId={columns[index + 1]!.id}
+            rightColumnId={encounter.columns[index + 1]!.id}
             leftColumnId={c.id}
             key={index}
           />
@@ -156,24 +154,28 @@ function StatColumns() {
 }
 
 function CreateNewColumnButton() {
-  const { getColumns } = api.useUtils();
+  const { encounterById } = api.useUtils();
   const [encounter] = useEncounter();
-  const { data: columns } = api.getColumns.useQuery(encounter.id);
   const { mutate: createColumn } = api.createColumn.useMutation({
     onSettled: async () => {
-      return await getColumns.invalidate();
+      return await encounterById.invalidate(encounter.id);
     },
     onMutate: async (newColumn) => {
-      await getColumns.cancel(newColumn.encounter_id);
-      const previousColumns = getColumns.getData(newColumn.encounter_id);
-      getColumns.setData(newColumn.encounter_id, (old) => {
+      const columns = encounter.columns;
+      await encounterById.cancel(newColumn.encounter_id);
+      const previousEncounter = encounterById.getData(newColumn.encounter_id);
+      encounterById.setData(newColumn.encounter_id, (old) => {
         if (!old || !columns) return old;
-        return StatColumnUtils.add(columns, {
-          ...newColumn,
-          id: Math.random.toString(),
-        });
+        return {
+          ...old,
+          columns: StatColumnUtils.add(columns, {
+            ...newColumn,
+            participants: [],
+            id: Math.random.toString(),
+          }),
+        };
       });
-      return { previousColumns };
+      return { previousColumns: previousEncounter };
     },
   });
   return (
@@ -189,20 +191,16 @@ function CreateNewColumnButton() {
   );
 }
 
-type Column = typeof stat_columns.$inferSelect;
-
 function StatColumnComponent({
   column,
   splitter,
 }: {
-  column: Column;
+  column: ColumnWithParticipants;
   splitter: React.ReactNode | null;
 }) {
-  // todo: setup join in db instead of here
-  //todo: when adding a participant, put them in the shortest column
   const [encounter] = useEncounter();
   const [acceptDrop, setAcceptDrop] = React.useState(false);
-  const { getColumns, encounterById } = api.useUtils();
+  const { encounterById } = api.useUtils();
   const { mutate: assignParticipantToColumn } =
     api.assignParticipantToColumn.useMutation({
       onSettled: async () => {
@@ -227,18 +225,21 @@ function StatColumnComponent({
     });
   const { mutate: deleteColumn } = api.deleteColumn.useMutation({
     onSettled: async () => {
-      return await getColumns.invalidate();
+      return await encounterById.invalidate();
     },
     onMutate: async (column) => {
-      await getColumns.cancel(column.encounter_id);
-      const previousColumns = getColumns.getData(column.encounter_id);
-      getColumns.setData(column.encounter_id, (old) => {
-        if (!previousColumns) {
+      await encounterById.cancel(column.encounter_id);
+      const previousEncounter = encounterById.getData(column.encounter_id);
+      encounterById.setData(column.encounter_id, (old) => {
+        if (!previousEncounter) {
           return old;
         }
-        return StatColumnUtils.remove(previousColumns, column.id);
+        return {
+          ...encounter,
+          columns: StatColumnUtils.remove(previousEncounter.columns, column.id),
+        };
       });
-      return { previousColumns };
+      return { previousColumns: previousEncounter };
     },
   });
   return (
@@ -284,22 +285,20 @@ function StatColumnComponent({
         >
           <X />
         </ButtonWithTooltip>
-        <BattleCards columnId={column.id} />
+        <BattleCards column={column} />
       </div>
       {splitter}
     </>
   );
 }
 
-function BattleCards({ columnId }: { columnId: string }) {
+function BattleCards({ column }: { column: ColumnWithParticipants }) {
   const [encounter] = useEncounter();
   const { mutate: removeCreatureFromEncounter } =
     useRemoveParticipantFromEncounter();
-  // todo: i would like to just have column.participants, but gets a little wonky, since we end
-  // up duplicating the data on encounter?
-  const participantsInColumn = encounter.participants
-    .filter((p) => p.column_id === columnId && !ParticipantUtils.isPlayer(p))
-    .sort(ParticipantUtils.sortLinearly);
+  const participantsInColumn = column.participants.sort(
+    ParticipantUtils.sortLinearly,
+  );
   const { mutate: createCreatureInEncounter } = useCreateCreatureInEncounter({
     encounter,
   });
@@ -318,7 +317,7 @@ function BattleCards({ columnId }: { columnId: string }) {
                   creature: c,
                   participant: {
                     is_ally: false,
-                    column_id: columnId,
+                    column_id: column.id,
                   },
                 })
               }
@@ -330,7 +329,7 @@ function BattleCards({ columnId }: { columnId: string }) {
                 addParticipantFromExistingCreature({
                   encounter_id: encounter.id,
                   creature_id: c.id,
-                  column_id: columnId,
+                  column_id: column.id,
                 })
               }
               encounter={encounter}

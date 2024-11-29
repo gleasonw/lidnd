@@ -1,6 +1,13 @@
 import type { StatColumn } from "@/server/api/columns-router";
+import type { ParticipantWithData } from "@/server/api/router";
+export type ColumnWithParticipants = StatColumn & {
+  participants: ParticipantWithData[];
+};
 
-function add(columns: StatColumn[], newColumn: StatColumn): StatColumn[] {
+function add(
+  columns: ColumnWithParticipants[],
+  newColumn: ColumnWithParticipants
+): ColumnWithParticipants[] {
   const numColumns = columns.length;
   if (numColumns === 0) {
     // first added column, take up the whole space
@@ -15,7 +22,10 @@ function add(columns: StatColumn[], newColumn: StatColumn): StatColumn[] {
   return [...updatedColumns, { ...newColumn, percent_width: newPercentWidth }];
 }
 
-function remove(columns: StatColumn[], columnId: string): StatColumn[] {
+function remove(
+  columns: ColumnWithParticipants[],
+  columnId: string
+): ColumnWithParticipants[] {
   const columnToDelete = columns.find((c) => c.id === columnId);
   if (!columnToDelete) {
     throw new Error(`could not find target delete column inside columns`);
@@ -31,7 +41,7 @@ function remove(columns: StatColumn[], columnId: string): StatColumn[] {
       ...acc,
       { ...c, percent_width: c.percent_width + widthToRedistribute },
     ];
-  }, [] as StatColumn[]);
+  }, [] as ColumnWithParticipants[]);
   return removed;
 }
 
