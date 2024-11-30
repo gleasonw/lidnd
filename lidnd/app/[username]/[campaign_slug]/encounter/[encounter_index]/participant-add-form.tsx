@@ -35,7 +35,7 @@ export function MonsterUpload({
 
   return (
     <div className="h-[900px] flex flex-col gap-2">
-      <EncounterDifficulty encounter={encounter} />
+      <EncounterDifficulty />
       <ParticipantUpload
         encounter={encounter}
         form={

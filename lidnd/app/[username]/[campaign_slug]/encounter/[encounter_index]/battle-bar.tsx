@@ -12,6 +12,7 @@ import {
   useCyclePreviousTurn,
   useEncounter,
   useRemoveStatusEffect,
+  useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import InitiativeInput from "@/encounters/[encounter_index]/InitiativeInput";
 import { ParticipantUpload } from "@/encounters/[encounter_index]/participant-add-form";
@@ -20,7 +21,6 @@ import {
   StatusInput,
 } from "@/encounters/[encounter_index]/status-input";
 import type { ParticipantWithData } from "@/server/api/router";
-import { api } from "@/trpc/react";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { PopoverTrigger } from "@radix-ui/react-popover";
@@ -36,41 +36,19 @@ import {
 import { observer } from "mobx-react-lite";
 import React from "react";
 
-export function ToggleEditingMode({
-  encounter,
-}: {
-  encounter: { id: string; is_editing_columns: boolean };
-}) {
-  const { encounterById } = api.useUtils();
-  const { data: latestEncounter } = api.encounterById.useQuery(encounter.id);
-  const { mutate: setEditingColumns } =
-    api.setEditingEncounterColumns.useMutation({
-      onSettled: async () => {
-        return await encounterById.invalidate(encounter.id);
-      },
-      onMutate: async (newEncounter) => {
-        await encounterById.cancel(encounter.id);
-        const previousEncounter = encounterById.getData(encounter.id);
-        encounterById.setData(encounter.id, (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            is_editing_columns: newEncounter.is_editing_columns,
-          };
-        });
-        return { previousEncounter };
-      },
-    });
+export function ToggleEditingMode() {
+  const [encounter] = useEncounter();
+  const { mutate: updateEncounter } = useUpdateEncounter();
   return (
     <Toggle
       onClick={(e) =>
-        setEditingColumns({
-          encounter_id: encounter.id,
-          is_editing_columns: !latestEncounter?.is_editing_columns,
+        updateEncounter({
+          ...encounter,
+          is_editing_columns: !encounter?.is_editing_columns,
         })
       }
     >
-      {latestEncounter?.is_editing_columns ? (
+      {encounter?.is_editing_columns ? (
         <Tip text={"Current view: editing columns"}>
           <ColumnsIcon />
         </Tip>

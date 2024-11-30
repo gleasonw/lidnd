@@ -48,7 +48,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 import {
   useDeleteEncounter,
-  useUpdateEncounter,
+  useUpdateCampaignEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import { appRoutes } from "@/app/routes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -230,7 +230,7 @@ export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
 export function SessionEncounters() {
   const campaignId = useCampaignId();
   const [acceptDrop, setAcceptDrop] = useState(false);
-  const { mutate: updateEncounter } = useUpdateEncounter();
+  const { mutate: updateEncounter } = useUpdateCampaignEncounter();
   const { encountersInCampaign: encounters } = api.useUtils();
   const { data: campaignEncounters } =
     api.encountersInCampaign.useQuery(campaignId);
@@ -416,7 +416,7 @@ export function EncounterArchive() {
   const archiveStore = useMemo(() => new EncounterArchiveStore(), []);
   const campaignId = useCampaignId();
   const [acceptDrop, setAcceptDrop] = useState(false);
-  const { mutate: updateEncounter } = useUpdateEncounter();
+  const { mutate: updateEncounter } = useUpdateCampaignEncounter();
   const { data: encounters } = api.encountersInCampaign.useQuery(campaignId);
   const inactiveEncounters = encounters
     ? R.sort(encounters, compareCreatedAt).reverse()
@@ -598,7 +598,8 @@ export function CreateEncounterButton({
   className?: string;
   category: Encounter["label"];
 }) {
-  const { encountersInCampaign, campaignById } = api.useUtils();
+  const { encountersInCampaign, campaignById, campaignFromUrl } =
+    api.useUtils();
   const [campaign] = useCampaign();
 
   const [name, setName] = useState("");
@@ -627,6 +628,7 @@ export function CreateEncounterButton({
         return await Promise.all([
           encountersInCampaign.invalidate(),
           campaignById.invalidate(campaign.id),
+          campaignFromUrl.invalidate(),
         ]);
       },
       onError: (err, newEn, context) => {
@@ -723,7 +725,7 @@ function DraggableEncounterCard(props: {
   const [acceptDrop, setAcceptDrop] = useState<"none" | "top" | "bottom">(
     "none",
   );
-  const { mutate: updateEncounter } = useUpdateEncounter();
+  const { mutate: updateEncounter } = useUpdateCampaignEncounter();
   return (
     <li
       onDrop={(e) => {

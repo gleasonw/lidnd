@@ -2,10 +2,11 @@
 
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { createContext, useContext } from "react";
+import { isNumber } from "remeda";
 
 interface EncounterIdProps {
   children: React.ReactNode;
-  encounterIndex: string;
+  encounterIndex: string | number;
 }
 
 const EncounterIdContext = createContext<string | null>(null);
@@ -21,7 +22,11 @@ export const useEncounterId = () => {
 export function EncounterId(props: EncounterIdProps) {
   const [campaign] = useCampaign();
   const encounter = campaign?.encounters.find(
-    (e) => e.index_in_campaign === parseInt(props.encounterIndex),
+    (e) =>
+      e.index_in_campaign ===
+      (isNumber(props.encounterIndex)
+        ? props.encounterIndex
+        : parseInt(props.encounterIndex)),
   );
   if (!encounter) {
     throw new Error(

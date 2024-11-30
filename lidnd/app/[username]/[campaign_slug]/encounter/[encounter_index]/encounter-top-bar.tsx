@@ -1,7 +1,7 @@
 "use client";
 
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
+import { LidndPlusDialog } from "@/components/ui/lidnd_dialog";
 import {
   Select,
   SelectItem,
@@ -20,7 +20,6 @@ import {
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { InitiativeTracker } from "@/encounters/[encounter_index]/battle-bar";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
-import { GroupInitiativeInput } from "@/encounters/[encounter_index]/group-initiative-input";
 import {
   useEncounter,
   useRemoveParticipantFromEncounter,
@@ -30,11 +29,10 @@ import {
   AllyUpload,
   MonsterUpload,
 } from "@/encounters/[encounter_index]/participant-add-form";
-import type { EncounterWithParticipants } from "@/server/api/router";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
-import { Plus, Swords } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export function EncounterTopBar() {
   const [encounter] = useEncounter();
@@ -45,8 +43,8 @@ export function EncounterTopBar() {
   }
 
   return (
-    <div className="w-full py-5 flex flex-col gap-5">
-      <div className="grid grid-cols-3 gap-5">
+    <div className="w-full pt-5 flex flex-col gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
         <ParticipantsContainer role="allies">
           {EncounterUtils.allies(encounter).map((p) => (
             <button
@@ -66,21 +64,9 @@ export function EncounterTopBar() {
             <AllyUpload encounter={encounter} />
           </LidndPlusDialog>
         </ParticipantsContainer>
-        <div className=" flex flex-col gap-5 items-center">
-          <LidndDialog
-            title={"Roll initiative"}
-            trigger={
-              <Button className="w-full h-full max-w-sm text-xl flex gap-3 py-4 shadow-lg">
-                <Swords />
-                Roll initiative
-                <Swords />
-              </Button>
-            }
-            content={<GroupInitiativeInput />}
-          />
-
-          <EncounterDifficulty encounter={encounter} />
-        </div>
+        <Card className="flex flex-col gap-5 items-center">
+          <EncounterDifficulty />
+        </Card>
         <ParticipantsContainer role="monsters">
           {EncounterUtils.monsters(encounter).map((p) => (
             <button
@@ -106,7 +92,7 @@ export function EncounterTopBar() {
               <DialogTitle>
                 <div className="flex gap-5 items-center">Add monster</div>
               </DialogTitle>
-              <div className="flex -space-x-2">
+              <ParticipantsContainer role="monsters">
                 {encounter?.participants
                   ?.filter((p) => !ParticipantUtils.isPlayer(p))
                   .map((p) => (
@@ -125,7 +111,8 @@ export function EncounterTopBar() {
                       <CreatureIcon creature={p.creature} size="small" />
                     </ButtonWithTooltip>
                   ))}
-              </div>
+              </ParticipantsContainer>
+
               <MonsterUpload encounter={encounter} />
             </DialogContent>
             <DialogOverlay />
@@ -144,69 +131,50 @@ function ParticipantsContainer({
   role: "allies" | "monsters";
 }) {
   return (
-    <div
-      className={clsx(
-        {
-          "border-blue-500": role === "allies",
-          "border-red-500": role === "monsters",
-        },
-        `flex gap-4 px-5  items-center border-4 shadow-md`,
-      )}
-    >
-      {children}
+    <div className="flex w-full h-44 items-baseline">
+      <Card
+        className={clsx(
+          {
+            "border-blue-500": role === "allies",
+            "border-red-500": role === "monsters",
+            "shadow-blue-500": role === "allies",
+            "shadow-red-500": role === "monsters",
+          },
+          `flex gap-4 p-5 w-full h-28 items-center shadow-sm`,
+        )}
+      >
+        {children}
+      </Card>
     </div>
   );
 }
 
-export function EncounterDifficulty({
-  encounter,
-}: {
-  encounter: EncounterWithParticipants;
-}) {
+export function EncounterDifficulty() {
   const [campaign] = useCampaign();
+  const [encounter] = useEncounter();
   const { mutate, isPending, variables } = useUpdateEncounter();
   const target = isPending
     ? variables.target_difficulty
     : encounter.target_difficulty;
-
   const totalCr = EncounterUtils.totalCr(encounter);
-  const partyLevel = campaign?.party_level ?? 1;
-
-  const { hardTier, standardTier, easyTier } = EncounterUtils.findCRBudget(
-    encounter,
-    partyLevel,
-  );
-
-  const remainingBudget =
-    target === "easy"
-      ? easyTier - totalCr
-      : target === "standard"
-        ? standardTier - totalCr
-        : hardTier - totalCr;
-
-  const textColor = EncounterUtils.colorForDifficulty(
-    target === "easy" ? "Easy" : target === "standard" ? "Standard" : "Hard",
-  );
+  const goalCR = EncounterUtils.goalCr(encounter, campaign);
+  const remainingBudget = goalCR - totalCr;
+  const textColor = EncounterUtils.difficultyColor(encounter, campaign);
 
   return (
-    <div className="flex flex-col gap-3 pb-8 w-full">
-      <span
-        className={`flex h-24 flex-col items-center justify-center p-3 gap-3 text-${textColor}-500`}
-      >
-        {remainingBudget === 0 ? (
-          <span className="text-3xl font-bold">
-            {EncounterUtils.difficulty(encounter, campaign?.party_level)}
+    <>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-5">
+          <span>Challenge Rating</span>
+          <span className="font-normal">
+            {totalCr} / {goalCR}
           </span>
-        ) : (
-          <>
-            <span className="text-7xl font-bold">{remainingBudget}</span>
-            <span className="text-slate-500">CR remaining</span>
-          </>
-        )}
-      </span>
-      <span className="grid grid-cols-2 justify-between items-center">
-        <label className="flex flex-col gap-3">
-          <span className=" text-slate-500">Target</span>
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent className="flex gap-3 w-full justify-between items-center">
+        <label className="flex flex-col gap-3 w-48">
+          <span className=" text-slate-500">Target difficulty</span>
           <Select
             onValueChange={(v) => {
               console.log(v);
@@ -218,22 +186,33 @@ export function EncounterDifficulty({
               <SelectValue placeholder="Select difficulty" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="easy">Easy {`(${easyTier})`}</SelectItem>
-              <SelectItem value="standard">
-                Standard {`(${standardTier})`}
-              </SelectItem>
-              <SelectItem value="hard">Hard {`(${hardTier})`}</SelectItem>
+              <SelectItem value="easy">Easy</SelectItem>
+              <SelectItem value="standard">Standard</SelectItem>
+              <SelectItem value="hard">Hard</SelectItem>
             </SelectContent>
           </Select>
         </label>
 
-        <span className="whitespace-nowrap flex flex-col gap-3 items-center justify-between text-slate-500">
-          <span>Current</span>
-          <span className={`font-bold text-xl text-${textColor}-500`}>
-            {totalCr}
-          </span>
-        </span>
-      </span>
-    </div>
+        <Card
+          className={`flex shadow-lg p-3 flex-col items-center justify-center gap-3 text-${textColor}-500`}
+        >
+          {remainingBudget === 0 ? (
+            <span className="text-3xl font-bold">
+              {EncounterUtils.difficulty(encounter, campaign?.party_level)}
+            </span>
+          ) : remainingBudget < 0 ? (
+            <span className="text-3xl font-bold">
+              {EncounterUtils.difficulty(encounter, campaign?.party_level)}{" "}
+              {`(+${totalCr - goalCR})`}
+            </span>
+          ) : (
+            <>
+              <span className="text-5xl font-bold">{remainingBudget}</span>
+              <span className="text-slate-500">CR budget</span>
+            </>
+          )}
+        </Card>
+      </CardContent>
+    </>
   );
 }

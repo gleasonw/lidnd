@@ -14,8 +14,8 @@ import type { EncounterStatus } from "@/server/api/db/schema";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { useUser } from "@/app/[username]/user-provider";
 import { appRoutes } from "@/app/routes";
-import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import type { Encounter } from "@/server/api/router";
+import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 
 export function useEncounterLink(status: EncounterStatus) {
   const [encounter] = useEncounter();
@@ -27,13 +27,24 @@ export function useEncounterLink(status: EncounterStatus) {
 export function useEncounter() {
   const currentEncounterId = useEncounterId();
 
-  return api.encounterById.useSuspenseQuery(currentEncounterId);
+  return api.encounterById.useSuspenseQuery(currentEncounterId, {
+    // wonky hack to make sure that optimistic updates to participants
+    // are also applied to participants referenced through column
+    // soon: replicache!
+    select: (e) => ({
+      ...e,
+      columns: e.columns.map((c) => ({
+        ...c,
+        participants: e.participants.filter((p) => p.column_id === c.id),
+      })),
+    }),
+  });
 }
 
 export function useCycleNextTurn() {
   const [encounter] = useEncounter();
   const { encounterById } = api.useUtils();
-  const { displayReminders } = useEncounterUIStore();
+  const { scrollToParticipant } = useEncounterUIStore();
 
   return api.cycleNextTurn.useMutation({
     onSettled: async () => {
@@ -47,8 +58,9 @@ export function useCycleNextTurn() {
         const { participants, current_round: updatedRoundNumber } =
           EncounterUtils.optimisticParticipants("loadingNext", old);
 
-        if (updatedRoundNumber > encounter.current_round) {
-          displayReminders(encounter);
+        const newlyActiveParticipant = participants.find((p) => p.is_active);
+        if (newlyActiveParticipant) {
+          scrollToParticipant(newlyActiveParticipant.id);
         }
 
         return { ...old, participants, current_round: updatedRoundNumber };
@@ -61,6 +73,7 @@ export function useCycleNextTurn() {
 export function useCyclePreviousTurn() {
   const [encounter] = useEncounter();
   const { encounterById } = api.useUtils();
+  const { scrollToParticipant } = useEncounterUIStore();
 
   return api.cyclePreviousTurn.useMutation({
     onSettled: async () => {
@@ -73,6 +86,12 @@ export function useCyclePreviousTurn() {
         if (!old) return old;
         const { participants, current_round } =
           EncounterUtils.optimisticParticipants("loadingPrevious", old);
+
+        const newlyActiveParticipant = participants.find((p) => p.is_active);
+        if (newlyActiveParticipant) {
+          scrollToParticipant(newlyActiveParticipant.id);
+        }
+
         return { ...old, participants, current_round };
       });
       return { previousEncounter };
@@ -254,14 +273,78 @@ export function useDeleteEncounter() {
   });
 }
 
+/**
+ *
+ * only callable underneath the encounter layout. encounterById is the client source of truth
+ */
 export function useUpdateEncounter() {
-  const { invalidateAll } = useEncounterQueryUtils();
+  const { encounterById } = api.useUtils();
+  const [encounter] = useEncounter();
+  const mutation = api.updateEncounter.useMutation({
+    onSettled: async () => {
+      return await encounterById.invalidate(encounter.id);
+    },
+    onMutate: async (newEncounter) => {
+      await encounterById.cancel(encounter.id);
+      const previousEncounter = encounterById.getData(encounter.id);
+      encounterById.setData(encounter.id, (old) => {
+        if (!old || !newEncounter) {
+          throw new Error("no encounter found");
+        }
+        return {
+          ...encounter,
+          ...newEncounter,
+        };
+      });
+      return { previousEncounter };
+    },
+  });
+  return mutation;
+}
+
+/**
+ * 
+ *  this "updateCampaignEncounter" is kloodgy, and it shows the limitations of using react query for optimistic updates.
+ since the query is the source of truth for the client, not the actual data in the db,
+ we run into issues where, if we reference the wrong query when running an optimistc update, 
+ nothing happens on the client, or we throw an error, etc. 
+
+ my thought is we use this hook when updating outside the encounter layout, and "updateEncounter" when we're not (we only reference)
+ encounterById as the source of truth. 
+ */
+export function useUpdateCampaignEncounter() {
+  const { encountersInCampaign: encounters } = api.useUtils();
   const campaignId = useCampaignId();
 
   const mutation = api.updateEncounter.useMutation({
     onSettled: async (en) => {
       if (!en) return;
-      return await invalidateAll(en);
+      return await encounters.invalidate(campaignId);
+    },
+    onMutate: async (en) => {
+      if (!en) return;
+      await encounters.cancel(campaignId);
+      const previousEncounter = encounters
+        .getData(campaignId)
+        ?.find((e) => e.id === en.id);
+
+      if (!previousEncounter) {
+        throw new Error("No previous encounter found");
+      }
+
+      const filteredNewEncounter = removeUndefinedFields(en);
+      encounters.setData(campaignId, (old) => {
+        return old?.map((e) => {
+          if (e.id === en.id) {
+            return {
+              ...e,
+              ...filteredNewEncounter,
+            };
+          }
+          return e;
+        });
+      });
+      return { previousEncounter };
     },
   });
 

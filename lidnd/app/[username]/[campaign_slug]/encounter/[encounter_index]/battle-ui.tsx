@@ -24,7 +24,6 @@ import {
   useRemoveStatusEffect,
   useUpdateEncounterParticipant,
 } from "@/encounters/[encounter_index]/hooks";
-import { ReminderDialog } from "@/encounters/[encounter_index]/reminder-dialog";
 import { useDebouncedCallback } from "use-debounce";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -32,6 +31,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 import { Label } from "@/components/ui/label";
+import { Reminders } from "@/encounters/[encounter_index]/reminders";
 
 export const BattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -39,7 +39,7 @@ export const BattleUI = observer(function BattleUI() {
 
   return (
     <>
-      <ReminderDialog />
+      <Reminders />
       <div className="flex gap-4 flex-col w-full max-h-full overflow-auto h-full">
         {/**create space for the overlaid initiative tracker */}
         {encounter.status === "run" && <div className="my-5" />}
@@ -62,11 +62,13 @@ export type BattleCardProps = {
   className?: string;
   isSelected?: boolean;
   extraHeaderButtons?: React.ReactNode;
+  ref: (ref: HTMLDivElement) => void;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export function BattleCard({
   participant,
   extraHeaderButtons,
+  ref,
   ...props
 }: BattleCardProps) {
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
@@ -94,6 +96,7 @@ export function BattleCard({
   return (
     <div
       className={`relative flex-col gap-6 items-center justify-between flex `}
+      ref={ref}
       {...props}
     >
       {participant?.minion_count && participant.minion_count > 1 ? (

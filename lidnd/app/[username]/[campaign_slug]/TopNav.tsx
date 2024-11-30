@@ -1,5 +1,6 @@
 "use client";
 
+import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import {
   useMaybeCampaignSlug,
   useMaybeEncounterIndex,
@@ -8,8 +9,15 @@ import { useUser } from "@/app/[username]/user-provider";
 import type { LidndUser } from "@/app/authentication";
 import { appRoutes } from "@/app/routes";
 import { Button, type ButtonProps } from "@/components/ui/button";
+import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { ToggleEditingMode } from "@/encounters/[encounter_index]/battle-bar";
+import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
+import { GroupInitiativeInput } from "@/encounters/[encounter_index]/group-initiative-input";
+import {
+  useEncounter,
+  useUpdateEncounter,
+} from "@/encounters/[encounter_index]/hooks";
 import { CampaignParty } from "@/encounters/campaign-encounters-overview";
 import { api } from "@/trpc/react";
 import _ from "lodash";
@@ -21,6 +29,7 @@ import {
   ChevronUp,
   Check,
   Clock,
+  Play,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,7 +44,7 @@ export function TopNav({
 }) {
   const user = useUser();
   return (
-    <div className="p-4 flex flex-shrink-0 flex-grow-0 items-center gap-5 justify-between border-b border-gray-200 h-16 overflow-hidden bg-white">
+    <div className="p-4 flex flex-shrink-0 flex-grow-0 items-center gap-5 border-b border-gray-200 h-16 overflow-hidden bg-white">
       <Link
         href={appRoutes.dashboard(user)}
         className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -92,9 +101,9 @@ function CampaignTopNav({ user }: { user: LidndUser }) {
     return null;
   }
   return (
-    <>
+    <CampaignId value={campaign.id}>
       <div
-        className={`flex items-center gap-5 ${isOnEncounterRoute ? "" : "mr-auto"}`}
+        className={`flex items-center gap-5 ${isOnEncounterRoute ? "" : ""}`}
       >
         <Link
           href={appRoutes.campaign(campaign, user)}
@@ -107,7 +116,7 @@ function CampaignTopNav({ user }: { user: LidndUser }) {
       </div>
 
       <EncounterTopNav />
-    </>
+    </CampaignId>
   );
 }
 
@@ -190,13 +199,12 @@ export function EncounterTopNav() {
   );
 
   return (
-    <>
-      <ChevronRight className="h-4 w-4 text-gray-400" />
-      <span className="text-lg w-44 max-w-full truncate font-medium text-gray-900">
-        {encounter.name}
-      </span>
-      {encounter ? <EncounterRoundNumber encounterId={encounter.id} /> : null}
-      <div className="flex items-center opacity-50 gap-2">
+    <EncounterId encounterIndex={encounter.index_in_campaign}>
+      <div className="flex items-center gap-2">
+        <ChevronRight className="h-4 w-4 text-gray-400" />
+        <span className="text-lg w-44 max-w-full truncate font-medium text-gray-900">
+          {encounter.name}
+        </span>
         <span className="whitespace-nowrap">
           {indexForDisplay + 1} / {campaign.encounters.length}
         </span>
@@ -230,7 +238,39 @@ export function EncounterTopNav() {
           )}
         </span>
       </div>
-      <ToggleEditingMode encounter={encounter} />
+      <EncounterWidgets />
+    </EncounterId>
+  );
+}
+
+function EncounterWidgets() {
+  const [encounter] = useEncounter();
+  const { mutate: updateEncounter } = useUpdateEncounter();
+
+  return (
+    <div className="flex items-center gap-2 ml-auto">
+      {encounter.status !== "run" ? (
+        <div className="flex items-center gap-2">
+          <LidndDialog
+            title={"Roll initiative"}
+            trigger={
+              <Button
+                className=" text-lg h-full w-full ml-auto max-w-sm flex gap-3"
+                onClick={() =>
+                  updateEncounter({ ...encounter, is_editing_columns: false })
+                }
+              >
+                Roll initiative
+                <Play />
+              </Button>
+            }
+            content={<GroupInitiativeInput />}
+          />
+        </div>
+      ) : (
+        <EncounterRoundNumber encounterId={encounter.id} />
+      )}
+      <ToggleEditingMode />
       <CheckmarkClicker
         onClick={() => {
           navigator.clipboard.writeText(
@@ -243,7 +283,7 @@ export function EncounterTopNav() {
       >
         <Share />
       </CheckmarkClicker>
-    </>
+    </div>
   );
 }
 
@@ -254,7 +294,7 @@ function EncounterRoundNumber({ encounterId }: { encounterId: string }) {
     return <div className="mx-auto"></div>;
   }
   return (
-    <span className=" font-bold mx-auto p-3 bg-blue-600 text-white rounded-sm flex items-center gap-2">
+    <span className=" font-bold ml-auto p-3 border shadow-md text-xl rounded-sm flex items-center gap-2">
       <Clock />
       <span>Round {liveEncounter?.current_round}</span>
     </span>

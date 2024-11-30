@@ -73,6 +73,21 @@ export const EncounterUtils = {
   difficultyColor,
   difficultyColorForCR,
   colorForDifficulty,
+
+  goalCr(e: EncounterWithParticipants, c: { party_level?: number }) {
+    const { easyTier, standardTier, hardTier } = this.findCRBudget(
+      e,
+      c.party_level ?? DEFAULT_LEVEL
+    );
+    if (e.target_difficulty === "easy") {
+      return easyTier;
+    }
+    if (e.target_difficulty === "standard") {
+      return standardTier;
+    }
+    return hardTier;
+  },
+
   nextTierAndDistance(
     e: EncounterWithParticipants,
     c: { party_level?: number }

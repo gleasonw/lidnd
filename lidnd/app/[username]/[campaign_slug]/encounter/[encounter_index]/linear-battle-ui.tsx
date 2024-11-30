@@ -2,7 +2,6 @@
 import React, { createContext, useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import { BattleCard } from "./battle-ui";
-import { EncounterUtils } from "@/utils/encounters";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import {
   useAddExistingCreatureAsParticipant,
@@ -10,10 +9,9 @@ import {
   useEncounter,
   useRemoveParticipantFromEncounter,
 } from "@/encounters/[encounter_index]/hooks";
-import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { observer } from "mobx-react-lite";
 import { Button } from "@/components/ui/button";
-import { Grip, Plus, Trash, X } from "lucide-react";
+import { Grip, Trash, X } from "lucide-react";
 import {
   StatColumnUtils,
   type ColumnWithParticipants,
@@ -26,50 +24,16 @@ import {
   ParticipantUpload,
 } from "@/encounters/[encounter_index]/participant-add-form";
 import { MonsterUploadForm } from "@/encounters/full-creature-add-form";
+import { AddColumn } from "@/app/public/images/icons/AddColumn";
+import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 
 //todo: custom margin when in editing layout mode
-function onSelectParticipant(id: string) {
-  const selectedCardElement = document.querySelector(
-    `[data-participant-id="${id}"]`,
-  );
-  if (selectedCardElement) {
-    selectedCardElement.scrollIntoView({
-      behavior: "instant",
-    });
-  }
-}
 
 const ParentWidthContext = createContext<number | null>(null);
 
 export const LinearBattleUI = observer(function LinearBattleUI() {
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
-
-  const { subscribeToSelectedParticipant, unsubscribeToSelectedParticipant } =
-    useEncounterUIStore();
-
-  useEffect(() => {
-    // not sure this is the best way to apply a callback from a click on a distant element.
-    // is more explicit about what the user wants, though.
-    subscribeToSelectedParticipant(onSelectParticipant);
-    return () => {
-      unsubscribeToSelectedParticipant(onSelectParticipant);
-    };
-  }, [subscribeToSelectedParticipant, unsubscribeToSelectedParticipant]);
-  const activeParticipantID = EncounterUtils.activeParticipant(encounter)?.id;
-
-  useEffect(() => {
-    if (!activeParticipantID) {
-      return;
-    }
-    const activeElement = document.querySelector(`[data-is-active="true"]`);
-    if (!activeElement) {
-      return;
-    }
-    activeElement.scrollIntoView({
-      behavior: "instant",
-    });
-  }, [activeParticipantID]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [parentWidth, setParentWidth] = useState<number | null>(null);
@@ -186,7 +150,7 @@ function CreateNewColumnButton() {
         createColumn({ encounter_id: encounter.id, percent_width: 50 })
       }
     >
-      <Plus />
+      <AddColumn className="h-6 w-6" />
     </ButtonWithTooltip>
   );
 }
@@ -245,7 +209,7 @@ function StatColumnComponent({
   return (
     <>
       <div
-        className={`flex flex-col h-full border gap-3 items-start relative ${acceptDrop && "outline outline-blue-500"}`}
+        className={`flex flex-col h-full border gap-5 items-start relative ${acceptDrop && "outline outline-blue-500"}`}
         style={{ width: `${column.percent_width}%` }}
         onDrop={(e) => {
           const droppedParticipant = typedDrag.get(
@@ -286,62 +250,70 @@ function StatColumnComponent({
           <X />
         </ButtonWithTooltip>
         <BattleCards column={column} />
+        <BattleCardUploader column={column} />
       </div>
       {splitter}
     </>
   );
 }
-
-function BattleCards({ column }: { column: ColumnWithParticipants }) {
+function BattleCardUploader({ column }: { column: ColumnWithParticipants }) {
   const [encounter] = useEncounter();
-  const { mutate: removeCreatureFromEncounter } =
-    useRemoveParticipantFromEncounter();
-  const participantsInColumn = column.participants.sort(
-    ParticipantUtils.sortLinearly,
-  );
   const { mutate: createCreatureInEncounter } = useCreateCreatureInEncounter({
     encounter,
   });
   const { mutate: addParticipantFromExistingCreature } =
     useAddExistingCreatureAsParticipant(encounter);
-
-  if (participantsInColumn?.length === 0) {
-    return (
-      <div className="p-4 w-full h-full">
-        <ParticipantUpload
-          encounter={encounter}
-          form={
-            <MonsterUploadForm
-              uploadCreature={(c) =>
-                createCreatureInEncounter({
-                  creature: c,
-                  participant: {
-                    is_ally: false,
-                    column_id: column.id,
-                  },
-                })
-              }
-            />
-          }
-          existingCreatures={
-            <ExistingMonster
-              onUpload={(c) =>
-                addParticipantFromExistingCreature({
-                  encounter_id: encounter.id,
-                  creature_id: c.id,
+  return (
+    <div className="p-4 w-full h-full">
+      <ParticipantUpload
+        encounter={encounter}
+        form={
+          <MonsterUploadForm
+            uploadCreature={(c) =>
+              createCreatureInEncounter({
+                creature: c,
+                participant: {
+                  is_ally: false,
                   column_id: column.id,
-                })
-              }
-              encounter={encounter}
-            />
-          }
-        />
-      </div>
-    );
-  }
+                },
+              })
+            }
+          />
+        }
+        existingCreatures={
+          <ExistingMonster
+            onUpload={(c) =>
+              addParticipantFromExistingCreature({
+                encounter_id: encounter.id,
+                creature_id: c.id,
+                column_id: column.id,
+              })
+            }
+            encounter={encounter}
+          />
+        }
+      />
+    </div>
+  );
+}
+
+function BattleCards({ column }: { column: ColumnWithParticipants }) {
+  const [encounter] = useEncounter();
+  const { registerBattleCardRef } = useEncounterUIStore();
+  const { mutate: removeCreatureFromEncounter } =
+    useRemoveParticipantFromEncounter();
+
+  // TODO: we have to reference e.participants instead of
+  // column.participants because column.participants doesn't get updated
+  // by the optimistic update...
+  const participantsInColumn = column.participants.sort(
+    ParticipantUtils.sortLinearly,
+  );
+
   return participantsInColumn.map((p) => (
     <BattleCard
       participant={p}
+      ref={(ref) => registerBattleCardRef(p.id, ref)}
       data-is-active={p.is_active}
       data-participant-id={p.id}
       key={p.id}
@@ -461,7 +433,7 @@ function StatColumnSplitter({
   return (
     <div
       onMouseDown={handleMouseDown}
-      className="w-2 bg-gray-300 hover:bg-gray-500 right-0"
+      className="w-2 bg-gray-300 hover:bg-gray-500 right-0 z-10"
       style={{ cursor: "ew-resize" }}
     />
   );
