@@ -168,7 +168,7 @@ export async function createParticipantInEncounter(formData: CreaturePostData) {
     schema: creatureUploadSchema.merge(
       z.object({
         encounter_id: z.string(),
-        column_id: z.string(),
+        column_id: z.string().optional(),
       }),
     ),
   });
@@ -176,10 +176,6 @@ export async function createParticipantInEncounter(formData: CreaturePostData) {
   if (!creature.value) {
     return { error: creature.error };
   }
-
-  console.log(formData.entries());
-
-  console.log(creature.value.column_id);
 
   const newCreature = await createCreature({ user }, creature.value);
 
