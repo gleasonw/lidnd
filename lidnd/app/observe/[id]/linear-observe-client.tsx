@@ -9,7 +9,7 @@ import clsx from "clsx";
 import React from "react";
 
 export function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
-  const participants = EncounterUtils.participants(encounter);
+  const participants = EncounterUtils.participantsInInitiativeOrder(encounter);
   const activeIndex = participants.findIndex(
     (participant) => participant.is_active,
   );

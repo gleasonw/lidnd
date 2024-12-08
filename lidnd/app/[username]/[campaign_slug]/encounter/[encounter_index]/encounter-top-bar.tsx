@@ -3,20 +3,12 @@
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogOverlay,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Select,
   SelectItem,
   SelectTrigger,
   SelectValue,
   SelectContent,
 } from "@/components/ui/select";
-import { ButtonWithTooltip } from "@/components/ui/tip";
 import { InitiativeTracker } from "@/encounters/[encounter_index]/battle-bar";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import {
@@ -24,11 +16,8 @@ import {
   useRemoveParticipantFromEncounter,
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
-import { MonsterUploadWithDifficulty } from "@/encounters/[encounter_index]/participant-add-form";
 import { EncounterUtils } from "@/utils/encounters";
-import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
-import { Plus } from "lucide-react";
 
 export function EncounterTopBar() {
   const [encounter] = useEncounter();
@@ -40,7 +29,7 @@ export function EncounterTopBar() {
 
   return (
     <div className="w-full pt-5 flex flex-col gap-5">
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
         <ParticipantsContainer role="allies">
           {EncounterUtils.allies(encounter).map((p) => (
             <button
@@ -75,41 +64,6 @@ export function EncounterTopBar() {
               <CreatureIcon creature={p.creature} size="small2" />
             </button>
           ))}
-          <Dialog>
-            <DialogTrigger asChild>
-              <ButtonWithTooltip text="Add monster" variant="ghost">
-                <Plus />
-              </ButtonWithTooltip>
-            </DialogTrigger>
-            <DialogContent className="max-h-screen overflow-auto sm:max-w-[1000px]">
-              <DialogTitle>
-                <div className="flex gap-5 items-center">Add monster</div>
-              </DialogTitle>
-              <ParticipantsContainer role="monsters">
-                {encounter?.participants
-                  ?.filter((p) => !ParticipantUtils.isPlayer(p))
-                  .map((p) => (
-                    <ButtonWithTooltip
-                      className="p-0 h-20 w-20 rounded-full flex items-center justify-center overflow-hidden border-2 border-white bg-white"
-                      key={p.id}
-                      variant="ghost"
-                      onClick={() =>
-                        removeParticipant({
-                          participant_id: p.id,
-                          encounter_id: encounter.id,
-                        })
-                      }
-                      text={`Remove ${p.creature.name}`}
-                    >
-                      <CreatureIcon creature={p.creature} size="small" />
-                    </ButtonWithTooltip>
-                  ))}
-              </ParticipantsContainer>
-
-              <MonsterUploadWithDifficulty encounter={encounter} />
-            </DialogContent>
-            <DialogOverlay />
-          </Dialog>
         </ParticipantsContainer>
       </div>
     </div>

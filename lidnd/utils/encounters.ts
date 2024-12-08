@@ -227,15 +227,20 @@ export const EncounterUtils = {
   },
 
   activeParticipantIndex(encounter: EncounterWithParticipants) {
-    if (this.participants(encounter).filter((p) => p.is_active).length > 1) {
+    if (
+      this.participantsInInitiativeOrder(encounter).filter((p) => p.is_active)
+        .length > 1
+    ) {
       throw new Error(
         `Encounter has more than one active participant: ${JSON.stringify(
-          this.participants(encounter).filter((p) => p.is_active)
+          this.participantsInInitiativeOrder(encounter).filter(
+            (p) => p.is_active
+          )
         )}`
       );
     }
 
-    const activeIndex = this.participants(encounter).findIndex(
+    const activeIndex = this.participantsInInitiativeOrder(encounter).findIndex(
       (p) => p.is_active
     );
 
@@ -243,7 +248,9 @@ export const EncounterUtils = {
   },
 
   activeParticipant(encounter: EncounterWithParticipants) {
-    return this.participants(encounter)[this.activeParticipantIndex(encounter)];
+    return this.participantsInInitiativeOrder(encounter)[
+      this.activeParticipantIndex(encounter)
+    ];
   },
 
   difficulty(
@@ -276,8 +283,20 @@ export const EncounterUtils = {
     }
   },
 
-  participants<T extends Participant>(encounter: EncounterWithParticipants<T>) {
+  participantsInInitiativeOrder<T extends Participant>(
+    encounter: EncounterWithParticipants<T>
+  ) {
     return R.sort(encounter.participants, ParticipantUtils.sortLinearly);
+  },
+
+  participants(encounter: EncounterWithParticipants) {
+    return encounter.participants;
+  },
+
+  participantsByName(encounter: EncounterWithParticipants) {
+    return R.sort(encounter.participants, (a, b) =>
+      ParticipantUtils.name(a).localeCompare(ParticipantUtils.name(b))
+    );
   },
 
   latest(encounters: { created_at: Encounter["created_at"] }[]) {
@@ -292,13 +311,13 @@ export const EncounterUtils = {
   },
 
   monsters(encounter: EncounterWithParticipants<ParticipantWithData>) {
-    return this.participants(encounter).filter(
+    return this.participantsByName(encounter).filter(
       (p) => !ParticipantUtils.isFriendly(p)
     );
   },
 
   allies(encounter: EncounterWithParticipants<ParticipantWithData>) {
-    return this.participants(encounter).filter((p) =>
+    return this.participantsByName(encounter).filter((p) =>
       ParticipantUtils.isFriendly(p)
     );
   },
@@ -373,13 +392,15 @@ export const EncounterUtils = {
   },
 
   hasSurpriseRound(encounter: EncounterWithParticipants) {
-    return this.participants(encounter).some((p) => p.has_surprise);
+    return this.participantsInInitiativeOrder(encounter).some(
+      (p) => p.has_surprise
+    );
   },
 
   firstActiveAndRoundNumber(
     encounter: EncounterWithParticipants
   ): [Participant, number] {
-    const participants = this.participants(encounter);
+    const participants = this.participantsInInitiativeOrder(encounter);
 
     const surprise = this.hasSurpriseRound(encounter);
 
@@ -440,7 +461,7 @@ export const EncounterUtils = {
     participant_has_played_this_round: boolean,
     encounter: EncounterWithData
   ): UpdateTurnOrderReturn {
-    const participants = this.participants(encounter);
+    const participants = this.participantsInInitiativeOrder(encounter);
     const participantWhoPlayed = participants.find(
       (p) => p.id === participant_id
     );

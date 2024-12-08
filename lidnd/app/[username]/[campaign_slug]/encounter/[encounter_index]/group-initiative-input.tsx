@@ -1,5 +1,4 @@
 "use client";
-import * as R from "remeda";
 import { Button } from "@/components/ui/button";
 import type { ParticipantWithData } from "@/server/api/router";
 import { api } from "@/trpc/react";
@@ -11,6 +10,8 @@ import { useStartEncounter } from "@/app/[username]/[campaign_slug]/encounter/[e
 import InitiativeInput from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/InitiativeInput";
 import React from "react";
 import { useLidndDialog } from "@/components/ui/lidnd_dialog";
+import { EncounterUtils } from "@/utils/encounters";
+import * as R from "remeda";
 
 export function GroupInitiativeInput() {
   const id = useEncounterId();
@@ -19,14 +20,26 @@ export function GroupInitiativeInput() {
   const [encounter] = api.encounterById.useSuspenseQuery(id);
   const { mutate: startEncounter } = useStartEncounter();
 
-  const sortedParticipants = R.sort(encounter.participants, (a, b) =>
-    a.id > b.id ? 1 : -1,
-  );
-
   function start() {
     startEncounter(id);
     close();
   }
+
+  const sortedParticipants = R.sort(
+    EncounterUtils.participantsByName(encounter),
+    (a, b) => {
+      if (ParticipantUtils.isPlayer(a) && !ParticipantUtils.isPlayer(b)) {
+        return -1;
+      }
+      if (!ParticipantUtils.isPlayer(a) && ParticipantUtils.isPlayer(b)) {
+        return 1;
+      }
+      if (ParticipantUtils.name(a) === ParticipantUtils.name(b)) {
+        return a.id > b.id ? 1 : -1;
+      }
+      return ParticipantUtils.name(a).localeCompare(ParticipantUtils.name(b));
+    },
+  );
 
   return (
     <div>

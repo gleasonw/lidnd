@@ -105,27 +105,29 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
       >
         <ChevronLeftIcon />
       </ButtonWithTooltip>
-      {EncounterUtils.participants(encounter).map((p, index) => (
-        <div
-          className="flex gap-2 flex-col relative flex-grow-0 max-h-fit"
-          key={p.id}
-        >
-          {ParticipantUtils.isPlayer(p) ? (
-            <PlayerCard
-              participant={p}
-              index={index}
-              activeIndex={activeIndex}
-            />
-          ) : (
-            <GMCreatureCard
-              participant={p}
-              index={index}
-              activeIndex={activeIndex}
-            />
-          )}
-          {isEditingInitiative ? <InitiativeInput participant={p} /> : null}
-        </div>
-      ))}
+      {EncounterUtils.participantsInInitiativeOrder(encounter).map(
+        (p, index) => (
+          <div
+            className="flex gap-2 flex-col relative flex-grow-0 max-h-fit"
+            key={p.id}
+          >
+            {ParticipantUtils.isPlayer(p) ? (
+              <PlayerCard
+                participant={p}
+                index={index}
+                activeIndex={activeIndex}
+              />
+            ) : (
+              <GMCreatureCard
+                participant={p}
+                index={index}
+                activeIndex={activeIndex}
+              />
+            )}
+            {isEditingInitiative ? <InitiativeInput participant={p} /> : null}
+          </div>
+        ),
+      )}
       <ButtonWithTooltip
         variant="ghost"
         className="self-stretch h-full flex"
