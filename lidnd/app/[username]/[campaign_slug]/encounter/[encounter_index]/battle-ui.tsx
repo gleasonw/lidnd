@@ -114,6 +114,7 @@ export function BattleCard({
                 className="flex-shrink-0 flex-grow-0"
               />
               <div className="flex flex-col gap-3 w-full">
+                <BattleCardCreatureName participant={participant} />
                 <div className="flex flex-wrap gap-3 items-center">
                   {participant.status_effects?.map((se) => (
                     <LidndPopover
@@ -259,8 +260,8 @@ export function BattleCardCreatureName({
   ];
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   return (
-    <span className="flex gap-2 justify-center items-center py-3 font-bold text-4xl">
-      <CardTitle className="text-2xl  truncate max-w-full">
+    <span className="flex gap-2 items-center font-bold">
+      <CardTitle className="text-xl  truncate max-w-full">
         {ParticipantUtils.name(participant)}
       </CardTitle>
       <LidndPopover
@@ -282,7 +283,7 @@ export function BattleCardCreatureName({
               onClick={() => {
                 updateParticipant({
                   ...participant,
-                  hex_color: color,
+                  hex_color: color === participant.hex_color ? null : color,
                 });
               }}
             />

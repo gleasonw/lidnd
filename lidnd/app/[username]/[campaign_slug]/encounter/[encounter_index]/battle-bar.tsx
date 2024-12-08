@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import { ButtonWithTooltip, Tip } from "@/components/ui/tip";
 import { Toggle } from "@/components/ui/toggle";
@@ -15,7 +14,6 @@ import {
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import InitiativeInput from "@/encounters/[encounter_index]/InitiativeInput";
-import { MonsterUpload } from "@/encounters/[encounter_index]/participant-add-form";
 import {
   EffectIcon,
   StatusInput,
@@ -29,9 +27,8 @@ import {
   BookOpen,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ColumnsIcon,
   ListOrdered,
-  UserPlus,
+  Pen,
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React from "react";
@@ -49,12 +46,12 @@ export function ToggleEditingMode() {
       }
     >
       {encounter?.is_editing_columns ? (
-        <Tip text={"Current view: editing columns"}>
-          <ColumnsIcon />
+        <Tip text={"Read-only"}>
+          <BookOpen />
         </Tip>
       ) : (
-        <Tip text={"Current view: run encounter (no column edit)"}>
-          <BookOpen />
+        <Tip text={"Edit columns/add creatures"}>
+          <Pen />
         </Tip>
       )}
     </Toggle>
@@ -128,19 +125,6 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
           {isEditingInitiative ? <InitiativeInput participant={p} /> : null}
         </div>
       ))}
-      <LidndDialog
-        title={"Add Monster"}
-        trigger={
-          <ButtonWithTooltip
-            variant="ghost"
-            text="Add creature"
-            className="flex bg-white flex-col items-center gap-2 self-stretch h-full"
-          >
-            <UserPlus />
-          </ButtonWithTooltip>
-        }
-        content={<MonsterUpload encounter={encounter} />}
-      />
       <ButtonWithTooltip
         variant="ghost"
         className="self-stretch h-full flex"

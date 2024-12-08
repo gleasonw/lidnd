@@ -230,6 +230,7 @@ export function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
       icon_image: undefined,
       stat_block_image: undefined,
       is_player: false,
+      name: "",
     },
   });
   const [keyToResetFile, setKeyToResetFile] = React.useState(0);

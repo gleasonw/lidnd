@@ -35,7 +35,9 @@ export function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
           <div
             className={clsx(
               "flex-1 flex flex-col p-1 text-white h-44 max-w-xs shadow-lg",
-              ParticipantUtils.isFriendly(p) ? `bg-blue-900` : `bg-red-900`,
+              !p.hex_color && ParticipantUtils.isFriendly(p)
+                ? `bg-blue-900`
+                : `bg-red-900`,
               p.is_active && "h-60",
               index < activeIndex
                 ? "opacity-60 hover:opacity-100"
@@ -43,6 +45,7 @@ export function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
             )}
             key={p.id}
             data-is-active={p.is_active}
+            style={{ background: p.hex_color ? p.hex_color : undefined }}
           >
             <div className="flex justify-between w-full">
               <span className="text-2xl font-bold">{p.initiative}</span>

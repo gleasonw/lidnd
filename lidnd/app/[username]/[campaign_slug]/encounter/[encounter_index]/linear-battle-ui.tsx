@@ -239,14 +239,18 @@ function StatColumnComponent({
         }}
         onDragLeave={() => setAcceptDrop(false)}
       >
-        <ButtonWithTooltip
-          text="Delete column"
-          className="h-10 absolute -top-10 z-10 left-0"
-          variant="ghost"
-          onClick={() => deleteColumn(column)}
-        >
-          <X />
-        </ButtonWithTooltip>
+        {encounter.columns.length > 1 ? (
+          <ButtonWithTooltip
+            text="Delete column"
+            className="h-10 absolute -top-10 z-10 left-0"
+            variant="ghost"
+            onClick={() => deleteColumn(column)}
+          >
+            <X />
+          </ButtonWithTooltip>
+        ) : null}
+
+        <BattleCardUploader column={column} />
         <BattleCards column={column} />
       </div>
       {splitter}
@@ -261,7 +265,7 @@ function BattleCardUploader({ column }: { column: ColumnWithParticipants }) {
   const { mutate: addParticipantFromExistingCreature } =
     useAddExistingCreatureAsParticipant(encounter);
   return (
-    <div className="h-full w-full">
+    <div className=" w-full p-3">
       <Tabs defaultValue="new">
         <TabsList>
           <TabsTrigger value="new" className="flex gap-3">
@@ -313,10 +317,6 @@ function BattleCards({ column }: { column: ColumnWithParticipants }) {
   const participantsInColumn = column.participants.sort(
     ParticipantUtils.sortLinearly,
   );
-
-  if (participantsInColumn.length === 0) {
-    return <BattleCardUploader column={column} />;
-  }
 
   return participantsInColumn.map((p) => (
     <BattleCard
