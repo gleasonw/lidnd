@@ -19,13 +19,11 @@ import {
 import { ParticipantUtils } from "@/utils/participants";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ButtonWithTooltip } from "@/components/ui/tip";
-import {
-  ExistingMonster,
-  ParticipantUpload,
-} from "@/encounters/[encounter_index]/participant-add-form";
+import { ExistingMonster } from "@/encounters/[encounter_index]/participant-add-form";
 import { MonsterUploadForm } from "@/encounters/full-creature-add-form";
 import { AddColumn } from "@/app/public/images/icons/AddColumn";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 //todo: custom margin when in editing layout mode
 
@@ -250,7 +248,6 @@ function StatColumnComponent({
           <X />
         </ButtonWithTooltip>
         <BattleCards column={column} />
-        <BattleCardUploader column={column} />
       </div>
       {splitter}
     </>
@@ -264,10 +261,17 @@ function BattleCardUploader({ column }: { column: ColumnWithParticipants }) {
   const { mutate: addParticipantFromExistingCreature } =
     useAddExistingCreatureAsParticipant(encounter);
   return (
-    <div className="p-4 w-full h-full">
-      <ParticipantUpload
-        encounter={encounter}
-        form={
+    <div className="h-full w-full">
+      <Tabs defaultValue="new">
+        <TabsList>
+          <TabsTrigger value="new" className="flex gap-3">
+            New Monster
+          </TabsTrigger>
+          <TabsTrigger value="existing" className="flex gap-3">
+            Existing Monster
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="new">
           <MonsterUploadForm
             uploadCreature={(c) =>
               createCreatureInEncounter({
@@ -279,8 +283,8 @@ function BattleCardUploader({ column }: { column: ColumnWithParticipants }) {
               })
             }
           />
-        }
-        existingCreatures={
+        </TabsContent>
+        <TabsContent value="existing">
           <ExistingMonster
             onUpload={(c) =>
               addParticipantFromExistingCreature({
@@ -291,8 +295,8 @@ function BattleCardUploader({ column }: { column: ColumnWithParticipants }) {
             }
             encounter={encounter}
           />
-        }
-      />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -309,6 +313,10 @@ function BattleCards({ column }: { column: ColumnWithParticipants }) {
   const participantsInColumn = column.participants.sort(
     ParticipantUtils.sortLinearly,
   );
+
+  if (participantsInColumn.length === 0) {
+    return <BattleCardUploader column={column} />;
+  }
 
   return participantsInColumn.map((p) => (
     <BattleCard

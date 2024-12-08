@@ -13,6 +13,7 @@ import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { ToggleEditingMode } from "@/encounters/[encounter_index]/battle-bar";
 import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
+import { EncounterUI } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { GroupInitiativeInput } from "@/encounters/[encounter_index]/group-initiative-input";
 import {
   useEncounter,
@@ -200,45 +201,47 @@ export function EncounterTopNav() {
 
   return (
     <EncounterId encounterIndex={encounter.index_in_campaign}>
-      <div className="flex items-center gap-2">
-        <ChevronRight className="h-4 w-4 text-gray-400" />
-        <span className="text-lg w-44 max-w-full truncate font-medium text-gray-900">
-          {encounter.name}
-        </span>
-        <span className="whitespace-nowrap">
-          {indexForDisplay + 1} / {campaign.encounters.length}
-        </span>
-        <span className="flex items-center gap-2">
-          {priorEncounter ? (
-            <Link href={appRoutes.encounter(campaign, priorEncounter, user)}>
-              <Button variant="ghost" className="p-0 h-6 w-6" size="icon">
+      <EncounterUI>
+        <div className="flex items-center gap-2">
+          <ChevronRight className="h-4 w-4 text-gray-400" />
+          <span className="text-lg w-44 max-w-full truncate font-medium text-gray-900">
+            {encounter.name}
+          </span>
+          <span className="whitespace-nowrap">
+            {indexForDisplay + 1} / {campaign.encounters.length}
+          </span>
+          <span className="flex items-center gap-2">
+            {priorEncounter ? (
+              <Link href={appRoutes.encounter(campaign, priorEncounter, user)}>
+                <Button variant="ghost" className="p-0 h-6 w-6" size="icon">
+                  <ChevronUp />
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="ghost" disabled className="h-6 w-6 p-0">
                 <ChevronUp />
               </Button>
-            </Link>
-          ) : (
-            <Button variant="ghost" disabled className="h-6 w-6 p-0">
-              <ChevronUp />
-            </Button>
-          )}
-          {nextEncounter ? (
-            <Link href={appRoutes.encounter(campaign, nextEncounter, user)}>
-              <Button variant="ghost" className="p-0 h-6 w-6" size="icon">
+            )}
+            {nextEncounter ? (
+              <Link href={appRoutes.encounter(campaign, nextEncounter, user)}>
+                <Button variant="ghost" className="p-0 h-6 w-6" size="icon">
+                  <ChevronDown />
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                variant="ghost"
+                disabled
+                size="icon"
+                className="h-6 w-6 p-0"
+              >
                 <ChevronDown />
               </Button>
-            </Link>
-          ) : (
-            <Button
-              variant="ghost"
-              disabled
-              size="icon"
-              className="h-6 w-6 p-0"
-            >
-              <ChevronDown />
-            </Button>
-          )}
-        </span>
-      </div>
-      <EncounterWidgets />
+            )}
+          </span>
+        </div>
+        <EncounterWidgets />
+      </EncounterUI>
     </EncounterId>
   );
 }

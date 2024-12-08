@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import clsx from "clsx";
 import { EncounterUtils } from "@/utils/encounters";
 import { ServerEncounter, type ObserveEncounter } from "@/server/encounters";
-import { HealthMeterOverlay } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/battle-ui";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/group-battle-ui";
 import { PageRefresher } from "@/app/observe/[id]/page-refresher";
@@ -79,7 +78,6 @@ function SimpleGroupBattleCard({
         },
       )}
     >
-      <HealthMeterOverlay participant={participant} />
       {participant.creature_id === "pending" ? (
         <span>Loading</span>
       ) : (

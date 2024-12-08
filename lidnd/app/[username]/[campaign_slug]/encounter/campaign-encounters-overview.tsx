@@ -491,11 +491,9 @@ export function DifficultyBadge({
   encounter: EncounterWithParticipants;
 }) {
   const [campaign] = useCampaign();
-  const diffColor = EncounterUtils.difficultyColor(encounter, campaign);
+  const diffColor = EncounterUtils.difficultyCssClasses(encounter, campaign);
   return (
-    <Badge
-      className={`bg-${diffColor}-100 text-${diffColor}-700 flex-grow-0 h-8 text-sm rounded-sm`}
-    >
+    <Badge className={`${diffColor} flex-grow-0 h-8 text-sm rounded-sm`}>
       {EncounterUtils.difficulty(encounter, campaign?.party_level)}
     </Badge>
   );
@@ -513,7 +511,7 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
   const user = useUser();
   const { mutate: updateCampaign } = useUpdateCampaign(campaign);
   return (
-    <ul className="flex flex-col gap-3">
+    <ul className="flex flex-col border-t-2">
       {inactiveEncounters?.length === 0 ? (
         <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
       ) : null}
@@ -533,8 +531,10 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
             }
             key={encounter.id}
             encounterCard={
-              <Card
-                className={clsx("flex w-full gap-3")}
+              <div
+                className={clsx(
+                  "flex w-full gap-3 hover:bg-gray-100 border-b-2",
+                )}
                 draggable
                 onDragStart={(e) => {
                   typedDrag.set(e.dataTransfer, dragTypes.encounter, encounter);
@@ -548,7 +548,7 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
               >
                 <Link
                   href={appRoutes.encounter(campaign, encounter, user)}
-                  className="flex gap-3 w-full hover:bg-gray-100 h-20 items-center"
+                  className="flex gap-3 w-full  h-20 items-center"
                 >
                   <div className="flex items-center text-gray-500">
                     <GripVertical className="flex-shrink-0 flex-grow-0" />
@@ -583,7 +583,7 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
                   </LidndPopover>
                   <DifficultyBadge encounter={encounter} />
                 </div>
-              </Card>
+              </div>
             }
           />
         );
@@ -647,6 +647,7 @@ export function CreateEncounterButton({
       const content = editor.getHTML();
       setDescription(content);
     },
+    immediatelyRender: false,
   });
 
   return (

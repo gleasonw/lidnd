@@ -38,41 +38,37 @@ const difficulties = {
 
 type Difficulty = keyof typeof difficulties;
 
-function difficultyColor(e: EncounterWithParticipants, c: Campaign) {
+function difficultyCssClasses(e: EncounterWithParticipants, c: Campaign) {
   const difficulty = EncounterUtils.difficulty(e, c?.party_level);
-  return colorForDifficulty(difficulty);
+  return cssClassForDifficulty(difficulty);
 }
 
-function difficultyColorForCR(
+function difficultyClassForCR(
   cr: number,
   e: EncounterWithParticipants,
   c: { party_level?: number }
 ) {
   const difficulty = EncounterUtils.difficultyForCR(cr, e, c?.party_level ?? 1);
-  return colorForDifficulty(difficulty);
+  return cssClassForDifficulty(difficulty);
 }
 
-function colorForDifficulty(d: Difficulty) {
-  if (d === "Deadly") {
-    return "red";
-  }
-  if (d === "Hard") {
-    return "yellow";
-  }
-  if (d === "Easy") {
-    return "green";
-  }
-  if (d === "Standard") {
-    return "blue";
-  }
+const difficultyClasses = {
+  Easy: "text-green-700 bg-green-100",
+  Standard: "text-blue-700 bg-blue-100",
+  Hard: "text-yellow-700 bg-yellow-100",
+  Deadly: "text-red-700 bg-red-100",
+} as const;
+
+function cssClassForDifficulty(d: Difficulty) {
+  return difficultyClasses[d];
 }
 
 const DEFAULT_LEVEL = 1;
 
 export const EncounterUtils = {
-  difficultyColor,
-  difficultyColorForCR,
-  colorForDifficulty,
+  difficultyCssClasses,
+  difficultyClassForCR,
+  cssClassForDifficulty,
 
   goalCr(e: EncounterWithParticipants, c: { party_level?: number }) {
     const { easyTier, standardTier, hardTier } = this.findCRBudget(

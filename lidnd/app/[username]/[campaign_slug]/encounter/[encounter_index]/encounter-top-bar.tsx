@@ -9,7 +9,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { LidndPlusDialog } from "@/components/ui/lidnd_dialog";
 import {
   Select,
   SelectItem,
@@ -25,10 +24,7 @@ import {
   useRemoveParticipantFromEncounter,
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
-import {
-  AllyUpload,
-  MonsterUpload,
-} from "@/encounters/[encounter_index]/participant-add-form";
+import { MonsterUploadWithDifficulty } from "@/encounters/[encounter_index]/participant-add-form";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
@@ -60,9 +56,6 @@ export function EncounterTopBar() {
               <CreatureIcon creature={p.creature} size="small2" />
             </button>
           ))}
-          <LidndPlusDialog text="Add ally">
-            <AllyUpload encounter={encounter} />
-          </LidndPlusDialog>
         </ParticipantsContainer>
         <Card className="flex flex-col gap-5 items-center">
           <EncounterDifficulty />
@@ -88,7 +81,7 @@ export function EncounterTopBar() {
                 <Plus />
               </ButtonWithTooltip>
             </DialogTrigger>
-            <DialogContent className="max-h-screen overflow-auto sm:max-w-[800px]">
+            <DialogContent className="max-h-screen overflow-auto sm:max-w-[1000px]">
               <DialogTitle>
                 <div className="flex gap-5 items-center">Add monster</div>
               </DialogTitle>
@@ -113,7 +106,7 @@ export function EncounterTopBar() {
                   ))}
               </ParticipantsContainer>
 
-              <MonsterUpload encounter={encounter} />
+              <MonsterUploadWithDifficulty encounter={encounter} />
             </DialogContent>
             <DialogOverlay />
           </Dialog>
@@ -131,7 +124,7 @@ function ParticipantsContainer({
   role: "allies" | "monsters";
 }) {
   return (
-    <div className="flex w-full h-44 items-baseline">
+    <div className="flex w-full h-[100px] items-baseline">
       <Card
         className={clsx(
           {
@@ -159,7 +152,10 @@ export function EncounterDifficulty() {
   const totalCr = EncounterUtils.totalCr(encounter);
   const goalCR = EncounterUtils.goalCr(encounter, campaign);
   const remainingBudget = goalCR - totalCr;
-  const textColor = EncounterUtils.difficultyColor(encounter, campaign);
+  const difficultyClasses = EncounterUtils.difficultyCssClasses(
+    encounter,
+    campaign,
+  );
 
   return (
     <>
@@ -194,7 +190,7 @@ export function EncounterDifficulty() {
         </label>
 
         <Card
-          className={`flex shadow-lg p-3 flex-col items-center justify-center gap-3 text-${textColor}-500`}
+          className={`flex shadow-lg p-3 flex-col items-center justify-center gap-3 ${difficultyClasses}`}
         >
           {remainingBudget === 0 ? (
             <span className="text-3xl font-bold">

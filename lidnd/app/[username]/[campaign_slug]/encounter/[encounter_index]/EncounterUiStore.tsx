@@ -1,7 +1,7 @@
 "use client";
 
 import { makeAutoObservable } from "mobx";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
 
 /**
  * Manages simple ui state
@@ -43,9 +43,12 @@ class EncounterUIStore {
     this.selectedParticipantId = id;
     this.scrollToParticipant(id);
   };
+
+  dispose() {
+    this.battleCardRefs.clear();
+  }
 }
 
-const encounterUIStore = new EncounterUIStore();
 const EncounterUIContext = createContext<EncounterUIStore | null>(null);
 
 export function useEncounterUIStore() {
@@ -59,8 +62,16 @@ export function useEncounterUIStore() {
 }
 
 export function EncounterUI({ children }: { children: React.ReactNode }) {
+  const encounterUiStore = useMemo(() => new EncounterUIStore(), []);
+
+  useEffect(() => {
+    return () => {
+      encounterUiStore.dispose();
+    };
+  }, [encounterUiStore]);
+
   return (
-    <EncounterUIContext.Provider value={encounterUIStore}>
+    <EncounterUIContext.Provider value={encounterUiStore}>
       {children}
     </EncounterUIContext.Provider>
   );

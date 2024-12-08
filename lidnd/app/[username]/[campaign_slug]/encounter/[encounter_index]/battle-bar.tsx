@@ -15,7 +15,7 @@ import {
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import InitiativeInput from "@/encounters/[encounter_index]/InitiativeInput";
-import { ParticipantUpload } from "@/encounters/[encounter_index]/participant-add-form";
+import { MonsterUpload } from "@/encounters/[encounter_index]/participant-add-form";
 import {
   EffectIcon,
   StatusInput,
@@ -129,7 +129,7 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
         </div>
       ))}
       <LidndDialog
-        title={"Add creature"}
+        title={"Add Monster"}
         trigger={
           <ButtonWithTooltip
             variant="ghost"
@@ -139,7 +139,7 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
             <UserPlus />
           </ButtonWithTooltip>
         }
-        content={<ParticipantUpload encounter={encounter} />}
+        content={<MonsterUpload encounter={encounter} />}
       />
       <ButtonWithTooltip
         variant="ghost"

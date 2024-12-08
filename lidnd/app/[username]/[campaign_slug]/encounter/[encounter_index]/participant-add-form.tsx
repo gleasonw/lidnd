@@ -1,16 +1,12 @@
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  FullCreatureAddForm,
-  MonsterUploadForm,
-} from "@/app/[username]/[campaign_slug]/encounter/full-creature-add-form";
+import { MonsterUploadForm } from "@/app/[username]/[campaign_slug]/encounter/full-creature-add-form";
 import type {
   Creature,
   Encounter,
   EncounterWithParticipants,
 } from "@/server/api/router";
 import { api } from "@/trpc/react";
-import { Heart, Plus, Skull, UserPlus } from "lucide-react";
+import { Heart, Skull } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { createContext, Suspense, useState } from "react";
 import {
@@ -24,94 +20,44 @@ const AllyContext = createContext<boolean | null>(null);
 
 const useAllyContext = () => React.useContext(AllyContext);
 
-export function MonsterUpload({
+export function MonsterUploadWithDifficulty({
   encounter,
 }: {
   encounter: EncounterWithParticipants;
 }) {
-  const { mutate: createCreatureInEncounter } = useCreateCreatureInEncounter({
-    encounter,
-  });
-
   return (
-    <div className="h-[900px] flex flex-col gap-2">
+    <div className="h-full flex flex-col gap-2">
       <EncounterDifficulty />
-      <ParticipantUpload
-        encounter={encounter}
-        form={
-          <MonsterUploadForm
-            uploadCreature={(c) =>
-              createCreatureInEncounter({
-                creature: c,
-                participant: {
-                  is_ally: false,
-                },
-              })
-            }
-          />
-        }
-        existingCreatures={<ExistingMonster encounter={encounter} />}
-      />
+      <MonsterUpload encounter={encounter} />
     </div>
   );
 }
 
-export function AllyUpload({ encounter }: { encounter: Encounter }) {
-  return (
-    <AllyContext.Provider value={true}>
-      <ParticipantUpload
-        encounter={encounter}
-        existingCreatures={<ExistingCreature encounter={encounter} />}
-      />
-    </AllyContext.Provider>
-  );
-}
-
-type ParticipantUploadProps = {
-  form?: React.ReactNode;
-  existingCreatures?: React.ReactNode;
-  encounter: Encounter;
+type MonsterUploadProps = {
+  encounter: EncounterWithParticipants;
 };
 
-export const ParticipantUpload = function ParticipantUpload({
-  form,
-  existingCreatures,
+export const MonsterUpload = function ParticipantUpload({
   encounter,
-}: ParticipantUploadProps) {
+}: MonsterUploadProps) {
   const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter({
     encounter,
   });
 
   return (
-    <Tabs defaultValue="new" className="flex flex-col gap-5 min-h-0 flex-1">
-      <span className="flex gap-1 flex-wrap pr-2">
-        <TabsList>
-          <TabsTrigger value="new">
-            <Plus /> Add new creature
-          </TabsTrigger>
-          <TabsTrigger value="existing">
-            <UserPlus /> Existing creatures
-          </TabsTrigger>
-        </TabsList>
-      </span>
-      <TabsContent value="new">
-        {form ?? (
-          <FullCreatureAddForm
-            uploadCreature={(data) =>
-              addCreatureToEncounter({
-                creature: data,
-                participant: {
-                  is_ally: false,
-                },
-              })
-            }
-          />
-        )}
-      </TabsContent>
-      <TabsContent value="existing">
-        {existingCreatures ?? <ExistingCreature encounter={encounter} />}
-      </TabsContent>
-    </Tabs>
+    <div defaultValue="new" className="grid grid-cols-2 gap-3">
+      <MonsterUploadForm
+        uploadCreature={(data) => {
+          addCreatureToEncounter({
+            creature: data,
+            participant: {
+              is_ally: false,
+            },
+          });
+        }}
+      />
+      <ExistingMonster encounter={encounter} />
+    </div>
   );
 };
 
@@ -137,11 +83,7 @@ export function ExistingMonster({
         value={name}
       />
       <Suspense key={name} fallback={<div>Loading creatures</div>}>
-        <div
-          className={
-            "flex flex-col overflow-auto max-h-full gap-5 min-h-0 h-96"
-          }
-        >
+        <div className={"flex flex-col overflow-auto max-h-full min-h-0 h-96"}>
           {creatures?.map((creature) => (
             <ListedCreature
               key={creature.id}
@@ -224,8 +166,8 @@ export const ListedCreature = observer<ListedCreatureProps>(
           }}
         >
           {creature.challenge_rating ? (
-            <span className="flex gap-10 flex-wrap text-gray-500">
-              <span className="flex gap-2 flex-wrap">
+            <span className="grid grid-cols-2 text-gray-500">
+              <span className="flex gap-2">
                 <Skull />
                 {creature.challenge_rating}
               </span>

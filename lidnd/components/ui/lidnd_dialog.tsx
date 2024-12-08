@@ -31,7 +31,7 @@ export function LidndDialog(props: LidndDialogProps) {
     <DialogContext.Provider value={{ close: () => setIsOpen(false) }}>
       <Dialog open={isOpen} onOpenChange={(isOpen) => setIsOpen(isOpen)}>
         <DialogTrigger asChild>{trigger}</DialogTrigger>
-        <DialogContent className="max-h-screen overflow-auto">
+        <DialogContent className="max-h-screen overflow-auto sm:max-w-[1000px]">
           <DialogTitle>{props.title}</DialogTitle>
           {content}
         </DialogContent>

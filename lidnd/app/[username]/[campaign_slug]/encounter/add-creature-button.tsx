@@ -15,9 +15,15 @@ export function AddCreatureButton({
   ...props
 }: AddCreatureButtonProps) {
   return (
-    <Button {...props} variant="outline" className="flex w-full h-12">
-      <CreatureIcon creature={creature} size="small" />
-      <span className="mr-auto">{creature.name}</span>
+    <Button
+      {...props}
+      variant="outline"
+      className="grid w-full grid-cols-3 h-12 items-start m-0 p-0 justify-start"
+    >
+      <div className="flex items-center gap-2 col-span-2 h-12">
+        <CreatureIcon creature={creature} size="small" />
+        <span className="truncate ">{creature.name}</span>
+      </div>
       {children}
     </Button>
   );
