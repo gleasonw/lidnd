@@ -1,4 +1,5 @@
 "use client";
+import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import { ButtonWithTooltip, Tip } from "@/components/ui/tip";
@@ -156,7 +157,13 @@ type CardProps = {
 function GMCreatureCard(props: CardProps) {
   const { setSelectedParticipantId } = useEncounterUIStore();
   return (
-    <div onClick={() => setSelectedParticipantId(props.participant.id)}>
+    <div
+      onClick={() => setSelectedParticipantId(props.participant.id)}
+      draggable
+      onDragStart={(e) =>
+        typedDrag.set(e.dataTransfer, dragTypes.participant, props.participant)
+      }
+    >
       <TopBarParticipantCard {...props}>
         <HealthMeterOverlay participant={props.participant} />
       </TopBarParticipantCard>
