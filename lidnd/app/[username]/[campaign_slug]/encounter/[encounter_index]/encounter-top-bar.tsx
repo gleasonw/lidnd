@@ -46,9 +46,7 @@ export function EncounterTopBar() {
             </button>
           ))}
         </ParticipantsContainer>
-        <Card className="flex flex-col gap-5 items-center">
-          <EncounterDifficulty />
-        </Card>
+        <EncounterDifficulty />
         <ParticipantsContainer role="monsters">
           {EncounterUtils.monsters(encounter).map((p) => (
             <button
@@ -112,57 +110,46 @@ export function EncounterDifficulty() {
   );
 
   return (
-    <>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-5">
-          <span>Challenge Rating</span>
-          <span className="font-normal">
-            {totalCr} / {goalCR}
-          </span>
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent className="flex gap-3 w-full justify-between items-center">
-        <label className="flex flex-col gap-3 w-48">
-          <span className=" text-slate-500">Target difficulty</span>
-          <Select
-            onValueChange={(v) => {
-              console.log(v);
-              mutate({ ...encounter, target_difficulty: v as any });
-            }}
-            defaultValue={target}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select difficulty" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="easy">Easy</SelectItem>
-              <SelectItem value="standard">Standard</SelectItem>
-              <SelectItem value="hard">Hard</SelectItem>
-            </SelectContent>
-          </Select>
-        </label>
-
-        <Card
-          className={`flex shadow-lg p-3 flex-col items-center justify-center gap-3 ${difficultyClasses}`}
+    <div className="flex gap-3 w-full justify-between items-center">
+      <label className="flex flex-col gap-3 w-48">
+        <span className=" text-slate-500">Target difficulty</span>
+        <Select
+          onValueChange={(v) => {
+            console.log(v);
+            mutate({ ...encounter, target_difficulty: v as any });
+          }}
+          defaultValue={target}
         >
-          {remainingBudget === 0 ? (
-            <span className="text-3xl font-bold">
-              {EncounterUtils.difficulty(encounter, campaign?.party_level)}
-            </span>
-          ) : remainingBudget < 0 ? (
-            <span className="text-3xl font-bold">
-              {EncounterUtils.difficulty(encounter, campaign?.party_level)}{" "}
-              {`(+${totalCr - goalCR})`}
-            </span>
-          ) : (
-            <>
-              <span className="text-5xl font-bold">{remainingBudget}</span>
-              <span className="text-slate-500">CR budget</span>
-            </>
-          )}
-        </Card>
-      </CardContent>
-    </>
+          <SelectTrigger>
+            <SelectValue placeholder="Select difficulty" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="easy">Easy</SelectItem>
+            <SelectItem value="standard">Standard</SelectItem>
+            <SelectItem value="hard">Hard</SelectItem>
+          </SelectContent>
+        </Select>
+      </label>
+
+      <Card
+        className={`flex shadow-lg p-3 flex-col items-center justify-center gap-3 ${difficultyClasses}`}
+      >
+        {remainingBudget === 0 ? (
+          <span className="text-3xl font-bold">
+            {EncounterUtils.difficulty(encounter, campaign?.party_level)}
+          </span>
+        ) : remainingBudget < 0 ? (
+          <span className="text-3xl font-bold">
+            {EncounterUtils.difficulty(encounter, campaign?.party_level)}{" "}
+            {`(+${totalCr - goalCR})`}
+          </span>
+        ) : (
+          <>
+            <span className="text-5xl font-bold">{remainingBudget}</span>
+            <span className="text-slate-500">CR budget</span>
+          </>
+        )}
+      </Card>
+    </div>
   );
 }
