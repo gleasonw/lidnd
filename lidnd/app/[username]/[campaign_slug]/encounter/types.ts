@@ -7,7 +7,7 @@ export const insertCreatureSchema = createInsertSchema(creatures);
 export const participantInsertSchema = createInsertSchema(participants);
 export const creatureUploadSchema = insertCreatureSchema
   .extend({
-    icon_image: z.any(),
+    icon_image: z.unknown().optional(),
     stat_block_image: z.unknown().optional(),
     max_hp: z.coerce.number().gt(0),
     challenge_rating: z.coerce.number(),

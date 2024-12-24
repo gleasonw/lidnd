@@ -14,6 +14,8 @@ export const GET = async (request: NextRequest) => {
   const code = url.searchParams.get("code");
   // validate state
 
+  console.log({storedState, url, state, code})
+
   if (!storedState || !state || storedState !== state || !code) {
     console.error("Invalid state when getting Discord user");
     return new Response(null, {

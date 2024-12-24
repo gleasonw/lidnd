@@ -4,8 +4,6 @@ import { api } from "@/trpc/react";
 import { BattleCard } from "./battle-ui";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import {
-  useAddExistingCreatureAsParticipant,
-  useCreateCreatureInEncounter,
   useEncounter,
   useRemoveParticipantFromEncounter,
 } from "@/encounters/[encounter_index]/hooks";
@@ -19,11 +17,8 @@ import {
 import { ParticipantUtils } from "@/utils/participants";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ButtonWithTooltip } from "@/components/ui/tip";
-import { ExistingMonster } from "@/encounters/[encounter_index]/participant-add-form";
-import { MonsterUploadForm } from "@/encounters/full-creature-add-form";
 import { AddColumn } from "@/app/public/images/icons/AddColumn";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 //todo: custom margin when in editing layout mode
 
@@ -178,7 +173,7 @@ function StatColumnComponent({
             participants: ParticipantUtils.assignColumn(
               old.participants,
               newColumn.column_id,
-              newColumn.participant_id,
+              newColumn.participant_id
             ),
           };
         });
@@ -207,12 +202,14 @@ function StatColumnComponent({
   return (
     <>
       <div
-        className={`flex flex-col h-full border gap-5 items-start relative ${acceptDrop && "outline outline-blue-500"}`}
+        className={`flex flex-col h-full border gap-5 items-start relative ${
+          acceptDrop && "outline outline-blue-500"
+        }`}
         style={{ width: `${column.percent_width}%` }}
         onDrop={(e) => {
           const droppedParticipant = typedDrag.get(
             e.dataTransfer,
-            dragTypes.participant,
+            dragTypes.participant
           );
           if (!droppedParticipant) {
             console.error("No participant found when dragging");
@@ -250,58 +247,10 @@ function StatColumnComponent({
           </ButtonWithTooltip>
         ) : null}
 
-        <BattleCardUploader column={column} />
         <BattleCards column={column} />
       </div>
       {splitter}
     </>
-  );
-}
-function BattleCardUploader({ column }: { column: ColumnWithParticipants }) {
-  const [encounter] = useEncounter();
-  const { mutate: createCreatureInEncounter } = useCreateCreatureInEncounter({
-    encounter,
-  });
-  const { mutate: addParticipantFromExistingCreature } =
-    useAddExistingCreatureAsParticipant(encounter);
-  return (
-    <div className=" w-full p-3">
-      <Tabs defaultValue="new">
-        <TabsList>
-          <TabsTrigger value="new" className="flex gap-3">
-            New Monster
-          </TabsTrigger>
-          <TabsTrigger value="existing" className="flex gap-3">
-            Existing Monster
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="new">
-          <MonsterUploadForm
-            uploadCreature={(c) =>
-              createCreatureInEncounter({
-                creature: c,
-                participant: {
-                  is_ally: false,
-                  column_id: column.id,
-                },
-              })
-            }
-          />
-        </TabsContent>
-        <TabsContent value="existing">
-          <ExistingMonster
-            onUpload={(c) =>
-              addParticipantFromExistingCreature({
-                encounter_id: encounter.id,
-                creature_id: c.id,
-                column_id: column.id,
-              })
-            }
-            encounter={encounter}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
   );
 }
 
@@ -315,7 +264,7 @@ function BattleCards({ column }: { column: ColumnWithParticipants }) {
   // column.participants because column.participants doesn't get updated
   // by the optimistic update...
   const participantsInColumn = column.participants.sort(
-    ParticipantUtils.sortLinearly,
+    ParticipantUtils.sortLinearly
   );
 
   return participantsInColumn.map((p) => (
@@ -373,11 +322,11 @@ function StatColumnSplitter({
     const currentColumns = encounterById.getData(encounter.id)?.columns;
     const leftColumnStart = currentColumns?.find((c) => c.id === leftColumnId);
     const rightColumnStart = currentColumns?.find(
-      (c) => c.id === rightColumnId,
+      (c) => c.id === rightColumnId
     );
     if (!leftColumnStart || !rightColumnStart) {
       throw new Error(
-        "no columns found when attempting to update percent width",
+        "no columns found when attempting to update percent width"
       );
     }
     let isPendingSetStateForFrame: number | null = null;

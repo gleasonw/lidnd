@@ -9,9 +9,6 @@ import { db } from "@/server/api/db";
 import { settings } from "@/server/api/db/schema";
 import { eq } from "drizzle-orm";
 import { TopNav } from "@/app/[username]/[campaign_slug]/TopNav";
-import { CreateCampaignButton } from "@/app/[username]/create-campaign-button";
-import { Plus } from "lucide-react";
-import { ButtonWithTooltip } from "@/components/ui/tip";
 
 export default async function CampaignsLayout({
   children,
@@ -35,9 +32,11 @@ export default async function CampaignsLayout({
     return redirect(`/login`);
   }
 
-  const userSettings = await db.query.settings.findFirst({
-    where: eq(settings.user_id, user.id),
-  });
+  const [userSettings] = await Promise.all([
+    db.query.settings.findFirst({
+      where: eq(settings.user_id, user.id),
+    }),
+  ]);
 
   if (!userSettings) {
     console.error("No user settings found");
@@ -51,20 +50,7 @@ export default async function CampaignsLayout({
       <UserProvider value={user}>
         <UIStoreProvider>
           <ClientOverlays>
-            <TopNav
-              createCampaignButton={
-                <CreateCampaignButton
-                  trigger={
-                    <ButtonWithTooltip
-                      text="Create new campaign"
-                      className="flex items-center"
-                    >
-                      <Plus />
-                    </ButtonWithTooltip>
-                  }
-                />
-              }
-            />
+            <TopNav />
             <div className="flex flex-col max-h-full overflow-hidden h-full">
               {children}
             </div>

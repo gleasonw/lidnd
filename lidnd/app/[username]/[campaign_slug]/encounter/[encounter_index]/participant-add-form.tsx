@@ -9,12 +9,10 @@ import { api } from "@/trpc/react";
 import { Heart, Skull } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { createContext, Suspense, useState } from "react";
-import {
-  useCreateCreatureInEncounter,
-  useAddExistingCreatureAsParticipant,
-} from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
+import { useAddExistingCreatureAsParticipant } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { AddCreatureButton } from "@/encounters/add-creature-button";
 import { EncounterDifficulty } from "@/encounters/[encounter_index]/encounter-top-bar";
+import { useCreateCreatureInEncounter } from "./encounter-upload-hooks";
 
 const AllyContext = createContext<boolean | null>(null);
 
@@ -40,24 +38,19 @@ type MonsterUploadProps = {
 export const MonsterUpload = function ParticipantUpload({
   encounter,
 }: MonsterUploadProps) {
-  const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter({
-    encounter,
-  });
+  const { mutate: addCreatureToEncounter } = useCreateCreatureInEncounter();
 
   return (
-    <div defaultValue="new" className="grid grid-cols-2 gap-3">
-      <MonsterUploadForm
-        uploadCreature={(data) => {
-          addCreatureToEncounter({
-            creature: data,
-            participant: {
-              is_ally: false,
-            },
-          });
-        }}
-      />
-      <ExistingMonster encounter={encounter} />
-    </div>
+    <MonsterUploadForm
+      uploadCreature={(data) => {
+        addCreatureToEncounter({
+          creature: data,
+          participant: {
+            is_ally: false,
+          },
+        });
+      }}
+    />
   );
 };
 
@@ -180,5 +173,5 @@ export const ListedCreature = observer<ListedCreatureProps>(
         </AddCreatureButton>
       </div>
     );
-  },
+  }
 );

@@ -8,25 +8,24 @@ import { ButtonWithTooltip } from "@/components/ui/tip";
 
 export function ImageUpload({
   onUpload,
-  image,
-  clearImage,
   previewSize = 200,
   dropText,
   dropContainerClassName,
   dropIcon,
   previewRender,
+  fileInputProps,
 }: {
   onUpload: (file: any) => void;
-  image?: File;
-  clearImage: () => void;
   previewSize?: number;
   dropText: string;
   dropIcon?: React.ReactNode;
   dropContainerClassName?: string;
   previewRender?: (url: string) => React.ReactNode;
+  fileInputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "hovering">("idle");
+  const [status, setStatus] = useState<"idle" | "hovering" | "preview">("idle");
+  const [image, setImage] = useState<File | undefined>();
 
   useEffect(() => {
     if (image && image instanceof File) {
@@ -49,7 +48,7 @@ export function ImageUpload({
 
       onUpload(dti.getAsFile() ?? undefined);
     },
-    [onUpload],
+    [onUpload]
   );
 
   const inputRef = React.useRef<HTMLInputElement | null>(null);
@@ -64,7 +63,7 @@ export function ImageUpload({
           variant="destructive"
           onClick={(e) => {
             e.preventDefault();
-            clearImage();
+            setImage(undefined);
           }}
           size="sm"
           className="absolute top-0 right-0"
@@ -76,6 +75,11 @@ export function ImageUpload({
           alt={"preview image for " + image?.name}
           width={previewSize}
           height={previewSize}
+        />
+        <input
+          type="hidden"
+          name={fileInputProps?.name}
+          value={image ? URL.createObjectURL(image) : ""}
         />
       </div>
     );
@@ -103,7 +107,7 @@ export function ImageUpload({
       className={clsx(
         "border-2 border-dashed border-gray-200 p-2 flex flex-col gap-2 items-center justify-center transition-all w-full",
         status === "hovering" && "border-gray-400",
-        dropContainerClassName,
+        dropContainerClassName
       )}
     >
       <span className="text-gray-600 flex flex-col justify-center items-center gap-3">
@@ -120,8 +124,10 @@ export function ImageUpload({
           onChange={(e) => {
             if (e.target.files) {
               onUpload(e.target.files[0]);
+              setImage(e.target.files[0]);
             }
           }}
+          {...fileInputProps}
         />
         <ButtonWithTooltip
           variant="outline"
@@ -146,7 +152,9 @@ export function ImageUpload({
               return;
             }
             onImageInput(item);
+            setImage(item.getAsFile() ?? undefined);
           }}
+          {...fileInputProps}
         />
       </span>
     </span>

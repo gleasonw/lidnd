@@ -1,13 +1,12 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Creature } from "@/server/api/router";
 import { CreatureUtils } from "@/utils/creatures";
-import Image from "next/image";
 
 type IconSize = "v-small" | "small" | "small2" | "medium" | "large";
 
 function iconDimensions(
-  creature: Creature,
-  size?: IconSize,
+  creature: { icon_width: number; icon_height: number },
+  size?: IconSize
 ): { width: number; height: number } {
   if (!size) {
     return { width: creature.icon_width, height: creature.icon_height };
@@ -37,14 +36,21 @@ export function CreatureIcon({
   size,
   objectFit = "contain",
 }: {
-  creature: Creature;
+  creature: {
+    id: string;
+    icon_width: number;
+    icon_height: number;
+    name: string;
+  };
   size?: IconSize;
   objectFit?: "contain" | "cover";
 }) {
   if (!creature.icon_width || !creature.icon_height) {
     console.trace();
     throw new Error(
-      `No icon width or height for ${creature.name}, ${JSON.stringify(creature)}`,
+      `No icon width or height for ${creature.name}, ${JSON.stringify(
+        creature
+      )}`
     );
   }
 
@@ -53,26 +59,16 @@ export function CreatureIcon({
   }
 
   const { width, height } = iconDimensions(creature, size);
-  const fitStyle = objectFit
-    ? { objectFit, maxWidth: "100%", maxHeight: "100%" }
-    : {};
-
-  const style = {
-    width: `${width}px`,
-    height: `${height}px`,
-    ...fitStyle,
-  };
 
   return (
-    <Image
-      quality={100}
-      className="select-none rounded-full overflow-hidden max-h-full max-w-full"
-      src={CreatureUtils.awsURL(creature, "icon")}
-      alt={creature.name}
-      priority
-      style={style}
-      width={width}
-      height={height}
-    />
+    <Avatar>
+      <AvatarImage
+        src={CreatureUtils.awsURL(creature, "icon")}
+        alt={creature.name}
+        width={width}
+        height={height}
+      />
+      <AvatarFallback>{creature.name}</AvatarFallback>
+    </Avatar>
   );
 }

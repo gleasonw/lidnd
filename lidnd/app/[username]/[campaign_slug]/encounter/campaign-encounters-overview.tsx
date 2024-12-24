@@ -80,7 +80,7 @@ export function ExistingCreaturesForPartyAdd({
   });
   const { mutate: addCreature } = useAddExistingToParty(campaignId);
   const creaturesPlayersFirst = R.sort(creatures ?? [], (a, b) =>
-    a.is_player ? -1 : b.is_player ? 1 : 0,
+    a.is_player ? -1 : b.is_player ? 1 : 0
   );
   return (
     <div className="flex flex-col gap-5">
@@ -113,10 +113,9 @@ export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
     placeholderData: (prev) => prev,
   });
 
-  const { mutate: onPlayerUpload } = useAddNewToParty(campaign);
   const { mutate: updateCampaign } = useUpdateCampaign(campaign);
   const [partyLevel, setPartyLevel] = React.useState(
-    campaign?.party_level ?? 1,
+    campaign?.party_level ?? 1
   );
   const [isEditingParty, setIsEditingParty] = React.useState(false);
 
@@ -129,6 +128,10 @@ export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
       });
     }
   });
+
+  if (reactiveCampaign?.campaignToPlayers.length === 0) {
+    return <AddPartyMemberDialog campaign={campaign} />;
+  }
 
   return (
     <div className="flex gap-5">
@@ -165,51 +168,7 @@ export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
         >
           {isEditingParty ? <Eye /> : <Pencil />}
         </ButtonWithTooltip>
-        {isEditingParty ? (
-          <LidndDialog
-            title={"Add new party member"}
-            trigger={
-              <ButtonWithTooltip text="Add new party member" variant="ghost">
-                <UserPlus />
-              </ButtonWithTooltip>
-            }
-            content={
-              <Tabs defaultValue="new">
-                <span className="flex gap-1 flex-wrap pr-2">
-                  <TabsList>
-                    <TabsTrigger value="new">
-                      <Plus /> Add new creature
-                    </TabsTrigger>
-                    <TabsTrigger value="existing">
-                      <UserPlus /> Existing creatures
-                    </TabsTrigger>
-                  </TabsList>
-                </span>
-                <TabsContent value="new">
-                  <Tabs defaultValue="player">
-                    <TabsList>
-                      <TabsTrigger value="player" className="flex gap-3">
-                        <User /> Player
-                      </TabsTrigger>
-                      <TabsTrigger value="npc" className="flex gap-3">
-                        <Smile /> NPC
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="npc">
-                      <MonsterUploadForm uploadCreature={onPlayerUpload} />
-                    </TabsContent>
-                    <TabsContent value="player">
-                      <PlayerUploadForm uploadCreature={onPlayerUpload} />
-                    </TabsContent>
-                  </Tabs>
-                </TabsContent>
-                <TabsContent value="existing">
-                  <ExistingCreaturesForPartyAdd campaignId={campaign.id} />
-                </TabsContent>
-              </Tabs>
-            }
-          />
-        ) : null}
+        {isEditingParty ? <AddPartyMemberDialog campaign={campaign} /> : null}
       </div>
       <label className="flex gap-2 items-center font-light whitespace-nowrap">
         Level
@@ -227,6 +186,56 @@ export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
   );
 }
 
+function AddPartyMemberDialog({ campaign }: { campaign: { id: string } }) {
+  const { mutate: onPlayerUpload } = useAddNewToParty(campaign);
+
+  return (
+    <LidndDialog
+      title={"Add new party member"}
+      trigger={
+        <ButtonWithTooltip text="Add new party member" variant="ghost">
+          <UserPlus />
+        </ButtonWithTooltip>
+      }
+      content={
+        <Tabs defaultValue="new">
+          <span className="flex gap-1 flex-wrap pr-2">
+            <TabsList>
+              <TabsTrigger value="new">
+                <Plus /> Add new creature
+              </TabsTrigger>
+              <TabsTrigger value="existing">
+                <UserPlus /> Existing creatures
+              </TabsTrigger>
+            </TabsList>
+          </span>
+          <TabsContent value="new">
+            <Tabs defaultValue="player">
+              <TabsList>
+                <TabsTrigger value="player" className="flex gap-3">
+                  <User /> Player
+                </TabsTrigger>
+                <TabsTrigger value="npc" className="flex gap-3">
+                  <Smile /> NPC
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="npc">
+                <MonsterUploadForm uploadCreature={onPlayerUpload} />
+              </TabsContent>
+              <TabsContent value="player">
+                <PlayerUploadForm uploadCreature={onPlayerUpload} />
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+          <TabsContent value="existing">
+            <ExistingCreaturesForPartyAdd campaignId={campaign.id} />
+          </TabsContent>
+        </Tabs>
+      }
+    />
+  );
+}
+
 export function SessionEncounters() {
   const campaignId = useCampaignId();
   const [acceptDrop, setAcceptDrop] = useState(false);
@@ -237,7 +246,7 @@ export function SessionEncounters() {
   const activeEncounters = campaignEncounters
     ? R.sort(
         EncounterUtils.byStatus(campaignEncounters).active ?? [],
-        compareCreatedAt,
+        compareCreatedAt
       )
     : [];
   const user = useUser();
@@ -270,7 +279,7 @@ export function SessionEncounters() {
   const sumActiveDuration = R.sumBy(activeEncounters, (e) =>
     EncounterUtils.durationSeconds(e, {
       playerLevel: campaign?.party_level,
-    }),
+    })
   );
 
   return (
@@ -308,7 +317,7 @@ export function SessionEncounters() {
         setAcceptDrop(false);
       }}
       className={clsx(
-        "flex-col flex w-full gap-3 transition-all rounded-sm max-h-full",
+        "flex-col flex w-full gap-3 transition-all rounded-sm max-h-full"
       )}
     >
       <div className="flex justify-between items-center w-full">
@@ -337,7 +346,7 @@ export function SessionEncounters() {
             "border-black": acceptDrop,
             "items-center justify-center": activeEncounters?.length === 0,
             "border-transparent": activeEncounters?.length > 0 && !acceptDrop,
-          },
+          }
         )}
       >
         {activeEncounters?.length === 0
@@ -362,14 +371,14 @@ export function SessionEncounters() {
                 <Link href={appRoutes.encounter(campaign, encounter, user)}>
                   <Card
                     className={clsx(
-                      "flex transition-all p-4 gap-3 justify-between items-center max-w-sm",
+                      "flex transition-all p-4 gap-3 justify-between items-center max-w-sm"
                     )}
                     draggable
                     onDragStart={(e) => {
                       typedDrag.set(
                         e.dataTransfer,
                         dragTypes.encounter,
-                        encounter,
+                        encounter
                       );
                     }}
                   >
@@ -409,7 +418,7 @@ class EncounterArchiveStore {
 }
 
 const EncounterArchiveContext = createContext<EncounterArchiveStore | null>(
-  null,
+  null
 );
 
 export function EncounterArchive() {
@@ -442,7 +451,7 @@ export function EncounterArchive() {
             }
             const encounter = typedDrag.get(
               e.dataTransfer,
-              dragTypes.encounter,
+              dragTypes.encounter
             );
             if (!encounter) {
               console.error("No encounter found when dragging");
@@ -475,7 +484,7 @@ export function EncounterArchive() {
               "border-black": acceptDrop,
               "border-transparent": !acceptDrop,
             },
-            "border-2 border-dashed flex flex-col w-full transition-all rounded-md max-h-full overflow-auto h-full",
+            "border-2 border-dashed flex flex-col w-full transition-all rounded-md max-h-full overflow-auto h-full"
           )}
         >
           <InactiveEncounterList />
@@ -533,7 +542,7 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
             encounterCard={
               <div
                 className={clsx(
-                  "flex w-full gap-3 hover:bg-gray-100 border-b-2",
+                  "flex w-full gap-3 hover:bg-gray-100 border-b-2"
                 )}
                 draggable
                 onDragStart={(e) => {
@@ -724,7 +733,7 @@ function DraggableEncounterCard(props: {
 }) {
   const { encounter, category, previousOrder, nextOrder } = props;
   const [acceptDrop, setAcceptDrop] = useState<"none" | "top" | "bottom">(
-    "none",
+    "none"
   );
   const { mutate: updateEncounter } = useUpdateCampaignEncounter();
   return (
@@ -732,7 +741,7 @@ function DraggableEncounterCard(props: {
       onDrop={(e) => {
         const droppedEncounter = typedDrag.get(
           e.dataTransfer,
-          dragTypes.encounter,
+          dragTypes.encounter
         );
         if (!droppedEncounter) {
           console.error("No encounter found when dragging");

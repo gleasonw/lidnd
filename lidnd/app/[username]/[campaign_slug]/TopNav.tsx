@@ -38,11 +38,7 @@ import { useState } from "react";
 
 import * as R from "remeda";
 
-export function TopNav({
-  createCampaignButton,
-}: {
-  createCampaignButton: React.ReactNode;
-}) {
+export function TopNav() {
   const user = useUser();
   return (
     <div className="p-4 flex flex-shrink-0 flex-grow-0 items-center gap-5 border-b border-gray-200 h-16 overflow-hidden bg-white">
@@ -52,7 +48,7 @@ export function TopNav({
       >
         <Home className="h-6 w-6" />
       </Link>
-      <CampaignGate createCampaignButton={createCampaignButton}>
+      <CampaignGate >
         <CampaignTopNav user={user} />
       </CampaignGate>
       <Link
@@ -68,10 +64,8 @@ export function TopNav({
 // todo: i should really move these pathname splits into a "check location" hook or something
 function CampaignGate({
   children,
-  createCampaignButton,
 }: {
   children: React.ReactNode;
-  createCampaignButton: React.ReactNode;
 }) {
   const campaignSlug = useMaybeCampaignSlug();
   if (!campaignSlug) {
@@ -81,7 +75,6 @@ function CampaignGate({
         <span className="text-xl whitespace-nowrap font-medium">
           My campaigns
         </span>
-        {createCampaignButton}
       </div>
     );
   }

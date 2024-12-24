@@ -21,6 +21,7 @@ import { DescriptionTextArea } from "@/encounters/[encounter_index]/description-
 import { GroupBattleUI } from "@/encounters/[encounter_index]/group-battle-ui";
 import {
   useEncounter,
+  useRemoveParticipantFromEncounter,
   useRemoveStatusEffect,
   useUpdateEncounterParticipant,
 } from "@/encounters/[encounter_index]/hooks";
@@ -32,10 +33,47 @@ import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 import { Label } from "@/components/ui/label";
 import { Reminders } from "@/encounters/[encounter_index]/reminders";
+import { EncounterUtils } from "@/utils/encounters";
+import { X } from "lucide-react";
+import { MonsterUpload } from "./participant-add-form";
+import { AllyUploadForm } from "./ally-upload-form";
+import { Separator } from "@/components/ui/separator";
 
 export const BattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
   const [encounter] = useEncounter();
+
+  const allies = EncounterUtils.allies(encounter);
+  const monsters = EncounterUtils.monsters(encounter);
+
+  if (encounter.status === "prep") {
+    return (
+      <div className="grid grid-cols-2 gap-10 h-full">
+        <ParticipantsContainer role="allies">
+          {allies.length === 0 ? (
+            <ParticipantBadgeWrapper role="allies">
+              No allies
+            </ParticipantBadgeWrapper>
+          ) : (
+            allies.map((p) => <ParticipantBadge key={p.id} participant={p} />)
+          )}
+          <Separator />
+          <AllyUploadForm />
+        </ParticipantsContainer>
+        <ParticipantsContainer role="monsters">
+          {monsters.length === 0 ? (
+            <ParticipantBadgeWrapper role="monsters">
+              No monsters yet
+            </ParticipantBadgeWrapper>
+          ) : (
+            monsters.map((p) => <ParticipantBadge key={p.id} participant={p} />)
+          )}
+          <Separator />
+          <MonsterUpload encounter={encounter} />
+        </ParticipantsContainer>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -55,6 +93,81 @@ export const BattleUI = observer(function BattleUI() {
     </>
   );
 });
+
+function ParticipantsContainer({
+  children,
+  role,
+}: {
+  children: React.ReactNode;
+  role: "allies" | "monsters";
+}) {
+  return (
+    <div className="flex w-full h-full items-baseline">
+      <Card className={clsx(`flex flex-col gap-4 w-full p-3 shadow-sm h-full`)}>
+        <CardTitle>{role === "allies" ? "Allies" : "Monsters"}</CardTitle>
+        {children}
+      </Card>
+    </div>
+  );
+}
+
+function ParticipantBadge({
+  participant,
+}: {
+  participant: {
+    id: string;
+    creature: {
+      id: string;
+      name: string;
+      icon_width: number;
+      icon_height: number;
+      is_player: boolean;
+    };
+  };
+}) {
+  const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
+  const [encounter] = useEncounter();
+
+  return (
+    <ParticipantBadgeWrapper
+      role={ParticipantUtils.isPlayer(participant) ? "allies" : "monsters"}
+    >
+      <div>
+        <CreatureIcon creature={participant.creature} />
+      </div>
+      <div className="col-span-2 flex">{participant.creature.name}</div>
+      <Button
+        variant="ghost"
+        onClick={() =>
+          removeParticipant({
+            participant_id: participant.id,
+            encounter_id: encounter.id,
+          })
+        }
+      >
+        <X />
+      </Button>
+    </ParticipantBadgeWrapper>
+  );
+}
+
+function ParticipantBadgeWrapper({
+  children,
+  role,
+}: {
+  children: React.ReactNode;
+  role: "allies" | "monsters";
+}) {
+  return (
+    <div
+      className={`flex gap-2 border rounded-full items-center justify-between px-2 h-12 max-w-[200px] ${
+        role === "allies" ? "bg-blue-100" : "bg-red-100"
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
 
 export type BattleCardProps = {
   participant: ParticipantWithData;
@@ -181,7 +294,7 @@ export function BattleCardLayout({
           "shadow-lg shadow-blue-800":
             ParticipantUtils.isFriendly(participant) && participant.is_active,
         },
-        className,
+        className
       )}
       {...props}
     >
@@ -339,7 +452,7 @@ export function HealthMeterOverlay({
         {
           "bg-gray-500": percentDamage >= 100,
           "bg-red-500": percentDamage !== 100,
-        },
+        }
       )}
     />
   );

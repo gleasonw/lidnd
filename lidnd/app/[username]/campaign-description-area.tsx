@@ -10,29 +10,15 @@ import React from "react";
 import { useDebouncedCallback } from "use-debounce";
 
 export function CampaignDescriptionForm() {
-  const [textValue, setTextValue] = React.useState("");
   const configuredPlaceholder = Placeholder.configure({
     placeholder: "Setting, hook, etc...",
   });
 
   const editor = useEditor({
     extensions: [StarterKit, configuredPlaceholder],
-    onUpdate: ({ editor }) => {
-      setTextValue(editor.getHTML());
-    },
   });
 
-  return (
-    <>
-      <LidndTextArea editor={editor} />
-      <input
-        type="text"
-        value={textValue}
-        name="description"
-        className="hidden"
-      />
-    </>
-  );
+  return <LidndTextArea editor={editor} />;
 }
 
 export function CampaignDescriptionArea({

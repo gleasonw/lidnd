@@ -280,7 +280,6 @@ export const creatures = pgTable(
     initiative_bonus: integer("initiative_bonus").default(0).notNull(),
     challenge_rating: real("challenge_rating").default(0).notNull(),
     is_player: boolean("is_player").default(false).notNull(),
-    col_span: integer("col_span"),
     user_id: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),

@@ -36,7 +36,7 @@ export async function createCampaign(formdata: FormData) {
       z.object({
         user_id: z.optional(z.string()),
         slug: z.optional(z.string()),
-      }),
+      })
     ),
   });
 
@@ -102,7 +102,7 @@ export async function postCreature(uploadedCreature: FormData) {
 
 export async function createPlayerAndAddToCampaign(
   campaignId: string,
-  form: FormData,
+  form: FormData
 ) {
   const user = await LidndAuth.getUser();
 
@@ -131,7 +131,7 @@ export async function createPlayerAndAddToCampaign(
 
 export async function updateEncounterDescription(
   id: string,
-  formData: FormData,
+  formData: FormData
 ) {
   const user = await LidndAuth.getUser();
 
@@ -156,7 +156,7 @@ export async function updateEncounterDescription(
     .where(and(eq(encounters.id, id), eq(encounters.user_id, user.id)));
 }
 
-export async function createParticipantInEncounter(formData: CreaturePostData) {
+export async function createParticipantInEncounter(formData: FormData) {
   const user = await LidndAuth.getUser();
 
   if (!user) {
@@ -169,9 +169,12 @@ export async function createParticipantInEncounter(formData: CreaturePostData) {
       z.object({
         encounter_id: z.string(),
         column_id: z.string().optional(),
-      }),
+      })
     ),
   });
+
+  console.log(creature.value, creature);
+  return;
 
   if (!creature.value) {
     return { error: creature.error };
@@ -187,7 +190,7 @@ export async function createParticipantInEncounter(formData: CreaturePostData) {
       hp: newCreature.max_hp,
       creature: newCreature,
       column_id: creature.value.column_id,
-    },
+    }
   );
 
   return {
