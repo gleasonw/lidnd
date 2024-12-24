@@ -1,7 +1,6 @@
 "use client";
 
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
-import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectItem,
