@@ -74,6 +74,7 @@ function isFriendly(p: ParticipantWithCreature) {
   return isPlayer(p) || p.is_ally;
 }
 
+// need to just create a "role" field on the participant
 function isAdversary(p: ParticipantWithCreature) {
   return !isFriendly(p);
 }
@@ -147,7 +148,7 @@ function updateMinionCount(
 }
 
 function sortLinearly<
-  T extends { initiative: number; created_at: Date | string; id: string },
+  T extends { initiative: number; created_at: Date | string; id: string }
 >(a: T, b: T) {
   // react query data serialized on server will not be a Date object
   const aTime =
