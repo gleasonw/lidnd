@@ -60,6 +60,7 @@ function isFriendly(p: ParticipantWithCreature) {
   return isPlayer(p) || p.is_ally;
 }
 
+// need to just create a "role" field on the participant
 function isAdversary(p: ParticipantWithCreature) {
   return !isFriendly(p);
 }

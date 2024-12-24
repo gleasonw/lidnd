@@ -12,6 +12,7 @@ import React from "react";
 import { useLidndDialog } from "@/components/ui/lidnd_dialog";
 import { EncounterUtils } from "@/utils/encounters";
 import * as R from "remeda";
+import { CreatureStatBlockImage } from "../original-size-image";
 
 export function GroupInitiativeInput() {
   const id = useEncounterId();
@@ -38,23 +39,35 @@ export function GroupInitiativeInput() {
         return a.id > b.id ? 1 : -1;
       }
       return ParticipantUtils.name(a).localeCompare(ParticipantUtils.name(b));
-    },
+    }
+  );
+
+  const sortedMonsters = sortedParticipants.filter((p) =>
+    ParticipantUtils.isAdversary(p)
   );
 
   return (
-    <div>
-      <PreBattleInputsList>
-        {sortedParticipants.map((p) => (
-          <PreBattleInput key={p.id} participant={p}>
-            <InitiativeInput participant={p} />
-          </PreBattleInput>
+    <div className="grid grid-cols-2">
+      {" "}
+      <div className="flex flex-col gap-3">
+        {sortedMonsters.map((m) => (
+          <CreatureStatBlockImage creature={m.creature} />
         ))}
-      </PreBattleInputsList>
-      <div className="flex justify-between gap-10">
-        <Button onClick={start}>
-          <Swords />
-          Commence the battle
-        </Button>
+      </div>
+      <div className="flex flex-col gap-3">
+        <PreBattleInputsList>
+          {sortedParticipants.map((p) => (
+            <PreBattleInput key={p.id} participant={p}>
+              <InitiativeInput participant={p} />
+            </PreBattleInput>
+          ))}
+        </PreBattleInputsList>{" "}
+        <div className="flex justify-between gap-10">
+          <Button onClick={start}>
+            <Swords />
+            Commence the battle
+          </Button>
+        </div>
       </div>
     </div>
   );
