@@ -17,9 +17,9 @@ import { CreatureStatBlockImage } from "../original-size-image";
 export function GroupInitiativeInput() {
   const id = useEncounterId();
   const { close } = useLidndDialog();
-
   const [encounter] = api.encounterById.useSuspenseQuery(id);
   const { mutate: startEncounter } = useStartEncounter();
+  const refMap = React.useRef(new Map<string, HTMLDivElement>());
 
   function start() {
     startEncounter(id);
@@ -49,16 +49,38 @@ export function GroupInitiativeInput() {
   return (
     <div className="grid grid-cols-2">
       {" "}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 overflow-auto h-96">
         {sortedMonsters.map((m) => (
-          <CreatureStatBlockImage creature={m.creature} />
+          <CreatureStatBlockImage
+            creature={m.creature}
+            key={m.id}
+            ref={(el) => {
+              if (el && !refMap.current.has(m.id)) {
+                refMap.current.set(m.id, el);
+              }
+
+              return () => {
+                refMap.current.delete(m.id);
+              };
+            }}
+          />
         ))}
       </div>
       <div className="flex flex-col gap-3">
         <PreBattleInputsList>
           {sortedParticipants.map((p) => (
             <PreBattleInput key={p.id} participant={p}>
-              <InitiativeInput participant={p} />
+              <InitiativeInput
+                participant={p}
+                inputProps={{
+                  onFocus: () => {
+                    const statBlockRef = refMap.current.get(p.id);
+                    if (statBlockRef) {
+                      statBlockRef.scrollIntoView({ behavior: "smooth" });
+                    }
+                  },
+                }}
+              />
             </PreBattleInput>
           ))}
         </PreBattleInputsList>{" "}

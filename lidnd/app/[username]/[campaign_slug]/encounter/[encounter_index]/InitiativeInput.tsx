@@ -10,13 +10,15 @@ export default function InitiativeInput({
   participant,
   className,
   tabIndex,
+  inputProps,
 }: {
   participant: Participant;
   className?: string;
   tabIndex?: number;
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }) {
   const [initiative, setInitiative] = React.useState<string | number>(
-    participant.initiative,
+    participant.initiative
   );
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   const debouncedUpdate = useDebouncedCallback((initiative: number) => {
@@ -39,6 +41,7 @@ export default function InitiativeInput({
           debouncedUpdate(parseInt(e.target.value));
         }}
         placeholder="Initiative"
+        {...inputProps}
       />
     </label>
   );
