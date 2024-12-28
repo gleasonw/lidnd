@@ -1,6 +1,7 @@
 "use client";
 
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectItem,
@@ -14,6 +15,7 @@ import {
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import { EncounterUtils } from "@/utils/encounters";
+import { DescriptionTextArea } from "./description-text-area";
 
 // todo: swap views to columns? just to keep everything on one screen? use dialog only for in combat?
 export function EncounterTopBar() {
@@ -94,6 +96,10 @@ export function EncounterDifficulty() {
           )}
         </div>
       </div>
+
+      <Card className="min-h-[100px] w-full flex p-3">
+        <DescriptionTextArea />
+      </Card>
     </div>
   );
 }

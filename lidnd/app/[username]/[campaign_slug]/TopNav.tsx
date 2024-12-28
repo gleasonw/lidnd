@@ -49,7 +49,7 @@ export function TopNav() {
       >
         <Home className="h-6 w-6" />
       </Link>
-      <CampaignGate >
+      <CampaignGate>
         <CampaignTopNav user={user} />
       </CampaignGate>
       <Link
@@ -63,11 +63,7 @@ export function TopNav() {
 }
 
 // todo: i should really move these pathname splits into a "check location" hook or something
-function CampaignGate({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function CampaignGate({ children }: { children: React.ReactNode }) {
   const campaignSlug = useMaybeCampaignSlug();
   if (!campaignSlug) {
     // we must be on the main campaigns page... a little clunky
@@ -196,7 +192,7 @@ export function EncounterTopNav() {
       <EncounterUI>
         <div className="flex items-center gap-2">
           <ChevronRight className="h-4 w-4 text-gray-400" />
-          <span className="text-lg w-44 max-w-full truncate font-medium text-gray-900">
+          <span className="text-lg w-32 max-w-full truncate font-medium text-gray-900">
             {encounter.name}
           </span>
           <span className="whitespace-nowrap">

@@ -49,7 +49,7 @@ export const BattleUI = observer(function BattleUI() {
   if (encounter.status === "prep") {
     return (
       <div className="grid grid-cols-2 gap-10 h-full">
-        <ParticipantsContainer role="allies">
+        <ParticipantsContainer role="allies" extra={<AllyUploadForm />}>
           {allies.length === 0 ? (
             <ParticipantBadgeWrapper role="allies">
               No allies
@@ -57,10 +57,11 @@ export const BattleUI = observer(function BattleUI() {
           ) : (
             allies.map((p) => <ParticipantBadge key={p.id} participant={p} />)
           )}
-          <Separator />
-          <AllyUploadForm />
         </ParticipantsContainer>
-        <ParticipantsContainer role="monsters">
+        <ParticipantsContainer
+          role="monsters"
+          extra={<MonsterUpload encounter={encounter} />}
+        >
           {monsters.length === 0 ? (
             <ParticipantBadgeWrapper role="monsters">
               No monsters yet
@@ -68,8 +69,6 @@ export const BattleUI = observer(function BattleUI() {
           ) : (
             monsters.map((p) => <ParticipantBadge key={p.id} participant={p} />)
           )}
-          <Separator />
-          <MonsterUpload encounter={encounter} />
         </ParticipantsContainer>
       </div>
     );
@@ -96,16 +95,20 @@ export const BattleUI = observer(function BattleUI() {
 
 function ParticipantsContainer({
   children,
+  extra,
   role,
 }: {
   children: React.ReactNode;
+  extra: React.ReactNode;
   role: "allies" | "monsters";
 }) {
   return (
     <div className="flex w-full h-full items-baseline">
       <Card className={clsx(`flex flex-col gap-4 w-full p-3 shadow-sm h-full`)}>
         <CardTitle>{role === "allies" ? "Allies" : "Monsters"}</CardTitle>
-        {children}
+        <div className="flex flex-wrap gap-2">{children}</div>
+        <Separator />
+        {extra}
       </Card>
     </div>
   );
