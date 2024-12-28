@@ -15,7 +15,6 @@ import {
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import { EncounterUtils } from "@/utils/encounters";
-import { DescriptionTextArea } from "./description-text-area";
 
 // todo: swap views to columns? just to keep everything on one screen? use dialog only for in combat?
 export function EncounterTopBar() {
@@ -55,7 +54,6 @@ export function EncounterDifficulty() {
 
   return (
     <div className={`flex gap-3 w-full`}>
-      <DescriptionTextArea />
       <div className={`flex flex-col w-full gap-3`}>
         <label className="flex flex-col gap-3 w-48">
           <span className=" text-slate-500">Target difficulty</span>
