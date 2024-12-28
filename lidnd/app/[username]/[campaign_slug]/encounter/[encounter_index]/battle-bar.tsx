@@ -1,6 +1,7 @@
 "use client";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { Button } from "@/components/ui/button";
+import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import { ButtonWithTooltip, Tip } from "@/components/ui/tip";
 import { Toggle } from "@/components/ui/toggle";
@@ -30,9 +31,11 @@ import {
   ChevronRightIcon,
   ListOrdered,
   Pen,
+  Plus,
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React from "react";
+import { MonsterUpload } from "./participant-add-form";
 
 export function ToggleEditingMode() {
   const [encounter] = useEncounter();
@@ -126,7 +129,7 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
             )}
             {isEditingInitiative ? <InitiativeInput participant={p} /> : null}
           </div>
-        ),
+        )
       )}
       <ButtonWithTooltip
         variant="ghost"
@@ -136,6 +139,19 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
       >
         <ListOrdered />
       </ButtonWithTooltip>
+      <LidndDialog
+        title={"Add monster"}
+        content={<MonsterUpload encounter={encounter} />}
+        trigger={
+          <ButtonWithTooltip
+            variant="ghost"
+            className="self-stretch h-full flex"
+            text="Add monster"
+          >
+            <Plus />
+          </ButtonWithTooltip>
+        }
+      />
       <ButtonWithTooltip
         className="h-full shadow-lg flex items-center"
         onClick={cycleNext}
@@ -227,7 +243,7 @@ function TopBarParticipantCard({
             participant.is_active && "h-32",
             index < activeIndex
               ? "opacity-60 hover:opacity-100"
-              : "hover:opacity-60",
+              : "hover:opacity-60"
           )}
           style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
         >

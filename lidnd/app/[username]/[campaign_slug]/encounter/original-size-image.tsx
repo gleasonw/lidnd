@@ -6,13 +6,18 @@ import Image from "next/image";
 
 export interface OriginalSizeImageProps {
   creature: Creature;
+  ref?: React.Ref<HTMLImageElement>;
 }
 
-export function CreatureStatBlockImage({ creature }: OriginalSizeImageProps) {
+export function CreatureStatBlockImage({
+  creature,
+  ref,
+}: OriginalSizeImageProps) {
   return (
     <Image
       src={CreatureUtils.awsURL(creature, "stat_block")}
       className="select-none object-contain"
+      ref={ref}
       alt={creature.name}
       style={{
         imageRendering: "-webkit-optimize-contrast",
