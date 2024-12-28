@@ -83,7 +83,7 @@ export function ExistingMonster({
         value={name}
       />
       <Suspense key={name} fallback={<div>Loading creatures</div>}>
-        <div className={"flex flex-col overflow-auto max-h-full min-h-0 h-96"}>
+        <div className={"flex flex-col overflow-auto gap-3 py-3"}>
           {creatures?.map((creature) => (
             <ListedCreature
               key={creature.id}
@@ -180,5 +180,5 @@ export const ListedCreature = observer<ListedCreatureProps>(
         </AddCreatureButton>
       </div>
     );
-  },
+  }
 );

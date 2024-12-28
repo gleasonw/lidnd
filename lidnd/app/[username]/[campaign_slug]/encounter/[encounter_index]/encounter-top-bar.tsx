@@ -18,6 +18,10 @@ import {
 } from "@/encounters/[encounter_index]/hooks";
 import { EncounterUtils } from "@/utils/encounters";
 import clsx from "clsx";
+import { MonsterUpload } from "./participant-add-form";
+import { LidndDialog } from "@/components/ui/lidnd_dialog";
+import { Plus } from "lucide-react";
+import { ButtonWithTooltip } from "@/components/ui/tip";
 
 export function EncounterTopBar() {
   const [encounter] = useEncounter();
@@ -62,6 +66,19 @@ export function EncounterTopBar() {
               <CreatureIcon creature={p.creature} size="small2" />
             </button>
           ))}
+          <LidndDialog
+            title={"Add monster"}
+            content={<MonsterUpload encounter={encounter} />}
+            trigger={
+              <ButtonWithTooltip
+                variant="ghost"
+                className="self-stretch h-full flex"
+                text="Add monster"
+              >
+                <Plus />
+              </ButtonWithTooltip>
+            }
+          />
         </ParticipantsContainer>
       </div>
     </div>
@@ -85,7 +102,7 @@ function ParticipantsContainer({
             "shadow-blue-500": role === "allies",
             "shadow-red-500": role === "monsters",
           },
-          `flex gap-4 p-5 w-full h-28 items-center shadow-sm`,
+          `flex gap-4 p-5 w-full h-28 items-center shadow-sm`
         )}
       >
         {children}
@@ -106,7 +123,7 @@ export function EncounterDifficulty() {
   const remainingBudget = goalCR - totalCr;
   const difficultyClasses = EncounterUtils.difficultyCssClasses(
     encounter,
-    campaign,
+    campaign
   );
 
   return (
