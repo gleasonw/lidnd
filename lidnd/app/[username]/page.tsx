@@ -10,7 +10,7 @@ import { LidndAuth, type LidndUser, UserUtils } from "@/app/authentication";
 import { ServerCampaign } from "@/server/campaigns";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import * as R from "remeda";
-import { CampaignUtils } from "@/utils/campaigns";
+import * as CampaignUtils from "@/utils/campaigns";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { CampaignDescriptionForm } from "@/app/[username]/campaign-description-area";
 import {

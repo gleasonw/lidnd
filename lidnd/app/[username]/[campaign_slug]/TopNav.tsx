@@ -35,6 +35,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import * as CampaignUtils from "@/utils/campaigns";
 
 import * as R from "remeda";
 
@@ -89,7 +90,7 @@ function CampaignTopNav({ user }: { user: LidndUser }) {
     {
       campaign_name: campaignSlug ?? "",
     },
-    { enabled: campaignSlug !== undefined },
+    { enabled: campaignSlug !== undefined }
   );
   if (!campaign) {
     return null;
@@ -161,39 +162,37 @@ export function EncounterTopNav() {
     {
       campaign_name: campaignSlug ?? "",
     },
-    { enabled: campaignSlug !== undefined },
+    { enabled: campaignSlug !== undefined }
   );
+
   if (!campaign) {
     return null;
   }
-  const encounterIndex = pathname.split("/").at(4);
-  const encounter = campaign?.encounters.find(
-    (e) => e.index_in_campaign === parseInt(encounterIndex ?? ""),
-  );
 
+  const encounter = CampaignUtils.encounterFromUrl(campaign, pathname);
   if (!encounter) {
     return null;
   }
 
   const indexForDisplay = R.sort(
     campaign.encounters,
-    (a, b) => a.index_in_campaign - b.index_in_campaign,
+    (a, b) => a.index_in_campaign - b.index_in_campaign
   ).findIndex((e) => e.id === encounter?.id);
 
   const currentIndex = encounter.index_in_campaign;
 
   const priorEncounter = _.maxBy(
     campaign.encounters.filter((e) => e.index_in_campaign < currentIndex),
-    (e) => e.index_in_campaign,
+    (e) => e.index_in_campaign
   );
 
   const nextEncounter = _.minBy(
     campaign.encounters.filter((e) => e.index_in_campaign > currentIndex),
-    (e) => e.index_in_campaign,
+    (e) => e.index_in_campaign
   );
 
   return (
-    <EncounterId encounterIndex={encounter.index_in_campaign}>
+    <EncounterId encounterId={encounter.id}>
       <EncounterUI>
         <div className="flex items-center gap-2">
           <ChevronRight className="h-4 w-4 text-gray-400" />
@@ -270,7 +269,7 @@ function EncounterWidgets() {
       <CheckmarkClicker
         onClick={() => {
           navigator.clipboard.writeText(
-            `${window.location.origin}${appRoutes.observe(encounter.id)}`,
+            `${window.location.origin}${appRoutes.observe(encounter.id)}`
           );
         }}
         className="flex gap-2 items-center"
