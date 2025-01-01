@@ -1,6 +1,5 @@
 import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { EncounterUI } from "@/encounters/[encounter_index]/EncounterUiStore";
-import { EncounterTopBar } from "@/encounters/[encounter_index]/encounter-top-bar";
 import { isEncounterPathParams } from "@/server/utils";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { LidndAuth } from "@/app/authentication";
@@ -30,12 +29,7 @@ export default async function EncounterLayout(props: {
   }
   return (
     <EncounterUI>
-      <EncounterId encounterId={encounter.id}>
-        <EncounterTopBar />
-        <section className="flex flex-col overflow-y-auto max-h-full min-h-0 h-full">
-          {props.children}
-        </section>
-      </EncounterId>
+      <EncounterId encounterId={encounter.id}>{props.children}</EncounterId>
     </EncounterUI>
   );
 }

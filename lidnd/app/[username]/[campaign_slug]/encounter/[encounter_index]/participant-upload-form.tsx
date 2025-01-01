@@ -1,6 +1,6 @@
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { ImageUpload } from "../image-upload";
-import { FileText, User } from "lucide-react";
+import { Angry, FileText, Plus, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Suspense, useEffect, useState } from "react";
@@ -23,17 +23,9 @@ import {
   useEncounter,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { AddCreatureButton } from "@/encounters/add-creature-button";
-import { EncounterDifficulty } from "@/encounters/[encounter_index]/encounter-top-bar";
 import { z } from "zod";
 import { omit } from "remeda";
-
-export function AllyUploadForm() {
-  return (
-    <>
-      <DmCreatureForm />
-    </>
-  );
-}
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 /**
  * We don't actually upload these, but we want to make sure the user has
@@ -44,7 +36,7 @@ const localCreatureUploadSchema = creatureUploadSchema.extend({
   iconImage: z.instanceof(File).optional(),
 });
 
-export function DmCreatureForm() {
+function useParticipantForm(role: "ally" | "opponent") {
   const form = useForm<Zod.infer<typeof localCreatureUploadSchema>>({
     resolver: zodResolver(localCreatureUploadSchema),
     defaultValues: {
@@ -59,11 +51,12 @@ export function DmCreatureForm() {
 
   function onSubmit(values: Zod.infer<typeof localCreatureUploadSchema>) {
     const creatureValues = omit(values, ["iconImage", "statBlockImage"]);
-    uploadCreature({
+    uploadParticipant({
       creature: { ...creatureValues, is_player: false },
       participant: {
         encounter_id: encounter.id,
-        is_ally: false,
+        //TODO: just use role at some point
+        is_ally: role === "ally",
         hp: creatureValues.max_hp,
       },
       hasStatBlock: values.statBlockImage !== undefined,
@@ -71,7 +64,7 @@ export function DmCreatureForm() {
     });
   }
 
-  const { mutate: uploadCreature, isPending } =
+  const { mutate: uploadParticipant, isPending } =
     UploadHooks.useUploadParticipant({
       creatureIcon: form.getValues("iconImage"),
       creatureStatBlock: form.getValues("statBlockImage"),
@@ -83,6 +76,12 @@ export function DmCreatureForm() {
   useEffect(() => {
     console.log(form.formState.errors);
   }, [form.formState.errors]);
+
+  return { form, onSubmit, uploadParticipant, isPending };
+}
+
+export function AllyParticipantForm() {
+  const { form, onSubmit, isPending } = useParticipantForm("ally");
 
   return (
     <FormProvider {...form}>
@@ -189,37 +188,119 @@ export function DmCreatureForm() {
   );
 }
 
-export function MonsterUploadWithDifficulty({
-  encounter,
-}: {
-  encounter: EncounterWithParticipants;
-}) {
+export function OpponentParticipantForm() {
+  const { form, onSubmit, isPending } = useParticipantForm("opponent");
+
   return (
-    <div className="h-full flex flex-col gap-2">
-      <EncounterDifficulty />
-      <MonsterUpload encounter={encounter} />
-    </div>
+    <Tabs defaultValue="new" className="w-full">
+      <span>
+        <TabsList>
+          <TabsTrigger value="new">
+            <Plus /> New opponent
+          </TabsTrigger>
+          <TabsTrigger value="existing">
+            <Angry /> Existing opponent
+          </TabsTrigger>
+        </TabsList>
+      </span>
+      <TabsContent value="new">
+        <FormProvider {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col gap-6 p-5 w-full"
+          >
+            <FormField
+              control={form.control}
+              name={"name"}
+              render={({ field }) => {
+                return (
+                  <LidndTextInput required placeholder="Name" {...field} />
+                );
+              }}
+            />
+            <FormField
+              control={form.control}
+              name="statBlockImage"
+              render={({ field }) => (
+                <ImageUpload
+                  dropContainerClassName="h-52"
+                  onUpload={(image) => {
+                    field.onChange(image);
+                  }}
+                  dropText="Drop a Statblock"
+                  dropIcon={<FileText />}
+                  previewSize={800}
+                  image={field.value}
+                  clearImage={() => field.onChange(undefined)}
+                  fileInputProps={{ name: "stat_block_image" }}
+                />
+              )}
+            />
+            <div className="flex gap-3">
+              <FormField
+                control={form.control}
+                name={"max_hp"}
+                render={({ field }) => (
+                  <Input
+                    type="number"
+                    required
+                    placeholder="HP"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={"challenge_rating"}
+                render={({ field }) => (
+                  <Input
+                    type="number"
+                    placeholder="Challenge Rating"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name="iconImage"
+              render={({ field }) => {
+                return (
+                  <ImageUpload
+                    image={field.value}
+                    clearImage={() => field.onChange(undefined)}
+                    onUpload={(image) => {
+                      field.onChange(image);
+                    }}
+                    dropText="Drop an Icon"
+                    dropIcon={<User />}
+                    fileInputProps={{ name: "icon_image" }}
+                  />
+                );
+              }}
+            />
+            <Button type="submit">
+              {isPending ? "Uploading..." : "Add participant"}
+            </Button>
+          </form>
+        </FormProvider>
+      </TabsContent>
+      <TabsContent value="existing">
+        <ExistingMonster />
+      </TabsContent>
+    </Tabs>
   );
 }
 
-type MonsterUploadProps = {
-  encounter: EncounterWithParticipants;
-};
-
-export const MonsterUpload = function ParticipantUpload({
-  encounter,
-}: MonsterUploadProps) {
-  return <DmCreatureForm />;
-};
-
 export function ExistingMonster({
-  encounter,
   onUpload,
 }: {
-  encounter: EncounterWithParticipants;
   onUpload?: (creature: Creature) => void;
 }) {
   const [name, setName] = useState("");
+  const [encounter] = useEncounter();
   const { data: creatures } = api.getUserCreatures.useQuery({
     name,
     is_player: false,
@@ -245,43 +326,6 @@ export function ExistingMonster({
           ))}
         </div>
       </Suspense>
-    </div>
-  );
-}
-
-export function ExistingCreature({
-  children,
-  encounter,
-}: {
-  children?: React.ReactNode;
-  encounter: Encounter;
-}) {
-  const [name, setName] = useState("");
-  const { data: creatures } = api.getUserCreatures.useQuery({
-    name,
-  });
-
-  return (
-    <div className="flex flex-col gap-5 w-full">
-      <Input
-        placeholder="Search..."
-        type="text"
-        onChange={(e) => setName(e.target.value)}
-        value={name}
-      />
-      <Suspense key={name} fallback={<div>Loading creatures</div>}>
-        <div className={"flex flex-col gap-2 h-96 overflow-auto w-full"}>
-          {creatures?.map((creature) => (
-            <ListedCreature
-              key={creature.id}
-              creature={creature}
-              encounter={encounter}
-            />
-          ))}
-        </div>
-      </Suspense>
-
-      <div className={"flex gap-5"}>{children}</div>
     </div>
   );
 }

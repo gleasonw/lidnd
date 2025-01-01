@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React from "react";
-import { MonsterUpload } from "./participant-upload-form";
+import { OpponentParticipantForm } from "./participant-upload-form";
 import Image from "next/image";
 import { CreatureUtils } from "@/utils/creatures";
 
@@ -143,7 +143,7 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
       </ButtonWithTooltip>
       <LidndDialog
         title={"Add monster"}
-        content={<MonsterUpload encounter={encounter} />}
+        content={<OpponentParticipantForm />}
         trigger={
           <ButtonWithTooltip
             variant="ghost"

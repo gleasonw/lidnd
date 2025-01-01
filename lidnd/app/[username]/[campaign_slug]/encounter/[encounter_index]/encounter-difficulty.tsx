@@ -1,7 +1,6 @@
 "use client";
 
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
-import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectItem,
@@ -9,40 +8,11 @@ import {
   SelectValue,
   SelectContent,
 } from "@/components/ui/select";
-import { InitiativeTracker } from "@/encounters/[encounter_index]/battle-bar";
 import {
   useEncounter,
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import { EncounterUtils } from "@/utils/encounters";
-import { DescriptionTextArea } from "./description-text-area";
-
-// todo: swap views to columns? just to keep everything on one screen? use dialog only for in combat?
-export function EncounterTopBar() {
-  const [encounter] = useEncounter();
-  // TODO: consider making these layouts for routes. status of a route decides the /prep, /run. although maybe not that big of a diff
-  switch (encounter.status) {
-    case "run":
-      return <InitiativeTracker />;
-    case "prep":
-      return (
-        <div className="flex flex-col gap-3 pt-5 w-full items-center">
-          <div className="flex w-full gap-5">
-            <Card className="flex items-center justify-center">
-              <EncounterDifficulty />{" "}
-            </Card>
-            <Card className="min-h-[100px] w-full flex p-3">
-              <DescriptionTextArea />
-            </Card>
-          </div>
-        </div>
-      );
-    default: {
-      const _: never = encounter.status;
-      throw new Error(`Unhandled case: ${encounter.status}`);
-    }
-  }
-}
 
 export function EncounterDifficulty() {
   const [campaign] = useCampaign();

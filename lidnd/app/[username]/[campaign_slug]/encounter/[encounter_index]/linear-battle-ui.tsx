@@ -200,7 +200,7 @@ export function StatColumnComponent({
   return (
     <>
       <div
-        className={`flex flex-col h-full border gap-5 items-start relative ${
+        className={`flex flex-col h-full items-start relative ${
           acceptDrop && "outline outline-blue-500"
         }`}
         style={{ width: `${column.percent_width}%` }}
@@ -234,17 +234,22 @@ export function StatColumnComponent({
         }}
         onDragLeave={() => setAcceptDrop(false)}
       >
-        {encounter.columns.length > 1 ? (
-          <ButtonWithTooltip
-            text="Delete column"
-            className="h-10 absolute -top-10 z-10 left-0"
-            variant="ghost"
-            onClick={() => deleteColumn(column)}
-          >
-            <X />
-          </ButtonWithTooltip>
-        ) : null}
-        {children}
+        <div className="mr-auto border border-b-0">
+          {encounter.columns.length > 1 ? (
+            <ButtonWithTooltip
+              text="Delete column"
+              className="h-10"
+              variant="ghost"
+              onClick={() => deleteColumn(column)}
+            >
+              <X />
+            </ButtonWithTooltip>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col gap-5 border w-full max-h-full overflow-hidden">
+          {children}
+        </div>
       </div>
       <StatColumnSplitter
         rightColumnId={encounter.columns[index + 1]?.id}
