@@ -24,6 +24,7 @@ export function CreatureStatBlockImage({
         transform: "translateZ(0)",
         willChange: "transform",
       }}
+      quality={100}
       width={creature.stat_block_width}
       height={creature.stat_block_height}
     />
