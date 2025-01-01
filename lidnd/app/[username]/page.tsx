@@ -7,7 +7,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { LidndAuth, type LidndUser, UserUtils } from "@/app/authentication";
-import { ServerCampaign } from "@/server/campaigns";
+import { ServerCampaign } from "@/server/sdk/campaigns";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import * as R from "remeda";
 import * as CampaignUtils from "@/utils/campaigns";

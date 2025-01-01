@@ -1,7 +1,7 @@
 import { protectedProcedure } from "@/server/api/base-trpc";
-import { db } from "@/server/api/db";
-import { participants, stat_columns } from "@/server/api/db/schema";
-import { ServerEncounter } from "@/server/encounters";
+import { db } from "@/server/db";
+import { participants, stat_columns } from "@/server/db/schema";
+import { ServerEncounter } from "@/server/sdk/encounters";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { TRPCError } from "@trpc/server";
 import { and, eq, sql } from "drizzle-orm";

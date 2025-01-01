@@ -1,6 +1,6 @@
 import { protectedProcedure } from "@/server/api/base-trpc";
-import { db } from "@/server/api/db";
-import { encounters } from "@/server/api/db/schema";
+import { db } from "@/server/db";
+import { encounters } from "@/server/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 

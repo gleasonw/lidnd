@@ -2,13 +2,9 @@
 
 import { createCreature, getPageSession } from "@/server/api/utils";
 import { redirect } from "next/navigation";
-import {
-  campaigns,
-  campaignToPlayer,
-  encounters,
-} from "@/server/api/db/schema";
+import { campaigns, campaignToPlayer, encounters } from "@/server/db/schema";
 import { z } from "zod";
-import { db } from "@/server/api/db";
+import { db } from "@/server/db";
 import { parse } from "@conform-to/zod";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
@@ -19,9 +15,9 @@ import type { CreaturePostData } from "@/encounters/utils";
 import { LidndAuth } from "@/app/authentication";
 import type { LidndUser } from "@/app/authentication";
 import _ from "lodash";
-import { ServerCreature } from "@/server/creatures";
-import { creatureUploadSchema } from "@/encounters/types";
-import { ServerEncounter } from "@/server/encounters";
+import { ServerCreature } from "@/server/sdk/creatures";
+import { creatureUploadSchema } from "@/server/db/schema";
+import { ServerEncounter } from "@/server/sdk/encounters";
 
 export async function logOut() {
   const session = await getPageSession();

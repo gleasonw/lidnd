@@ -14,6 +14,8 @@ export function ImageUpload({
   dropIcon,
   previewRender,
   fileInputProps,
+  image,
+  clearImage,
 }: {
   onUpload: (file: any) => void;
   previewSize?: number;
@@ -22,10 +24,11 @@ export function ImageUpload({
   dropContainerClassName?: string;
   previewRender?: (url: string) => React.ReactNode;
   fileInputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+  image?: File;
+  clearImage: () => void;
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "hovering" | "preview">("idle");
-  const [image, setImage] = useState<File | undefined>();
 
   useEffect(() => {
     if (image && image instanceof File) {
@@ -63,7 +66,7 @@ export function ImageUpload({
           variant="destructive"
           onClick={(e) => {
             e.preventDefault();
-            setImage(undefined);
+            clearImage();
           }}
           size="sm"
           className="absolute top-0 right-0"
@@ -124,7 +127,6 @@ export function ImageUpload({
           onChange={(e) => {
             if (e.target.files) {
               onUpload(e.target.files[0]);
-              setImage(e.target.files[0]);
             }
           }}
           {...fileInputProps}
@@ -152,7 +154,6 @@ export function ImageUpload({
               return;
             }
             onImageInput(item);
-            setImage(item.getAsFile() ?? undefined);
           }}
           {...fileInputProps}
         />

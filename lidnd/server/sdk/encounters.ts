@@ -1,12 +1,12 @@
 import type { LidndContext } from "@/server/api/base-trpc";
-import { db } from "@/server/api/db";
+import { db } from "@/server/db";
 import {
   reminders,
   encounters,
   participants,
   type EncounterStatus,
   stat_columns,
-} from "@/server/api/db/schema";
+} from "@/server/db/schema";
 import type { InsertParticipant, Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql, inArray } from "drizzle-orm";
@@ -274,7 +274,7 @@ export const ServerEncounter = {
     await dbObject.execute(
       sql`
         UPDATE participants
-        SET is_active = CASE 
+        SET is_active = CASE
             WHEN id = ${participant_id} THEN TRUE
             ELSE FALSE
         END

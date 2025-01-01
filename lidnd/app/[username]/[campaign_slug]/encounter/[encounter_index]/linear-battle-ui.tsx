@@ -22,14 +22,11 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 
 //todo: custom margin when in editing layout mode
 
-const ParentWidthContext = createContext<number | null>(null);
+export const ParentWidthContext = createContext<number | null>(null);
 
-export const LinearBattleUI = observer(function LinearBattleUI() {
-  const id = useEncounterId();
-  const [encounter] = api.encounterById.useSuspenseQuery(id);
-
-  const containerRef = useRef<HTMLDivElement | null>(null);
+export const useParentResizeObserver = () => {
   const [parentWidth, setParentWidth] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -54,6 +51,15 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
       observer.disconnect();
     };
   }, []);
+
+  return { parentWidth, containerRef };
+};
+
+export const LinearBattleUI = observer(function LinearBattleUI() {
+  const id = useEncounterId();
+  const [encounter] = api.encounterById.useSuspenseQuery(id);
+
+  const { parentWidth, containerRef } = useParentResizeObserver();
 
   return (
     <div className="flex relative gap-4 h-full" ref={containerRef}>
@@ -91,26 +97,16 @@ function ReadOnlyStatColumn({ column }: { column: ColumnWithParticipants }) {
   );
 }
 
-function StatColumns() {
+export function StatColumns() {
   const [encounter] = useEncounter();
   return encounter.columns?.map((c, index) => (
-    <StatColumnComponent
-      column={c}
-      key={c.id}
-      splitter={
-        index < encounter.columns.length - 1 ? (
-          <StatColumnSplitter
-            rightColumnId={encounter.columns[index + 1]!.id}
-            leftColumnId={c.id}
-            key={index}
-          />
-        ) : null
-      }
-    />
+    <StatColumnComponent column={c} key={c.id} index={index}>
+      <BattleCards column={c} />
+    </StatColumnComponent>
   ));
 }
 
-function CreateNewColumnButton() {
+export function CreateNewColumnButton() {
   const { encounterById } = api.useUtils();
   const [encounter] = useEncounter();
   const { mutate: createColumn } = api.createColumn.useMutation({
@@ -148,12 +144,14 @@ function CreateNewColumnButton() {
   );
 }
 
-function StatColumnComponent({
+export function StatColumnComponent({
   column,
-  splitter,
+  index,
+  children,
 }: {
   column: ColumnWithParticipants;
-  splitter: React.ReactNode | null;
+  index: number;
+  children: React.ReactNode;
 }) {
   const [encounter] = useEncounter();
   const [acceptDrop, setAcceptDrop] = React.useState(false);
@@ -246,10 +244,13 @@ function StatColumnComponent({
             <X />
           </ButtonWithTooltip>
         ) : null}
-
-        <BattleCards column={column} />
+        {children}
       </div>
-      {splitter}
+      <StatColumnSplitter
+        rightColumnId={encounter.columns[index + 1]?.id}
+        leftColumnId={column.id}
+        key={index}
+      />
     </>
   );
 }
@@ -260,9 +261,6 @@ function BattleCards({ column }: { column: ColumnWithParticipants }) {
   const { mutate: removeCreatureFromEncounter } =
     useRemoveParticipantFromEncounter();
 
-  // TODO: we have to reference e.participants instead of
-  // column.participants because column.participants doesn't get updated
-  // by the optimistic update...
   const participantsInColumn = column.participants.sort(
     ParticipantUtils.sortLinearly
   );
@@ -310,7 +308,7 @@ function StatColumnSplitter({
   rightColumnId,
   leftColumnId,
 }: {
-  rightColumnId: string;
+  rightColumnId?: string;
   leftColumnId: string;
 }) {
   const parentWidth = React.useContext(ParentWidthContext);
@@ -390,7 +388,7 @@ function StatColumnSplitter({
   return (
     <div
       onMouseDown={handleMouseDown}
-      className="w-2 bg-gray-300 hover:bg-gray-500 right-0 z-10"
+      className="w-2 bg-gray-300 hover:bg-gray-500 right-0 z-10 last:hidden"
       style={{ cursor: "ew-resize" }}
     />
   );

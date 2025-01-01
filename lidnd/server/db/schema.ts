@@ -1,3 +1,5 @@
+import { booleanSchema } from "@/app/[username]/utils";
+import { z } from "zod";
 import { type InferInsertModel, relations } from "drizzle-orm";
 import {
   bigint,
@@ -13,6 +15,7 @@ import {
   pgEnum,
   doublePrecision,
 } from "drizzle-orm/pg-core";
+import { createSelectSchema, createInsertSchema } from "drizzle-zod";
 
 export type DbSpell = InferInsertModel<typeof spells>;
 
@@ -68,7 +71,7 @@ export const target_difficulty_enum = pgEnum("difficulty", [
   "hard",
 ]);
 
-export const encounter_status = ["roll", "surprise", "prep", "run"] as const;
+export const encounter_status = ["prep", "run"] as const;
 export type EncounterStatus = (typeof encounter_status)[number];
 
 export const encounter_status_enum = pgEnum(
@@ -380,3 +383,46 @@ export const channels = pgTable("channels", {
   message_id: bigint("message_id", { mode: "number" }),
   discord_user_id: bigint("discord_user_id", { mode: "number" }).notNull(),
 });
+
+//#region validators
+
+export const participantSchema = createSelectSchema(participants);
+export const insertSettingsSchema = createInsertSchema(settings);
+export const updateEncounterSchema = createInsertSchema(encounters);
+export const updateCampaignSchema = createInsertSchema(campaigns);
+export const encounterInsertSchema = createInsertSchema(encounters);
+export const reminderInsertSchema = createInsertSchema(reminders);
+export const creaturesSchema = createSelectSchema(creatures);
+
+export const updateSettingsSchema = insertSettingsSchema
+  .omit({ user_id: true })
+  .merge(
+    z.object({
+      show_health_in_discord: booleanSchema,
+      show_icons_in_discord: booleanSchema,
+      average_turn_seconds: z.coerce.number(),
+    })
+  );
+export const insertCreatureSchema = createInsertSchema(creatures);
+export const participantInsertSchema = createInsertSchema(participants);
+export const creatureUploadSchema = insertCreatureSchema
+  .extend({
+    max_hp: z.coerce.number().gt(0),
+    challenge_rating: z.coerce.number(),
+    is_player: booleanSchema,
+    column_id: z.string().optional(),
+  })
+  .omit({ user_id: true });
+
+export type CreaturePost = z.infer<typeof creatureUploadSchema>;
+// encounter_id will be provided by hook
+// creature_id will come after creature is inserted
+
+export const participantCreateSchema = z.object({
+  participant: participantInsertSchema.extend({
+    creature_id: z.string().optional(),
+  }),
+  creature: creatureUploadSchema,
+});
+
+export type ParticipantPost = z.infer<typeof participantCreateSchema>;

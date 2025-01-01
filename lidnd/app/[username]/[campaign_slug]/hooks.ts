@@ -1,6 +1,6 @@
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { createPlayerAndAddToCampaign } from "@/app/[username]/actions";
-import type { CreaturePost } from "@/encounters/types";
+import type { CreaturePost } from "@/server/db/schema";
 import { getCreaturePostForm } from "@/encounters/utils";
 import { api } from "@/trpc/react";
 import { CreatureUtils } from "@/utils/creatures";
@@ -132,7 +132,7 @@ export function useRemoveFromParty(campaign: { id: string }) {
         return {
           ...old,
           campaignToPlayers: old.campaignToPlayers.filter(
-            (p) => p.player_id !== player_id,
+            (p) => p.player_id !== player_id
           ),
         };
       });

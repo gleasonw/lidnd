@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
@@ -17,7 +19,7 @@ const Form = FormProvider;
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
 > = {
   name: TName;
 };
@@ -28,7 +30,7 @@ const FormFieldContext = React.createContext<FormFieldContextValue>(
 
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
 >({
   ...props
 }: ControllerProps<TFieldValues, TName>) => {
@@ -148,20 +150,18 @@ const FormMessage = React.forwardRef<
   const { error, formMessageId } = useFormField();
   const body = error ? String(error?.message) : children;
 
+  if (!body) {
+    return null;
+  }
+
   return (
     <p
       ref={ref}
       id={formMessageId}
-      className={cn(
-        "text-sm font-medium text-destructive min-h-[1.25rem]",
-        "aria-hidden:invisible aria-hidden:h-[1.25rem]",
-        !body && "aria-hidden",
-        className
-      )}
+      className={cn("text-sm font-medium text-destructive", className)}
       {...props}
     >
-      {body || "\u00A0"}{" "}
-      {/* Non-breaking space to maintain height when empty */}
+      {body}
     </p>
   );
 });

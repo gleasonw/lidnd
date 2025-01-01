@@ -11,7 +11,7 @@ import { api } from "@/trpc/react";
 import type { Creature } from "@/server/api/router";
 import { useMutation } from "@tanstack/react-query";
 import { getCreaturePostForm } from "@/app/[username]/[campaign_slug]/encounter/utils";
-import type { CreaturePost } from "@/app/[username]/[campaign_slug]/encounter/types";
+import type { CreaturePost } from "@/server/db/schema";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 import { DataTable } from "@/app/[username]/creatures/creatures-table";
@@ -27,11 +27,11 @@ export default function CreaturesPage() {
     name,
   });
   const [selectedCreatureId, setSelectedCreatureId] = useState<string | null>(
-    null,
+    null
   );
 
   const selectedCreature = creatures?.find(
-    (creature) => creature.id === selectedCreatureId,
+    (creature) => creature.id === selectedCreatureId
   );
 
   const {
@@ -163,7 +163,7 @@ function CreatureUpdateDialog({
 
 function CreatureUpdateForm({ creature }: { creature: Creature }) {
   const [challengeRating, setChallengeRating] = useState(
-    creature.challenge_rating,
+    creature.challenge_rating
   );
   const [maxHp, setMaxHp] = useState(creature.max_hp);
   const [name, setName] = useState(creature.name);

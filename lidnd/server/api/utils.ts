@@ -1,11 +1,11 @@
-import { db } from "@/server/api/db";
-import { campaigns, systems } from "@/server/api/db/schema";
+import { db } from "@/server/db";
+import { campaigns, systems } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import type { Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { ParticipantUtils } from "@/utils/participants";
 import { LidndAuth } from "@/app/authentication";
-import { ServerCreature } from "@/server/creatures";
+import { ServerCreature } from "@/server/sdk/creatures";
 import { CreatureUtils } from "@/utils/creatures";
 
 export async function getUserCampaigns(user_id: string) {

@@ -6,19 +6,9 @@ import { removeUndefinedFields } from "@/app/[username]/utils";
 import type { UpsertEncounter } from "@/app/[username]/types";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
-import type { EncounterStatus } from "@/server/api/db/schema";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
-import { useUser } from "@/app/[username]/user-provider";
-import { appRoutes } from "@/app/routes";
 import type { Encounter } from "@/server/api/router";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
-
-export function useEncounterLink(status: EncounterStatus) {
-  const [encounter] = useEncounter();
-  const [campaign] = useCampaign();
-  const user = useUser();
-  return appRoutes.encounter(campaign, encounter, user, status);
-}
 
 export function useEncounter() {
   const currentEncounterId = useEncounterId();

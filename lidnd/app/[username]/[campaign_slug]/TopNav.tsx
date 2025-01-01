@@ -9,16 +9,10 @@ import { useUser } from "@/app/[username]/user-provider";
 import type { LidndUser } from "@/app/authentication";
 import { appRoutes } from "@/app/routes";
 import { Button, type ButtonProps } from "@/components/ui/button";
-import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { ButtonWithTooltip } from "@/components/ui/tip";
-import { ToggleEditingMode } from "@/encounters/[encounter_index]/battle-bar";
 import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { EncounterUI } from "@/encounters/[encounter_index]/EncounterUiStore";
-import { GroupInitiativeInput } from "@/encounters/[encounter_index]/group-initiative-input";
-import {
-  useEncounter,
-  useUpdateEncounter,
-} from "@/encounters/[encounter_index]/hooks";
+import { useEncounter } from "@/encounters/[encounter_index]/hooks";
 import { CampaignParty } from "@/encounters/campaign-encounters-overview";
 import { api } from "@/trpc/react";
 import _ from "lodash";
@@ -30,7 +24,6 @@ import {
   ChevronUp,
   Check,
   Clock,
-  Play,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -200,7 +193,13 @@ export function EncounterTopNav() {
           </span>
           <span className="flex items-center gap-2">
             {priorEncounter ? (
-              <Link href={appRoutes.encounter(campaign, priorEncounter, user)}>
+              <Link
+                href={appRoutes.encounter({
+                  campaign,
+                  encounter: priorEncounter,
+                  user,
+                })}
+              >
                 <Button variant="ghost" className="p-0 h-6 w-6" size="icon">
                   <ChevronUp />
                 </Button>
@@ -211,7 +210,13 @@ export function EncounterTopNav() {
               </Button>
             )}
             {nextEncounter ? (
-              <Link href={appRoutes.encounter(campaign, nextEncounter, user)}>
+              <Link
+                href={appRoutes.encounter({
+                  campaign,
+                  encounter: nextEncounter,
+                  user,
+                })}
+              >
                 <Button variant="ghost" className="p-0 h-6 w-6" size="icon">
                   <ChevronDown />
                 </Button>
@@ -236,32 +241,11 @@ export function EncounterTopNav() {
 
 function EncounterWidgets() {
   const [encounter] = useEncounter();
-  const { mutate: updateEncounter } = useUpdateEncounter();
-
   return (
     <div className="flex items-center gap-2 ml-auto">
-      {encounter.status !== "run" ? (
-        <div className="flex items-center gap-2">
-          <LidndDialog
-            title={"Roll initiative"}
-            trigger={
-              <Button
-                className=" text-lg h-full w-full ml-auto max-w-sm flex gap-3"
-                onClick={() =>
-                  updateEncounter({ ...encounter, is_editing_columns: false })
-                }
-              >
-                Roll initiative
-                <Play />
-              </Button>
-            }
-            content={<GroupInitiativeInput />}
-          />
-        </div>
-      ) : (
+      {encounter.status === "run" ? (
         <EncounterRoundNumber encounterId={encounter.id} />
-      )}
-      <ToggleEditingMode />
+      ) : null}
       <CheckmarkClicker
         onClick={() => {
           navigator.clipboard.writeText(

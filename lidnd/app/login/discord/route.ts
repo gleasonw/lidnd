@@ -1,5 +1,5 @@
 // app/login/github/route.ts
-import { discordAuth } from "@/server/api/auth/lucia";
+import { discordAuth } from "@/server/auth/lucia";
 import { generateState } from "arctic";
 import * as context from "next/headers";
 

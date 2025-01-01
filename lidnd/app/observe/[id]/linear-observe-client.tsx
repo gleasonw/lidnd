@@ -2,7 +2,7 @@
 
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { EffectIcon } from "@/encounters/[encounter_index]/status-input";
-import type { ObserveEncounter } from "@/server/encounters";
+import type { ObserveEncounter } from "@/server/sdk/encounters";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
@@ -11,7 +11,7 @@ import React from "react";
 export function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
   const participants = EncounterUtils.participantsInInitiativeOrder(encounter);
   const activeIndex = participants.findIndex(
-    (participant) => participant.is_active,
+    (participant) => participant.is_active
   );
 
   // scroll active participant into view
@@ -41,7 +41,7 @@ export function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
               p.is_active && "h-60",
               index < activeIndex
                 ? "opacity-60 hover:opacity-100"
-                : "hover:opacity-60",
+                : "hover:opacity-60"
             )}
             key={p.id}
             data-is-active={p.is_active}

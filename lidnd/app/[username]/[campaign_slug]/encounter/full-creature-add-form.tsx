@@ -9,15 +9,16 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Angry, FileText, Plus, Shield, Skull, User, X } from "lucide-react";
-import type { CreaturePost } from "./types";
+import { Angry, FileText, Shield, Skull, User, X } from "lucide-react";
+import type { CreaturePost } from "@/server/db/schema";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
+import { useEncounter } from "./[encounter_index]/hooks";
 
 type CreatureAddProps = {
   uploadCreature: (data: CreaturePost) => void;
@@ -224,128 +225,56 @@ export function CompactMonsterUploadForm({ uploadCreature }: CreatureAddProps) {
   );
 }
 export function MonsterUploadForm({ uploadCreature }: CreatureAddProps) {
-  const form = useForm<z.infer<typeof monsterFormSchema>>({
-    resolver: zodResolver(monsterFormSchema),
-    defaultValues: {
-      icon_image: undefined,
-      stat_block_image: undefined,
-      is_player: false,
-      name: "",
-    },
-  });
-  const [keyToResetFile, setKeyToResetFile] = React.useState(0);
+  const [keyToResetImages, setKeyToResetImages] = useState(0);
+  const [encounter] = useEncounter();
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit((data) => {
-          uploadCreature(data);
-          form.reset();
-          setKeyToResetFile(keyToResetFile + 1);
-        })}
-        className="flex flex-col gap-6 pt-3"
-      >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <CreatureFormItems name="Name">
-              <LidndTextInput
-                variant="ghost"
-                className="text-xl"
-                placeholder="Name"
-                {...field}
-              />
-            </CreatureFormItems>
-          )}
+    <form
+      className="flex flex-col gap-6 p-5 w-full"
+      onSubmit={(e) => {
+        const form = e.target as HTMLFormElement;
+        e.preventDefault();
+        const data = new FormData(form);
+        for (const [key, value] of data.entries()) {
+          console.log(key, value);
+        }
+        form.reset();
+        setKeyToResetImages(keyToResetImages + 1);
+
+        //not sure this is the best way to do this
+        data.append("encounter_id", encounter.id);
+        data.append("is_ally", "true");
+        data.append("is_player", "false");
+        uploadCreature(data);
+      }}
+    >
+      <LidndTextInput required placeholder="Name" name="name" />
+      <ImageUpload
+        dropContainerClassName="h-52"
+        onUpload={() => {}}
+        dropText="Drop a Statblock"
+        dropIcon={<FileText />}
+        fileInputProps={{ name: "stat_block_image" }}
+        key={`stat block ${keyToResetImages}`}
+      />
+      <div className="flex gap-3">
+        <Input type="number" required placeholder="HP" name="max_hp" />
+        <Input
+          type="number"
+          placeholder="Challenge Rating"
+          name="challenge_rating"
+          required
         />
-        <FormField
-          control={form.control}
-          name="icon_image"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-2">
-              <FormControl>
-                <ImageUpload
-                  onUpload={(file) =>
-                    field.onChange({ target: { value: file } })
-                  }
-                  dropText="Drop an icon"
-                  dropIcon={<User />}
-                  key={keyToResetFile}
-                  image={field.value}
-                  clearImage={() =>
-                    field.onChange({ target: { value: undefined } })
-                  }
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="stat_block_image"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-2">
-              <FormControl>
-                <ImageUpload
-                  onUpload={(file) =>
-                    field.onChange({ target: { value: file } })
-                  }
-                  dropText="Drop a stat block"
-                  dropIcon={<FileText />}
-                  dropContainerClassName="h-48"
-                  key={keyToResetFile}
-                  image={field.value}
-                  clearImage={() =>
-                    field.onChange({ target: { value: undefined } })
-                  }
-                  previewSize={700}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="grid grid-cols-2 gap-5">
-          <FormField
-            control={form.control}
-            name="max_hp"
-            render={({ field }) => (
-              <CreatureFormItems name="Max HP">
-                <Input
-                  placeholder="HP"
-                  {...field}
-                  type="number"
-                  onChange={(e) =>
-                    field.onChange(Math.max(1, parseInt(e.target.value)))
-                  }
-                />
-              </CreatureFormItems>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="challenge_rating"
-            render={({ field }) => (
-              <CreatureFormItems name="Challenge Rating">
-                <Input
-                  placeholder="CR"
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.value)}
-                  type="number"
-                />
-              </CreatureFormItems>
-            )}
-          />
-        </div>
-        <div className="flex gap-2 items-center">
-          {" "}
-          <Button type="submit" className="w-full">
-            <Plus /> Add Creature
-          </Button>
-        </div>
-      </form>
-    </Form>
+      </div>
+      <ImageUpload
+        onUpload={() => {}}
+        dropText="Drop an Icon"
+        dropIcon={<User />}
+        fileInputProps={{ name: "icon_image" }}
+        key={`icon ${keyToResetImages}`}
+      />
+
+      <Button type="submit">Add Ally</Button>
+    </form>
   );
 }
 

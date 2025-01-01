@@ -1,5 +1,5 @@
 import { appRoutes } from "@/app/routes";
-import { auth, discordAuth } from "@/server/api/auth/lucia";
+import { auth, discordAuth } from "@/server/auth/lucia";
 import { discordApi } from "@/utils/discord";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -41,7 +41,7 @@ export const LidndAuth = {
     (await cookies()).set(
       sessionCookie.name,
       sessionCookie.value,
-      sessionCookie.attributes,
+      sessionCookie.attributes
     );
   },
 
@@ -60,7 +60,7 @@ export const LidndAuth = {
         (await cookies()).set(
           sessionCookie.name,
           sessionCookie.value,
-          sessionCookie.attributes,
+          sessionCookie.attributes
         );
       }
       if (!session) {
@@ -68,7 +68,7 @@ export const LidndAuth = {
         (await cookies()).set(
           sessionCookie.name,
           sessionCookie.value,
-          sessionCookie.attributes,
+          sessionCookie.attributes
         );
       }
     } catch {

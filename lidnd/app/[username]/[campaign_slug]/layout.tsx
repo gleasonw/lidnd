@@ -1,6 +1,6 @@
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { LidndAuth, UserUtils } from "@/app/authentication";
-import { ServerCampaign } from "@/server/campaigns";
+import { ServerCampaign } from "@/server/sdk/campaigns";
 import { isCampaignSlug } from "@/server/utils";
 import React from "react";
 
@@ -27,7 +27,7 @@ export default async function CampaignLayout(props: {
 
   const campaign = await ServerCampaign.campaignFromSlug(
     UserUtils.context(user),
-    params.campaign_slug,
+    params.campaign_slug
   );
 
   if (!campaign) {

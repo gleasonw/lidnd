@@ -25,6 +25,7 @@ import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import Link from "next/link";
 import { makeAutoObservable } from "mobx";
+import { useEncounterLinks } from "../link-hooks";
 
 class EncounterPrepStore {
   selectedeParticipantId: string | null = null;
@@ -43,7 +44,7 @@ const useEncounterPrepStore = () => {
   const store = useContext(EncounterPrepContext);
   if (!store) {
     throw new Error(
-      "useEncounterPrepStore must be used within a EncounterPrepProvider",
+      "useEncounterPrepStore must be used within a EncounterPrepProvider"
     );
   }
   return store;
@@ -65,12 +66,12 @@ export function EncounterNameInput() {
       history.replaceState(
         {},
         "",
-        appRoutes.encounter(campaign, newEncounter, user),
+        appRoutes.encounter({ campaign, encounter: newEncounter, user })
       ),
   });
 
   const [encounterName, setEncounterName] = React.useState(
-    encounter?.name ?? "",
+    encounter?.name ?? ""
   );
 
   const debouncedNameUpdate = useDebouncedCallback((name: string) => {
@@ -98,38 +99,6 @@ export function EncounterNameInput() {
   );
 }
 
-export function EncounterStartButton() {
-  const id = useEncounterId();
-  const campaignId = useCampaignId();
-  const [campaign] = api.campaignById.useSuspenseQuery(campaignId);
-  const { mutate: startEncounter } = useStartEncounter();
-  const runLink = useEncounterLink("run");
-  const rollLink = useEncounterLink("roll");
-  return (
-    <span className="flex gap-2 items-center">
-      {campaign.system?.initiative_type === "group" ? (
-        <Link href={runLink}>
-          <Button
-            onClick={() => {
-              startEncounter(id);
-            }}
-          >
-            <Swords />
-            Commence the battle
-          </Button>
-        </Link>
-      ) : (
-        <Link href={rollLink}>
-          <Button>
-            <Dices />
-            Roll initiative!
-          </Button>
-        </Link>
-      )}
-    </span>
-  );
-}
-
 export interface ParticipantCreatureProps {
   participant: ParticipantWithData;
 }
@@ -139,7 +108,7 @@ export interface RemoveCreatureFromEncounterButtonProps {
 }
 
 export function RemoveCreatureFromEncounterButton(
-  props: RemoveCreatureFromEncounterButtonProps,
+  props: RemoveCreatureFromEncounterButtonProps
 ) {
   const { participant } = props;
 
@@ -172,7 +141,7 @@ export function MonsterParticipantActions(props: ParticipantCreatureProps) {
 
   const [status, setStatus] = useState<"idle" | "input">("idle");
   const [minionCount, setMinionCount] = useState<number | null>(
-    participant.minion_count,
+    participant.minion_count
   );
 
   if (status === "input") {
@@ -255,7 +224,7 @@ export function EncounterReminderInput() {
             reminder: newReminder.reminder ?? "",
             ...newReminder,
           },
-          old,
+          old
         );
       });
       return previousEncounter;
@@ -294,7 +263,7 @@ export function EncounterReminderInput() {
               setAlertAfterRound(
                 !isNaN(parseInt(e.target.value))
                   ? parseInt(e.target.value)
-                  : undefined,
+                  : undefined
               )
             }
             placeholder="Alert after round (0 for every)"

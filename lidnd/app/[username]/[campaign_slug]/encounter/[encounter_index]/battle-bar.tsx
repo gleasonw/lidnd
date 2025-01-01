@@ -35,7 +35,9 @@ import {
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React from "react";
-import { MonsterUpload } from "./participant-add-form";
+import { MonsterUpload } from "./participant-upload-form";
+import Image from "next/image";
+import { CreatureUtils } from "@/utils/creatures";
 
 export function ToggleEditingMode() {
   const [encounter] = useEncounter();
@@ -172,7 +174,7 @@ type CardProps = {
   overrideIcon?: React.ReactNode;
 };
 
-function GMCreatureCard(props: CardProps) {
+export function GMCreatureCard(props: CardProps) {
   const { setSelectedParticipantId } = useEncounterUIStore();
   return (
     <div
@@ -189,7 +191,7 @@ function GMCreatureCard(props: CardProps) {
   );
 }
 
-function PlayerCard(props: CardProps) {
+export function PlayerCard(props: CardProps) {
   const { mutate: removeStatusEffect } = useRemoveStatusEffect();
   return (
     <TopBarParticipantCard
@@ -197,10 +199,13 @@ function PlayerCard(props: CardProps) {
       overrideIcon={
         <Popover>
           <PopoverTrigger className="max-h-full overflow-hidden h-20">
-            <CreatureIcon
-              creature={props.participant.creature}
-              size="small2"
+            {/* todo: upload icon width/height */}
+            <Image
+              src={CreatureUtils.awsURL(props.participant.creature, "icon")}
+              alt={props.participant.creature.name}
               objectFit="contain"
+              width={500}
+              height={500}
             />
           </PopoverTrigger>
           <PopoverContent>

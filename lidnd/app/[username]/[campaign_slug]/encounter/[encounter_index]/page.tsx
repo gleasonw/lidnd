@@ -3,11 +3,9 @@ import { appRoutes } from "@/app/routes";
 import { encounterFromPathParams } from "@/server/utils";
 import { redirect } from "next/navigation";
 
-export default async function EncounterPage(
-  props: {
-    params: Promise<{ encounter_index: string; campaign_slug: string }>;
-  }
-) {
+export default async function EncounterPage(props: {
+  params: Promise<{ encounter_index: string; campaign_slug: string }>;
+}) {
   const params = await props.params;
   const user = await LidndAuth.getUser();
 
@@ -20,8 +18,8 @@ export default async function EncounterPage(
 
   const [campaign, encounter] = await encounterFromPathParams(
     userContext,
-    params,
+    params
   );
 
-  return redirect(appRoutes.encounter(campaign, encounter, user));
+  return redirect(appRoutes.encounter({ campaign, encounter, user }));
 }

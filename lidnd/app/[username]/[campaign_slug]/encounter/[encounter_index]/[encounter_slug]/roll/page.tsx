@@ -9,21 +9,19 @@ import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[enco
 import { useStartEncounter } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import InitiativeInput from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/InitiativeInput";
 import React from "react";
-import { useLidndDialog } from "@/components/ui/lidnd_dialog";
 import { EncounterUtils } from "@/utils/encounters";
 import * as R from "remeda";
-import { CreatureStatBlockImage } from "../original-size-image";
+import { CreatureStatBlockImage } from "@/encounters/original-size-image";
+import { Card } from "@/components/ui/card";
 
-export function GroupInitiativeInput() {
+export default function RollPage() {
   const id = useEncounterId();
-  const { close } = useLidndDialog();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
   const { mutate: startEncounter } = useStartEncounter();
   const refMap = React.useRef(new Map<string, HTMLDivElement>());
 
   function start() {
     startEncounter(id);
-    close();
   }
 
   const sortedParticipants = R.sort(
@@ -47,9 +45,9 @@ export function GroupInitiativeInput() {
   );
 
   return (
-    <div className="grid grid-cols-2">
+    <Card className="grid grid-cols-2 h-full">
       {" "}
-      <div className="flex flex-col gap-3 overflow-auto h-96">
+      <div className="flex flex-col gap-3 overflow-auto">
         {sortedMonsters.map((m) => (
           <CreatureStatBlockImage
             creature={m.creature}
@@ -91,7 +89,7 @@ export function GroupInitiativeInput() {
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 

@@ -10,7 +10,14 @@ import clsx from "clsx";
 import type { Participant, ParticipantWithData } from "@/server/api/router";
 import { LidndPopover } from "@/encounters/base-popover";
 import { EffectIcon, StatusInput } from "./status-input";
-import { LinearBattleUI } from "./linear-battle-ui";
+import {
+  CreateNewColumnButton,
+  LinearBattleUI,
+  ParentWidthContext,
+  StatColumnComponent,
+  StatColumns,
+  useParentResizeObserver,
+} from "./linear-battle-ui";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
 import { observer } from "mobx-react-lite";
 import { ParticipantUtils } from "@/utils/participants";
@@ -34,64 +41,143 @@ import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 import { Label } from "@/components/ui/label";
 import { Reminders } from "@/encounters/[encounter_index]/reminders";
 import { EncounterUtils } from "@/utils/encounters";
-import { X } from "lucide-react";
-import { MonsterUpload } from "./participant-add-form";
-import { AllyUploadForm } from "./ally-upload-form";
+import { Play, X } from "lucide-react";
+import { AllyUploadForm, MonsterUpload } from "./participant-upload-form";
 import { Separator } from "@/components/ui/separator";
+import { CreatureUtils } from "@/utils/creatures";
+import Image from "next/image";
+import type { ColumnWithParticipants } from "@/utils/stat-columns";
+import { useEncounterLinks } from "../link-hooks";
+import Link from "next/link";
 
-export const BattleUI = observer(function BattleUI() {
+// TODO: split out layouts/encounter ui into routes, by status (prep, run, roll)
+// redirect to proper page based on status?
+// TODO: fix forms (no ally/player switch on monster upload, for instance)
+// TODO: collapse allies by default, show on toggle
+
+export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
   const [encounter] = useEncounter();
 
   const allies = EncounterUtils.allies(encounter);
   const monsters = EncounterUtils.monsters(encounter);
 
-  if (encounter.status === "prep") {
-    return (
-      <div className="grid grid-cols-2 gap-10 h-full">
-        <ParticipantsContainer role="allies" extra={<AllyUploadForm />}>
-          {allies.length === 0 ? (
-            <ParticipantBadgeWrapper role="allies">
-              No allies
-            </ParticipantBadgeWrapper>
-          ) : (
-            allies.map((p) => <ParticipantBadge key={p.id} participant={p} />)
-          )}
-        </ParticipantsContainer>
-        <ParticipantsContainer
-          role="monsters"
-          extra={<MonsterUpload encounter={encounter} />}
-        >
-          {monsters.length === 0 ? (
-            <ParticipantBadgeWrapper role="monsters">
-              No monsters yet
-            </ParticipantBadgeWrapper>
-          ) : (
-            monsters.map((p) => <ParticipantBadge key={p.id} participant={p} />)
-          )}
-        </ParticipantsContainer>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <Reminders />
-      <div className="flex gap-4 flex-col w-full max-h-full overflow-auto h-full">
-        {/**create space for the overlaid initiative tracker */}
-        {encounter.status === "run" && <div className="my-5" />}
-        <div className="bg-white p-5">
-          <DescriptionTextArea />
+  switch (encounter.status) {
+    case "prep":
+      return (
+        <div className="grid grid-cols-4 gap-5 h-full">
+          {/* todo: make this collapsible, start collapsed */}
+          <ParticipantsContainer role="allies" extra={<AllyUploadForm />}>
+            {allies.length === 0 ? (
+              <ParticipantBadgeWrapper role="allies">
+                No allies
+              </ParticipantBadgeWrapper>
+            ) : (
+              allies.map((p) => <ParticipantBadge key={p.id} participant={p} />)
+            )}
+          </ParticipantsContainer>
+          <EncounterBattlePreview />
+          <ParticipantsContainer
+            role="monsters"
+            extra={<MonsterUpload encounter={encounter} />}
+          >
+            {monsters.length === 0 ? (
+              <ParticipantBadgeWrapper role="monsters">
+                No monsters yet
+              </ParticipantBadgeWrapper>
+            ) : (
+              monsters.map((p) => (
+                <ParticipantBadge key={p.id} participant={p} />
+              ))
+            )}
+          </ParticipantsContainer>
         </div>
-        {campaign.system?.initiative_type === "linear" ? (
-          <LinearBattleUI />
-        ) : (
-          <GroupBattleUI />
-        )}
-      </div>
-    </>
-  );
+      );
+    case "run":
+      return (
+        <>
+          <Reminders />
+          <div className="flex gap-4 flex-col w-full max-h-full overflow-auto h-full">
+            {/**create space for the overlaid initiative tracker */}
+            {encounter.status === "run" && <div className="my-5" />}
+            <div className="bg-white p-5">
+              <DescriptionTextArea />
+            </div>
+            {campaign.system?.initiative_type === "linear" ? (
+              <LinearBattleUI />
+            ) : (
+              <GroupBattleUI />
+            )}
+          </div>
+        </>
+      );
+    default: {
+      const _: never = encounter.status;
+      throw new Error(`Unhandled case: ${encounter.status}`);
+    }
+  }
 });
+
+function EncounterBattlePreview() {
+  const [encounter] = useEncounter();
+  const { rollEncounter } = useEncounterLinks();
+  const { parentWidth, containerRef } = useParentResizeObserver();
+  return (
+    <Card className="col-span-2 p-3 flex flex-col gap-8">
+      <Link title={"Roll initiative"} href={rollEncounter}>
+        <Button className=" text-lg h-full w-full mx-auto max-w-sm flex gap-3">
+          Roll initiative
+          <Play />
+        </Button>
+      </Link>
+      <div className="flex gap-1">
+        {EncounterUtils.participantsInInitiativeOrder(encounter).map((p) => (
+          <div
+            className="flex gap-2 flex-col relative w-28 border-4 h-full"
+            key={p.id}
+            style={{ borderColor: ParticipantUtils.iconHexColor(p) }}
+          >
+            <Image
+              src={CreatureUtils.awsURL(p.creature, "icon")}
+              alt={p.creature.name}
+              objectFit="contain"
+              width={500}
+              height={500}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="flex relative gap-4 h-full" ref={containerRef}>
+        <div className="absolute -top-10 h-10 right-0 text-xl z-10">
+          <CreateNewColumnButton />
+        </div>
+        <ParentWidthContext.Provider value={parentWidth}>
+          {encounter.columns.map((c, i) => (
+            <StatColumnComponent column={c} index={i} key={c.id}>
+              <PreviewCardsForColumn column={c} />
+            </StatColumnComponent>
+          ))}
+        </ParentWidthContext.Provider>
+      </div>
+    </Card>
+  );
+}
+
+function PreviewCardsForColumn({ column }: { column: ColumnWithParticipants }) {
+  const participantsInColumn = column.participants.sort(
+    ParticipantUtils.sortLinearly
+  );
+  return (
+    <div className="flex flex-col">
+      {participantsInColumn.map((p) => (
+        <div key={p.id}>
+          <BattleCardCreatureName participant={p} />
+          <CreatureStatBlockImage creature={p.creature} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function ParticipantsContainer({
   children,
@@ -138,9 +224,12 @@ function ParticipantBadge({
       <div>
         <CreatureIcon creature={participant.creature} />
       </div>
-      <div className="col-span-2 flex">{participant.creature.name}</div>
+      <div className="col-span-2 flex truncate">
+        {participant.creature.name}
+      </div>
       <Button
         variant="ghost"
+        className="p-1"
         onClick={() =>
           removeParticipant({
             participant_id: participant.id,

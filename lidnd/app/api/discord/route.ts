@@ -1,6 +1,6 @@
 import { appRoutes } from "@/app/routes";
-import { db } from "@/server/api/db";
-import { settings, users } from "@/server/api/db/schema";
+import { db } from "@/server/db";
+import { settings, users } from "@/server/db/schema";
 import { LidndAuth, type LidndUser } from "@/app/authentication";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
@@ -14,7 +14,7 @@ export const GET = async (request: NextRequest) => {
   const code = url.searchParams.get("code");
   // validate state
 
-  console.log({storedState, url, state, code})
+  console.log({ storedState, url, state, code });
 
   if (!storedState || !state || storedState !== state || !code) {
     console.error("Invalid state when getting Discord user");

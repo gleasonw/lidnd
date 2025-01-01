@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 import { UIStoreProvider } from "@/app/[username]/UIStore";
 import { LidndAuth } from "@/app/authentication";
 import { UserProvider } from "@/app/[username]/user-provider";
-import { db } from "@/server/api/db";
-import { settings } from "@/server/api/db/schema";
+import { db } from "@/server/db";
+import { settings } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import { TopNav } from "@/app/[username]/[campaign_slug]/TopNav";
 
@@ -51,7 +51,7 @@ export default async function CampaignsLayout({
         <UIStoreProvider>
           <ClientOverlays>
             <TopNav />
-            <div className="flex flex-col max-h-full overflow-hidden h-full">
+            <div className="flex flex-col max-h-full overflow-hidden h-full bg-gray-100">
               {children}
             </div>
           </ClientOverlays>

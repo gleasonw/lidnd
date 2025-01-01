@@ -1,7 +1,7 @@
 import { Lucia, TimeSpan } from "lucia";
-import { session, users } from "@/server/api/db/schema";
+import { session, users } from "@/server/db/schema";
 import { DrizzlePostgreSQLAdapter } from "@lucia-auth/adapter-drizzle";
-import { db } from "@/server/api/db";
+import { db } from "@/server/db";
 import { Discord } from "arctic";
 import { rerouteUrl } from "@/app/[username]/utils";
 

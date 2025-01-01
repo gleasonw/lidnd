@@ -1,11 +1,11 @@
-import { db } from "@/server/api/db";
+import { db } from "@/server/db";
 import {
   campaigns,
   creatures,
   encounters,
   participants,
   stat_columns,
-} from "@/server/api/db/schema";
+} from "@/server/db/schema";
 import { CreatureUtils } from "@/utils/creatures";
 import { eq, isNull } from "drizzle-orm";
 import _ from "lodash";

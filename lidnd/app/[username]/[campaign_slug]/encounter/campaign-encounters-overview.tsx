@@ -59,7 +59,7 @@ import { compareCreatedAt, formatSeconds } from "@/lib/utils";
 import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { LidndPopover } from "@/encounters/base-popover";
-import type { CampaignWithData } from "@/server/campaigns";
+import type { CampaignWithData } from "@/server/sdk/campaigns";
 import { AddCreatureButton } from "@/encounters/add-creature-button";
 import { useRouter } from "next/navigation";
 import { Placeholder } from "@tiptap/extension-placeholder";
@@ -368,7 +368,7 @@ export function SessionEncounters() {
               }
               key={encounter.id}
               encounterCard={
-                <Link href={appRoutes.encounter(campaign, encounter, user)}>
+                <Link href={appRoutes.encounter({ campaign, encounter, user })}>
                   <Card
                     className={clsx(
                       "flex transition-all p-4 gap-3 justify-between items-center max-w-sm"
@@ -556,7 +556,7 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
                 }}
               >
                 <Link
-                  href={appRoutes.encounter(campaign, encounter, user)}
+                  href={appRoutes.encounter({ campaign, encounter, user })}
                   className="flex gap-3 w-full  h-20 items-center"
                 >
                   <div className="flex items-center text-gray-500">
@@ -631,7 +631,7 @@ export function CreateEncounterButton({
       },
       onSuccess: async (encounter) => {
         if (!createMore) {
-          router.push(appRoutes.encounter(campaign, encounter, user));
+          router.push(appRoutes.encounter({ campaign, encounter, user }));
         }
 
         return await Promise.all([

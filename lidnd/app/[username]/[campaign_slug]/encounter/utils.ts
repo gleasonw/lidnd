@@ -1,5 +1,5 @@
 import { CreatureUtils } from "@/utils/creatures";
-import type { CreaturePost } from "./types";
+import type { CreaturePost } from "@/server/db/schema";
 import type { Participant, ParticipantWithData } from "@/server/api/router";
 
 /**
@@ -7,7 +7,7 @@ import type { Participant, ParticipantWithData } from "@/server/api/router";
  */
 export function getAWSimageURL(
   creature_id: string,
-  type: "icon" | "stat_block",
+  type: "icon" | "stat_block"
 ): string {
   return CreatureUtils.awsURL({ id: creature_id }, type);
 }
@@ -38,7 +38,7 @@ export function defaultParticipant(
     id: string;
     encounter_id: string;
     creature_id: string;
-  },
+  }
 ): Participant {
   return {
     is_active: p.is_active ?? false,

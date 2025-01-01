@@ -7,7 +7,7 @@ import type {
   Participant,
   ParticipantWithData,
 } from "@/server/api/router";
-import type { EncounterWithData } from "@/server/encounters";
+import type { EncounterWithData } from "@/server/sdk/encounters";
 import type { System } from "@/types";
 import * as R from "remeda";
 import { ParticipantUtils } from "@/utils/participants";
@@ -19,7 +19,7 @@ export const ESTIMATED_TURN_SECONDS = 180;
 export const ESTIMATED_ROUNDS = 2;
 
 type EncounterWithParticipants<
-  T extends Participant = EncounterWithData["participants"][number],
+  T extends Participant = EncounterWithData["participants"][number]
 > = Encounter & {
   participants: T[];
 };
@@ -183,12 +183,12 @@ export const EncounterUtils = {
       opts?.estimatedRounds ?? difficulty === "Deadly"
         ? 5
         : difficulty === "Hard"
-          ? 4
-          : difficulty === "Standard"
-            ? 3
-            : difficulty === "Easy"
-              ? 2
-              : 1;
+        ? 4
+        : difficulty === "Standard"
+        ? 3
+        : difficulty === "Easy"
+        ? 2
+        : 1;
     const finalTurnSeconds = opts?.estimatedTurnSeconds ?? 180;
     const estimateEncounterSeconds =
       (encounter.participants.length *
