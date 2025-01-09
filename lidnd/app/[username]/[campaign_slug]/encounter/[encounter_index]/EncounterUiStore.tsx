@@ -36,6 +36,7 @@ class EncounterUIStore {
         behavior: "smooth",
         block: "center",
       });
+      this.selectedParticipantId = id;
     }
   };
 

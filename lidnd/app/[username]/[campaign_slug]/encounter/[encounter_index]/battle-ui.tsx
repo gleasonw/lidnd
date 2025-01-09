@@ -32,6 +32,7 @@ import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 import { Label } from "@/components/ui/label";
 import { Reminders } from "@/encounters/[encounter_index]/reminders";
+import { useEncounterUIStore } from "./EncounterUiStore";
 
 export const BattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -159,7 +160,7 @@ export function BattleCard({
   );
 }
 
-export function BattleCardLayout({
+export const BattleCardLayout = observer(function BattleCardLayout({
   className,
   children,
   participant,
@@ -169,6 +170,7 @@ export function BattleCardLayout({
   children: React.ReactNode;
   participant: ParticipantWithData;
 } & React.HTMLAttributes<HTMLDivElement>) {
+  const { selectedParticipantId } = useEncounterUIStore();
   return (
     <Card
       className={clsx(
@@ -181,14 +183,16 @@ export function BattleCardLayout({
           "shadow-lg shadow-blue-800":
             ParticipantUtils.isFriendly(participant) && participant.is_active,
         },
+        { outline: selectedParticipantId === participant.id },
         className,
       )}
+      style={{ outlineColor: ParticipantUtils.iconHexColor(participant) }}
       {...props}
     >
       {children}
     </Card>
   );
-}
+});
 
 export function BattleCardContent({
   children,
@@ -241,23 +245,20 @@ export function BattleCardStatusEffects({
 export function BattleCardCreatureName({
   participant,
 }: BattleCardParticipantProps) {
-  const labelColors = [
-    "#FF4D4F", // Red
-    "#FA8C16", // Orange
-    "#FFEC3D", // Yellow
-    "#52C41A", // Green
-    "#13C2C2", // Teal
-    "#1890FF", // Blue
-    "#722ED1", // Purple
-    "#EB2F96", // Pink
-    "#36CFC9", // Cyan
-    "#A0D911", // Lime
-    "#FAAD14", // Gold
-    "#EB2F96", // Magenta
-    "#8C8C8C", // Gray
-    "#40A9FF", // Light Blue
-    "#73D13D", // Light Green
+  // todo: maybe at some point just allow a color picker and save previous values
+  const pastelLabels = ["#7eb2bc", "#e39ca0", "#edab33", "#94ae7f"];
+  const solidColors = [
+    "#8abd11",
+    "#0063c3",
+    "#ff1353",
+    "#fe9c1c",
+    "#632469",
+    "#fff91e",
+    "#57b3bd",
+    "#1f105b",
+    "#ff1a13",
   ];
+  const labelColors = [...pastelLabels, ...solidColors];
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   return (
     <span className="flex gap-2 items-center font-bold">
