@@ -11,6 +11,7 @@ import {
   Pencil,
   Skull,
   Trash,
+  Users,
 } from "lucide-react";
 import { api } from "@/trpc/react";
 import type {
@@ -34,9 +35,7 @@ import {
   useUpdateCampaignEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import { appRoutes } from "@/app/routes";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useDebouncedCallback } from "use-debounce";
 import { compareCreatedAt, formatSeconds } from "@/lib/utils";
 import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -59,50 +58,16 @@ export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
     placeholderData: (prev) => prev,
   });
 
-  const { mutate: updateCampaign } = useUpdateCampaign(campaign);
-  const [partyLevel, setPartyLevel] = React.useState(
-    campaign?.party_level ?? 1
-  );
-
-  const handlePartyLevelChange = useDebouncedCallback((level: string) => {
-    const stringAsInt = parseInt(level);
-    if (!isNaN(stringAsInt)) {
-      updateCampaign({
-        ...campaign,
-        party_level: Math.max(1, stringAsInt),
-      });
-    }
-  });
-
   return (
     <div className="flex gap-5">
-      <div className="flex">
-        {reactiveCampaign?.campaignToPlayers.map(({ player }) => (
-          <div
-            key={player.id}
-            className="flex flex-col justify-center items-center"
-          >
-            <CreatureIcon key={player.id} creature={player} size="v-small" />
-          </div>
-        ))}
+      <div className="flex -space-x-2">
         <Link href={partyLink}>
-          <ButtonWithTooltip text={"Edit party"} variant="ghost">
-            <Pencil />
-          </ButtonWithTooltip>
+          <Button variant="ghost">
+            Party
+            <Users />
+          </Button>
         </Link>
       </div>
-      <label className="flex gap-2 items-center font-light whitespace-nowrap">
-        Level
-        <Input
-          type="number"
-          className="w-16"
-          value={partyLevel}
-          onChange={(e) => {
-            setPartyLevel(Math.max(1, parseInt(e.target.value)));
-            handlePartyLevelChange(e.target.value);
-          }}
-        />
-      </label>
     </div>
   );
 }

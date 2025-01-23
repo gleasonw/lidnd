@@ -47,7 +47,7 @@ export function TopNav() {
       </CampaignGate>
       <Link
         href={appRoutes.settings(user)}
-        className="text-gray-500 hover:text-gray-700 transition-colors"
+        className="text-gray-500 hover:text-gray-700 transition-colors ml-auto"
       >
         <DiscordAvatar user={user} />
       </Link>

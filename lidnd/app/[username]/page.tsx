@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSystems, getUserCampaigns } from "@/server/api/utils";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { AngryIcon, ChevronRight } from "lucide-react";
 import { LidndAuth, type LidndUser, UserUtils } from "@/app/authentication";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
@@ -42,6 +42,11 @@ export default async function Page(props: {
 
   return (
     <div className="flex w-full flex-col gap-10 p-5">
+      <Link href={appRoutes.creatures(user)}>
+        <Button variant={"outline"}>
+          Creatures <AngryIcon />
+        </Button>
+      </Link>
       <LidndDialog
         trigger={
           <Button className="max-w-sm mx-auto mt-5">Create new campaign</Button>

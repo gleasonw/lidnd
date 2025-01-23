@@ -18,8 +18,8 @@ import { columns } from "@/app/[username]/creatures/columns";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { postCreature } from "@/app/[username]/actions";
 import { CreatureUtils } from "@/utils/creatures";
+import { Card } from "@/components/ui/card";
 
-//TODO: add forms again
 export default function CreaturesPage() {
   const [name, setName] = useState("");
   const { getUserCreatures } = api.useUtils();
@@ -81,8 +81,8 @@ export default function CreaturesPage() {
     : creatures;
 
   return (
-    <div className="grid md:grid-cols-2">
-      <div className="flex flex-col gap-3">
+    <div className="flex w-full">
+      <div className="flex flex-col gap-3 w-full">
         <div className={"flex gap-5 relative"}>
           <Input
             placeholder="Search"
@@ -104,18 +104,20 @@ export default function CreaturesPage() {
             </Dialog>
           </div>
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap w-full gap-2">
           <span className={!name ? "opacity-100" : "opacity-0"}>
             {displayCreatures?.length} / 30
           </span>
-          <div className="flex gap-10 flex-wrap ">
-            {displayCreatures && (
-              <DataTable
-                columns={columns}
-                data={displayCreatures}
-                onRowClick={(row) => setSelectedCreatureId(row.original.id)}
-              />
-            )}
+          <div className="flex w-full gap-2 flex-wrap">
+            {displayCreatures?.map((creature) => (
+              <Card key={creature.id}>
+                <CreatureIcon creature={creature} size="medium" />
+                <Button
+                  variant="destructive"
+                  onClick={() => deleteCreature(creature.id)}
+                ></Button>
+              </Card>
+            ))}
           </div>
         </div>
       </div>

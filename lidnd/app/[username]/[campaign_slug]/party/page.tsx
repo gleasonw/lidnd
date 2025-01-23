@@ -5,6 +5,7 @@ import {
   useAddNewToParty,
   useCampaign,
   useRemoveFromParty,
+  useUpdateCampaign,
 } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import {
   AllyCreatureUploadForm,
@@ -22,9 +23,10 @@ import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { AddCreatureButton } from "@/encounters/add-creature-button";
 import { api } from "@/trpc/react";
 import { Plus, Smile, User, UserPlus } from "lucide-react";
-import type React from "react";
+import React from "react";
 import { useState } from "react";
 import * as R from "remeda";
+import { useDebouncedCallback } from "use-debounce";
 
 export default function PartyPage() {
   const [campaign] = useCampaign();
@@ -33,6 +35,7 @@ export default function PartyPage() {
   return (
     <div className="flex flex-col gap-5 pt-5">
       {/* todo: make a table */}
+      <PartyLevelInput />
       <Card className="flex w-full flex-col gap-5 p-3">
         {campaign.campaignToPlayers.map((c) => (
           <div key={c.id} className="flex gap-2 items-center border">
@@ -84,6 +87,39 @@ export default function PartyPage() {
         </Tabs>
       </Card>
     </div>
+  );
+}
+
+function PartyLevelInput() {
+  const [campaign] = useCampaign();
+  const { mutate: updateCampaign } = useUpdateCampaign(campaign);
+
+  const [partyLevel, setPartyLevel] = React.useState(
+    campaign?.party_level ?? 1
+  );
+
+  const handlePartyLevelChange = useDebouncedCallback((level: string) => {
+    const stringAsInt = parseInt(level);
+    if (!isNaN(stringAsInt)) {
+      updateCampaign({
+        ...campaign,
+        party_level: Math.max(1, stringAsInt),
+      });
+    }
+  });
+  return (
+    <label className="flex gap-2 items-center font-light whitespace-nowrap">
+      Level
+      <Input
+        type="number"
+        className="w-16"
+        value={partyLevel}
+        onChange={(e) => {
+          setPartyLevel(Math.max(1, parseInt(e.target.value)));
+          handlePartyLevelChange(e.target.value);
+        }}
+      />
+    </label>
   );
 }
 
