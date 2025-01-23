@@ -1,6 +1,6 @@
 "use client";
 
-import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
+import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import {
   Select,
   SelectItem,
@@ -30,48 +30,48 @@ export function EncounterDifficulty() {
   );
 
   return (
-    <div className={`flex gap-3 w-full`}>
-      <div className={`flex flex-col w-full gap-3`}>
-        <label className="flex flex-col gap-3 w-48">
-          <span className=" text-slate-500">Target difficulty</span>
-          <Select
-            onValueChange={(v) => {
-              console.log(v);
-              mutate({ ...encounter, target_difficulty: v as any });
-            }}
-            defaultValue={target}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select difficulty" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="easy">Easy</SelectItem>
-              <SelectItem value="standard">Standard</SelectItem>
-              <SelectItem value="hard">Hard</SelectItem>
-            </SelectContent>
-          </Select>
-        </label>
-
-        <div
-          className={`flex p-3 flex-col items-center justify-center gap-3 ${difficultyClasses}`}
+    <>
+      <label className="flex flex-col gap-3">
+        <span className=" text-slate-500">Target difficulty</span>
+        <Select
+          onValueChange={(v) => {
+            console.log(v);
+            mutate({ ...encounter, target_difficulty: v as any });
+          }}
+          defaultValue={target}
         >
-          {remainingBudget === 0 ? (
-            <span className="text-3xl font-bold">
-              {EncounterUtils.difficulty(encounter, campaign?.party_level)}
-            </span>
-          ) : remainingBudget < 0 ? (
-            <span className="text-3xl font-bold">
+          <SelectTrigger>
+            <SelectValue placeholder="Select difficulty" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="easy">Easy</SelectItem>
+            <SelectItem value="standard">Standard</SelectItem>
+            <SelectItem value="hard">Hard</SelectItem>
+          </SelectContent>
+        </Select>
+      </label>
+
+      <div
+        className={`flex p-3 flex-col items-center justify-center gap-3 ${difficultyClasses}`}
+      >
+        {remainingBudget === 0 ? (
+          <span className="text-xl font-bold">
+            {EncounterUtils.difficulty(encounter, campaign?.party_level)}
+          </span>
+        ) : remainingBudget < 0 ? (
+          <span className="text-xl font-bold flex flex-col">
+            <span>
               {EncounterUtils.difficulty(encounter, campaign?.party_level)}{" "}
-              {`(+${totalCr - goalCR})`}
             </span>
-          ) : (
-            <>
-              <span className="text-5xl font-bold">{remainingBudget}</span>
-              <span className="text-slate-500">CR budget</span>
-            </>
-          )}
-        </div>
+            <span>{`(+${totalCr - goalCR})`}</span>
+          </span>
+        ) : (
+          <>
+            <span className="text-xl font-bold">{remainingBudget}</span>
+            <span className="text-slate-500">CR budget</span>
+          </>
+        )}
       </div>
-    </div>
+    </>
   );
 }

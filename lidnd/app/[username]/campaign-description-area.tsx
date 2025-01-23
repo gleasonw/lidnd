@@ -1,6 +1,6 @@
 "use client";
 
-import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
+import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { api } from "@/trpc/react";
 import Placeholder from "@tiptap/extension-placeholder";

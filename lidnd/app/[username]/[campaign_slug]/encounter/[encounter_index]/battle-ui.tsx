@@ -4,20 +4,19 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
 import type { Participant, ParticipantWithData } from "@/server/api/router";
 import { LidndPopover } from "@/encounters/base-popover";
 import { EffectIcon, StatusInput } from "./status-input";
 import {
-  CreateNewColumnButton,
   LinearBattleUI,
   ParentWidthContext,
   StatColumnComponent,
   useParentResizeObserver,
 } from "./linear-battle-ui";
-import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
+import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { observer } from "mobx-react-lite";
 import { ParticipantUtils } from "@/utils/participants";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
@@ -38,67 +37,79 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 import { Label } from "@/components/ui/label";
-import { Reminders } from "@/encounters/[encounter_index]/reminders";
+import {
+  ReminderInput,
+  Reminders,
+} from "@/encounters/[encounter_index]/reminders";
 import { EncounterUtils } from "@/utils/encounters";
-import { Grip, Play, SidebarClose, SidebarOpen, Trash, X } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { Grip, MoreHorizontal, PlayIcon, X } from "lucide-react";
 import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
-import type { ColumnWithParticipants } from "@/utils/stat-columns";
 import { useEncounterLinks } from "../link-hooks";
 import Link from "next/link";
 import { InitiativeTracker } from "./battle-bar";
 import { EncounterDifficulty } from "./encounter-difficulty";
-import {
-  AllyParticipantForm,
-  OpponentParticipantForm,
-} from "./participant-upload-form";
+import { OpponentParticipantForm } from "./participant-upload-form";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
+import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
+import { api } from "@/trpc/react";
+import type { StatColumn } from "@/server/api/columns-router";
+import { ButtonWithTooltip } from "@/components/ui/tip";
+import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 
-// TODO: split out layouts/encounter ui into routes, by status (prep, run, roll)
-// redirect to proper page based on status?
-// TODO: fix forms (no ally/player switch on monster upload, for instance)
-// TODO: collapse allies by default, show on toggle
+// TODO: existing creatures for ally/player upload?
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
   const [encounter] = useEncounter();
+  const { rollEncounter } = useEncounterLinks();
 
   switch (encounter.status) {
     case "prep":
       return (
-        <div className="flex flex-col h-full overflow-hidden">
-          <div className="flex flex-col gap-3 py-5 w-full items-center">
-            <div className="flex w-full gap-5">
-              <Card className="flex items-center justify-center">
-                <EncounterDifficulty />{" "}
-              </Card>
-              <Card className="min-h-[100px] w-full flex p-3">
-                <DescriptionTextArea />
-              </Card>
-            </div>
-          </div>
-          <div className="grid grid-cols-[auto_1fr_auto] gap-5 max-h-full h-full overflow-hidden">
-            <AlliesSidebar />
-            <EncounterBattlePreview />
+        <div className="flex max-h-full overflow-hidden h-full gap-3 pt-3">
+          <div className="flex flex-col gap-2 items-center">
+            <Card className="flex flex-col items-center pb-3 gap-3 w-full">
+              <div className=" p-4 flex justify-evenly text-lg w-full">
+                <EncounterDifficulty />
+              </div>
+              <Link href={rollEncounter} className="text-lg">
+                <Button className="w-48 ">
+                  <PlayIcon />
+                  Roll initiative
+                </Button>
+              </Link>
+            </Card>
+            <Card className="w-full flex p-3">
+              <ReminderInput />
+            </Card>
             <ParticipantsContainer
               role="monsters"
               extra={<OpponentParticipantForm />}
             />
           </div>
+          <div className="w-full overflow-hidden flex flex-col gap-3">
+            <Card className="p-4">
+              <PrepVersusDisplay />
+            </Card>
+            <EncounterBattlePreview />
+          </div>
         </div>
       );
     case "run":
       return (
-        <section className="flex flex-col overflow-y-auto max-h-full min-h-0 h-full">
+        <section className="flex flex-col max-h-full min-h-0 h-full">
           <InitiativeTracker />
           <Reminders />
-          <div className="flex gap-4 flex-col w-full max-h-full overflow-auto h-full">
+          <div className="flex gap-4 flex-col w-full max-h-full overflow-hidden">
             {/**create space for the overlaid initiative tracker */}
             {encounter.status === "run" && <div className="my-5" />}
-            <div className="bg-white p-5">
-              <DescriptionTextArea />
-            </div>
+            {encounter.description ? (
+              <div className="bg-white p-5">
+                <DescriptionTextArea />
+              </div>
+            ) : null}
+
             {campaign.system?.initiative_type === "linear" ? (
               <LinearBattleUI />
             ) : (
@@ -114,120 +125,104 @@ export const EncounterBattleUI = observer(function BattleUI() {
   }
 });
 
-const ALLIES_SIDEBAR_KEY = "alliesSidebarExpanded";
-
-function AlliesSidebar() {
-  const [encounter] = useEncounter();
-  const [expanded, setExpanded] = React.useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-    const savedState = localStorage.getItem(ALLIES_SIDEBAR_KEY);
-    return savedState === "true";
-  });
-
-  useEffect(() => {
-    localStorage.setItem(ALLIES_SIDEBAR_KEY, expanded.toString());
-  }, [expanded]);
-
-  const allies = EncounterUtils.allies(encounter);
-
-  return (
-    <ParticipantsContainer
-      role="allies"
-      extra={expanded ? <AllyParticipantForm /> : null}
-      className={`${!expanded && "w-[80px]"}`}
-    >
-      <Button onClick={() => setExpanded(!expanded)} variant="ghost">
-        {expanded ? <SidebarClose /> : <SidebarOpen />}
-      </Button>
-
-      {expanded ? (
-        allies.length === 0 ? (
-          <ParticipantBadgeWrapper role="allies">
-            No allies
-          </ParticipantBadgeWrapper>
-        ) : (
-          allies.map((p) => <ParticipantBadge key={p.id} participant={p} />)
-        )
-      ) : (
-        <div className="flex items-center flex-col gap-2 justify-center">
-          {allies.map((p) => (
-            <CreatureIcon key={p.id} creature={p.creature} size="small" />
-          ))}
-        </div>
-      )}
-    </ParticipantsContainer>
-  );
-}
-
 function EncounterBattlePreview() {
-  const [encounter] = useEncounter();
-  const { rollEncounter } = useEncounterLinks();
+  const { data: columns } = api.getColumns.useQuery(useEncounterId());
   const { parentWidth, containerRef } = useParentResizeObserver();
   return (
-    <Card className="p-3 flex flex-col gap-8 max-h-full overflow-hidden">
-      <div className="flex w-full itmes-center justify-center">
-        <Link title={"Roll initiative"} href={rollEncounter}>
-          <Button className=" text-lg h-full w-full mx-auto max-w-sm flex gap-3">
-            Roll initiative
-            <Play />
-          </Button>
-        </Link>
-        <div>
-          <CreateNewColumnButton />
-        </div>
-      </div>
-
+    <div className="flex flex-col gap-8 max-h-full overflow-hidden w-full h-full">
       <div
         className="flex relative h-full max-h-full overflow-hidden"
         ref={containerRef}
       >
         <ParentWidthContext.Provider value={parentWidth}>
-          {encounter.columns.map((c, i) => (
+          {columns?.map((c, i) => (
             <StatColumnComponent column={c} index={i} key={c.id}>
-              <PreviewCardsForColumn column={c} />
+              <div className="flex flex-col gap-5 border border-t-0 w-full max-h-full overflow-hidden h-full bg-white">
+                <PreviewCardsForColumn column={c} />
+              </div>
             </StatColumnComponent>
           ))}
         </ParentWidthContext.Provider>
       </div>
-    </Card>
+    </div>
   );
 }
 
-function PreviewCardsForColumn({ column }: { column: ColumnWithParticipants }) {
-  const participantsInColumn = column.participants.sort(
-    ParticipantUtils.sortLinearly
-  );
-  const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
+function PrepVersusDisplay() {
+  const [encounter] = useEncounter();
+  const monsters = EncounterUtils.monsters(encounter);
+  const allies = EncounterUtils.allies(encounter);
   return (
-    <div className="flex flex-col max-h-full overflow-hidden ">
+    <div className="w-full justify-evenly flex items-center">
+      <div className="flex flex-wrap gap-2">
+        {allies.map((m) => (
+          <ParticipantBadge key={m.id} participant={m} />
+        ))}
+      </div>
+      <span className="text-lg font-bold">vs.</span>
+      <div className="flex flex-wrap gap-2">
+        {monsters.map((m) => (
+          <ParticipantBadge key={m.id} participant={m} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BattleCardTools({ participant }: { participant: Participant }) {
+  const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
+  const uiStore = useEncounterUIStore();
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        className="z-10 ml-auto cursor-grab"
+        onDragStart={(e) => {
+          typedDrag.set(e.dataTransfer, dragTypes.participant, participant);
+          uiStore.startDraggingBattleCard();
+        }}
+        draggable
+      >
+        <Grip />
+      </Button>
+      <LidndPopover
+        trigger={
+          <ButtonWithTooltip text="More" variant="ghost">
+            <MoreHorizontal />
+          </ButtonWithTooltip>
+        }
+        className="justify-center flex"
+      >
+        <Button
+          onClick={() =>
+            removeParticipant({
+              encounter_id: participant.encounter_id,
+              participant_id: participant.id,
+            })
+          }
+          variant="destructive"
+        >
+          Remove participant
+        </Button>
+      </LidndPopover>
+    </>
+  );
+}
+
+function PreviewCardsForColumn({ column }: { column: StatColumn }) {
+  const [encounter] = useEncounter();
+  const participantsInColumn = encounter.participants
+    .filter((p) => p.column_id === column.id)
+    .sort(ParticipantUtils.sortLinearly);
+  return (
+    <div className="flex flex-col max-h-full overflow-hidden h-full">
       {participantsInColumn.map((p) => (
         <div className="max-h-full flex flex-col overflow-hidden" key={p.id}>
           <div className="w-full flex gap-2 p-4">
             <CreatureIcon creature={p.creature} size="small" />
             <BattleCardCreatureName participant={p} />
-            <Button
-              onClick={() =>
-                removeParticipant({
-                  encounter_id: column.encounter_id,
-                  participant_id: p.id,
-                })
-              }
-              variant="ghost"
-            >
-              <Trash />
-            </Button>
-            <Button
-              variant="ghost"
-              className="z-10 ml-auto"
-              onDragStart={(e) => {
-                typedDrag.set(e.dataTransfer, dragTypes.participant, p);
-              }}
-              draggable
-            >
-              <Grip />
-            </Button>
+            <BattleCardTools participant={p} />
           </div>
 
           {/* required for the image to respect the bounds... goodness */}
@@ -271,7 +266,6 @@ function ParticipantsContainer({
         <div className="flex flex-wrap gap-2 items-center justify-center">
           {children}
         </div>
-        <Separator />
         {extra}
       </Card>
     </div>
@@ -378,7 +372,7 @@ export function BattleCard({
 
   return (
     <div
-      className={`relative flex-col gap-6 items-center justify-between flex `}
+      className={`relative flex-col gap-6 items-center w-full justify-between flex `}
       ref={ref}
       {...props}
     >
@@ -386,9 +380,6 @@ export function BattleCard({
         <MinionCardStack minionCount={participant.minion_count} />
       ) : null}
       <BattleCardLayout key={participant.id} participant={participant}>
-        <div className="absolute top-2 right-2 flex gap-2 items-center">
-          {extraHeaderButtons}
-        </div>
         <div className="flex gap-4 p-5 items-center w-full">
           <BattleCardContent>
             <div className="flex gap-2 items-center w-full justify-between">
@@ -397,7 +388,10 @@ export function BattleCard({
                 className="flex-shrink-0 flex-grow-0"
               />
               <div className="flex flex-col gap-3 w-full">
-                <BattleCardCreatureName participant={participant} />
+                <div className="flex justify-between">
+                  <BattleCardCreatureName participant={participant} />
+                  <BattleCardTools participant={participant} />
+                </div>
                 <div className="flex flex-wrap gap-3 items-center">
                   {participant.status_effects?.map((se) => (
                     <LidndPopover
@@ -453,9 +447,9 @@ export function BattleCardLayout({
   participant: ParticipantWithData;
 } & React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <Card
+    <div
       className={clsx(
-        "bg-white shadow-sm border-none flex flex-col justify-between transition-all group",
+        "bg-white shadow-sm w-full flex flex-col justify-between transition-all group",
         {
           "shadow-lg shadow-red-800":
             !ParticipantUtils.isFriendly(participant) && participant.is_active,
@@ -469,7 +463,7 @@ export function BattleCardLayout({
       {...props}
     >
       {children}
-    </Card>
+    </div>
   );
 }
 
@@ -587,11 +581,7 @@ export function BattleCardCreatureIcon({
     <span>Loading</span>
   ) : (
     <div className={clsx("relative", className)}>
-      <CreatureIcon
-        creature={participant.creature}
-        size="small2"
-        objectFit="contain"
-      />
+      <CreatureIcon creature={participant.creature} size="small2" />
     </div>
   );
 }

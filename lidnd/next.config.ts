@@ -1,4 +1,8 @@
-/** @type {import('next').NextConfig} */
+import type { NextConfig } from "next";
+
+const isProd = process.env.NODE_ENV === "production";
+console.log(`isProd: ${isProd}`);
+
 const nextConfig = {
   images: {
     remotePatterns: [
@@ -16,12 +20,9 @@ const nextConfig = {
       },
     ],
   },
-  //todo: lower this once we just pass the client a aws signed url
   experimental: {
-    serverActions: {
-      bodySizeLimit: "10mb",
-    },
+    reactCompiler: isProd,
   },
-};
+} satisfies NextConfig;
 
 export default nextConfig;

@@ -96,35 +96,6 @@ export async function postCreature(uploadedCreature: FormData) {
   return newCreature;
 }
 
-export async function createPlayerAndAddToCampaign(
-  campaignId: string,
-  form: FormData
-) {
-  const user = await LidndAuth.getUser();
-
-  if (!user) {
-    console.log("user not logged in");
-    return NextResponse.json({ error: "No session found." }, { status: 400 });
-  }
-
-  const player = parse(form, {
-    schema: creatureUploadSchema,
-  });
-
-  await db.transaction(async (tx) => {
-    if (!player.value) {
-      return NextResponse.json({ error: player.error }, { status: 400 });
-    }
-
-    const newCreature = await ServerCreature.create({ user }, player.value, tx);
-
-    await tx.insert(campaignToPlayer).values({
-      campaign_id: campaignId,
-      player_id: newCreature.id,
-    });
-  });
-}
-
 export async function updateEncounterDescription(
   id: string,
   formData: FormData

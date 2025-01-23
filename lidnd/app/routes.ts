@@ -38,5 +38,9 @@ export const appRoutes = {
     return `${this.dashboard(user)}/${campaign.slug}`;
   },
 
+  party({ campaign, user }: { campaign: { slug: string }; user: LidndUser }) {
+    return `${this.campaign(campaign, user)}/party`;
+  },
+
   login: "/login",
 } as const;

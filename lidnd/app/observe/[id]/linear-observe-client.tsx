@@ -50,11 +50,7 @@ export function LinearObserve({ encounter }: { encounter: ObserveEncounter }) {
             <div className="flex justify-between w-full">
               <span className="text-2xl font-bold">{p.initiative}</span>
               <div className="relative w-16 h-16">
-                <CreatureIcon
-                  creature={p.creature}
-                  size="medium"
-                  objectFit="contain"
-                />
+                <CreatureIcon creature={p.creature} size="medium" />
               </div>
             </div>
             <div className="w-10">

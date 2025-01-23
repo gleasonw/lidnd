@@ -18,6 +18,9 @@ export const columnsRouter = {
     const [columns, _] = await Promise.all([
       db.query.stat_columns.findMany({
         where: (columns, { eq }) => and(eq(columns.encounter_id, opts.input)),
+        with: {
+          participants: true,
+        },
       }),
       ServerEncounter.encounterByIdThrows(opts.ctx, opts.input),
     ]);

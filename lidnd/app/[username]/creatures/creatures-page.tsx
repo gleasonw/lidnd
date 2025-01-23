@@ -1,6 +1,5 @@
 "use client";
 
-import { FullCreatureAddForm } from "@/app/[username]/[campaign_slug]/encounter/full-creature-add-form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -20,6 +19,7 @@ import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encoun
 import { postCreature } from "@/app/[username]/actions";
 import { CreatureUtils } from "@/utils/creatures";
 
+//TODO: add forms again
 export default function CreaturesPage() {
   const [name, setName] = useState("");
   const { getUserCreatures } = api.useUtils();
@@ -100,7 +100,6 @@ export default function CreaturesPage() {
               </DialogTrigger>
               <DialogContent className="max-w-[900px] w-full overflow-auto">
                 <DialogTitle>Add creature</DialogTitle>
-                <FullCreatureAddForm uploadCreature={createCreature} />
               </DialogContent>
             </Dialog>
           </div>
@@ -120,9 +119,7 @@ export default function CreaturesPage() {
           </div>
         </div>
       </div>
-      <div className="hidden md:block">
-        <FullCreatureAddForm uploadCreature={createCreature} />
-      </div>
+      <div className="hidden md:block"></div>
       <Dialog
         open={selectedCreatureId !== null}
         onOpenChange={(isOpen) =>

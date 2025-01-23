@@ -17,6 +17,7 @@ import {
   updateCampaignSchema,
   updateEncounterSchema,
   updateSettingsSchema,
+  creatureUploadSchema,
 } from "@/server/db/schema";
 import { eq, and, ilike } from "drizzle-orm";
 import { db } from "@/server/db";
@@ -35,6 +36,7 @@ import { columnsRouter } from "@/server/api/columns-router";
 import { protectedProcedure, publicProcedure, t } from "@/server/api/base-trpc";
 import { encountersRouter } from "@/server/api/encounters-router";
 import { participantsRouter } from "./participants-router";
+import { ServerCreature } from "@/server/sdk/creatures";
 
 export type Encounter = typeof encounters.$inferSelect;
 export type Creature = typeof creatures.$inferSelect;
@@ -281,6 +283,7 @@ export const appRouter = t.router({
               started_at: new Date(),
               current_round: firstRoundNumber,
               status: "run",
+              is_editing_columns: false,
             })
             .where(eq(encounters.id, opts.input)),
         ]);
@@ -571,11 +574,55 @@ export const appRouter = t.router({
       });
     }),
 
-  addToParty: protectedProcedure
+  createCreatureAndAddToParty: protectedProcedure
+    .input(
+      z.object({
+        creature: creatureUploadSchema,
+        campaign_id: z.string(),
+        hasStatBlock: z.boolean(),
+        hasIcon: z.boolean(),
+      })
+    )
+    .mutation(async (opts) => {
+      return await db.transaction(async (tx) => {
+        const campaign = await ServerCampaign.campaignByIdThrows(
+          opts.ctx,
+          opts.input.campaign_id,
+          tx
+        );
+        console.log({ opts });
+
+        const { creature, statBlockPresigned, iconPresigned } =
+          await ServerCreature.create(opts.ctx, opts.input.creature, {
+            hasStatBlock: opts.input.hasStatBlock,
+            hasIcon: opts.input.hasIcon,
+          });
+        if (!creature) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create creature",
+          });
+        }
+        await tx.insert(campaignToPlayer).values({
+          campaign_id: campaign.id,
+          player_id: creature.id,
+        });
+        return {
+          newPartyMember: creature,
+          statBlockPresigned,
+          iconPresigned,
+        };
+      });
+    }),
+
+  /**we take a full creature here just to make the optimistic update on the client
+   * work
+   */
+  addExistingCreatureToParty: protectedProcedure
     .input(
       z.object({
         campaign_id: z.string(),
-        player: creaturesSchema,
+        creature: creaturesSchema,
       })
     )
     .mutation(async (opts) => {
@@ -585,9 +632,19 @@ export const appRouter = t.router({
           opts.input.campaign_id,
           tx
         );
+        const creature = await tx.query.creatures.findFirst({
+          where: eq(creatures.id, opts.input.creature.id),
+        });
+        if (!creature) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "No creature found",
+          });
+        }
+
         await tx.insert(campaignToPlayer).values({
           campaign_id: campaign.id,
-          player_id: opts.input.player.id,
+          player_id: opts.input.creature.id,
         });
       });
     }),

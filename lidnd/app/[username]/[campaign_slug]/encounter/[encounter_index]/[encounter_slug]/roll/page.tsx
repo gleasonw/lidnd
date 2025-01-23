@@ -13,15 +13,20 @@ import { EncounterUtils } from "@/utils/encounters";
 import * as R from "remeda";
 import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 import { Card } from "@/components/ui/card";
+import { useEncounterLinks } from "@/encounters/link-hooks";
+import { useRouter } from "next/navigation";
 
 export default function RollPage() {
   const id = useEncounterId();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
   const { mutate: startEncounter } = useStartEncounter();
   const refMap = React.useRef(new Map<string, HTMLDivElement>());
+  const { encounter: encounterLink } = useEncounterLinks();
+  const router = useRouter();
 
   function start() {
     startEncounter(id);
+    router.push(encounterLink);
   }
 
   const sortedParticipants = R.sort(

@@ -63,9 +63,27 @@ function cssClassForDifficulty(d: Difficulty) {
   return difficultyClasses[d];
 }
 
+function start(e: EncounterWithData): EncounterWithData {
+  const [firstActive, firstRoundNumber] =
+    EncounterUtils.firstActiveAndRoundNumber(e);
+
+  const activatedEncounter = EncounterUtils.updateParticipant(
+    { ...firstActive, is_active: true },
+    { ...e, current_round: firstRoundNumber }
+  );
+
+  return {
+    ...activatedEncounter,
+    status: "run",
+    is_editing_columns: false,
+    started_at: new Date(),
+  };
+}
+
 const DEFAULT_LEVEL = 1;
 
 export const EncounterUtils = {
+  start,
   difficultyCssClasses,
   difficultyClassForCR,
   cssClassForDifficulty,
@@ -121,10 +139,10 @@ export const EncounterUtils = {
     user: LidndUser
   ) {
     if (encounter.started_at) {
-      return `${appRoutes.encounter(campaign, encounter, user)}/run`;
+      return `${appRoutes.encounter({ campaign, encounter, user })}/run`;
     }
 
-    return appRoutes.encounter(campaign, encounter, user);
+    return appRoutes.encounter({ campaign, encounter, user });
   },
 
   initiativeType(encounter: { campaigns: { system: System } }) {

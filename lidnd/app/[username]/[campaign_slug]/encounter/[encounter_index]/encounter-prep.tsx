@@ -20,7 +20,7 @@ import {
   useUpdateEncounterParticipant,
   useEncounterLink,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
-import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
+import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import Link from "next/link";
@@ -181,124 +181,5 @@ export function MonsterParticipantActions(props: ParticipantCreatureProps) {
         </Button>
       )}
     </span>
-  );
-}
-
-export function EncounterReminderInput() {
-  const [encounter] = useEncounter();
-  const { encounterById } = api.useUtils();
-  const [alertAfterRound, setAlertAfterRound] = React.useState<
-    number | undefined
-  >(undefined);
-  const [reminder, setReminder] = React.useState<string | undefined>(undefined);
-  const { mutate: removeReminder } = api.removeEncounterReminder.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(encounter.id);
-    },
-    onMutate: async ({ reminder_id }) => {
-      await encounterById.cancel(encounter.id);
-      const previousEncounter = encounterById.getData(encounter.id);
-      encounterById.setData(encounter.id, (old) => {
-        if (!old) {
-          return;
-        }
-        return EncounterUtils.removeReminder(reminder_id, old);
-      });
-      return previousEncounter;
-    },
-  });
-  const { mutate: addReminder } = api.addEncounterReminder.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(encounter.id);
-    },
-    onMutate: async (newReminder) => {
-      await encounterById.cancel(encounter.id);
-      const previousEncounter = encounterById.getData(encounter.id);
-      encounterById.setData(encounter.id, (old) => {
-        if (!old) {
-          return;
-        }
-        return EncounterUtils.addReminder(
-          {
-            id: Math.random().toString(),
-            reminder: newReminder.reminder ?? "",
-            ...newReminder,
-          },
-          old
-        );
-      });
-      return previousEncounter;
-    },
-  });
-
-  if (!encounter) {
-    return null;
-  }
-
-  return (
-    <div className="flex gap-5">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          addReminder({
-            encounter_id: encounter.id,
-            alert_after_round: alertAfterRound ?? 0,
-            reminder: reminder,
-          });
-        }}
-        className="flex gap-3"
-      >
-        <section className="flex gap-3 items-center shadow-md border p-3">
-          <LidndTextInput
-            variant="ghost"
-            placeholder="Reminder text"
-            value={reminder}
-            onChange={(e) => setReminder(e.target.value)}
-          />
-          <LidndTextInput
-            variant="ghost"
-            type="number"
-            value={alertAfterRound}
-            onChange={(e) =>
-              setAlertAfterRound(
-                !isNaN(parseInt(e.target.value))
-                  ? parseInt(e.target.value)
-                  : undefined
-              )
-            }
-            placeholder="Alert after round (0 for every)"
-            className="w-72"
-          />
-          <Button type="submit">
-            <Plus />
-          </Button>
-        </section>
-        {encounter?.reminders
-          .slice()
-          .sort((a, b) => a.alert_after_round - b.alert_after_round)
-          .map((reminder) => (
-            <div
-              className="flex gap-1 shadow-md border items-center p-3"
-              key={reminder.id}
-            >
-              <span className="flex-grow">{reminder.reminder}</span>
-              <span>after round {reminder.alert_after_round}</span>
-              <ButtonWithTooltip
-                text="Remove reminder"
-                variant="ghost"
-                onClick={(e) => {
-                  e.preventDefault();
-                  removeReminder({
-                    reminder_id: reminder.id,
-                    encounter_id: encounter.id,
-                  });
-                }}
-              >
-                <X />
-              </ButtonWithTooltip>
-            </div>
-          ))}
-      </form>
-    </div>
   );
 }

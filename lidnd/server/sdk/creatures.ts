@@ -5,13 +5,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import type { LidndContext } from "@/server/api/base-trpc";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import {
-  GetObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from "@aws-sdk/client-s3";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { CreatureUtils } from "@/utils/creatures";
-import { has } from "lodash";
 
 export const ServerCreature = {
   create: async function (
@@ -20,6 +15,7 @@ export const ServerCreature = {
     { hasStatBlock, hasIcon }: { hasStatBlock: boolean; hasIcon: boolean },
     dbObject = db
   ) {
+    console.log({ hasStatBlock, hasIcon });
     if (
       !process.env.AWS_BUCKET_NAME ||
       !process.env.AWS_ACCESS_KEY_ID ||
@@ -56,41 +52,48 @@ export const ServerCreature = {
       });
     }
 
-    const urlsToGet: Array<Promise<string>> = [];
+    const urlsToGet: Record<
+      "statBlockPresigned" | "iconPresigned",
+      Promise<string>
+    > = {} as any;
     if (hasStatBlock) {
-      urlsToGet.push(
-        getSignedUrl(
-          //@ts-expect-error weird aws type error. initialize not assignable to serialize?
-          s3Client,
-          new PutObjectCommand({
-            Bucket: process.env.AWS_BUCKET_NAME!,
-            Key: CreatureUtils.statBlockKey(newCreature[0]),
-          })
-        )
+      urlsToGet["statBlockPresigned"] = getSignedUrl(
+        //@ts-expect-error weird aws type error. initialize not assignable to serialize?
+        s3Client,
+        new PutObjectCommand({
+          Bucket: process.env.AWS_BUCKET_NAME!,
+          Key: CreatureUtils.statBlockKey(newCreature[0]),
+        })
       );
     }
 
     if (hasIcon) {
-      urlsToGet.push(
-        getSignedUrl(
-          //@ts-expect-error weird aws type error. initialize not assignable to serialize?
-          s3Client,
-          new PutObjectCommand({
-            Bucket: process.env.AWS_BUCKET_NAME!,
-            Key: CreatureUtils.iconKey(newCreature[0]),
-          })
-        )
+      urlsToGet["iconPresigned"] = getSignedUrl(
+        //@ts-expect-error weird aws type error. initialize not assignable to serialize?
+        s3Client,
+        new PutObjectCommand({
+          Bucket: process.env.AWS_BUCKET_NAME!,
+          Key: CreatureUtils.iconKey(newCreature[0]),
+        })
       );
     }
 
-    const [statBlockPresigned, iconPresigned] = await Promise.all(urlsToGet);
+    const results = await Promise.all(
+      Object.entries(urlsToGet).map(async ([key, task]) => ({
+        key,
+        value: await task,
+      }))
+    );
 
-    console.log(statBlockPresigned, iconPresigned);
+    const keyedResults = Object.fromEntries(
+      results.map(({ key, value }) => [key, value])
+    ) as Record<"statBlockPresigned" | "iconPresigned", string>;
+
+    console.log({ keyedResults });
 
     return {
       creature: newCreature[0],
-      statBlockPresigned,
-      iconPresigned,
+      ...keyedResults,
     };
   },
 };

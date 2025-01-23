@@ -8,7 +8,9 @@ import { createContext, useContext, useEffect, useMemo } from "react";
  */
 class EncounterUIStore {
   selectedParticipantId: string | null = null;
-  isEditingInitiative: boolean = false;
+  isEditingInitiative = false;
+  userDismissedReminder = false;
+  isDraggingBattleCard = false;
   /**
    * participantId -> ref
    *  */
@@ -39,6 +41,22 @@ class EncounterUIStore {
     }
   };
 
+  startDraggingBattleCard = () => {
+    this.isDraggingBattleCard = true;
+  };
+
+  stopDraggingBattleCard = () => {
+    this.isDraggingBattleCard = false;
+  };
+
+  setReminderViewed = () => {
+    this.userDismissedReminder = true;
+  };
+
+  resetViewedState = () => {
+    this.userDismissedReminder = false;
+  };
+
   setSelectedParticipantId = (id: string) => {
     this.selectedParticipantId = id;
     this.scrollToParticipant(id);
@@ -55,7 +73,7 @@ export function useEncounterUIStore() {
   const store = useContext(EncounterUIContext);
   if (!store) {
     throw new Error(
-      "useEncounterUIStore must be used within a EncounterUIProvider",
+      "useEncounterUIStore must be used within a EncounterUIProvider"
     );
   }
   return store;
@@ -65,6 +83,7 @@ export function EncounterUI({ children }: { children: React.ReactNode }) {
   const encounterUiStore = useMemo(() => new EncounterUIStore(), []);
 
   useEffect(() => {
+    window["uiStore"] = encounterUiStore;
     return () => {
       encounterUiStore.dispose();
     };
@@ -75,4 +94,10 @@ export function EncounterUI({ children }: { children: React.ReactNode }) {
       {children}
     </EncounterUIContext.Provider>
   );
+}
+
+declare global {
+  interface Window {
+    uiStore: EncounterUIStore;
+  }
 }

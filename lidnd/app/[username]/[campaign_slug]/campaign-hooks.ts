@@ -1,10 +1,7 @@
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
-import { createPlayerAndAddToCampaign } from "@/app/[username]/actions";
-import type { CreaturePost } from "@/server/db/schema";
-import { getCreaturePostForm } from "@/encounters/utils";
+import { useAwsImageUpload } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 import { api } from "@/trpc/react";
 import { CreatureUtils } from "@/utils/creatures";
-import { useMutation } from "@tanstack/react-query";
 
 import { useEditor } from "@tiptap/react";
 
@@ -39,20 +36,43 @@ export function useUpdateCampaign(campaign: { id: string }) {
   });
 }
 
-export function useAddExistingToParty(campaignId: string) {
+export function useAddNewToParty({
+  campaign,
+  statBlockImage,
+  iconImage,
+}: {
+  campaign: { id: string };
+  statBlockImage?: File;
+  iconImage?: File;
+}) {
+  const campaignId = campaign.id;
   const { campaignById } = api.useUtils();
-  return api.addToParty.useMutation({
+  const uploadToAws = useAwsImageUpload({
+    statBlockImage,
+    iconImage,
+  });
+  return api.createCreatureAndAddToParty.useMutation({
+    onSuccess: async (data) => {
+      uploadToAws({
+        iconPresigned: data.iconPresigned,
+        statBlockPresigned: data.statBlockPresigned,
+        creature: data.newPartyMember,
+      });
+    },
     onSettled: async () => {
       return await campaignById.invalidate(campaignId);
     },
-    onMutate: async ({ player }) => {
+    onMutate: async ({ creature }) => {
       await campaignById.cancel(campaignId);
       const previous = campaignById.getData(campaignId);
       campaignById.setData(campaignId, (old) => {
         if (!old) {
           return;
         }
-        const playerWithPlaceholders = CreatureUtils.placeholder(player);
+        const playerWithPlaceholders = CreatureUtils.placeholder({
+          ...creature,
+          is_player: Boolean(creature.is_player),
+        });
         return {
           ...old,
           campaignToPlayers: [
@@ -71,32 +91,22 @@ export function useAddExistingToParty(campaignId: string) {
   });
 }
 
-export function useAddNewToParty(campaign: { id: string }) {
+export function useAddExistingToParty(campaign: { id: string }) {
   const campaignId = campaign.id;
   const { campaignById } = api.useUtils();
 
-  return useMutation({
-    mutationFn: async (data: CreaturePost) => {
-      const dataAsForm = getCreaturePostForm(data);
-      dataAsForm.set("max_hp", "1");
-      await createPlayerAndAddToCampaign(campaignId, dataAsForm);
-    },
-    onSettled: async () => {
-      return await campaignById.invalidate(campaignId);
-    },
-    onError: (err, variables, context) =>
-      console.error(err, variables, context),
-    onSuccess: (data) => {
-      console.log(data);
-    },
-    onMutate: async (player) => {
+  return api.addExistingCreatureToParty.useMutation({
+    onMutate: async ({ creature }) => {
       await campaignById.cancel(campaignId);
       const previous = campaignById.getData(campaignId);
       campaignById.setData(campaignId, (old) => {
         if (!old) {
           return;
         }
-        const playerWithPlaceholders = CreatureUtils.placeholder(player);
+        const playerWithPlaceholders = CreatureUtils.placeholder({
+          ...creature,
+          is_player: Boolean(creature.is_player),
+        });
         return {
           ...old,
           campaignToPlayers: [

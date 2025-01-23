@@ -34,7 +34,6 @@ function iconDimensions(
 export function CreatureIcon({
   creature,
   size,
-  objectFit = "contain",
 }: {
   creature: {
     id: string;
@@ -43,7 +42,6 @@ export function CreatureIcon({
     name: string;
   };
   size?: IconSize;
-  objectFit?: "contain" | "cover";
 }) {
   if (!creature.icon_width || !creature.icon_height) {
     console.trace();
@@ -67,6 +65,7 @@ export function CreatureIcon({
         alt={creature.name}
         width={width}
         height={height}
+        fetchPriority="high"
       />
       <AvatarFallback>{creature.name}</AvatarFallback>
     </Avatar>

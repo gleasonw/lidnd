@@ -6,7 +6,7 @@ import { removeUndefinedFields } from "@/app/[username]/utils";
 import type { UpsertEncounter } from "@/app/[username]/types";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
-import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
+import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import type { Encounter } from "@/server/api/router";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 
@@ -30,7 +30,7 @@ export function useEncounter() {
 export function useCycleNextTurn() {
   const [encounter] = useEncounter();
   const { encounterById } = api.useUtils();
-  const { scrollToParticipant } = useEncounterUIStore();
+  const uiStore = useEncounterUIStore();
 
   return api.cycleNextTurn.useMutation({
     onSettled: async () => {
@@ -46,7 +46,11 @@ export function useCycleNextTurn() {
 
         const newlyActiveParticipant = participants.find((p) => p.is_active);
         if (newlyActiveParticipant) {
-          scrollToParticipant(newlyActiveParticipant.id);
+          uiStore.scrollToParticipant(newlyActiveParticipant.id);
+        }
+
+        if (old.current_round !== updatedRoundNumber) {
+          uiStore.resetViewedState();
         }
 
         return { ...old, participants, current_round: updatedRoundNumber };
@@ -59,7 +63,7 @@ export function useCycleNextTurn() {
 export function useCyclePreviousTurn() {
   const [encounter] = useEncounter();
   const { encounterById } = api.useUtils();
-  const { scrollToParticipant } = useEncounterUIStore();
+  const uiStore = useEncounterUIStore();
 
   return api.cyclePreviousTurn.useMutation({
     onSettled: async () => {
@@ -75,7 +79,7 @@ export function useCyclePreviousTurn() {
 
         const newlyActiveParticipant = participants.find((p) => p.is_active);
         if (newlyActiveParticipant) {
-          scrollToParticipant(newlyActiveParticipant.id);
+          uiStore.scrollToParticipant(newlyActiveParticipant.id);
         }
 
         return { ...old, participants, current_round };
@@ -439,15 +443,7 @@ export function useStartEncounter() {
       const previousEncounter = encounterById.getData(id);
       encounterById.setData(id, (old) => {
         if (!old) return old;
-        const [firstActive, firstRoundNumber] =
-          EncounterUtils.firstActiveAndRoundNumber(old);
-
-        const newEncounter = EncounterUtils.updateParticipant(
-          { ...firstActive, is_active: true },
-          { ...old, current_round: firstRoundNumber }
-        );
-
-        return { ...newEncounter, status: "run" };
+        return EncounterUtils.start(old);
       });
       return { previousEncounter };
     },

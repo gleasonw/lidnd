@@ -1,20 +1,9 @@
-import { LidndTextInput } from "@/components/ui/lidnd-text-input";
-import { ImageUpload } from "../image-upload";
-import { Angry, FileText, Plus, User } from "lucide-react";
+import { Angry, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Suspense, useEffect, useState } from "react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import * as UploadHooks from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-upload-hooks";
-import { FormField } from "@/components/ui/form";
 import { creatureUploadSchema } from "@/server/db/schema";
-import { FormProvider, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type {
-  Creature,
-  Encounter,
-  EncounterWithParticipants,
-} from "@/server/api/router";
+import type { Creature, Encounter } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { Heart, Skull } from "lucide-react";
 import { observer } from "mobx-react-lite";
@@ -26,27 +15,23 @@ import { AddCreatureButton } from "@/encounters/add-creature-button";
 import { z } from "zod";
 import { omit } from "remeda";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AllyCreatureUploadForm,
+  OppponentCreatureUploadForm,
+  useCreatureForm,
+} from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 
 /**
  * We don't actually upload these, but we want to make sure the user has
  * a stat block image ready before triggering the full upload.
  */
-const localCreatureUploadSchema = creatureUploadSchema.extend({
+export const localCreatureUploadSchema = creatureUploadSchema.extend({
   statBlockImage: z.instanceof(File),
   iconImage: z.instanceof(File).optional(),
 });
 
 function useParticipantForm(role: "ally" | "opponent") {
-  const form = useForm<Zod.infer<typeof localCreatureUploadSchema>>({
-    resolver: zodResolver(localCreatureUploadSchema),
-    defaultValues: {
-      name: "",
-      is_player: false,
-    },
-    resetOptions: {
-      keepValues: false,
-    },
-  });
+  const form = useCreatureForm();
   const [encounter] = useEncounter();
 
   function onSubmit(values: Zod.infer<typeof localCreatureUploadSchema>) {
@@ -84,107 +69,11 @@ export function AllyParticipantForm() {
   const { form, onSubmit, isPending } = useParticipantForm("ally");
 
   return (
-    <FormProvider {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col gap-6 p-5 w-full"
-      >
-        <FormField
-          control={form.control}
-          name={"is_player"}
-          render={({ field }) => (
-            <RadioGroup
-              value={field.value ? "player" : "ally"}
-              onValueChange={(v) => field.onChange(v === "player")}
-            >
-              <div className="flex gap-3 justify-start">
-                <label>
-                  Ally
-                  <RadioGroupItem value="ally" />
-                </label>
-                <label>
-                  Player
-                  <RadioGroupItem value="player" />
-                </label>
-              </div>
-            </RadioGroup>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name={"name"}
-          render={({ field }) => {
-            return <LidndTextInput required placeholder="Name" {...field} />;
-          }}
-        />
-        <FormField
-          control={form.control}
-          name="statBlockImage"
-          render={({ field }) => (
-            <ImageUpload
-              dropContainerClassName="h-52"
-              onUpload={(image) => {
-                field.onChange(image);
-              }}
-              dropText="Drop a Statblock"
-              dropIcon={<FileText />}
-              previewSize={800}
-              image={field.value}
-              clearImage={() => field.onChange(undefined)}
-              fileInputProps={{ name: "stat_block_image" }}
-            />
-          )}
-        />
-        <div className="flex gap-3">
-          <FormField
-            control={form.control}
-            name={"max_hp"}
-            render={({ field }) => (
-              <Input
-                type="number"
-                required
-                placeholder="HP"
-                {...field}
-                value={field.value ?? ""}
-              />
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={"challenge_rating"}
-            render={({ field }) => (
-              <Input
-                type="number"
-                placeholder="Challenge Rating"
-                {...field}
-                value={field.value ?? ""}
-              />
-            )}
-          />
-        </div>
-        <FormField
-          control={form.control}
-          name="iconImage"
-          render={({ field }) => {
-            return (
-              <ImageUpload
-                image={field.value}
-                clearImage={() => field.onChange(undefined)}
-                onUpload={(image) => {
-                  field.onChange(image);
-                }}
-                dropText="Drop an Icon"
-                dropIcon={<User />}
-                fileInputProps={{ name: "icon_image" }}
-              />
-            );
-          }}
-        />
-        <Button type="submit">
-          {isPending ? "Uploading..." : "Add participant"}
-        </Button>
-      </form>
-    </FormProvider>
+    <AllyCreatureUploadForm
+      form={form}
+      onSubmit={onSubmit}
+      isPending={isPending}
+    />
   );
 }
 
@@ -204,88 +93,11 @@ export function OpponentParticipantForm() {
         </TabsList>
       </span>
       <TabsContent value="new">
-        <FormProvider {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-6 p-5 w-full"
-          >
-            <FormField
-              control={form.control}
-              name={"name"}
-              render={({ field }) => {
-                return (
-                  <LidndTextInput required placeholder="Name" {...field} />
-                );
-              }}
-            />
-            <FormField
-              control={form.control}
-              name="statBlockImage"
-              render={({ field }) => (
-                <ImageUpload
-                  dropContainerClassName="h-52"
-                  onUpload={(image) => {
-                    field.onChange(image);
-                  }}
-                  dropText="Drop a Statblock"
-                  dropIcon={<FileText />}
-                  previewSize={800}
-                  image={field.value}
-                  clearImage={() => field.onChange(undefined)}
-                  fileInputProps={{ name: "stat_block_image" }}
-                />
-              )}
-            />
-            <div className="flex gap-3">
-              <FormField
-                control={form.control}
-                name={"max_hp"}
-                render={({ field }) => (
-                  <Input
-                    type="number"
-                    required
-                    placeholder="HP"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
-                )}
-              />
-              <FormField
-                control={form.control}
-                name={"challenge_rating"}
-                render={({ field }) => (
-                  <Input
-                    type="number"
-                    placeholder="Challenge Rating"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="iconImage"
-              render={({ field }) => {
-                return (
-                  <ImageUpload
-                    image={field.value}
-                    clearImage={() => field.onChange(undefined)}
-                    onUpload={(image) => {
-                      field.onChange(image);
-                    }}
-                    dropText="Drop an Icon"
-                    dropIcon={<User />}
-                    fileInputProps={{ name: "icon_image" }}
-                  />
-                );
-              }}
-            />
-            <Button type="submit">
-              {isPending ? "Uploading..." : "Add participant"}
-            </Button>
-          </form>
-        </FormProvider>
+        <OppponentCreatureUploadForm
+          form={form}
+          onSubmit={onSubmit}
+          isPending={isPending}
+        />
       </TabsContent>
       <TabsContent value="existing">
         <ExistingMonster />

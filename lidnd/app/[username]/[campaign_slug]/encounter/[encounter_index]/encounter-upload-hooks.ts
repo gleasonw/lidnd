@@ -1,11 +1,8 @@
-import {
-  useEncounter,
-  useEncounterQueryUtils,
-  useUpdateCreature,
-} from "./hooks";
+import { useEncounter, useEncounterQueryUtils } from "./hooks";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { api } from "@/trpc/react";
+import { useAwsImageUpload } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 
 /**Note: must be called underneath an encounter provider */
 export function useUploadParticipant({
@@ -21,7 +18,14 @@ export function useUploadParticipant({
   const { encounterById } = api.useUtils();
   const id = encounter.id;
   const { invalidateAll, cancelAll } = useEncounterQueryUtils();
-  const { mutate: updateCreature } = useUpdateCreature();
+  const uploadToAws = useAwsImageUpload({
+    statBlockImage: creatureStatBlock,
+    iconImage: creatureIcon,
+    onSuccess: () => {
+      onSuccess?.();
+      invalidateAll(encounter);
+    },
+  });
 
   return api.uploadParticipant.useMutation({
     onMutate: async (data) => {
@@ -42,6 +46,7 @@ export function useUploadParticipant({
             {
               ...data.creature,
               user_id: "pending",
+              is_player: Boolean(data.creature.is_player),
             }
           ),
           old
@@ -56,97 +61,14 @@ export function useUploadParticipant({
       }
     },
     onSuccess: async (data) => {
-      try {
-        const fileUploadTasks = [];
-        const dimensionTasks = [];
-
-        if (data.iconPresigned && creatureIcon) {
-          fileUploadTasks.push(
-            uploadFileToAWS(creatureIcon, data.iconPresigned)
-          );
-          dimensionTasks.push(readImageHeightWidth(creatureIcon));
-        }
-
-        if (data.statBlockPresigned && creatureStatBlock) {
-          fileUploadTasks.push(
-            uploadFileToAWS(creatureStatBlock, data.statBlockPresigned)
-          );
-          dimensionTasks.push(readImageHeightWidth(creatureStatBlock));
-        }
-
-        await Promise.all(fileUploadTasks);
-
-        const dimensions = await Promise.all(dimensionTasks);
-
-        const [statBlockDimensions, iconDimensions] = dimensions;
-        updateCreature({
-          ...data.creature,
-          stat_block_height:
-            statBlockDimensions?.height ?? data.creature.stat_block_height,
-          stat_block_width:
-            statBlockDimensions?.width ?? data.creature.stat_block_width,
-          icon_height: iconDimensions?.height ?? data.creature.icon_height,
-          icon_width: iconDimensions?.width ?? data.creature.icon_width,
-        });
-
-        onSuccess?.();
-        invalidateAll(encounter);
-      } catch (error) {
-        console.error(error);
-        const message = "Failed to upload participant";
-        if (!(error instanceof Error)) {
-          throw new Error(message);
-        }
-        throw new Error(`${message}: ${error.message}`);
-      }
+      uploadToAws({
+        iconPresigned: data.iconPresigned,
+        statBlockPresigned: data.statBlockPresigned,
+        creature: data.creature,
+      });
     },
     onSettled: async () => {
       return await invalidateAll(encounter);
     },
-  });
-}
-
-async function uploadFileToAWS(file: File, presignedUrl: string) {
-  try {
-    const response = await fetch(presignedUrl, {
-      method: "PUT",
-      headers: {
-        "Content-Type": file.type,
-      },
-      body: file,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to upload file: ${response.statusText}`);
-    }
-
-    console.log("File uploaded successfully!");
-  } catch (err) {
-    console.error("Error uploading file to AWS:", err);
-  }
-}
-
-async function readImageHeightWidth(
-  file: File
-): Promise<{ height: number; width: number }> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = function (event) {
-      const image = new Image();
-      image.onload = function () {
-        resolve({
-          height: image.height,
-          width: image.width,
-        });
-      };
-      image.onerror = function () {
-        reject(new Error("Failed to read image"));
-      };
-      image.src = event.target?.result as string;
-    };
-    reader.onerror = function (error) {
-      reject(error);
-    };
-    reader.readAsDataURL(file);
   });
 }

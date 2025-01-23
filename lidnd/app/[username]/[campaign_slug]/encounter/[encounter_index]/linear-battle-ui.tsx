@@ -3,22 +3,18 @@ import React, { createContext, useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import { BattleCard } from "./battle-ui";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
-import {
-  useEncounter,
-  useRemoveParticipantFromEncounter,
-} from "@/encounters/[encounter_index]/hooks";
+import { useEncounter } from "@/encounters/[encounter_index]/hooks";
 import { observer } from "mobx-react-lite";
-import { Button } from "@/components/ui/button";
-import { Grip, Trash, X } from "lucide-react";
-import {
-  StatColumnUtils,
-  type ColumnWithParticipants,
-} from "@/utils/stat-columns";
+import { X } from "lucide-react";
+import { StatColumnUtils } from "@/utils/stat-columns";
 import { ParticipantUtils } from "@/utils/participants";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { AddColumn } from "@/app/public/images/icons/AddColumn";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
+import type { Participant } from "@/server/api/router";
+import type { StatColumn } from "@/server/api/columns-router";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 //todo: custom margin when in editing layout mode
 
@@ -56,77 +52,50 @@ export const useParentResizeObserver = () => {
 };
 
 export const LinearBattleUI = observer(function LinearBattleUI() {
-  const id = useEncounterId();
-  const [encounter] = api.encounterById.useSuspenseQuery(id);
-
   const { parentWidth, containerRef } = useParentResizeObserver();
 
   return (
-    <div className="flex relative gap-4 h-full" ref={containerRef}>
-      {encounter.is_editing_columns ? (
-        <>
-          <div className="absolute -top-10 h-10 right-0 text-xl z-10">
-            <CreateNewColumnButton />
-          </div>
-          <ParentWidthContext.Provider value={parentWidth}>
-            <StatColumns />
-          </ParentWidthContext.Provider>
-        </>
-      ) : (
-        <ReadOnlyStatColumns />
-      )}
+    <div
+      className="flex relative gap-1 w-full max-h-full overflow-hidden"
+      ref={containerRef}
+    >
+      <ParentWidthContext.Provider value={parentWidth}>
+        <StatColumns />
+      </ParentWidthContext.Provider>
     </div>
   );
 });
 
-function ReadOnlyStatColumns() {
-  const [encounter] = useEncounter();
-  return encounter.columns?.map((c) => (
-    <ReadOnlyStatColumn column={c} key={c.id} />
-  ));
-}
-
-function ReadOnlyStatColumn({ column }: { column: ColumnWithParticipants }) {
-  return (
-    <div
-      className="flex flex-col gap-10"
-      style={{ width: `${column.percent_width}%` }}
-    >
-      <BattleCards column={column} />
-    </div>
-  );
-}
-
 export function StatColumns() {
-  const [encounter] = useEncounter();
-  return encounter.columns?.map((c, index) => (
-    <StatColumnComponent column={c} key={c.id} index={index}>
-      <BattleCards column={c} />
+  const encounterId = useEncounterId();
+  const { data: columns } = api.getColumns.useQuery(encounterId);
+  return columns?.map((c, index) => (
+    <StatColumnComponent column={c} index={index} key={c.id}>
+      <ScrollArea className="flex flex-col gap-5 border border-t-0 w-full max-h-full h-full overflow-hidden bg-white">
+        <BattleCards column={c} />
+      </ScrollArea>
     </StatColumnComponent>
   ));
 }
 
 export function CreateNewColumnButton() {
-  const { encounterById } = api.useUtils();
-  const [encounter] = useEncounter();
+  const { getColumns } = api.useUtils();
+  const encounterId = useEncounterId();
+  const { data: columns } = api.getColumns.useQuery(encounterId);
   const { mutate: createColumn } = api.createColumn.useMutation({
     onSettled: async () => {
-      return await encounterById.invalidate(encounter.id);
+      return await getColumns.invalidate(encounterId);
     },
     onMutate: async (newColumn) => {
-      const columns = encounter.columns;
-      await encounterById.cancel(newColumn.encounter_id);
-      const previousEncounter = encounterById.getData(newColumn.encounter_id);
-      encounterById.setData(newColumn.encounter_id, (old) => {
+      await getColumns.cancel(newColumn.encounter_id);
+      const previousEncounter = getColumns.getData(newColumn.encounter_id);
+      getColumns.setData(newColumn.encounter_id, (old) => {
         if (!old || !columns) return old;
-        return {
-          ...old,
-          columns: StatColumnUtils.add(columns, {
-            ...newColumn,
-            participants: [],
-            id: Math.random.toString(),
-          }),
-        };
+        return StatColumnUtils.add(columns, {
+          ...newColumn,
+          participants: [],
+          id: Math.random.toString(),
+        });
       });
       return { previousColumns: previousEncounter };
     },
@@ -136,7 +105,7 @@ export function CreateNewColumnButton() {
       text={"Create new column"}
       variant="ghost"
       onClick={() =>
-        createColumn({ encounter_id: encounter.id, percent_width: 50 })
+        createColumn({ encounter_id: encounterId, percent_width: 50 })
       }
     >
       <AddColumn className="h-6 w-6" />
@@ -148,23 +117,26 @@ export function StatColumnComponent({
   column,
   index,
   children,
+  toolbarExtra,
 }: {
-  column: ColumnWithParticipants;
+  column: StatColumn & { participants: Participant[] };
   index: number;
   children: React.ReactNode;
+  toolbarExtra?: React.ReactNode;
 }) {
-  const [encounter] = useEncounter();
   const [acceptDrop, setAcceptDrop] = React.useState(false);
-  const { encounterById } = api.useUtils();
+  const { encounterById, getColumns } = api.useUtils();
+  const encounterId = useEncounterId();
+  const { data: columns } = api.getColumns.useQuery(encounterId);
   const { mutate: assignParticipantToColumn } =
     api.assignParticipantToColumn.useMutation({
       onSettled: async () => {
-        return await encounterById.invalidate(encounter.id);
+        return await encounterById.invalidate(encounterId);
       },
       onMutate: async (newColumn) => {
-        await encounterById.cancel(encounter.id);
-        const previousEncounter = encounterById.getData(encounter.id);
-        encounterById.setData(encounter.id, (old) => {
+        await encounterById.cancel(encounterId);
+        const previousEncounter = encounterById.getData(encounterId);
+        encounterById.setData(encounterId, (old) => {
           if (!old) return old;
           return {
             ...old,
@@ -180,27 +152,25 @@ export function StatColumnComponent({
     });
   const { mutate: deleteColumn } = api.deleteColumn.useMutation({
     onSettled: async () => {
-      return await encounterById.invalidate();
+      return await getColumns.invalidate();
     },
     onMutate: async (column) => {
-      await encounterById.cancel(column.encounter_id);
-      const previousEncounter = encounterById.getData(column.encounter_id);
-      encounterById.setData(column.encounter_id, (old) => {
-        if (!previousEncounter) {
+      await getColumns.cancel(column.encounter_id);
+      const previousColumns = getColumns.getData(column.encounter_id);
+      getColumns.setData(column.encounter_id, (old) => {
+        if (!previousColumns) {
           return old;
         }
-        return {
-          ...encounter,
-          columns: StatColumnUtils.remove(previousEncounter.columns, column.id),
-        };
+        return StatColumnUtils.remove(previousColumns, column.id);
       });
-      return { previousColumns: previousEncounter };
+      return { previousColumns: previousColumns };
     },
   });
+  const isLastColumn = columns && index === columns.length - 1;
   return (
     <>
       <div
-        className={`flex flex-col h-full items-start relative ${
+        className={`flex flex-col h-full max-h-full overflow-hidden items-start relative ${
           acceptDrop && "outline outline-blue-500"
         }`}
         style={{ width: `${column.percent_width}%` }}
@@ -216,7 +186,7 @@ export function StatColumnComponent({
           assignParticipantToColumn({
             participant_id: droppedParticipant.id,
             column_id: column.id,
-            encounter_id: encounter.id,
+            encounter_id: encounterId,
           });
           setAcceptDrop(false);
         }}
@@ -234,25 +204,33 @@ export function StatColumnComponent({
         }}
         onDragLeave={() => setAcceptDrop(false)}
       >
-        <div className="mr-auto border border-b-0">
-          {encounter.columns.length > 1 ? (
-            <ButtonWithTooltip
-              text="Delete column"
-              className="h-10"
-              variant="ghost"
-              onClick={() => deleteColumn(column)}
-            >
-              <X />
-            </ButtonWithTooltip>
+        <div className="flex w-full">
+          {columns && columns?.length > 1 ? (
+            <div className="border border-b-0">
+              <ButtonWithTooltip
+                text="Delete column"
+                className="h-10 bg-white"
+                variant="ghost"
+                onClick={() => deleteColumn(column)}
+              >
+                <X />
+              </ButtonWithTooltip>
+            </div>
           ) : null}
+          <div className="flex w-full border-b" />
+          <div
+            className={` ${isLastColumn ? "flex" : "hidden"} ml-auto border-b`}
+          >
+            <CreateNewColumnButton />
+          </div>
         </div>
 
-        <div className="flex flex-col gap-5 border w-full max-h-full overflow-hidden">
-          {children}
-        </div>
+        {toolbarExtra}
+
+        {children}
       </div>
       <StatColumnSplitter
-        rightColumnId={encounter.columns[index + 1]?.id}
+        rightColumnId={columns?.[index + 1]?.id}
         leftColumnId={column.id}
         key={index}
       />
@@ -260,15 +238,13 @@ export function StatColumnComponent({
   );
 }
 
-function BattleCards({ column }: { column: ColumnWithParticipants }) {
+function BattleCards({ column }: { column: StatColumn }) {
   const [encounter] = useEncounter();
   const { registerBattleCardRef } = useEncounterUIStore();
-  const { mutate: removeCreatureFromEncounter } =
-    useRemoveParticipantFromEncounter();
 
-  const participantsInColumn = column.participants.sort(
-    ParticipantUtils.sortLinearly
-  );
+  const participantsInColumn = encounter.participants
+    .filter((p) => p.column_id === column.id)
+    .sort(ParticipantUtils.sortLinearly);
 
   return participantsInColumn.map((p) => (
     <BattleCard
@@ -277,38 +253,10 @@ function BattleCards({ column }: { column: ColumnWithParticipants }) {
       data-is-active={p.is_active}
       data-participant-id={p.id}
       key={p.id}
-      extraHeaderButtons={
-        encounter?.is_editing_columns ? (
-          <>
-            <Button
-              variant="ghost"
-              className="z-10"
-              onDragStart={(e) => {
-                typedDrag.set(e.dataTransfer, dragTypes.participant, p);
-              }}
-              draggable
-            >
-              <Grip />
-            </Button>
-            <Button
-              variant="ghost"
-              className="opacity-25 z-10"
-              onClick={() =>
-                removeCreatureFromEncounter({
-                  encounter_id: encounter.id,
-                  participant_id: p.id,
-                })
-              }
-            >
-              <Trash />
-            </Button>
-          </>
-        ) : null
-      }
     />
   ));
 }
-
+//todo make this smaller... like vscode
 function StatColumnSplitter({
   rightColumnId,
   leftColumnId,
@@ -317,12 +265,13 @@ function StatColumnSplitter({
   leftColumnId: string;
 }) {
   const parentWidth = React.useContext(ParentWidthContext);
-  const { encounterById } = api.useUtils();
-  const [encounter] = useEncounter();
+  const { getColumns } = api.useUtils();
+  const encounterId = useEncounterId();
   const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
+  const { data: columns } = api.getColumns.useQuery(encounterId);
   const handleMouseDown = (e: React.MouseEvent) => {
     const startX = e.clientX;
-    const currentColumns = encounterById.getData(encounter.id)?.columns;
+    const currentColumns = getColumns.getData(encounterId);
     const leftColumnStart = currentColumns?.find((c) => c.id === leftColumnId);
     const rightColumnStart = currentColumns?.find(
       (c) => c.id === rightColumnId
@@ -354,20 +303,17 @@ function StatColumnSplitter({
           ...rightColumnStart,
           percent_width: rightColumnStart.percent_width - deltaPercent,
         };
-        encounterById.setData(encounter.id, (old) => {
+        getColumns.setData(encounterId, (old) => {
           if (!old) return old;
-          return {
-            ...encounter,
-            columns: encounter.columns.map((c) => {
-              if (c.id === leftColumnId) {
-                return newLeftColumn;
-              }
-              if (c.id === rightColumnId) {
-                return newRightColumn;
-              }
-              return c;
-            }),
-          };
+          return columns?.map((c) => {
+            if (c.id === leftColumnId) {
+              return newLeftColumn;
+            }
+            if (c.id === rightColumnId) {
+              return newRightColumn;
+            }
+            return c;
+          });
         });
         isPendingSetStateForFrame = null;
       });
@@ -375,7 +321,7 @@ function StatColumnSplitter({
 
     const handleMouseUp = () => {
       document.body.style.userSelect = "auto";
-      const updatedColumns = encounterById.getData(encounter.id)?.columns;
+      const updatedColumns = getColumns.getData(encounterId);
       if (!updatedColumns) {
         throw new Error("no columns found when updating");
       }
@@ -383,7 +329,7 @@ function StatColumnSplitter({
       document.removeEventListener("mouseup", handleMouseUp);
       updateColumnBatch({
         columns: updatedColumns,
-        encounter_id: encounter.id,
+        encounter_id: encounterId,
       });
     };
 
@@ -393,7 +339,7 @@ function StatColumnSplitter({
   return (
     <div
       onMouseDown={handleMouseDown}
-      className="w-2 bg-gray-300 hover:bg-gray-500 right-0 z-10 last:hidden"
+      className="w-2 hover:bg-gray-500 right-0 z-10 last:hidden"
       style={{ cursor: "ew-resize" }}
     />
   );
