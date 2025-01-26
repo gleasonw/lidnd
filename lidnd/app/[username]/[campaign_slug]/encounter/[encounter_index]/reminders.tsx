@@ -90,7 +90,7 @@ export function ReminderInput() {
       }}
       className="flex flex-col gap-3"
     >
-      <section className="flex gap-3 items-center shadow-md border p-3">
+      <section className="flex gap-3 items-center p-3">
         <LidndTextInput
           variant="ghost"
           placeholder="Reminder text"
@@ -107,7 +107,7 @@ export function ReminderInput() {
           placeholder="After round (0 = all)"
           className="w-72"
         />
-        <Button type="submit">
+        <Button type="submit" variant="ghost">
           <Plus />
         </Button>
       </section>

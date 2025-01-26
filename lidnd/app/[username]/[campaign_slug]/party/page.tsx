@@ -15,14 +15,19 @@ import {
   type CreatureUpload,
   type PlayerUpload,
 } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
+import { useUIStore } from "@/app/UIStore";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { AddCreatureButton } from "@/encounters/add-creature-button";
+import type { Creature } from "@/server/api/router";
 import { api } from "@/trpc/react";
+import { CreatureUtils } from "@/utils/creatures";
 import { Plus, Smile, User, UserPlus } from "lucide-react";
+import { observer } from "mobx-react-lite";
+import Image from "next/image";
 import React from "react";
 import { useState } from "react";
 import * as R from "remeda";
@@ -31,26 +36,11 @@ import { useDebouncedCallback } from "use-debounce";
 export default function PartyPage() {
   const [campaign] = useCampaign();
   const { mutate: removeFromParty } = useRemoveFromParty(campaign);
+  const uiStore = useUIStore();
 
   return (
-    <div className="flex flex-col gap-5 pt-5">
+    <div className="flex flex-col gap-5 w-[800px] mx-auto overflow-auto">
       {/* todo: make a table */}
-      <PartyLevelInput />
-      <Card className="flex w-full flex-col gap-5 p-3">
-        {campaign.campaignToPlayers.map((c) => (
-          <div key={c.id} className="flex gap-2 items-center border">
-            <CreatureIcon key={c.player.id} creature={c.player} />
-            <span>{c.player.name}</span>
-            <Button
-              variant="destructive"
-              className="ml-auto"
-              onClick={() => removeFromParty(c.player.id)}
-            >
-              Remove
-            </Button>
-          </div>
-        ))}
-      </Card>
       <Card className="p-5">
         <Tabs defaultValue="new">
           <span className="flex gap-1 flex-wrap pr-2">
@@ -86,9 +76,61 @@ export default function PartyPage() {
           </TabsContent>
         </Tabs>
       </Card>
+      <PartyLevelInput />
+      <div className="flex gap-5 p-3">
+        {campaign.campaignToPlayers.map((c) => (
+          <Card
+            key={c.id}
+            className="flex gap-2 flex-col w-fit items-center p-3"
+          >
+            <CharacterIcon c={c.player} />
+            <span className="text-xl font-bold">{c.player.name}</span>
+            <Button
+              variant="ghost"
+              className="text-red-500"
+              onClick={() => removeFromParty(c.player.id)}
+            >
+              Remove
+            </Button>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
+
+const CharacterIcon = observer(function CharacterIcon({ c }: { c: Creature }) {
+  const uiStore = useUIStore();
+  const status = uiStore.getIconUploadStatus(c);
+  const statBlock = (
+    <Image
+      src={CreatureUtils.awsURL(c, "icon")}
+      width={c.icon_width}
+      height={c.icon_height}
+      className="w-32 h-32"
+      alt="icon"
+      onError={() =>
+        console.log("error loading image... this should never happen")
+      }
+    />
+  );
+  switch (status) {
+    case "pending":
+      return <div>pending</div>;
+    case "error":
+      return <div>error</div>;
+    case "idle":
+      return statBlock;
+    case "success":
+      return statBlock;
+    case undefined:
+      return statBlock;
+    default: {
+      const _: never = status;
+      throw new Error(`Unhandled case: ${status}`);
+    }
+  }
+});
 
 function PartyLevelInput() {
   const [campaign] = useCampaign();

@@ -50,7 +50,7 @@ export default function RollPage() {
   );
 
   return (
-    <Card className="grid grid-cols-2 h-full">
+    <Card className="grid grid-cols-2 h-full p-5">
       {" "}
       <div className="flex flex-col gap-3 overflow-auto">
         {sortedMonsters.map((m) => (
@@ -69,7 +69,7 @@ export default function RollPage() {
           />
         ))}
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-5">
         <PreBattleInputsList>
           {sortedParticipants.map((p) => (
             <PreBattleInput key={p.id} participant={p}>
@@ -103,7 +103,7 @@ export function PreBattleInputsList({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className={"flex flex-col gap-2 max-w-2xl"}>{children}</div>;
+  return <div className={"flex flex-col gap-5 max-w-2xl"}>{children}</div>;
 }
 
 export function PreBattleInput({
@@ -115,16 +115,12 @@ export function PreBattleInput({
 }) {
   const pName = ParticipantUtils.name(participant);
   return (
-    <div
-      key={participant.id}
-      className="flex gap-20 items-center justify-between"
-    >
-      <span className="flex gap-4 items-center">
+    <div key={participant.id} className="flex gap-5">
+      {children}
+      <span className="flex gap-4 items-end">
         <CreatureIcon creature={participant.creature} size="small" />
         <span>{pName}</span>
       </span>
-
-      {children}
     </div>
   );
 }

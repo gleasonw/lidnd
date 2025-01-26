@@ -5,10 +5,10 @@ import * as R from "remeda";
 import React, { createContext, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import {
+  BookIcon,
   Clock,
   GripVertical,
   MoreVertical,
-  Pencil,
   Skull,
   Trash,
   Users,
@@ -29,7 +29,6 @@ import { LidndPlusDialog } from "@/components/ui/lidnd_dialog";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useUser } from "@/app/[username]/user-provider";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   useDeleteEncounter,
   useUpdateCampaignEncounter,
@@ -52,11 +51,6 @@ import { Switch } from "@/components/ui/switch";
 export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
   const user = useUser();
   const partyLink = appRoutes.party({ campaign, user });
-
-  // kinda wonky, if we just use playersInCampaign it won't update correctly.
-  const { data: reactiveCampaign } = api.campaignById.useQuery(campaign.id, {
-    placeholderData: (prev) => prev,
-  });
 
   return (
     <div className="flex gap-5">
@@ -157,7 +151,10 @@ export function SessionEncounters() {
       )}
     >
       <div className="flex justify-between items-center w-full">
-        <span className="text-lg text-gray-900 font-bold">Session docket</span>
+        <h1 className={"text-2xl gap-5 flex items-center"}>
+          <BookIcon />
+          <span className="py-2 text-xl">Session docket</span>
+        </h1>
         <span className="opacity-50 flex items-center gap-2 text-sm ml-auto">
           <Clock className="text-4xl" />
           <span>Est. duration:</span>
@@ -174,7 +171,7 @@ export function SessionEncounters() {
         </Button>
       </div>
 
-      <Card
+      <div
         className={clsx(
           "flex overflow-auto max-h-full p-2 gap-2 border-2 border-dashed h-32 items-center",
 
@@ -232,7 +229,7 @@ export function SessionEncounters() {
             />
           );
         })}
-      </Card>
+      </div>
     </div>
   );
 }
@@ -264,7 +261,10 @@ export function EncounterArchive() {
   const { mutate: updateEncounter } = useUpdateCampaignEncounter();
   const { data: encounters } = api.encountersInCampaign.useQuery(campaignId);
   const inactiveEncounters = encounters
-    ? R.sort(encounters, compareCreatedAt).reverse()
+    ? R.sort(
+        EncounterUtils.byStatus(encounters).inactive ?? [],
+        compareCreatedAt
+      ).reverse()
     : [];
 
   const lastOrder = inactiveEncounters?.length
@@ -279,54 +279,52 @@ export function EncounterArchive() {
           <span className="py-2 text-xl">Encounters</span>
           <CreateEncounterButton category="inactive" />
         </h1>
-        <Card>
-          <ScrollArea
-            key={"inactive"}
-            onDrop={(e) => {
-              if (!acceptDrop) {
-                return;
-              }
-              const encounter = typedDrag.get(
-                e.dataTransfer,
-                dragTypes.encounter
-              );
-              if (!encounter) {
-                console.error("No encounter found when dragging");
-                return;
-              }
-              updateEncounter({
-                id: encounter.id,
-                label: "inactive",
-                order: lastOrder,
-              });
-              setAcceptDrop(false);
-            }}
-            onDragEnter={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            onDragOver={(e) => {
-              if (!typedDrag.includes(e.dataTransfer, dragTypes.encounter)) {
-                return;
-              }
-              e.preventDefault();
-              e.stopPropagation();
-              setAcceptDrop(true);
-            }}
-            onDragLeave={() => {
-              setAcceptDrop(false);
-            }}
-            className={clsx(
-              {
-                "border-black": acceptDrop,
-                "border-transparent": !acceptDrop,
-              },
-              "border-2 border-dashed flex flex-col w-full transition-all rounded-md max-h-full overflow-auto h-full"
-            )}
-          >
-            <InactiveEncounterList />
-          </ScrollArea>
-        </Card>
+        <div
+          key={"inactive"}
+          onDrop={(e) => {
+            if (!acceptDrop) {
+              return;
+            }
+            const encounter = typedDrag.get(
+              e.dataTransfer,
+              dragTypes.encounter
+            );
+            if (!encounter) {
+              console.error("No encounter found when dragging");
+              return;
+            }
+            updateEncounter({
+              id: encounter.id,
+              label: "inactive",
+              order: lastOrder,
+            });
+            setAcceptDrop(false);
+          }}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onDragOver={(e) => {
+            if (!typedDrag.includes(e.dataTransfer, dragTypes.encounter)) {
+              return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            setAcceptDrop(true);
+          }}
+          onDragLeave={() => {
+            setAcceptDrop(false);
+          }}
+          className={clsx(
+            {
+              "border-black": acceptDrop,
+              "border-transparent": !acceptDrop,
+            },
+            "border-2 border-dashed flex  justify-center transition-all rounded-md max-h-full overflow-auto h-full"
+          )}
+        >
+          <InactiveEncounterList />
+        </div>
       </EncounterArchiveContext.Provider>
     </div>
   );
@@ -350,7 +348,10 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
   const campaignId = useCampaignId();
   const { data: encounters } = api.encountersInCampaign.useQuery(campaignId);
   const inactiveEncounters = encounters
-    ? R.sort(encounters, compareCreatedAt).reverse()
+    ? R.sort(
+        EncounterUtils.inactiveEncounters(encounters),
+        compareCreatedAt
+      ).reverse()
     : [];
 
   const [campaign] = useCampaign();
@@ -358,7 +359,7 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
   const user = useUser();
   const { mutate: updateCampaign } = useUpdateCampaign(campaign);
   return (
-    <ul className="flex flex-col first:border-0 border-t-2">
+    <ul className="flex flex-col gap-3">
       {inactiveEncounters?.length === 0 ? (
         <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
       ) : null}
@@ -378,10 +379,8 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
             }
             key={encounter.id}
             encounterCard={
-              <div
-                className={clsx(
-                  "flex w-full gap-3 hover:bg-gray-100 border-b-2"
-                )}
+              <Card
+                className={clsx("flex w-[600px] px-5 gap-3 hover:bg-gray-100")}
                 draggable
                 onDragStart={(e) => {
                   typedDrag.set(e.dataTransfer, dragTypes.encounter, encounter);
@@ -430,7 +429,7 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
                   </LidndPopover>
                   <DifficultyBadge encounter={encounter} />
                 </div>
-              </div>
+              </Card>
             }
           />
         );
@@ -501,6 +500,7 @@ export function CreateEncounterButton({
     <LidndPlusDialog
       text="Create new encounter"
       dialogTitle="Create new encounter"
+      variant="default"
     >
       <form
         onSubmit={(e) => {
@@ -575,7 +575,7 @@ function DraggableEncounterCard(props: {
   );
   const { mutate: updateEncounter } = useUpdateCampaignEncounter();
   return (
-    <li
+    <div
       onDrop={(e) => {
         const droppedEncounter = typedDrag.get(
           e.dataTransfer,
@@ -594,10 +594,10 @@ function DraggableEncounterCard(props: {
         setAcceptDrop("none");
       }}
       key={encounter.id}
-      className={clsx("transition-all -mb-[2px] flex-grow-0 cursor-grab")}
+      className={clsx("transition-all flex-grow-0 h-fit w-fit")}
     >
       {props.encounterCard}
-    </li>
+    </div>
   );
 }
 export function MonstersInEncounter({
@@ -616,15 +616,19 @@ export function MonstersInEncounter({
 
   return (
     <div className="flex -space-x-4">
-      {participants?.map((p) => (
-        <button
-          className="rounded-full w-12 h-12 flex items-center justify-center overflow-hidden border-2 border-white bg-white"
-          key={p.id}
-          onClick={() => onClick?.(p)}
-        >
-          <CreatureIcon creature={p.creature} size="v-small" />
-        </button>
-      ))}
+      {participants?.length === 0 ? (
+        <div className="text-gray-400">no opponents</div>
+      ) : (
+        participants?.map((p) => (
+          <button
+            className="rounded-full w-12 h-12 flex items-center justify-center overflow-hidden border-2 border-white bg-white"
+            key={p.id}
+            onClick={() => onClick?.(p)}
+          >
+            <CreatureIcon creature={p.creature} size="v-small" />
+          </button>
+        ))
+      )}
     </div>
   );
 }

@@ -7,7 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import React from "react";
 import { motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
-import type { Participant, ParticipantWithData } from "@/server/api/router";
+import type {
+  Creature,
+  Participant,
+  ParticipantWithData,
+} from "@/server/api/router";
 import { LidndPopover } from "@/encounters/base-popover";
 import { EffectIcon, StatusInput } from "./status-input";
 import {
@@ -56,6 +60,7 @@ import { api } from "@/trpc/react";
 import type { StatColumn } from "@/server/api/columns-router";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
+import { useUIStore } from "@/app/UIStore";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -68,7 +73,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
     case "prep":
       return (
         <div className="flex max-h-full overflow-hidden h-full gap-3 pt-3">
-          <div className="flex flex-col gap-2 items-center">
+          <div className="flex flex-col gap-2 items-center w-[700px]">
             <Card className="flex flex-col items-center pb-3 gap-3 w-full">
               <div className=" p-4 flex justify-evenly text-lg w-full">
                 <EncounterDifficulty />
@@ -80,18 +85,13 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 </Button>
               </Link>
             </Card>
-            <Card className="w-full flex p-3">
-              <ReminderInput />
+            <ReminderInput />
+            <Card className="p-4 overflow-auto w-full h-full">
+              <OpponentParticipantForm />
             </Card>
-            <ParticipantsContainer
-              role="monsters"
-              extra={<OpponentParticipantForm />}
-            />
           </div>
           <div className="w-full overflow-hidden flex flex-col gap-3">
-            <Card className="p-4">
-              <PrepVersusDisplay />
-            </Card>
+            <PrepVersusDisplay />
             <EncounterBattlePreview />
           </div>
         </div>
@@ -101,7 +101,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
         <section className="flex flex-col max-h-full min-h-0 h-full">
           <InitiativeTracker />
           <Reminders />
-          <div className="flex gap-4 flex-col w-full max-h-full overflow-hidden">
+          <div className="flex gap-4 flex-col w-full max-h-full overflow-hidden h-full">
             {/**create space for the overlaid initiative tracker */}
             {encounter.status === "run" && <div className="my-5" />}
             {encounter.description ? (
@@ -225,23 +225,52 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
             <BattleCardTools participant={p} />
           </div>
 
-          {/* required for the image to respect the bounds... goodness */}
           <div className="w-full h-full max-h-full overflow-hidden">
-            <Image
-              quality={100}
-              style={{ objectFit: "contain" }}
-              className="max-h-full"
-              src={CreatureUtils.awsURL(p.creature, "stat_block")}
-              alt={p.creature.name}
-              width={p.creature.stat_block_width}
-              height={p.creature.stat_block_height}
-            />
+            <CreatureStatBlock creature={p.creature} />
           </div>
         </div>
       ))}
     </div>
   );
 }
+
+const CreatureStatBlock = observer(function CreatureStatBlock({
+  creature,
+}: {
+  creature: Creature;
+}) {
+  const uiStore = useUIStore();
+  const status = uiStore.getStatBlockUploadStatus(creature);
+
+  const statblock = (
+    <Image
+      quality={100}
+      style={{ objectFit: "contain" }}
+      className="max-h-full"
+      src={CreatureUtils.awsURL(creature, "stat_block")}
+      alt={creature.name}
+      width={creature.stat_block_width}
+      height={creature.stat_block_height}
+      onError={() => console.log("error loading image")}
+    />
+  );
+  switch (status) {
+    case "idle":
+      return statblock;
+    case "pending":
+      return <div>pending</div>;
+    case "success":
+      return statblock;
+    case "error":
+      return <div>error</div>;
+    case undefined:
+      return statblock;
+    default: {
+      const _: never = status;
+      throw new Error(`Unhandled case: ${status}`);
+    }
+  }
+});
 
 //TODO: this isn't a participants container anymore, more just a sidebar for allies/monsters uploads
 function ParticipantsContainer({
@@ -262,7 +291,6 @@ function ParticipantsContainer({
           `flex flex-col gap-4 w-full p-3 items-center shadow-sm h-full`
         )}
       >
-        <CardTitle>{role === "allies" ? "Allies" : "Monsters"}</CardTitle>
         <div className="flex flex-wrap gap-2 items-center justify-center">
           {children}
         </div>
@@ -372,7 +400,7 @@ export function BattleCard({
 
   return (
     <div
-      className={`relative flex-col gap-6 items-center w-full justify-between flex `}
+      className={`relative flex-col h-full gap-6 items-center w-full justify-between flex `}
       ref={ref}
       {...props}
     >
@@ -430,7 +458,9 @@ export function BattleCard({
             <ParticipantHealthForm participant={participant} />
           </BattleCardContent>
         </div>
-        <CreatureStatBlockImage creature={participant.creature} />
+        <div className="flex w-full h-full border">
+          <CreatureStatBlockImage creature={participant.creature} />
+        </div>
       </BattleCardLayout>
     </div>
   );
@@ -449,7 +479,7 @@ export function BattleCardLayout({
   return (
     <div
       className={clsx(
-        "bg-white shadow-sm w-full flex flex-col justify-between transition-all group",
+        "bg-white h-full shadow-sm w-full flex flex-col justify-between transition-all group",
         {
           "shadow-lg shadow-red-800":
             !ParticipantUtils.isFriendly(participant) && participant.is_active,

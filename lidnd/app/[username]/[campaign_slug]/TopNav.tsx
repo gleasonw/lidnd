@@ -68,6 +68,10 @@ function CampaignGate({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+  if (campaignSlug === "creatures") {
+    // really clunky... there's definitely a better way to do this
+    return null;
+  }
   return children;
 }
 

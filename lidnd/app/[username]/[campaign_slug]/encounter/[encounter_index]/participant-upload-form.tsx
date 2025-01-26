@@ -54,6 +54,7 @@ function useParticipantForm(role: "ally" | "opponent") {
       creatureIcon: form.getValues("iconImage"),
       creatureStatBlock: form.getValues("statBlockImage"),
       onSuccess: () => {
+        console.log("upload participant success, reseting form");
         form.reset();
       },
     });
@@ -81,7 +82,7 @@ export function OpponentParticipantForm() {
   const { form, onSubmit, isPending } = useParticipantForm("opponent");
 
   return (
-    <Tabs defaultValue="new" className="w-full">
+    <Tabs defaultValue="new" className="overflow-auto">
       <span>
         <TabsList>
           <TabsTrigger value="new">
@@ -119,7 +120,7 @@ export function ExistingMonster({
   });
 
   return (
-    <div className="flex flex-col max-h-full gap-5">
+    <div className="flex flex-col max-h-full gap-5 ">
       <Input
         placeholder="Search..."
         type="text"
@@ -127,7 +128,7 @@ export function ExistingMonster({
         value={name}
       />
       <Suspense key={name} fallback={<div>Loading creatures</div>}>
-        <div className={"flex flex-col overflow-auto gap-3 py-3 h-[600px]"}>
+        <div className={"flex flex-col overflow-auto gap-3 py-3"}>
           {creatures?.map((creature) => (
             <ListedCreature
               key={creature.id}

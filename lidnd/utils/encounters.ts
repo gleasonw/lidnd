@@ -80,9 +80,17 @@ function start(e: EncounterWithData): EncounterWithData {
   };
 }
 
+/**encounters not in the session */
+function inactiveEncounters<E extends { label: Encounter["label"] }>(
+  encounters: E[]
+) {
+  return encounters.filter((e) => e.label === "inactive");
+}
+
 const DEFAULT_LEVEL = 1;
 
 export const EncounterUtils = {
+  inactiveEncounters,
   start,
   difficultyCssClasses,
   difficultyClassForCR,

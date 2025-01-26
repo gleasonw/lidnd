@@ -4,21 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { Plus } from "lucide-react";
+import { Plus, Trash } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/trpc/react";
 import type { Creature } from "@/server/api/router";
-import { useMutation } from "@tanstack/react-query";
-import { getCreaturePostForm } from "@/app/[username]/[campaign_slug]/encounter/utils";
-import type { CreaturePost } from "@/server/db/schema";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
-import { DataTable } from "@/app/[username]/creatures/creatures-table";
-import { columns } from "@/app/[username]/creatures/columns";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
-import { postCreature } from "@/app/[username]/actions";
-import { CreatureUtils } from "@/utils/creatures";
 import { Card } from "@/components/ui/card";
+import { groupBy } from "remeda";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");
@@ -52,33 +46,13 @@ export default function CreaturesPage() {
     },
   });
 
-  const { mutate: createCreature } = useMutation({
-    mutationFn: async (rawData: CreaturePost) => {
-      const formData = getCreaturePostForm({
-        ...rawData,
-        max_hp: rawData.max_hp ? rawData.max_hp : 1,
-      });
-      return await postCreature(formData);
-    },
-    onSettled: async () => {
-      await getUserCreatures.invalidate({ name });
-    },
-    onMutate: async (data) => {
-      await getUserCreatures.cancel({ name });
-      const previous = getUserCreatures.getData({ name });
-      getUserCreatures.setData({ name }, (old) => {
-        if (!old) {
-          return old;
-        }
-        return [...old, CreatureUtils.placeholder(data)];
-      });
-      return { previous };
-    },
-  });
-
   const displayCreatures = isDeletePending
     ? creatures?.filter((creature) => creature.id !== deletedId)
     : creatures;
+
+  const groupedCreatures = groupBy(displayCreatures ?? [], (c) =>
+    c.is_player ? "player" : "npc"
+  );
 
   return (
     <div className="flex w-full">
@@ -104,20 +78,42 @@ export default function CreaturesPage() {
             </Dialog>
           </div>
         </div>
-        <div className="flex flex-wrap w-full gap-2">
-          <span className={!name ? "opacity-100" : "opacity-0"}>
-            {displayCreatures?.length} / 30
-          </span>
-          <div className="flex w-full gap-2 flex-wrap">
-            {displayCreatures?.map((creature) => (
-              <Card key={creature.id}>
-                <CreatureIcon creature={creature} size="medium" />
-                <Button
-                  variant="destructive"
-                  onClick={() => deleteCreature(creature.id)}
-                ></Button>
-              </Card>
-            ))}
+        <div className="flex flex-col w-full gap-10">
+          <div>
+            <h1>DM creatures</h1>
+            <div className="flex w-full gap-2 flex-wrap">
+              {groupedCreatures?.npc?.map((creature) => (
+                <Card key={creature.id} className="flex gap-2 p-3 items-center">
+                  <CreatureIcon creature={creature} size="medium" />
+                  <span className="text-lg">{creature.name}</span>
+                  <Button
+                    variant="ghost"
+                    className="text-red-300"
+                    onClick={() => deleteCreature(creature.id)}
+                  >
+                    <Trash />
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h1>Player creatures</h1>
+            <div className="flex w-full gap-2 flex-wrap">
+              {groupedCreatures?.player?.map((creature) => (
+                <Card key={creature.id} className="flex gap-2 p-3 items-center">
+                  <CreatureIcon creature={creature} size="medium" />
+                  <span className="text-lg">{creature.name}</span>
+                  <Button
+                    variant="ghost"
+                    className="text-red-300"
+                    onClick={() => deleteCreature(creature.id)}
+                  >
+                    <Trash />
+                  </Button>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </div>

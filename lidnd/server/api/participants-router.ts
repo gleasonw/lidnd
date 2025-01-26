@@ -33,11 +33,14 @@ export const participantsRouter = {
           hasIcon: opts.input.hasIcon,
         }
       );
+      console.log(newCreature);
 
       const newParticipant = await ServerEncounter.addParticipant(opts.ctx, {
         ...opts.input.participant,
         creature_id: newCreature.creature.id,
       });
+
+      console.log(newParticipant);
 
       return {
         participant: newParticipant,

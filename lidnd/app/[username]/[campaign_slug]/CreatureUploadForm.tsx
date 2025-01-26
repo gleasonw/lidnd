@@ -11,6 +11,8 @@ import { useEffect } from "react";
 import { z } from "zod";
 import type { Creature } from "@/server/api/router";
 import { api } from "@/trpc/react";
+import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
+import { useUIStore } from "@/app/UIStore";
 
 export type CreatureUpload = Zod.infer<typeof localCreatureUploadSchema>;
 
@@ -285,7 +287,12 @@ export function useAwsImageUpload({
   iconImage,
   onSuccess,
 }: AwsImageUploadArgs) {
-  const { mutate: updateCreature } = api.updateCreature.useMutation();
+  const uiStore = useUIStore();
+  const { mutate: updateCreature } = api.updateCreature.useMutation({
+    onSuccess: () => {
+      console.log("upload completed");
+    },
+  });
   return async ({
     iconPresigned,
     statBlockPresigned,
@@ -300,11 +307,19 @@ export function useAwsImageUpload({
       const dimensionTasks = [];
 
       if (iconPresigned && iconImage) {
+        uiStore.setUploadStatusForCreature(creature, {
+          type: "icon",
+          status: "pending",
+        });
         fileUploadTasks.push(uploadFileToAWS(iconImage, iconPresigned));
         dimensionTasks.push(readImageHeightWidth(iconImage));
       }
 
       if (statBlockPresigned && statBlockImage) {
+        uiStore.setUploadStatusForCreature(creature, {
+          type: "statBlock",
+          status: "pending",
+        });
         fileUploadTasks.push(
           uploadFileToAWS(statBlockImage, statBlockPresigned)
         );
@@ -326,9 +341,33 @@ export function useAwsImageUpload({
         icon_width: iconDimensions?.width ?? creature.icon_width,
       });
 
+      if (statBlockDimensions) {
+        uiStore.setUploadStatusForCreature(creature, {
+          type: "statBlock",
+          status: "success",
+        });
+      }
+      if (iconDimensions) {
+        uiStore.setUploadStatusForCreature(creature, {
+          type: "icon",
+          status: "success",
+        });
+      }
       onSuccess?.();
     } catch (error) {
       console.error(error);
+      if (statBlockPresigned) {
+        uiStore.setUploadStatusForCreature(creature, {
+          type: "statBlock",
+          status: "error",
+        });
+      }
+      if (iconPresigned) {
+        uiStore.setUploadStatusForCreature(creature, {
+          type: "icon",
+          status: "error",
+        });
+      }
       const message = "Failed to upload participant";
       if (!(error instanceof Error)) {
         throw new Error(message);

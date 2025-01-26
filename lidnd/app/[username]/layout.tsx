@@ -51,7 +51,7 @@ export default async function CampaignsLayout({
         <UIStoreProvider>
           <ClientOverlays>
             <TopNav />
-            <div className="flex flex-col max-h-full overflow-hidden h-full bg-gray-100">
+            <div className="flex flex-col max-h-full overflow-hidden h-full bg-gray-100 p-5">
               {children}
             </div>
           </ClientOverlays>

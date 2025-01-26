@@ -66,10 +66,10 @@ export function EncounterDifficulty() {
             <span>{`(+${totalCr - goalCR})`}</span>
           </span>
         ) : (
-          <>
+          <div className="flex gap-3 items-baseline">
             <span className="text-xl font-bold">{remainingBudget}</span>
-            <span className="text-slate-500">CR budget</span>
-          </>
+            <span className="text-sm">CR to spend</span>
+          </div>
         )}
       </div>
     </>

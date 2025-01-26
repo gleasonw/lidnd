@@ -19,11 +19,6 @@ export function CreatureStatBlockImage({
       className="select-none object-contain"
       ref={ref}
       alt={creature.name}
-      style={{
-        imageRendering: "-webkit-optimize-contrast",
-        transform: "translateZ(0)",
-        willChange: "transform",
-      }}
       quality={100}
       width={creature.stat_block_width}
       height={creature.stat_block_height}

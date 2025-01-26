@@ -1,7 +1,10 @@
 "use client";
 
+import type { Creature } from "@/server/api/router";
 import { makeAutoObservable } from "mobx";
 import { createContext, useContext, useEffect, useMemo } from "react";
+
+type ImageUploadStatus = "idle" | "pending" | "success" | "error";
 
 /**
  * Manages simple ui state
@@ -15,6 +18,27 @@ class EncounterUIStore {
    * participantId -> ref
    *  */
   battleCardRefs: Map<string, HTMLDivElement> = new Map();
+
+  private imageUploadStatusForCreatureId: Map<
+    string,
+    { statBlock?: ImageUploadStatus; icon?: ImageUploadStatus }
+  > = new Map();
+
+  setUploadStatusForCreature = (
+    c: Creature,
+    info: { status: ImageUploadStatus; type: "statBlock" | "icon" }
+  ) => {
+    switch (info.type) {
+      case "statBlock":
+        this.imageUploadStatusForCreatureId.set(c.id, {
+          statBlock: info.status,
+        });
+        break;
+      case "icon":
+        this.imageUploadStatusForCreatureId.set(c.id, { icon: info.status });
+        break;
+    }
+  };
 
   constructor() {
     makeAutoObservable(this);

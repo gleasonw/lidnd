@@ -1,6 +1,11 @@
+"use client";
+
+import { useUIStore } from "@/app/UIStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreatureUtils } from "@/utils/creatures";
+import { observer } from "mobx-react-lite";
+import React from "react";
 
 type IconSize = "v-small" | "small" | "small2" | "medium" | "large";
 
@@ -31,7 +36,7 @@ function iconDimensions(
   return { width: 512, height: 512 };
 }
 
-export function CreatureIcon({
+export const CreatureIcon = observer(function CreatureIcon({
   creature,
   size,
 }: {
@@ -43,31 +48,45 @@ export function CreatureIcon({
   };
   size?: IconSize;
 }) {
-  if (!creature.icon_width || !creature.icon_height) {
-    console.trace();
-    throw new Error(
-      `No icon width or height for ${creature.name}, ${JSON.stringify(
-        creature
-      )}`
-    );
-  }
+  const uiStore = useUIStore();
+  const status = uiStore.getIconUploadStatus(creature);
+  const dimensions = iconDimensions(creature, size);
+  const [retryCount, setRetryCount] = React.useState(0);
 
-  if (creature.id === "pending") {
-    return <Skeleton />;
-  }
-
-  const { width, height } = iconDimensions(creature, size);
-
-  return (
+  const icon = (
     <Avatar>
       <AvatarImage
         src={CreatureUtils.awsURL(creature, "icon")}
         alt={creature.name}
-        width={width}
-        height={height}
+        width={dimensions.width}
+        height={dimensions.height}
         fetchPriority="high"
+        onError={(e) => {
+          if (retryCount < 3) {
+            setTimeout(() => setRetryCount(retryCount + 1), 500);
+          } else {
+            console.error(e);
+          }
+        }}
       />
       <AvatarFallback>{creature.name}</AvatarFallback>
     </Avatar>
   );
-}
+
+  switch (status) {
+    case "pending":
+      return <div>uploading icon</div>;
+    case "error":
+      return <div>error</div>;
+    case "idle":
+      return icon;
+    case "success":
+      return icon;
+    case undefined:
+      return icon;
+    default: {
+      const _: never = status;
+      throw new Error(`Unhandled case: ${status}`);
+    }
+  }
+});
