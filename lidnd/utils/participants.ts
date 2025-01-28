@@ -56,7 +56,7 @@ function isDead(p: ParticipantWithCreature) {
   return p.hp <= 0;
 }
 
-function isFriendly(p: ParticipantWithCreature) {
+function isFriendly(p: { is_ally: boolean; creature: { is_player: boolean } }) {
   return isPlayer(p) || p.is_ally;
 }
 

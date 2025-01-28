@@ -63,6 +63,7 @@ export const CreatureIcon = observer(function CreatureIcon({
         fetchPriority="high"
         onError={(e) => {
           if (retryCount < 3) {
+            console.log("retrying");
             setTimeout(() => setRetryCount(retryCount + 1), 500);
           } else {
             console.error(e);
@@ -72,6 +73,12 @@ export const CreatureIcon = observer(function CreatureIcon({
       <AvatarFallback>{creature.name}</AvatarFallback>
     </Avatar>
   );
+
+  if (creature.id === "pending") {
+    // catch the case where we'v just uploaded but not yet set the
+    // image upload status in the ui store...
+    return <div>pending</div>;
+  }
 
   switch (status) {
     case "pending":

@@ -2,7 +2,6 @@ import ClientOverlays from "@/app/[username]/overlays";
 import { TRPCReactProvider } from "@/trpc/react";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { UIStoreProvider } from "@/app/[username]/UIStore";
 import { LidndAuth } from "@/app/authentication";
 import { UserProvider } from "@/app/[username]/user-provider";
 import { db } from "@/server/db";
@@ -48,14 +47,11 @@ export default async function CampaignsLayout({
   return (
     <TRPCReactProvider cookies={(await cookies()).toString()}>
       <UserProvider value={user}>
-        <UIStoreProvider>
-          <ClientOverlays>
-            <TopNav />
-            <div className="flex flex-col max-h-full overflow-hidden h-full bg-gray-100 p-5">
-              {children}
-            </div>
-          </ClientOverlays>
-        </UIStoreProvider>
+        <ClientOverlays>
+          <div className="flex flex-col max-h-full overflow-hidden h-full bg-gray-100">
+            {children}
+          </div>
+        </ClientOverlays>
       </UserProvider>
     </TRPCReactProvider>
   );

@@ -19,6 +19,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script src="https://unpkg.com/react-scan/dist/auto.global.js" async />
+      </head>
       <body className={clsx(inter.className)}>
         <GlobalUI>
           <div className="h-screen max-h-full flex flex-col">{children}</div>

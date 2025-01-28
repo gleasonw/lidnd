@@ -9,7 +9,7 @@ type ImageUploadStatus = "idle" | "pending" | "success" | "error";
 /**
  * Manages simple ui state
  */
-class UIStore {
+export class UIStore {
   private imageUploadStatusForCreatureId: Map<
     string,
     { statBlock?: ImageUploadStatus; icon?: ImageUploadStatus }
@@ -21,23 +21,26 @@ class UIStore {
   ) => {
     switch (info.type) {
       case "statBlock":
-        this.imageUploadStatusForCreatureId.set(c.id, {
+        this.imageUploadStatusForCreatureId.set(`${c.id}-statBlock`, {
           statBlock: info.status,
         });
         break;
       case "icon":
-        this.imageUploadStatusForCreatureId.set(c.id, { icon: info.status });
+        this.imageUploadStatusForCreatureId.set(`${c.id}--icon`, {
+          icon: info.status,
+        });
         break;
     }
   };
 
   /**icon width included only for tagging purposes */
   getStatBlockUploadStatus = (c: { id: string; icon_width: number }) => {
-    return this.imageUploadStatusForCreatureId.get(c.id)?.statBlock;
+    return this.imageUploadStatusForCreatureId.get(`${c.id}-statBlock`)
+      ?.statBlock;
   };
 
   getIconUploadStatus = (c: { id: string; icon_width: number }) => {
-    return this.imageUploadStatusForCreatureId.get(c.id)?.icon;
+    return this.imageUploadStatusForCreatureId.get(`${c.id}--icon`)?.icon;
   };
 
   constructor() {

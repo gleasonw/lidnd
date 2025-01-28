@@ -3,6 +3,7 @@ import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { api } from "@/trpc/react";
 import { useAwsImageUpload } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
+import { useUIStore } from "@/app/UIStore";
 
 /**Note: must be called underneath an encounter provider */
 export function useUploadParticipant({
@@ -16,6 +17,7 @@ export function useUploadParticipant({
 }) {
   const [encounter] = useEncounter();
   const { encounterById } = api.useUtils();
+  const uiStore = useUIStore();
   const id = encounter.id;
   const { invalidateAll, cancelAll } = useEncounterQueryUtils();
   const uploadToAws = useAwsImageUpload({
@@ -67,7 +69,18 @@ export function useUploadParticipant({
         creature: data.creature,
       });
     },
-    onSettled: async () => {
+    onSettled: async (data) => {
+      if (data?.creature) {
+        uiStore.setUploadStatusForCreature(data.creature, {
+          type: "icon",
+          status: "pending",
+        });
+        uiStore.setUploadStatusForCreature(data.creature, {
+          type: "statBlock",
+          status: "pending",
+        });
+      }
+
       return await invalidateAll(encounter);
     },
   });

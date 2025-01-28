@@ -11,10 +11,10 @@ import InitiativeInput from "@/app/[username]/[campaign_slug]/encounter/[encount
 import React from "react";
 import { EncounterUtils } from "@/utils/encounters";
 import * as R from "remeda";
-import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 import { Card } from "@/components/ui/card";
 import { useEncounterLinks } from "@/encounters/link-hooks";
 import { useRouter } from "next/navigation";
+import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
 
 export default function RollPage() {
   const id = useEncounterId();
@@ -54,7 +54,7 @@ export default function RollPage() {
       {" "}
       <div className="flex flex-col gap-3 overflow-auto">
         {sortedMonsters.map((m) => (
-          <CreatureStatBlockImage
+          <CreatureStatBlock
             creature={m.creature}
             key={m.id}
             ref={(el) => {

@@ -125,7 +125,7 @@ export const InitiativeTracker = observer(function InitiativeTracker() {
       <ButtonWithTooltip
         variant="ghost"
         className="self-stretch h-full flex"
-        text="Edit initiative"
+        text="Edit initiative and columns"
         onClick={() => toggleEditingInitiative()}
       >
         <ListOrdered />
@@ -163,7 +163,7 @@ type CardProps = {
   overrideIcon?: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-const imageStyle = { objectFit: "contain" } as const;
+export const imageStyle = { objectFit: "contain" } as const;
 
 export function GMCreatureCard(props: CardProps) {
   const uiStore = useEncounterUIStore();

@@ -88,7 +88,7 @@ export function ReminderInput() {
         setAlertAfterRound("");
         setReminder("");
       }}
-      className="flex flex-col gap-3"
+      className="flex flex-col gap-3 rounded-lg"
     >
       <section className="flex gap-3 items-center p-3">
         <LidndTextInput

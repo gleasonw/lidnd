@@ -7,11 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import React from "react";
 import { motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
-import type {
-  Creature,
-  Participant,
-  ParticipantWithData,
-} from "@/server/api/router";
+import type { Participant, ParticipantWithData } from "@/server/api/router";
 import { LidndPopover } from "@/encounters/base-popover";
 import { EffectIcon, StatusInput } from "./status-input";
 import {
@@ -39,19 +35,15 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 import { Label } from "@/components/ui/label";
 import {
   ReminderInput,
   Reminders,
 } from "@/encounters/[encounter_index]/reminders";
-import { EncounterUtils } from "@/utils/encounters";
 import { Grip, MoreHorizontal, PlayIcon, X } from "lucide-react";
-import { CreatureUtils } from "@/utils/creatures";
-import Image from "next/image";
 import { useEncounterLinks } from "../link-hooks";
 import Link from "next/link";
-import { InitiativeTracker } from "./battle-bar";
+import { imageStyle, InitiativeTracker } from "./battle-bar";
 import { EncounterDifficulty } from "./encounter-difficulty";
 import { OpponentParticipantForm } from "./participant-upload-form";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
@@ -60,7 +52,9 @@ import { api } from "@/trpc/react";
 import type { StatColumn } from "@/server/api/columns-router";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
-import { useUIStore } from "@/app/UIStore";
+import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
+import { CreatureUtils } from "@/utils/creatures";
+import Image from "next/image";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -72,26 +66,25 @@ export const EncounterBattleUI = observer(function BattleUI() {
   switch (encounter.status) {
     case "prep":
       return (
-        <div className="flex max-h-full overflow-hidden h-full gap-3 pt-3">
-          <div className="flex flex-col gap-2 items-center w-[700px]">
-            <Card className="flex flex-col items-center pb-3 gap-3 w-full">
-              <div className=" p-4 flex justify-evenly text-lg w-full">
+        <div className="flex flex-col max-h-full overflow-hidden h-full gap-3">
+          <div className="flex flex-col w-full">
+            <div className="flex gap-2 items-baseline">
+              <Card className="flex shadow-none w-[800px] items-center justify-between p-3 gap-3 ">
                 <EncounterDifficulty />
-              </div>
-              <Link href={rollEncounter} className="text-lg">
-                <Button className="w-48 ">
-                  <PlayIcon />
-                  Roll initiative
-                </Button>
-              </Link>
-            </Card>
-            <ReminderInput />
-            <Card className="p-4 overflow-auto w-full h-full">
+                <Link href={rollEncounter} className="text-lg">
+                  <ButtonWithTooltip text={"Roll initiative"}>
+                    <PlayIcon />
+                  </ButtonWithTooltip>
+                </Link>
+              </Card>
+              <ReminderInput />
+            </div>
+          </div>
+
+          <div className="w-full overflow-hidden flex gap-3 h-full">
+            <Card className="p-4 overflow-auto w-[700px] h-full">
               <OpponentParticipantForm />
             </Card>
-          </div>
-          <div className="w-full overflow-hidden flex flex-col gap-3">
-            <PrepVersusDisplay />
             <EncounterBattlePreview />
           </div>
         </div>
@@ -148,27 +141,6 @@ function EncounterBattlePreview() {
   );
 }
 
-function PrepVersusDisplay() {
-  const [encounter] = useEncounter();
-  const monsters = EncounterUtils.monsters(encounter);
-  const allies = EncounterUtils.allies(encounter);
-  return (
-    <div className="w-full justify-evenly flex items-center">
-      <div className="flex flex-wrap gap-2">
-        {allies.map((m) => (
-          <ParticipantBadge key={m.id} participant={m} />
-        ))}
-      </div>
-      <span className="text-lg font-bold">vs.</span>
-      <div className="flex flex-wrap gap-2">
-        {monsters.map((m) => (
-          <ParticipantBadge key={m.id} participant={m} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function BattleCardTools({ participant }: { participant: Participant }) {
   const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
   const uiStore = useEncounterUIStore();
@@ -218,7 +190,10 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
   return (
     <div className="flex flex-col max-h-full overflow-hidden h-full">
       {participantsInColumn.map((p) => (
-        <div className="max-h-full flex flex-col overflow-hidden" key={p.id}>
+        <div
+          className="max-h-full h-full flex flex-col overflow-hidden"
+          key={p.id}
+        >
           <div className="w-full flex gap-2 p-4">
             <CreatureIcon creature={p.creature} size="small" />
             <BattleCardCreatureName participant={p} />
@@ -234,77 +209,12 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
   );
 }
 
-const CreatureStatBlock = observer(function CreatureStatBlock({
-  creature,
-}: {
-  creature: Creature;
-}) {
-  const uiStore = useUIStore();
-  const status = uiStore.getStatBlockUploadStatus(creature);
-
-  const statblock = (
-    <Image
-      quality={100}
-      style={{ objectFit: "contain" }}
-      className="max-h-full"
-      src={CreatureUtils.awsURL(creature, "stat_block")}
-      alt={creature.name}
-      width={creature.stat_block_width}
-      height={creature.stat_block_height}
-      onError={() => console.log("error loading image")}
-    />
-  );
-  switch (status) {
-    case "idle":
-      return statblock;
-    case "pending":
-      return <div>pending</div>;
-    case "success":
-      return statblock;
-    case "error":
-      return <div>error</div>;
-    case undefined:
-      return statblock;
-    default: {
-      const _: never = status;
-      throw new Error(`Unhandled case: ${status}`);
-    }
-  }
-});
-
-//TODO: this isn't a participants container anymore, more just a sidebar for allies/monsters uploads
-function ParticipantsContainer({
-  children,
-  extra,
-  role,
-  className,
-}: {
-  children?: React.ReactNode;
-  extra: React.ReactNode;
-  role: "allies" | "monsters";
-  className?: string;
-}) {
-  return (
-    <div className={clsx("flex h-full items-baseline w-[500px]", className)}>
-      <Card
-        className={clsx(
-          `flex flex-col gap-4 w-full p-3 items-center shadow-sm h-full`
-        )}
-      >
-        <div className="flex flex-wrap gap-2 items-center justify-center">
-          {children}
-        </div>
-        {extra}
-      </Card>
-    </div>
-  );
-}
-
 function ParticipantBadge({
   participant,
 }: {
   participant: {
     id: string;
+    is_ally: boolean;
     creature: {
       id: string;
       name: string;
@@ -319,7 +229,7 @@ function ParticipantBadge({
 
   return (
     <ParticipantBadgeWrapper
-      role={ParticipantUtils.isPlayer(participant) ? "allies" : "monsters"}
+      role={ParticipantUtils.isFriendly(participant) ? "allies" : "monsters"}
     >
       <div>
         <CreatureIcon creature={participant.creature} />
@@ -344,15 +254,15 @@ function ParticipantBadge({
 }
 
 function ParticipantBadgeWrapper({
-  children,
   role,
+  children,
 }: {
-  children: React.ReactNode;
   role: "allies" | "monsters";
+  children: React.ReactNode;
 }) {
   return (
     <div
-      className={`flex gap-2 border rounded-full items-center justify-between px-2 h-12 max-w-[200px] ${
+      className={`flex gap-2 border rounded-full shadow-lg items-center justify-between px-2 h-12 max-w-[200px] ${
         role === "allies" ? "bg-blue-100" : "bg-red-100"
       }`}
     >
@@ -399,11 +309,7 @@ export function BattleCard({
   });
 
   return (
-    <div
-      className={`relative flex-col h-full gap-6 items-center w-full justify-between flex `}
-      ref={ref}
-      {...props}
-    >
+    <div className={`relative flex-col gap-6 w-full flex`} ref={ref} {...props}>
       {participant?.minion_count && participant.minion_count > 1 ? (
         <MinionCardStack minionCount={participant.minion_count} />
       ) : null}
@@ -458,9 +364,7 @@ export function BattleCard({
             <ParticipantHealthForm participant={participant} />
           </BattleCardContent>
         </div>
-        <div className="flex w-full h-full border">
-          <CreatureStatBlockImage creature={participant.creature} />
-        </div>
+        <CreatureStatBlock creature={participant.creature} />
       </BattleCardLayout>
     </div>
   );
@@ -479,7 +383,7 @@ export function BattleCardLayout({
   return (
     <div
       className={clsx(
-        "bg-white h-full shadow-sm w-full flex flex-col justify-between transition-all group",
+        "bg-white h-full shadow-sm w-full flex flex-col transition-all group",
         {
           "shadow-lg shadow-red-800":
             !ParticipantUtils.isFriendly(participant) && participant.is_active,
@@ -611,7 +515,14 @@ export function BattleCardCreatureIcon({
     <span>Loading</span>
   ) : (
     <div className={clsx("relative", className)}>
-      <CreatureIcon creature={participant.creature} size="small2" />
+      <Image
+        src={CreatureUtils.awsURL(participant.creature, "icon")}
+        alt={participant.creature.name}
+        style={imageStyle}
+        width={participant.creature.icon_width}
+        height={participant.creature.icon_height}
+        className="w-36 h-36"
+      />
     </div>
   );
 }

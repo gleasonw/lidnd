@@ -71,7 +71,7 @@ export function StatColumns() {
   const { data: columns } = api.getColumns.useQuery(encounterId);
   return columns?.map((c, index) => (
     <StatColumnComponent column={c} index={index} key={c.id}>
-      <ScrollArea className="flex flex-col gap-5 border border-t-0 w-full max-h-full h-full overflow-hidden bg-white">
+      <ScrollArea className="flex flex-col gap-5 border border-t-0 w-full max-h-screen h-full overflow-hidden bg-white">
         <BattleCards column={c} />
       </ScrollArea>
     </StatColumnComponent>
@@ -113,7 +113,7 @@ export function CreateNewColumnButton() {
   );
 }
 
-export function StatColumnComponent({
+export const StatColumnComponent = observer(function StatColumnComponent({
   column,
   index,
   children,
@@ -127,6 +127,7 @@ export function StatColumnComponent({
   const [acceptDrop, setAcceptDrop] = React.useState(false);
   const { encounterById, getColumns } = api.useUtils();
   const encounterId = useEncounterId();
+  const encounterUiStore = useEncounterUIStore();
   const { data: columns } = api.getColumns.useQuery(encounterId);
   const { mutate: assignParticipantToColumn } =
     api.assignParticipantToColumn.useMutation({
@@ -170,7 +171,7 @@ export function StatColumnComponent({
   return (
     <>
       <div
-        className={`flex flex-col h-full max-h-full overflow-hidden items-start relative ${
+        className={`flex flex-col h-full max-h-full bg-gray-200 overflow-hidden items-start relative ${
           acceptDrop && "outline outline-blue-500"
         }`}
         style={{ width: `${column.percent_width}%` }}
@@ -204,26 +205,30 @@ export function StatColumnComponent({
         }}
         onDragLeave={() => setAcceptDrop(false)}
       >
-        <div className="flex w-full">
-          {columns && columns?.length > 1 ? (
-            <div className="border border-b-0">
-              <ButtonWithTooltip
-                text="Delete column"
-                className="h-10 bg-white"
-                variant="ghost"
-                onClick={() => deleteColumn(column)}
-              >
-                <X />
-              </ButtonWithTooltip>
+        {encounterUiStore.isEditingInitiative ? (
+          <div className="flex w-full">
+            {columns && columns?.length > 1 ? (
+              <div className="border border-b-0">
+                <ButtonWithTooltip
+                  text="Delete column"
+                  className="h-10 bg-white rounded-none"
+                  variant="ghost"
+                  onClick={() => deleteColumn(column)}
+                >
+                  <X />
+                </ButtonWithTooltip>
+              </div>
+            ) : null}
+            <div className="flex w-full border-b" />
+            <div
+              className={` ${
+                isLastColumn ? "flex" : "hidden"
+              } ml-auto border-b`}
+            >
+              <CreateNewColumnButton />
             </div>
-          ) : null}
-          <div className="flex w-full border-b" />
-          <div
-            className={` ${isLastColumn ? "flex" : "hidden"} ml-auto border-b`}
-          >
-            <CreateNewColumnButton />
           </div>
-        </div>
+        ) : null}
 
         {toolbarExtra}
 
@@ -236,7 +241,7 @@ export function StatColumnComponent({
       />
     </>
   );
-}
+});
 
 function BattleCards({ column }: { column: StatColumn }) {
   const [encounter] = useEncounter();
@@ -256,7 +261,9 @@ function BattleCards({ column }: { column: StatColumn }) {
     />
   ));
 }
-//todo make this smaller... like vscode
+//todo: instead of updating a width which causes a full re-render of the stat column component,
+// set a css var on the parent ref. keep react out of the loop
+//like-wise for parent width?
 function StatColumnSplitter({
   rightColumnId,
   leftColumnId,

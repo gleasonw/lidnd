@@ -16,8 +16,8 @@ import clsx from "clsx";
 import React from "react";
 import { AnimatePresence } from "framer-motion";
 import { EncounterUtils } from "@/utils/encounters";
-import { CreatureStatBlockImage } from "@/app/[username]/[campaign_slug]/encounter/original-size-image";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
+import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
 
 export function GroupBattleUI() {
   const id = useEncounterId();
@@ -32,7 +32,7 @@ export function GroupBattleUI() {
   const players = EncounterUtils.allies(encounter);
 
   const selectedMonster = monsters.find(
-    (monster) => monster.id === dmSelectedCreature,
+    (monster) => monster.id === dmSelectedCreature
   );
 
   return (
@@ -55,7 +55,7 @@ export function GroupBattleUI() {
         ))}
       >
         {selectedMonster && (
-          <CreatureStatBlockImage creature={selectedMonster.creature} />
+          <CreatureStatBlock creature={selectedMonster.creature} />
         )}
       </GroupBattleLayout>
     </div>
@@ -157,7 +157,7 @@ export function GroupBattleCard({
               participant.has_played_this_round,
             "outline-zinc-900 outline": isSelected,
           },
-          "cursor-pointer relative",
+          "cursor-pointer relative"
         )}
       >
         {participant?.minion_count && participant.minion_count > 1 ? (

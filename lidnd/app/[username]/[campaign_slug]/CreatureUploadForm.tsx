@@ -12,7 +12,8 @@ import { z } from "zod";
 import type { Creature } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
-import { useUIStore } from "@/app/UIStore";
+import { UIStore, useUIStore } from "@/app/UIStore";
+import { CreatureUtils } from "@/utils/creatures";
 
 export type CreatureUpload = Zod.infer<typeof localCreatureUploadSchema>;
 
@@ -342,15 +343,13 @@ export function useAwsImageUpload({
       });
 
       if (statBlockDimensions) {
-        uiStore.setUploadStatusForCreature(creature, {
-          type: "statBlock",
-          status: "success",
+        pollForUploadSuccess(creature, uiStore, "statBlock").catch((e) => {
+          console.error(e);
         });
       }
       if (iconDimensions) {
-        uiStore.setUploadStatusForCreature(creature, {
-          type: "icon",
-          status: "success",
+        pollForUploadSuccess(creature, uiStore, "icon").catch((e) => {
+          console.error(e);
         });
       }
       onSuccess?.();
@@ -375,6 +374,33 @@ export function useAwsImageUpload({
       throw new Error(`${message}: ${error.message}`);
     }
   };
+}
+
+async function pollForUploadSuccess(
+  creature: Creature,
+  uiStore: UIStore,
+  type: "icon" | "statBlock"
+) {
+  const url = CreatureUtils.awsURL(creature, type);
+  for (let i = 0; i < 5; i++) {
+    const image = new Image();
+
+    const hasLoaded = await new Promise<boolean>((resolve) => {
+      image.onload = () => resolve(true);
+      image.onerror = () => resolve(false);
+      image.src = url;
+    });
+
+    if (hasLoaded) {
+      uiStore.setUploadStatusForCreature(creature, {
+        type,
+        status: "success",
+      });
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500 * i + 100));
+  }
+  throw new Error(`failed to upload ${type} for creature ${creature.id}`);
 }
 
 async function uploadFileToAWS(file: File, presignedUrl: string) {
