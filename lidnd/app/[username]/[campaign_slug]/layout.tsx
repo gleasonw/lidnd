@@ -26,7 +26,7 @@ export default async function CampaignLayout(props: {
 
   const campaign = await ServerCampaign.campaignFromSlug(
     UserUtils.context(user),
-    params.campaign_slug
+    params.campaign_slug,
   );
 
   if (!campaign) {
@@ -35,7 +35,9 @@ export default async function CampaignLayout(props: {
   // todo: add basic nav box, that takes up the same amount of space as the initiative bar
   return (
     <CampaignId value={campaign.id}>
-      <div className="mx-2 flex flex-col overflow-hidden max-h-full h-full gap-5">
+      <div
+        className={`mx-2 flex flex-col overflow-hidden max-h-full h-full gap-5 relative `}
+      >
         {children}
       </div>
     </CampaignId>

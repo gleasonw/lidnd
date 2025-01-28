@@ -25,7 +25,7 @@ export const appRoutes = {
   },
 
   encounter({ campaign, encounter, user }: EncounterLinkArgs) {
-    return `${this.campaign(campaign, user)}/encounter/${
+    return `${this.campaign({ campaign, user })}/encounter/${
       encounter.index_in_campaign
     }/${_.kebabCase(encounter.name)}`;
   },
@@ -34,12 +34,18 @@ export const appRoutes = {
     return `${this.encounter(args)}/roll`;
   },
 
-  campaign(campaign: { slug: string }, user: LidndUser) {
+  campaign({
+    campaign,
+    user,
+  }: {
+    campaign: { slug: string };
+    user: LidndUser;
+  }) {
     return `${this.dashboard(user)}/${campaign.slug}`;
   },
 
-  party({ campaign, user }: { campaign: { slug: string }; user: LidndUser }) {
-    return `${this.campaign(campaign, user)}/party`;
+  party(props: { campaign: { slug: string }; user: LidndUser }) {
+    return `${this.campaign(props)}/party`;
   },
 
   login: "/login",

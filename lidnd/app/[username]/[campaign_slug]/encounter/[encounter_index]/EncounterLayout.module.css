@@ -1,0 +1,9 @@
+.root {
+  --campaign-nav-width: 200px;
+  --campaign-nav-height: 100px;
+}
+
+.encounterNav {
+  width: var(--campaign-nav-width);
+  height: var(--campaign-nav-height);
+}

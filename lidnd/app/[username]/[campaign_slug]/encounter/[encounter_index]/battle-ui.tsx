@@ -68,7 +68,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
       return (
         <div className="flex flex-col max-h-full overflow-hidden h-full gap-3">
           <div className="flex flex-col w-full">
-            <div className="flex gap-2 items-baseline">
+            <div className="flex gap-2 items-baseline ml-[var(--campaign-nav-width)]">
               <Card className="flex shadow-none w-[800px] items-center justify-between p-3 gap-3 ">
                 <EncounterDifficulty />
                 <Link href={rollEncounter} className="text-lg">
@@ -392,7 +392,7 @@ export function BattleCardLayout({
           "shadow-lg shadow-blue-800":
             ParticipantUtils.isFriendly(participant) && participant.is_active,
         },
-        className
+        className,
       )}
       {...props}
     >
@@ -553,7 +553,7 @@ export function HealthMeterOverlay({
         {
           "bg-gray-500": percentDamage >= 100,
           "bg-red-500": percentDamage !== 100,
-        }
+        },
       )}
     />
   );

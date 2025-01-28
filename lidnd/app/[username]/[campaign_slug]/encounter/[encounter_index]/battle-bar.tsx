@@ -91,7 +91,7 @@ export const InitiativeTracker = observer(function InitiativeTracker() {
 
   return (
     <div
-      className={`flex overflow-visible h-20 z-20 gap-2 justify-center w-full mx-auto bottom-0`}
+      className={`pl-[var(--campaign-nav-width)] flex overflow-visible h-20 z-20 gap-2 w-full bottom-0`}
     >
       <ButtonWithTooltip
         className="h-full shadow-lg"
@@ -120,7 +120,7 @@ export const InitiativeTracker = observer(function InitiativeTracker() {
             )}
             {isEditingInitiative ? <InitiativeInput participant={p} /> : null}
           </div>
-        )
+        ),
       )}
       <ButtonWithTooltip
         variant="ghost"
@@ -222,7 +222,7 @@ function TopBarParticipantCard({
         participant.is_active ? "h-32" : "h-20",
         index < activeIndex
           ? "opacity-60 hover:opacity-100"
-          : "hover:opacity-60"
+          : "hover:opacity-60",
       )}
       style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
       {...props}
