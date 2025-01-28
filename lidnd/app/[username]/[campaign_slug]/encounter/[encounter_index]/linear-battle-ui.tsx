@@ -71,8 +71,10 @@ export function StatColumns() {
   const { data: columns } = api.getColumns.useQuery(encounterId);
   return columns?.map((c, index) => (
     <StatColumnComponent column={c} index={index} key={c.id}>
-      <ScrollArea className="flex flex-col gap-5 border border-t-0 w-full max-h-screen h-full overflow-hidden bg-white">
-        <BattleCards column={c} />
+      <ScrollArea className="flex flex-col gap-5 border-t-0 w-full max-h-screen h-full overflow-hidden ">
+        <div className="flex flex-col gap-5">
+          <BattleCards column={c} />
+        </div>
       </ScrollArea>
     </StatColumnComponent>
   ));
@@ -172,7 +174,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
   return (
     <>
       <div
-        className={`flex flex-col h-full max-h-full bg-gray-200 overflow-hidden items-start relative ${
+        className={`flex flex-col h-full max-h-full overflow-hidden items-start relative ${
           acceptDrop && "outline outline-blue-500"
         }`}
         style={{ width: `${column.percent_width}%` }}
@@ -207,7 +209,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         onDragLeave={() => setAcceptDrop(false)}
       >
         {encounterUiStore.isEditingInitiative ? (
-          <div className="flex w-full">
+          <div className="flex w-full bg-gray-200">
             {columns && columns?.length > 1 ? (
               <div className="border border-b-0">
                 <ButtonWithTooltip

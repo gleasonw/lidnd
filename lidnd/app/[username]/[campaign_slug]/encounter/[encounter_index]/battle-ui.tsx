@@ -383,7 +383,7 @@ export function BattleCardLayout({
   return (
     <div
       className={clsx(
-        "bg-white h-full shadow-sm w-full flex flex-col transition-all group",
+        "bg-white h-full shadow-sm border w-full flex flex-col transition-all group",
         {
           "shadow-lg shadow-red-800":
             !ParticipantUtils.isFriendly(participant) && participant.is_active,
