@@ -37,7 +37,9 @@ export default async function EncounterLayout(props: {
   return (
     <EncounterUI>
       <EncounterId encounterId={encounter.id}>
-        <div className={`relative ${css.root}`}>
+        <div
+          className={`relative ${css.root} flex flex-col overflow-hidden max-h-full`}
+        >
           <div className={`${css.encounterNav} absolute top-0 left-0 z-50`}>
             <Card
               className={`items-center justify-center gap-3 flex flex-col w-full h-full`}

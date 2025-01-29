@@ -97,11 +97,11 @@ async function CampaignCard(props: CampaignCardProps) {
 
   const players = await ServerCampaign.campaignById(
     UserUtils.context(user),
-    campaign.id
+    campaign.id,
   );
 
   return (
-    <Link href={appRoutes.campaign(campaign, user)} className="w-full">
+    <Link href={appRoutes.campaign({ campaign, user })} className="w-full">
       <Card className=" flex flex-col relative transition-all border-2 shadow-lg hover:bg-gray-200 w-full ">
         <CardHeader className="flex gap-2 flex-col">
           <CardTitle>
