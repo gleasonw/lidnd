@@ -42,11 +42,11 @@ export default function RollPage() {
         return a.id > b.id ? 1 : -1;
       }
       return ParticipantUtils.name(a).localeCompare(ParticipantUtils.name(b));
-    }
+    },
   );
 
   const sortedMonsters = sortedParticipants.filter((p) =>
-    ParticipantUtils.isAdversary(p)
+    ParticipantUtils.isAdversary(p),
   );
 
   return (
@@ -59,7 +59,7 @@ export default function RollPage() {
             key={m.id}
             ref={(el) => {
               if (el && !refMap.current.has(m.id)) {
-                refMap.current.set(m.id, el);
+                refMap.current.set(m.id, el as HTMLImageElement);
               }
 
               return () => {

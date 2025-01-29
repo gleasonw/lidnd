@@ -30,7 +30,7 @@ async function addImageDimensions() {
     }
 
     const statBlockResponse = await fetch(
-      CreatureUtils.awsURL(creature, "stat_block")
+      CreatureUtils.awsURL(creature, "statBlock")
     );
 
     if (!statBlockResponse.ok) {

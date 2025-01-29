@@ -40,7 +40,7 @@ import {
   ReminderInput,
   Reminders,
 } from "@/encounters/[encounter_index]/reminders";
-import { Grip, MoreHorizontal, PlayIcon, X } from "lucide-react";
+import { Grip, MoreHorizontal, PlayIcon } from "lucide-react";
 import { useEncounterLinks } from "../link-hooks";
 import Link from "next/link";
 import { imageStyle, InitiativeTracker } from "./battle-bar";
@@ -112,6 +112,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
         </section>
       );
     default: {
+      //@ts-expect-error - exhaustive check
       const _: never = encounter.status;
       throw new Error(`Unhandled case: ${encounter.status}`);
     }
@@ -205,68 +206,6 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-function ParticipantBadge({
-  participant,
-}: {
-  participant: {
-    id: string;
-    is_ally: boolean;
-    creature: {
-      id: string;
-      name: string;
-      icon_width: number;
-      icon_height: number;
-      is_player: boolean;
-    };
-  };
-}) {
-  const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
-  const [encounter] = useEncounter();
-
-  return (
-    <ParticipantBadgeWrapper
-      role={ParticipantUtils.isFriendly(participant) ? "allies" : "monsters"}
-    >
-      <div>
-        <CreatureIcon creature={participant.creature} />
-      </div>
-      <div className="col-span-2 flex truncate">
-        {participant.creature.name}
-      </div>
-      <Button
-        variant="ghost"
-        className="p-1"
-        onClick={() =>
-          removeParticipant({
-            participant_id: participant.id,
-            encounter_id: encounter.id,
-          })
-        }
-      >
-        <X />
-      </Button>
-    </ParticipantBadgeWrapper>
-  );
-}
-
-function ParticipantBadgeWrapper({
-  role,
-  children,
-}: {
-  role: "allies" | "monsters";
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={`flex gap-2 border rounded-full shadow-lg items-center justify-between px-2 h-12 max-w-[200px] ${
-        role === "allies" ? "bg-blue-100" : "bg-red-100"
-      }`}
-    >
-      {children}
     </div>
   );
 }

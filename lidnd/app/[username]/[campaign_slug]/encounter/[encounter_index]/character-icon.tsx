@@ -2,7 +2,6 @@
 
 import { useUIStore } from "@/app/UIStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
 import { CreatureUtils } from "@/utils/creatures";
 import { observer } from "mobx-react-lite";
 import React from "react";
@@ -11,7 +10,7 @@ type IconSize = "v-small" | "small" | "small2" | "medium" | "large";
 
 function iconDimensions(
   creature: { icon_width: number; icon_height: number },
-  size?: IconSize
+  size?: IconSize,
 ): { width: number; height: number } {
   if (!size) {
     return { width: creature.icon_width, height: creature.icon_height };
@@ -92,6 +91,7 @@ export const CreatureIcon = observer(function CreatureIcon({
     case undefined:
       return icon;
     default: {
+      //@ts-expect-error - exhaustive check
       const _: never = status;
       throw new Error(`Unhandled case: ${status}`);
     }

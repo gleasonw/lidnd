@@ -7,7 +7,6 @@ import { UserProvider } from "@/app/[username]/user-provider";
 import { db } from "@/server/db";
 import { settings } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
-import { TopNav } from "@/app/[username]/[campaign_slug]/TopNav";
 
 export default async function CampaignsLayout({
   children,

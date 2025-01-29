@@ -14,6 +14,7 @@ export function EncounterRoundIndicator() {
         </div>
       );
     default: {
+      // @ts-expect-error - exhaustive check
       const _: never = encounter.status;
       throw new Error(`Unhandled case: ${encounter.status}`);
     }

@@ -1,31 +1,24 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Dices, X, Swords, Users2, Check, Plus, FileText } from "lucide-react";
+import { X, Users2, Check, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import React, { createContext, useContext, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { api } from "@/trpc/react";
 import type { ParticipantWithData } from "@/server/api/router";
-import { EncounterUtils } from "@/utils/encounters";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { isStringMeaningful } from "@/app/[username]/utils";
-import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
 import {
-  useStartEncounter,
   useRemoveParticipantFromEncounter,
-  useEncounter,
   useUpdateEncounterParticipant,
-  useEncounterLink,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
-import Link from "next/link";
 import { makeAutoObservable } from "mobx";
-import { useEncounterLinks } from "../link-hooks";
 
 class EncounterPrepStore {
   selectedeParticipantId: string | null = null;
@@ -44,7 +37,7 @@ const useEncounterPrepStore = () => {
   const store = useContext(EncounterPrepContext);
   if (!store) {
     throw new Error(
-      "useEncounterPrepStore must be used within a EncounterPrepProvider"
+      "useEncounterPrepStore must be used within a EncounterPrepProvider",
     );
   }
   return store;
@@ -66,12 +59,12 @@ export function EncounterNameInput() {
       history.replaceState(
         {},
         "",
-        appRoutes.encounter({ campaign, encounter: newEncounter, user })
+        appRoutes.encounter({ campaign, encounter: newEncounter, user }),
       ),
   });
 
   const [encounterName, setEncounterName] = React.useState(
-    encounter?.name ?? ""
+    encounter?.name ?? "",
   );
 
   const debouncedNameUpdate = useDebouncedCallback((name: string) => {
@@ -108,7 +101,7 @@ export interface RemoveCreatureFromEncounterButtonProps {
 }
 
 export function RemoveCreatureFromEncounterButton(
-  props: RemoveCreatureFromEncounterButtonProps
+  props: RemoveCreatureFromEncounterButtonProps,
 ) {
   const { participant } = props;
 
@@ -141,7 +134,7 @@ export function MonsterParticipantActions(props: ParticipantCreatureProps) {
 
   const [status, setStatus] = useState<"idle" | "input">("idle");
   const [minionCount, setMinionCount] = useState<number | null>(
-    participant.minion_count
+    participant.minion_count,
   );
 
   if (status === "input") {

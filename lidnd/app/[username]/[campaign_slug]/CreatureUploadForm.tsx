@@ -11,7 +11,6 @@ import { useEffect } from "react";
 import { z } from "zod";
 import type { Creature } from "@/server/api/router";
 import { api } from "@/trpc/react";
-import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { UIStore, useUIStore } from "@/app/UIStore";
 import { CreatureUtils } from "@/utils/creatures";
 
@@ -223,7 +222,7 @@ export type PlayerUpload = Pick<CreatureUpload, "name" | "iconImage">;
 export function usePlayerCreatureForm() {
   return useForm<PlayerUpload>({
     resolver: zodResolver(
-      z.object({ name: z.string(), iconImage: z.instanceof(File).optional() })
+      z.object({ name: z.string(), iconImage: z.instanceof(File).optional() }),
     ),
     defaultValues: { name: "" },
   });
@@ -322,7 +321,7 @@ export function useAwsImageUpload({
           status: "pending",
         });
         fileUploadTasks.push(
-          uploadFileToAWS(statBlockImage, statBlockPresigned)
+          uploadFileToAWS(statBlockImage, statBlockPresigned),
         );
         dimensionTasks.push(readImageHeightWidth(statBlockImage));
       }
@@ -379,7 +378,7 @@ export function useAwsImageUpload({
 async function pollForUploadSuccess(
   creature: Creature,
   uiStore: UIStore,
-  type: "icon" | "statBlock"
+  type: "icon" | "statBlock",
 ) {
   const url = CreatureUtils.awsURL(creature, type);
   for (let i = 0; i < 5; i++) {
@@ -424,7 +423,7 @@ async function uploadFileToAWS(file: File, presignedUrl: string) {
 }
 
 async function readImageHeightWidth(
-  file: File
+  file: File,
 ): Promise<{ height: number; width: number }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

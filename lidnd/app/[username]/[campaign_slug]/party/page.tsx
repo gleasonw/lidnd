@@ -19,7 +19,6 @@ import { useUIStore } from "@/app/UIStore";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddCreatureButton } from "@/encounters/add-creature-button";
 import type { Creature } from "@/server/api/router";
@@ -36,7 +35,6 @@ import { useDebouncedCallback } from "use-debounce";
 export default function PartyPage() {
   const [campaign] = useCampaign();
   const { mutate: removeFromParty } = useRemoveFromParty(campaign);
-  const uiStore = useUIStore();
 
   return (
     <div className="flex flex-col gap-5 w-[800px] mx-auto overflow-auto">
@@ -126,6 +124,7 @@ const CharacterIcon = observer(function CharacterIcon({ c }: { c: Creature }) {
     case undefined:
       return statBlock;
     default: {
+      //@ts-expect-error - exhaustive check
       const _: never = status;
       throw new Error(`Unhandled case: ${status}`);
     }
@@ -137,7 +136,7 @@ function PartyLevelInput() {
   const { mutate: updateCampaign } = useUpdateCampaign(campaign);
 
   const [partyLevel, setPartyLevel] = React.useState(
-    campaign?.party_level ?? 1
+    campaign?.party_level ?? 1,
   );
 
   const handlePartyLevelChange = useDebouncedCallback((level: string) => {
@@ -238,7 +237,7 @@ export function ExistingCreaturesForPartyAdd({
   });
   const { mutate: addCreature } = useAddExistingToParty({ id: campaignId });
   const creaturesPlayersFirst = R.sort(creatures ?? [], (a, b) =>
-    a.is_player ? -1 : b.is_player ? 1 : 0
+    a.is_player ? -1 : b.is_player ? 1 : 0,
   );
   return (
     <div className="flex flex-col gap-5">
