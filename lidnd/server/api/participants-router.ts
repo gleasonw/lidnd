@@ -25,22 +25,27 @@ export const participantsRouter = {
         opts.ctx,
         opts.input.participant.encounter_id
       );
-      const newCreature = await ServerCreature.create(
-        opts.ctx,
-        opts.input.creature,
-        {
-          hasStatBlock: opts.input.hasStatBlock,
-          hasIcon: opts.input.hasIcon,
-        }
-      );
-      console.log(newCreature);
+      const [newCreature, newParticipant] = await db.transaction(async (tx) => {
+        const nc = await ServerCreature.create(
+          opts.ctx,
+          opts.input.creature,
+          {
+            hasStatBlock: opts.input.hasStatBlock,
+            hasIcon: opts.input.hasIcon,
+          },
+          tx
+        );
 
-      const newParticipant = await ServerEncounter.addParticipant(opts.ctx, {
-        ...opts.input.participant,
-        creature_id: newCreature.creature.id,
+        const np = await ServerEncounter.addParticipant(
+          opts.ctx,
+          {
+            ...opts.input.participant,
+            creature_id: nc.creature.id,
+          },
+          tx
+        );
+        return [nc, np] as const;
       });
-
-      console.log(newParticipant);
 
       return {
         participant: newParticipant,
