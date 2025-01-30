@@ -42,11 +42,11 @@ export default function RollPage() {
         return a.id > b.id ? 1 : -1;
       }
       return ParticipantUtils.name(a).localeCompare(ParticipantUtils.name(b));
-    },
+    }
   );
 
   const sortedMonsters = sortedParticipants.filter((p) =>
-    ParticipantUtils.isAdversary(p),
+    ParticipantUtils.isAdversary(p)
   );
 
   return (
@@ -98,15 +98,11 @@ export default function RollPage() {
   );
 }
 
-export function PreBattleInputsList({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function PreBattleInputsList({ children }: { children: React.ReactNode }) {
   return <div className={"flex flex-col gap-5 max-w-2xl"}>{children}</div>;
 }
 
-export function PreBattleInput({
+function PreBattleInput({
   children,
   participant,
 }: {
