@@ -219,7 +219,7 @@ export type BattleCardProps = {
   ref: (ref: HTMLDivElement) => void;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export function BattleCard({
+export const BattleCard = observer(function BattleCard({
   participant,
   extraHeaderButtons,
   ref,
@@ -260,7 +260,7 @@ export function BattleCard({
                 participant={participant}
                 className="flex-shrink-0 flex-grow-0"
               />
-              <div className="flex flex-col gap-3 w-full">
+              <div className="flex flex-col gap-3 w-full ">
                 <div className="flex justify-between">
                   <BattleCardCreatureName participant={participant} />
                   <BattleCardTools participant={participant} />
@@ -307,9 +307,9 @@ export function BattleCard({
       </BattleCardLayout>
     </div>
   );
-}
+});
 
-export function BattleCardLayout({
+export const BattleCardLayout = observer(function BattleCardLayout({
   className,
   children,
   participant,
@@ -322,7 +322,7 @@ export function BattleCardLayout({
   return (
     <div
       className={clsx(
-        "bg-white h-full shadow-sm border w-full flex flex-col transition-all group",
+        "bg-white h-full shadow-sm w-full flex flex-col transition-all group",
         {
           "shadow-lg shadow-red-800":
             !ParticipantUtils.isFriendly(participant) && participant.is_active,
@@ -331,14 +331,14 @@ export function BattleCardLayout({
           "shadow-lg shadow-blue-800":
             ParticipantUtils.isFriendly(participant) && participant.is_active,
         },
-        className,
+        className
       )}
       {...props}
     >
       {children}
     </div>
   );
-}
+});
 
 export function BattleCardContent({
   children,
@@ -388,26 +388,22 @@ export function BattleCardStatusEffects({
   );
 }
 
-export function BattleCardCreatureName({
+export const BattleCardCreatureName = observer(function BattleCardCreatureName({
   participant,
 }: BattleCardParticipantProps) {
-  const labelColors = [
-    "#FF4D4F", // Red
-    "#FA8C16", // Orange
-    "#FFEC3D", // Yellow
-    "#52C41A", // Green
-    "#13C2C2", // Teal
-    "#1890FF", // Blue
-    "#722ED1", // Purple
-    "#EB2F96", // Pink
-    "#36CFC9", // Cyan
-    "#A0D911", // Lime
-    "#FAAD14", // Gold
-    "#EB2F96", // Magenta
-    "#8C8C8C", // Gray
-    "#40A9FF", // Light Blue
-    "#73D13D", // Light Green
+  const pastelLabels = ["#7eb2bc", "#e39ca0", "#edab33", "#94ae7f"];
+  const solidColors = [
+    "#8abd11",
+    "#0063c3",
+    "#ff1353",
+    "#fe9c1c",
+    "#632469",
+    "#fff91e",
+    "#57b3bd",
+    "#1f105b",
+    "#ff1a13",
   ];
+  const labelColors = [...pastelLabels, ...solidColors];
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   return (
     <span className="flex gap-2 items-center font-bold">
@@ -442,18 +438,24 @@ export function BattleCardCreatureName({
       </LidndPopover>
     </span>
   );
-}
+});
 
-export function BattleCardCreatureIcon({
+export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   participant,
   className,
 }: BattleCardParticipantProps & {
   className?: string;
 }) {
+  const uiStore = useEncounterUIStore();
   return participant.creature_id === "pending" ? (
     <span>Loading</span>
   ) : (
-    <div className={clsx("relative", className)}>
+    <div
+      className={clsx("relative border-4", className, {
+        "opacity-50": !(uiStore.selectedParticipantId === participant.id),
+      })}
+      style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
+    >
       <Image
         src={CreatureUtils.awsURL(participant.creature, "icon")}
         alt={participant.creature.name}
@@ -464,7 +466,7 @@ export function BattleCardCreatureIcon({
       />
     </div>
   );
-}
+});
 
 export function BattleCardHealthAndStatus({
   participant,
@@ -492,7 +494,7 @@ export function HealthMeterOverlay({
         {
           "bg-gray-500": percentDamage >= 100,
           "bg-red-500": percentDamage !== 100,
-        },
+        }
       )}
     />
   );
