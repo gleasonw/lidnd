@@ -2,17 +2,19 @@ import { useEncounter, useEncounterQueryUtils } from "./hooks";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { api } from "@/trpc/react";
-import { useAwsImageUpload } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
+import {
+  useAwsImageUpload,
+  type CreatureUpload,
+} from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 import { useUIStore } from "@/app/UIStore";
+import type { UseFormReturn } from "react-hook-form";
 
 /**Note: must be called underneath an encounter provider */
 export function useUploadParticipant({
-  creatureStatBlock,
-  creatureIcon,
+  form,
   onSuccess,
 }: {
-  creatureStatBlock?: File;
-  creatureIcon?: File;
+  form: UseFormReturn<CreatureUpload>;
   onSuccess?: () => void;
 }) {
   const [encounter] = useEncounter();
@@ -21,8 +23,8 @@ export function useUploadParticipant({
   const id = encounter.id;
   const { invalidateAll, cancelAll } = useEncounterQueryUtils();
   const uploadToAws = useAwsImageUpload({
-    statBlockImage: creatureStatBlock,
-    iconImage: creatureIcon,
+    //@ts-expect-error - need to fix the types on the form... the playerupload object and the participant upload object differ slightly
+    form,
     onSuccess: () => {
       onSuccess?.();
       invalidateAll(encounter);

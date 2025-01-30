@@ -277,16 +277,11 @@ export function PlayerCreatureUploadForm({
 }
 
 type AwsImageUploadArgs = {
-  statBlockImage?: File;
-  iconImage?: File;
+  form: UseFormReturn<{ iconImage?: File; statBlockImage?: File }>;
   onSuccess?: () => void;
 };
 
-export function useAwsImageUpload({
-  statBlockImage,
-  iconImage,
-  onSuccess,
-}: AwsImageUploadArgs) {
+export function useAwsImageUpload({ form, onSuccess }: AwsImageUploadArgs) {
   const uiStore = useUIStore();
   const { mutate: updateCreature } = api.updateCreature.useMutation({
     onSuccess: () => {
@@ -305,6 +300,12 @@ export function useAwsImageUpload({
     try {
       const fileUploadTasks = [];
       const dimensionTasks = [];
+      const iconImage = form.getValues("iconImage");
+      const statBlockImage = form.getValues("statBlockImage");
+
+      if (!iconImage && !statBlockImage) {
+        throw new Error("No images found in form");
+      }
 
       if (iconPresigned && iconImage) {
         uiStore.setUploadStatusForCreature(creature, {

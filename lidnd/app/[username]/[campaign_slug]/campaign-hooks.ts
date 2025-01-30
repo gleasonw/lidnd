@@ -1,11 +1,15 @@
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
-import { useAwsImageUpload } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
+import {
+  useAwsImageUpload,
+  type PlayerUpload,
+} from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 import { api } from "@/trpc/react";
 import { CreatureUtils } from "@/utils/creatures";
 
 import { useEditor } from "@tiptap/react";
 
 import StarterKit from "@tiptap/starter-kit";
+import type { UseFormReturn } from "react-hook-form";
 
 export function useCampaign() {
   const campaignId = useCampaignId();
@@ -38,19 +42,15 @@ export function useUpdateCampaign(campaign: { id: string }) {
 
 export function useAddNewToParty({
   campaign,
-  statBlockImage,
-  iconImage,
+  form,
 }: {
   campaign: { id: string };
-  statBlockImage?: File;
-  iconImage?: File;
+  form: UseFormReturn<PlayerUpload>;
 }) {
   const campaignId = campaign.id;
   const { campaignById } = api.useUtils();
-  const uploadToAws = useAwsImageUpload({
-    statBlockImage,
-    iconImage,
-  });
+  //@ts-expect-error - need to fix the types on the form... the playerupload object and the participant upload object differ slightly
+  const uploadToAws = useAwsImageUpload({ form });
   return api.createCreatureAndAddToParty.useMutation({
     onSuccess: async (data) => {
       uploadToAws({

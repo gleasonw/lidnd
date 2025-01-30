@@ -51,8 +51,7 @@ function useParticipantForm(role: "ally" | "opponent") {
 
   const { mutate: uploadParticipant, isPending } =
     UploadHooks.useUploadParticipant({
-      creatureIcon: form.getValues("iconImage"),
-      creatureStatBlock: form.getValues("statBlockImage"),
+      form,
       onSuccess: () => {
         console.log("upload participant success, reseting form");
         form.reset();

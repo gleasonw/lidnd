@@ -180,8 +180,8 @@ function AddNpcToPartyForm() {
 
   const { mutate: onPlayerUpload, isPending } = useAddNewToParty({
     campaign,
-    statBlockImage: allyForm.getValues("statBlockImage"),
-    iconImage: allyForm.getValues("iconImage"),
+    //@ts-expect-error - need to fix the types on the form... the playerupload object and the participant upload object differ slightly
+    form: allyForm,
   });
 
   return (
@@ -214,7 +214,7 @@ function AddPlayerToPartyForm() {
 
   const { mutate: onPlayerUpload, isPending } = useAddNewToParty({
     campaign,
-    iconImage: playerForm.getValues("iconImage"),
+    form: playerForm,
   });
 
   return (

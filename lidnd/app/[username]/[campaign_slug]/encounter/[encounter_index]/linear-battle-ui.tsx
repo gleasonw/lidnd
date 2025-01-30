@@ -129,7 +129,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
   const [acceptDrop, setAcceptDrop] = React.useState(false);
   const { encounterById, getColumns } = api.useUtils();
   const encounterId = useEncounterId();
-  // const [encounter] = useEncounter();
+  const [encounter] = useEncounter();
   const encounterUiStore = useEncounterUIStore();
   const { data: columns } = api.getColumns.useQuery(encounterId);
   const { mutate: assignParticipantToColumn } =
@@ -208,7 +208,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         }}
         onDragLeave={() => setAcceptDrop(false)}
       >
-        {encounterUiStore.isEditingInitiative ? (
+        {encounterUiStore.isEditingInitiative || encounter.status === "prep" ? (
           <div className="flex w-full bg-gray-200">
             {columns && columns?.length > 1 ? (
               <div className="border border-b-0">

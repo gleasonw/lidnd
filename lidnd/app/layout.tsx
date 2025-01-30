@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   description: "A free and open-source initiative tracker for D&D 5e.",
 };
 
+const isDev = process.env.NODE_ENV === "development";
+
 export default function RootLayout({
   children,
 }: {
@@ -20,7 +22,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script src="https://unpkg.com/react-scan/dist/auto.global.js" async />
+        {isDev && (
+          <script
+            src="https://unpkg.com/react-scan/dist/auto.global.js"
+            async
+          />
+        )}
       </head>
       <body className={clsx(inter.className)}>
         <GlobalUI>

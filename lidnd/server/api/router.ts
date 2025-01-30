@@ -162,6 +162,7 @@ export const appRouter = t.router({
               name: opts.input.name ?? "Unnamed encounter",
               user_id: opts.ctx.user.id,
               index_in_campaign: newIndex,
+              status: "prep",
             })
             .returning(),
           ServerCampaign.campaignByIdThrows(
