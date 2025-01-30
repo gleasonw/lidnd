@@ -1,3 +1,6 @@
+"use client";
+
+import type { ButtonProps } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +48,7 @@ interface LidndPlusDialogProps {
   text: string;
   children: React.ReactNode;
   dialogTitle?: React.ReactNode;
+  variant?: ButtonProps["variant"];
 }
 
 export function LidndPlusDialog(props: LidndPlusDialogProps) {
@@ -53,7 +57,7 @@ export function LidndPlusDialog(props: LidndPlusDialogProps) {
     <LidndDialog
       title={props.dialogTitle}
       trigger={
-        <ButtonWithTooltip variant="ghost" text={text}>
+        <ButtonWithTooltip variant={props.variant ?? "ghost"} text={text}>
           <Plus />
         </ButtonWithTooltip>
       }

@@ -2,7 +2,7 @@ import {
   EncounterArchive,
   SessionEncounters,
 } from "./encounter/campaign-encounters-overview";
-import { ServerCampaign } from "@/server/campaigns";
+import { ServerCampaign } from "@/server/sdk/campaigns";
 import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
@@ -21,7 +21,7 @@ export default async function CampaignPage(props: {
 
   const campaignData = await ServerCampaign.campaignFromSlug(
     UserUtils.context(user),
-    params.campaign_slug,
+    params.campaign_slug
   );
 
   if (!campaignData) {

@@ -9,21 +9,24 @@ import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[enco
 import { useStartEncounter } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import InitiativeInput from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/InitiativeInput";
 import React from "react";
-import { useLidndDialog } from "@/components/ui/lidnd_dialog";
 import { EncounterUtils } from "@/utils/encounters";
 import * as R from "remeda";
-import { CreatureStatBlockImage } from "../original-size-image";
+import { Card } from "@/components/ui/card";
+import { useEncounterLinks } from "@/encounters/link-hooks";
+import { useRouter } from "next/navigation";
+import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
 
-export function GroupInitiativeInput() {
+export default function RollPage() {
   const id = useEncounterId();
-  const { close } = useLidndDialog();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
   const { mutate: startEncounter } = useStartEncounter();
   const refMap = React.useRef(new Map<string, HTMLDivElement>());
+  const { encounter: encounterLink } = useEncounterLinks();
+  const router = useRouter();
 
   function start() {
     startEncounter(id);
-    close();
+    router.push(encounterLink);
   }
 
   const sortedParticipants = R.sort(
@@ -39,24 +42,24 @@ export function GroupInitiativeInput() {
         return a.id > b.id ? 1 : -1;
       }
       return ParticipantUtils.name(a).localeCompare(ParticipantUtils.name(b));
-    }
+    },
   );
 
   const sortedMonsters = sortedParticipants.filter((p) =>
-    ParticipantUtils.isAdversary(p)
+    ParticipantUtils.isAdversary(p),
   );
 
   return (
-    <div className="grid grid-cols-2">
+    <Card className="grid grid-cols-2 h-full p-5">
       {" "}
-      <div className="flex flex-col gap-3 overflow-auto h-96">
+      <div className="flex flex-col gap-3 overflow-auto">
         {sortedMonsters.map((m) => (
-          <CreatureStatBlockImage
+          <CreatureStatBlock
             creature={m.creature}
             key={m.id}
             ref={(el) => {
               if (el && !refMap.current.has(m.id)) {
-                refMap.current.set(m.id, el);
+                refMap.current.set(m.id, el as HTMLImageElement);
               }
 
               return () => {
@@ -66,7 +69,7 @@ export function GroupInitiativeInput() {
           />
         ))}
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-5">
         <PreBattleInputsList>
           {sortedParticipants.map((p) => (
             <PreBattleInput key={p.id} participant={p}>
@@ -91,7 +94,7 @@ export function GroupInitiativeInput() {
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -100,7 +103,7 @@ export function PreBattleInputsList({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className={"flex flex-col gap-2 max-w-2xl"}>{children}</div>;
+  return <div className={"flex flex-col gap-5 max-w-2xl"}>{children}</div>;
 }
 
 export function PreBattleInput({
@@ -112,16 +115,12 @@ export function PreBattleInput({
 }) {
   const pName = ParticipantUtils.name(participant);
   return (
-    <div
-      key={participant.id}
-      className="flex gap-20 items-center justify-between"
-    >
-      <span className="flex gap-4 items-center">
+    <div key={participant.id} className="flex gap-5">
+      {children}
+      <span className="flex gap-4 items-end">
         <CreatureIcon creature={participant.creature} size="small" />
         <span>{pName}</span>
       </span>
-
-      {children}
     </div>
   );
 }

@@ -10,7 +10,7 @@ import { CreatureUtils } from "@/utils/creatures";
 type ParticipantWithCreature = Participant & { creature: Creature };
 type MinionParticipant = ParticipantWithCreature & { minion_count: number };
 
-function isPlayer(participant: ParticipantWithCreature) {
+function isPlayer(participant: { creature: { is_player: boolean } }) {
   return participant.creature.is_player;
 }
 
@@ -52,25 +52,11 @@ function statBlockAspectRatio(participant: ParticipantWithCreature) {
   );
 }
 
-function colSpan(p: ParticipantWithCreature) {
-  if (p.creature.col_span) {
-    return p.creature.col_span;
-  }
-  const ratio = statBlockAspectRatio(p);
-  if (ratio < 0.6) {
-    return 1;
-  }
-  if (ratio >= 0.6) {
-    return 2;
-  }
-  return 1;
-}
-
 function isDead(p: ParticipantWithCreature) {
   return p.hp <= 0;
 }
 
-function isFriendly(p: ParticipantWithCreature) {
+function isFriendly(p: { is_ally: boolean; creature: { is_player: boolean } }) {
   return isPlayer(p) || p.is_ally;
 }
 
@@ -182,7 +168,6 @@ export const ParticipantUtils = {
   isPlayer,
   iconHexColor,
   statBlockAspectRatio,
-  colSpan,
   isDead,
   isFriendly,
   name,

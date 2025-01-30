@@ -1,12 +1,15 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import type { Creature } from "@/server/api/router";
+"use client";
+
+import { useUIStore } from "@/app/UIStore";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreatureUtils } from "@/utils/creatures";
-import Image from "next/image";
+import { observer } from "mobx-react-lite";
+import React from "react";
 
 type IconSize = "v-small" | "small" | "small2" | "medium" | "large";
 
 function iconDimensions(
-  creature: Creature,
+  creature: { icon_width: number; icon_height: number },
   size?: IconSize,
 ): { width: number; height: number } {
   if (!size) {
@@ -32,47 +35,65 @@ function iconDimensions(
   return { width: 512, height: 512 };
 }
 
-export function CreatureIcon({
+export const CreatureIcon = observer(function CreatureIcon({
   creature,
   size,
-  objectFit = "contain",
 }: {
-  creature: Creature;
+  creature: {
+    id: string;
+    icon_width: number;
+    icon_height: number;
+    name: string;
+  };
   size?: IconSize;
-  objectFit?: "contain" | "cover";
 }) {
-  if (!creature.icon_width || !creature.icon_height) {
-    console.trace();
-    throw new Error(
-      `No icon width or height for ${creature.name}, ${JSON.stringify(creature)}`,
-    );
-  }
+  const uiStore = useUIStore();
+  const status = uiStore.getIconUploadStatus(creature);
+  const dimensions = iconDimensions(creature, size);
+  const [retryCount, setRetryCount] = React.useState(0);
+
+  const icon = (
+    <Avatar>
+      <AvatarImage
+        src={CreatureUtils.awsURL(creature, "icon")}
+        alt={creature.name}
+        width={dimensions.width}
+        height={dimensions.height}
+        fetchPriority="high"
+        onError={(e) => {
+          if (retryCount < 3) {
+            console.log("retrying");
+            setTimeout(() => setRetryCount(retryCount + 1), 500);
+          } else {
+            console.error(e);
+          }
+        }}
+      />
+      <AvatarFallback>{creature.name}</AvatarFallback>
+    </Avatar>
+  );
 
   if (creature.id === "pending") {
-    return <Skeleton />;
+    // catch the case where we'v just uploaded but not yet set the
+    // image upload status in the ui store...
+    return <div>pending</div>;
   }
 
-  const { width, height } = iconDimensions(creature, size);
-  const fitStyle = objectFit
-    ? { objectFit, maxWidth: "100%", maxHeight: "100%" }
-    : {};
-
-  const style = {
-    width: `${width}px`,
-    height: `${height}px`,
-    ...fitStyle,
-  };
-
-  return (
-    <Image
-      quality={100}
-      className="select-none rounded-full overflow-hidden max-h-full max-w-full"
-      src={CreatureUtils.awsURL(creature, "icon")}
-      alt={creature.name}
-      priority
-      style={style}
-      width={width}
-      height={height}
-    />
-  );
-}
+  switch (status) {
+    case "pending":
+      return <div>uploading icon</div>;
+    case "error":
+      return <div>error</div>;
+    case "idle":
+      return icon;
+    case "success":
+      return icon;
+    case undefined:
+      return icon;
+    default: {
+      //@ts-expect-error - exhaustive check
+      const _: never = status;
+      throw new Error(`Unhandled case: ${status}`);
+    }
+  }
+});

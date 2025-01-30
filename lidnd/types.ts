@@ -4,7 +4,7 @@ import {
   participants,
   status_effects,
   systems,
-} from "@/server/api/db/schema";
+} from "@/server/db/schema";
 
 export type System = typeof systems.$inferSelect;
 export type StatusEffect = typeof status_effects.$inferSelect;

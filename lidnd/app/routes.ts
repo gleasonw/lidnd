@@ -1,6 +1,11 @@
 import type { LidndUser } from "@/app/authentication";
-import type { EncounterStatus } from "@/server/api/db/schema";
 import _ from "lodash";
+
+type EncounterLinkArgs = {
+  campaign: { slug: string };
+  encounter: { name: string; index_in_campaign: number };
+  user: LidndUser;
+};
 
 export const appRoutes = {
   dashboard: (user: LidndUser) => {
@@ -19,21 +24,28 @@ export const appRoutes = {
     return `/observe/${encounter_id}`;
   },
 
-  encounter(
-    campaign: { slug: string },
-    encounter: { name: string; index_in_campaign: number },
-    user: LidndUser,
-    status: EncounterStatus = "prep",
-  ) {
-    if (status === "prep") {
-      return `${this.campaign(campaign, user)}/encounter/${encounter.index_in_campaign}/${_.kebabCase(encounter.name)}`;
-    }
-
-    return `${this.campaign(campaign, user)}/encounter/${encounter.index_in_campaign}/${_.kebabCase(encounter.name)}/${status}`;
+  encounter({ campaign, encounter, user }: EncounterLinkArgs) {
+    return `${this.campaign({ campaign, user })}/encounter/${
+      encounter.index_in_campaign
+    }/${_.kebabCase(encounter.name)}`;
   },
 
-  campaign(campaign: { slug: string }, user: LidndUser) {
+  rollEncounter(args: EncounterLinkArgs) {
+    return `${this.encounter(args)}/roll`;
+  },
+
+  campaign({
+    campaign,
+    user,
+  }: {
+    campaign: { slug: string };
+    user: LidndUser;
+  }) {
     return `${this.dashboard(user)}/${campaign.slug}`;
+  },
+
+  party(props: { campaign: { slug: string }; user: LidndUser }) {
+    return `${this.campaign(props)}/party`;
   },
 
   login: "/login",

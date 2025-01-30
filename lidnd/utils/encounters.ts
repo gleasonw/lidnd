@@ -7,7 +7,7 @@ import type {
   Participant,
   ParticipantWithData,
 } from "@/server/api/router";
-import type { EncounterWithData } from "@/server/encounters";
+import type { EncounterWithData } from "@/server/sdk/encounters";
 import type { System } from "@/types";
 import * as R from "remeda";
 import { ParticipantUtils } from "@/utils/participants";
@@ -19,7 +19,7 @@ export const ESTIMATED_TURN_SECONDS = 180;
 export const ESTIMATED_ROUNDS = 2;
 
 type EncounterWithParticipants<
-  T extends Participant = EncounterWithData["participants"][number],
+  T extends Participant = EncounterWithData["participants"][number]
 > = Encounter & {
   participants: T[];
 };
@@ -63,9 +63,35 @@ function cssClassForDifficulty(d: Difficulty) {
   return difficultyClasses[d];
 }
 
+function start(e: EncounterWithData): EncounterWithData {
+  const [firstActive, firstRoundNumber] =
+    EncounterUtils.firstActiveAndRoundNumber(e);
+
+  const activatedEncounter = EncounterUtils.updateParticipant(
+    { ...firstActive, is_active: true },
+    { ...e, current_round: firstRoundNumber }
+  );
+
+  return {
+    ...activatedEncounter,
+    status: "run",
+    is_editing_columns: false,
+    started_at: new Date(),
+  };
+}
+
+/**encounters not in the session */
+function inactiveEncounters<E extends { label: Encounter["label"] }>(
+  encounters: E[]
+) {
+  return encounters.filter((e) => e.label === "inactive");
+}
+
 const DEFAULT_LEVEL = 1;
 
 export const EncounterUtils = {
+  inactiveEncounters,
+  start,
   difficultyCssClasses,
   difficultyClassForCR,
   cssClassForDifficulty,
@@ -121,10 +147,10 @@ export const EncounterUtils = {
     user: LidndUser
   ) {
     if (encounter.started_at) {
-      return `${appRoutes.encounter(campaign, encounter, user)}/run`;
+      return `${appRoutes.encounter({ campaign, encounter, user })}/run`;
     }
 
-    return appRoutes.encounter(campaign, encounter, user);
+    return appRoutes.encounter({ campaign, encounter, user });
   },
 
   initiativeType(encounter: { campaigns: { system: System } }) {
@@ -183,12 +209,12 @@ export const EncounterUtils = {
       opts?.estimatedRounds ?? difficulty === "Deadly"
         ? 5
         : difficulty === "Hard"
-          ? 4
-          : difficulty === "Standard"
-            ? 3
-            : difficulty === "Easy"
-              ? 2
-              : 1;
+        ? 4
+        : difficulty === "Standard"
+        ? 3
+        : difficulty === "Easy"
+        ? 2
+        : 1;
     const finalTurnSeconds = opts?.estimatedTurnSeconds ?? 180;
     const estimateEncounterSeconds =
       (encounter.participants.length *

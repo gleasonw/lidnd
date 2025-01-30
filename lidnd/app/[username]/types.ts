@@ -1,4 +1,4 @@
-import { campaigns, encounters, reminders } from "@/server/api/db/schema";
+import { campaigns, encounters, reminders } from "@/server/db/schema";
 import { createInsertSchema } from "drizzle-zod";
 
 export type Campaign = typeof campaigns.$inferSelect;

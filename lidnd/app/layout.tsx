@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
 import "@/app/globals.css";
+import { GlobalUI } from "@/app/UIStore";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,8 +19,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script src="https://unpkg.com/react-scan/dist/auto.global.js" async />
+      </head>
       <body className={clsx(inter.className)}>
-        <div className="h-screen max-h-full flex flex-col">{children}</div>
+        <GlobalUI>
+          <div className="h-screen max-h-full flex flex-col">{children}</div>
+        </GlobalUI>
       </body>
     </html>
   );

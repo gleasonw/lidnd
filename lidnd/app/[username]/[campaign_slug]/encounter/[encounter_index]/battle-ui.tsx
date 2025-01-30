@@ -10,8 +10,13 @@ import clsx from "clsx";
 import type { Participant, ParticipantWithData } from "@/server/api/router";
 import { LidndPopover } from "@/encounters/base-popover";
 import { EffectIcon, StatusInput } from "./status-input";
-import { LinearBattleUI } from "./linear-battle-ui";
-import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
+import {
+  LinearBattleUI,
+  ParentWidthContext,
+  StatColumnComponent,
+  useParentResizeObserver,
+} from "./linear-battle-ui";
+import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { observer } from "mobx-react-lite";
 import { ParticipantUtils } from "@/utils/participants";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
@@ -21,6 +26,7 @@ import { DescriptionTextArea } from "@/encounters/[encounter_index]/description-
 import { GroupBattleUI } from "@/encounters/[encounter_index]/group-battle-ui";
 import {
   useEncounter,
+  useRemoveParticipantFromEncounter,
   useRemoveStatusEffect,
   useUpdateEncounterParticipant,
 } from "@/encounters/[encounter_index]/hooks";
@@ -29,33 +35,180 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-import { CreatureStatBlockImage } from "@/encounters/original-size-image";
 import { Label } from "@/components/ui/label";
-import { Reminders } from "@/encounters/[encounter_index]/reminders";
-import { useEncounterUIStore } from "./EncounterUiStore";
+import {
+  ReminderInput,
+  Reminders,
+} from "@/encounters/[encounter_index]/reminders";
+import { Grip, MoreHorizontal, PlayIcon } from "lucide-react";
+import { useEncounterLinks } from "../link-hooks";
+import Link from "next/link";
+import { imageStyle, InitiativeTracker } from "./battle-bar";
+import { EncounterDifficulty } from "./encounter-difficulty";
+import { OpponentParticipantForm } from "./participant-upload-form";
+import { dragTypes, typedDrag } from "@/app/[username]/utils";
+import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
+import { api } from "@/trpc/react";
+import type { StatColumn } from "@/server/api/columns-router";
+import { ButtonWithTooltip } from "@/components/ui/tip";
+import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
+import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
+import { CreatureUtils } from "@/utils/creatures";
+import Image from "next/image";
 
-export const BattleUI = observer(function BattleUI() {
+// TODO: existing creatures for ally/player upload?
+
+export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
   const [encounter] = useEncounter();
+  const { rollEncounter } = useEncounterLinks();
+
+  switch (encounter.status) {
+    case "prep":
+      return (
+        <div className="flex flex-col max-h-full overflow-hidden h-full gap-3">
+          <div className="flex flex-col w-full">
+            <div className="flex gap-2 items-baseline ml-[var(--campaign-nav-width)]">
+              <Card className="flex shadow-none w-[800px] items-center justify-between p-3 gap-3 ">
+                <EncounterDifficulty />
+                <Link href={rollEncounter} className="text-lg">
+                  <ButtonWithTooltip text={"Roll initiative"}>
+                    <PlayIcon />
+                  </ButtonWithTooltip>
+                </Link>
+              </Card>
+              <ReminderInput />
+            </div>
+          </div>
+
+          <div className="w-full overflow-hidden flex gap-3 h-full">
+            <Card className="p-4 overflow-auto w-[700px] h-full">
+              <OpponentParticipantForm />
+            </Card>
+            <EncounterBattlePreview />
+          </div>
+        </div>
+      );
+    case "run":
+      return (
+        <section className="flex flex-col max-h-full min-h-0 h-full">
+          <InitiativeTracker />
+          <Reminders />
+          <div className="flex gap-4 flex-col w-full max-h-full overflow-hidden h-full">
+            {/**create space for the overlaid initiative tracker */}
+            {encounter.status === "run" && <div className="my-5" />}
+            {encounter.description ? (
+              <div className="bg-white p-5">
+                <DescriptionTextArea />
+              </div>
+            ) : null}
+
+            {campaign.system?.initiative_type === "linear" ? (
+              <LinearBattleUI />
+            ) : (
+              <GroupBattleUI />
+            )}
+          </div>
+        </section>
+      );
+    default: {
+      //@ts-expect-error - exhaustive check
+      const _: never = encounter.status;
+      throw new Error(`Unhandled case: ${encounter.status}`);
+    }
+  }
+});
+
+function EncounterBattlePreview() {
+  const { data: columns } = api.getColumns.useQuery(useEncounterId());
+  const { parentWidth, containerRef } = useParentResizeObserver();
+  return (
+    <div className="flex flex-col gap-8 max-h-full overflow-hidden w-full h-full">
+      <div
+        className="flex relative h-full max-h-full overflow-hidden"
+        ref={containerRef}
+      >
+        <ParentWidthContext.Provider value={parentWidth}>
+          {columns?.map((c, i) => (
+            <StatColumnComponent column={c} index={i} key={c.id}>
+              <div className="flex flex-col gap-5 border border-t-0 w-full max-h-full overflow-hidden h-full bg-white">
+                <PreviewCardsForColumn column={c} />
+              </div>
+            </StatColumnComponent>
+          ))}
+        </ParentWidthContext.Provider>
+      </div>
+    </div>
+  );
+}
+
+function BattleCardTools({ participant }: { participant: Participant }) {
+  const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
+  const uiStore = useEncounterUIStore();
 
   return (
     <>
-      <Reminders />
-      <div className="flex gap-4 flex-col w-full max-h-full overflow-auto h-full">
-        {/**create space for the overlaid initiative tracker */}
-        {encounter.status === "run" && <div className="my-5" />}
-        <div className="bg-white p-5">
-          <DescriptionTextArea />
-        </div>
-        {campaign.system?.initiative_type === "linear" ? (
-          <LinearBattleUI />
-        ) : (
-          <GroupBattleUI />
-        )}
-      </div>
+      <Button
+        variant="ghost"
+        className="z-10 ml-auto cursor-grab"
+        onDragStart={(e) => {
+          typedDrag.set(e.dataTransfer, dragTypes.participant, participant);
+          uiStore.startDraggingBattleCard();
+        }}
+        draggable
+      >
+        <Grip />
+      </Button>
+      <LidndPopover
+        trigger={
+          <ButtonWithTooltip text="More" variant="ghost">
+            <MoreHorizontal />
+          </ButtonWithTooltip>
+        }
+        className="justify-center flex"
+      >
+        <Button
+          onClick={() =>
+            removeParticipant({
+              encounter_id: participant.encounter_id,
+              participant_id: participant.id,
+            })
+          }
+          variant="destructive"
+        >
+          Remove participant
+        </Button>
+      </LidndPopover>
     </>
   );
-});
+}
+
+function PreviewCardsForColumn({ column }: { column: StatColumn }) {
+  const [encounter] = useEncounter();
+  const participantsInColumn = encounter.participants
+    .filter((p) => p.column_id === column.id)
+    .sort(ParticipantUtils.sortLinearly);
+  return (
+    <div className="flex flex-col max-h-full overflow-hidden h-full">
+      {participantsInColumn.map((p) => (
+        <div
+          className="max-h-full h-full flex flex-col overflow-hidden"
+          key={p.id}
+        >
+          <div className="w-full flex gap-2 p-4">
+            <CreatureIcon creature={p.creature} size="small" />
+            <BattleCardCreatureName participant={p} />
+            <BattleCardTools participant={p} />
+          </div>
+
+          <div className="w-full h-full max-h-full overflow-hidden">
+            <CreatureStatBlock creature={p.creature} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export type BattleCardProps = {
   participant: ParticipantWithData;
@@ -66,7 +219,7 @@ export type BattleCardProps = {
   ref: (ref: HTMLDivElement) => void;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export function BattleCard({
+export const BattleCard = observer(function BattleCard({
   participant,
   extraHeaderButtons,
   ref,
@@ -95,18 +248,11 @@ export function BattleCard({
   });
 
   return (
-    <div
-      className={`relative flex-col gap-6 items-center justify-between flex `}
-      ref={ref}
-      {...props}
-    >
+    <div className={`relative flex-col gap-6 w-full flex`} ref={ref} {...props}>
       {participant?.minion_count && participant.minion_count > 1 ? (
         <MinionCardStack minionCount={participant.minion_count} />
       ) : null}
       <BattleCardLayout key={participant.id} participant={participant}>
-        <div className="absolute top-2 right-2 flex gap-2 items-center">
-          {extraHeaderButtons}
-        </div>
         <div className="flex gap-4 p-5 items-center w-full">
           <BattleCardContent>
             <div className="flex gap-2 items-center w-full justify-between">
@@ -114,8 +260,11 @@ export function BattleCard({
                 participant={participant}
                 className="flex-shrink-0 flex-grow-0"
               />
-              <div className="flex flex-col gap-3 w-full">
-                <BattleCardCreatureName participant={participant} />
+              <div className="flex flex-col gap-3 w-full ">
+                <div className="flex justify-between">
+                  <BattleCardCreatureName participant={participant} />
+                  <BattleCardTools participant={participant} />
+                </div>
                 <div className="flex flex-wrap gap-3 items-center">
                   {participant.status_effects?.map((se) => (
                     <LidndPopover
@@ -154,11 +303,11 @@ export function BattleCard({
             <ParticipantHealthForm participant={participant} />
           </BattleCardContent>
         </div>
-        <CreatureStatBlockImage creature={participant.creature} />
+        <CreatureStatBlock creature={participant.creature} />
       </BattleCardLayout>
     </div>
   );
-}
+});
 
 export const BattleCardLayout = observer(function BattleCardLayout({
   className,
@@ -170,11 +319,10 @@ export const BattleCardLayout = observer(function BattleCardLayout({
   children: React.ReactNode;
   participant: ParticipantWithData;
 } & React.HTMLAttributes<HTMLDivElement>) {
-  const { selectedParticipantId } = useEncounterUIStore();
   return (
-    <Card
+    <div
       className={clsx(
-        "bg-white shadow-sm border-none flex flex-col justify-between transition-all group",
+        "bg-white h-full shadow-sm w-full flex flex-col transition-all group",
         {
           "shadow-lg shadow-red-800":
             !ParticipantUtils.isFriendly(participant) && participant.is_active,
@@ -183,14 +331,12 @@ export const BattleCardLayout = observer(function BattleCardLayout({
           "shadow-lg shadow-blue-800":
             ParticipantUtils.isFriendly(participant) && participant.is_active,
         },
-        { outline: selectedParticipantId === participant.id },
-        className,
+        className
       )}
-      style={{ outlineColor: ParticipantUtils.iconHexColor(participant) }}
       {...props}
     >
       {children}
-    </Card>
+    </div>
   );
 });
 
@@ -242,10 +388,9 @@ export function BattleCardStatusEffects({
   );
 }
 
-export function BattleCardCreatureName({
+export const BattleCardCreatureName = observer(function BattleCardCreatureName({
   participant,
 }: BattleCardParticipantProps) {
-  // todo: maybe at some point just allow a color picker and save previous values
   const pastelLabels = ["#7eb2bc", "#e39ca0", "#edab33", "#94ae7f"];
   const solidColors = [
     "#8abd11",
@@ -293,26 +438,35 @@ export function BattleCardCreatureName({
       </LidndPopover>
     </span>
   );
-}
+});
 
-export function BattleCardCreatureIcon({
+export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   participant,
   className,
 }: BattleCardParticipantProps & {
   className?: string;
 }) {
+  const uiStore = useEncounterUIStore();
   return participant.creature_id === "pending" ? (
     <span>Loading</span>
   ) : (
-    <div className={clsx("relative", className)}>
-      <CreatureIcon
-        creature={participant.creature}
-        size="small2"
-        objectFit="contain"
+    <div
+      className={clsx("relative border-4", className, {
+        "opacity-50": !(uiStore.selectedParticipantId === participant.id),
+      })}
+      style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
+    >
+      <Image
+        src={CreatureUtils.awsURL(participant.creature, "icon")}
+        alt={participant.creature.name}
+        style={imageStyle}
+        width={participant.creature.icon_width}
+        height={participant.creature.icon_height}
+        className="w-36 h-36"
       />
     </div>
   );
-}
+});
 
 export function BattleCardHealthAndStatus({
   participant,
@@ -340,7 +494,7 @@ export function HealthMeterOverlay({
         {
           "bg-gray-500": percentDamage >= 100,
           "bg-red-500": percentDamage !== 100,
-        },
+        }
       )}
     />
   );

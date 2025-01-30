@@ -4,7 +4,10 @@ import type { ParticipantWithData } from "@/server/api/router";
 import { Card } from "@/components/ui/card";
 import clsx from "clsx";
 import { EncounterUtils } from "@/utils/encounters";
-import { ServerEncounter, type ObserveEncounter } from "@/server/encounters";
+import {
+  ServerEncounter,
+  type ObserveEncounter,
+} from "@/server/sdk/encounters";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/group-battle-ui";
 import { PageRefresher } from "@/app/observe/[id]/page-refresher";
@@ -75,7 +78,7 @@ function SimpleGroupBattleCard({
         "w-40 shadow-lg border-2 relative select-none mb-8 rounded-sm justify-between overflow-hidden pt-3 gap-0 items-center flex flex-col transition-all",
         {
           "opacity-20": participant.has_played_this_round,
-        },
+        }
       )}
     >
       {participant.creature_id === "pending" ? (

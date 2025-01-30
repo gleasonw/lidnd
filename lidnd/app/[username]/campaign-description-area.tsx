@@ -1,6 +1,6 @@
 "use client";
 
-import { useCampaign } from "@/app/[username]/[campaign_slug]/hooks";
+import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { api } from "@/trpc/react";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -10,29 +10,15 @@ import React from "react";
 import { useDebouncedCallback } from "use-debounce";
 
 export function CampaignDescriptionForm() {
-  const [textValue, setTextValue] = React.useState("");
   const configuredPlaceholder = Placeholder.configure({
     placeholder: "Setting, hook, etc...",
   });
 
   const editor = useEditor({
     extensions: [StarterKit, configuredPlaceholder],
-    onUpdate: ({ editor }) => {
-      setTextValue(editor.getHTML());
-    },
   });
 
-  return (
-    <>
-      <LidndTextArea editor={editor} />
-      <input
-        type="text"
-        value={textValue}
-        name="description"
-        className="hidden"
-      />
-    </>
-  );
+  return <LidndTextArea editor={editor} />;
 }
 
 export function CampaignDescriptionArea({

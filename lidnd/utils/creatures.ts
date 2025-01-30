@@ -9,7 +9,7 @@ export const CreatureUtils = {
     return `stat_block-${creature.id}.png`;
   },
 
-  awsURL(creature: { id: Creature["id"] }, type: "icon" | "stat_block") {
+  awsURL(creature: { id: Creature["id"] }, type: "icon" | "statBlock") {
     const key =
       type === "icon" ? this.iconKey(creature) : this.statBlockKey(creature);
     return `https://dnd-init-tracker-icons-stats.s3.us-west-1.amazonaws.com/${key}`;
@@ -30,7 +30,6 @@ export const CreatureUtils = {
       stat_block_width: creature.stat_block_width ?? 250,
       icon_height: creature.icon_height ?? 250,
       icon_width: creature.icon_width ?? 250,
-      col_span: creature.col_span ?? 1,
     };
   },
 };

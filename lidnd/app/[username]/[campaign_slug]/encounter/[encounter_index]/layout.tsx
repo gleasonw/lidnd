@@ -1,9 +1,15 @@
 import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { EncounterUI } from "@/encounters/[encounter_index]/EncounterUiStore";
-import { EncounterTopBar } from "@/encounters/[encounter_index]/encounter-top-bar";
 import { isEncounterPathParams } from "@/server/utils";
-import { ServerCampaign } from "@/server/campaigns";
+import { ServerCampaign } from "@/server/sdk/campaigns";
 import { LidndAuth } from "@/app/authentication";
+import { Card } from "@/components/ui/card";
+import Link from "next/link";
+import { appRoutes } from "@/app/routes";
+import { Home } from "lucide-react";
+import css from "./EncounterLayout.module.css";
+import { EncounterRoundIndicator } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
+import { ButtonWithTooltip } from "@/components/ui/tip";
 
 export default async function EncounterLayout(props: {
   children: React.ReactNode;
@@ -31,10 +37,29 @@ export default async function EncounterLayout(props: {
   return (
     <EncounterUI>
       <EncounterId encounterId={encounter.id}>
-        <EncounterTopBar />
-        <section className="flex flex-col overflow-y-auto max-h-full min-h-0 h-full ">
+        <div
+          className={`relative ${css.root} flex flex-col overflow-hidden max-h-full`}
+        >
+          <div className={`${css.encounterNav} absolute top-0 left-0 z-50`}>
+            <Card
+              className={`items-center justify-center gap-3 flex flex-col w-full h-full`}
+            >
+              <Link
+                href={appRoutes.campaign({
+                  campaign: { ...campaign, slug: param.campaign_slug },
+                  user,
+                })}
+                className="flex gap-3"
+              >
+                <ButtonWithTooltip text="Back to campaign" variant="outline">
+                  <Home />
+                </ButtonWithTooltip>
+              </Link>
+              <EncounterRoundIndicator />
+            </Card>
+          </div>
           {props.children}
-        </section>
+        </div>
       </EncounterId>
     </EncounterUI>
   );

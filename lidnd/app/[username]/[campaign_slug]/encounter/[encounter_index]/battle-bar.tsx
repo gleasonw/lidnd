@@ -1,8 +1,6 @@
 "use client";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
-import { Button } from "@/components/ui/button";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
-import { Popover, PopoverContent } from "@/components/ui/popover";
 import { ButtonWithTooltip, Tip } from "@/components/ui/tip";
 import { Toggle } from "@/components/ui/toggle";
 import { HealthMeterOverlay } from "@/encounters/[encounter_index]/battle-ui";
@@ -12,18 +10,12 @@ import {
   useCycleNextTurn,
   useCyclePreviousTurn,
   useEncounter,
-  useRemoveStatusEffect,
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import InitiativeInput from "@/encounters/[encounter_index]/InitiativeInput";
-import {
-  EffectIcon,
-  StatusInput,
-} from "@/encounters/[encounter_index]/status-input";
 import type { ParticipantWithData } from "@/server/api/router";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
-import { PopoverTrigger } from "@radix-ui/react-popover";
 import clsx from "clsx";
 import {
   BookOpen,
@@ -35,7 +27,9 @@ import {
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React from "react";
-import { MonsterUpload } from "./participant-add-form";
+import { OpponentParticipantForm } from "./participant-upload-form";
+import Image from "next/image";
+import { CreatureUtils } from "@/utils/creatures";
 
 export function ToggleEditingMode() {
   const [encounter] = useEncounter();
@@ -62,7 +56,7 @@ export function ToggleEditingMode() {
   );
 }
 
-export const InitiativeTracker = observer(function ParticipantIcons() {
+export const InitiativeTracker = observer(function InitiativeTracker() {
   const {
     setSelectedParticipantId,
     isEditingInitiative,
@@ -97,7 +91,7 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
 
   return (
     <div
-      className={`flex flex-grow-0 h-20 z-20 gap-2 justify-center w-full mx-auto bottom-0`}
+      className={`pl-[var(--campaign-nav-width)] flex overflow-visible h-20 z-20 gap-2 w-full bottom-0`}
     >
       <ButtonWithTooltip
         className="h-full shadow-lg"
@@ -110,10 +104,7 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
       </ButtonWithTooltip>
       {EncounterUtils.participantsInInitiativeOrder(encounter).map(
         (p, index) => (
-          <div
-            className="flex gap-2 flex-col relative flex-grow-0 max-h-fit"
-            key={p.id}
-          >
+          <div className="flex gap-2 flex-col relative h-fit" key={p.id}>
             {ParticipantUtils.isPlayer(p) ? (
               <PlayerCard
                 participant={p}
@@ -134,14 +125,14 @@ export const InitiativeTracker = observer(function ParticipantIcons() {
       <ButtonWithTooltip
         variant="ghost"
         className="self-stretch h-full flex"
-        text="Edit initiative"
+        text="Edit initiative and columns"
         onClick={() => toggleEditingInitiative()}
       >
         <ListOrdered />
       </ButtonWithTooltip>
       <LidndDialog
         title={"Add monster"}
-        content={<MonsterUpload encounter={encounter} />}
+        content={<OpponentParticipantForm />}
         trigger={
           <ButtonWithTooltip
             variant="ghost"
@@ -170,58 +161,47 @@ type CardProps = {
   activeIndex: number;
   participant: ParticipantWithData;
   overrideIcon?: React.ReactNode;
-};
+} & React.HTMLAttributes<HTMLDivElement>;
 
-function GMCreatureCard(props: CardProps) {
-  const { setSelectedParticipantId } = useEncounterUIStore();
+export const imageStyle = { objectFit: "contain" } as const;
+
+export function GMCreatureCard(props: CardProps) {
+  const uiStore = useEncounterUIStore();
   return (
-    <div
-      onClick={() => setSelectedParticipantId(props.participant.id)}
+    <TopBarParticipantCard
+      onClick={() => uiStore.setSelectedParticipantId(props.participant.id)}
       draggable
       onDragStart={(e) =>
         typedDrag.set(e.dataTransfer, dragTypes.participant, props.participant)
       }
+      overrideIcon={
+        <Image
+          src={CreatureUtils.awsURL(props.participant.creature, "icon")}
+          alt={props.participant.creature.name}
+          style={imageStyle}
+          width={props.participant.creature.icon_width}
+          height={props.participant.creature.icon_height}
+        />
+      }
+      {...props}
     >
-      <TopBarParticipantCard {...props}>
-        <HealthMeterOverlay participant={props.participant} />
-      </TopBarParticipantCard>
-    </div>
+      <HealthMeterOverlay participant={props.participant} />
+    </TopBarParticipantCard>
   );
 }
 
-function PlayerCard(props: CardProps) {
-  const { mutate: removeStatusEffect } = useRemoveStatusEffect();
+export function PlayerCard(props: CardProps) {
   return (
     <TopBarParticipantCard
       {...props}
       overrideIcon={
-        <Popover>
-          <PopoverTrigger className="max-h-full overflow-hidden h-20">
-            <CreatureIcon
-              creature={props.participant.creature}
-              size="small2"
-              objectFit="contain"
-            />
-          </PopoverTrigger>
-          <PopoverContent>
-            <StatusInput participant={props.participant} />
-            <div className="flex flex-wrap gap-2">
-              {props.participant.status_effects.map((s) => {
-                return (
-                  <Button
-                    onClick={() => removeStatusEffect(s)}
-                    variant="ghost"
-                    key={s.id}
-                    className="text-red-500"
-                  >
-                    <EffectIcon effect={s.effect} />
-                    {s.effect.name}
-                  </Button>
-                );
-              })}
-            </div>
-          </PopoverContent>
-        </Popover>
+        <Image
+          src={CreatureUtils.awsURL(props.participant.creature, "icon")}
+          alt={props.participant.creature.name}
+          style={imageStyle}
+          width={props.participant.creature.icon_width}
+          height={props.participant.creature.icon_height}
+        />
       }
     />
   );
@@ -233,30 +213,24 @@ function TopBarParticipantCard({
   activeIndex,
   children,
   overrideIcon,
+  ...props
 }: CardProps) {
   return (
-    <div className="relative cursor-pointer shadow-md bg-white">
-      <Tip text={ParticipantUtils.name(participant)}>
-        <div
-          className={clsx(
-            "w-auto border-4 flex justify-center items-center transition-all h-20 max-w-xs",
-            participant.is_active && "h-32",
-            index < activeIndex
-              ? "opacity-60 hover:opacity-100"
-              : "hover:opacity-60"
-          )}
-          style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
-        >
-          {children}
-          {overrideIcon ?? (
-            <CreatureIcon
-              creature={participant.creature}
-              size="small2"
-              objectFit="contain"
-            />
-          )}
-        </div>
-      </Tip>
+    <div
+      className={clsx(
+        "w-auto border-4 flex justify-center items-center transition-all max-h-full overflow-hidden max-w-[200px]",
+        participant.is_active ? "h-32" : "h-20",
+        index < activeIndex
+          ? "opacity-60 hover:opacity-100"
+          : "hover:opacity-60"
+      )}
+      style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
+      {...props}
+    >
+      {children}
+      {overrideIcon ?? (
+        <CreatureIcon creature={participant.creature} size="small2" />
+      )}
     </div>
   );
 }

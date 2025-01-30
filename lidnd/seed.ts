@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { type DbSpell, status_effects, spells } from "@/server/api/db/schema";
+import { type DbSpell, status_effects, spells } from "@/server/db/schema";
 
 type Entry = {
   type: string;

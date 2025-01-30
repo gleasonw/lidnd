@@ -1,6 +1,6 @@
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { LidndAuth, UserUtils } from "@/app/authentication";
-import { ServerCampaign } from "@/server/campaigns";
+import { ServerCampaign } from "@/server/sdk/campaigns";
 import { isCampaignSlug } from "@/server/utils";
 import React from "react";
 
@@ -8,7 +8,6 @@ export default async function CampaignLayout(props: {
   children: React.ReactNode;
   params: Promise<unknown>;
 }) {
-  const start = performance.now();
   const params = await props.params;
 
   const { children } = props;
@@ -33,10 +32,12 @@ export default async function CampaignLayout(props: {
   if (!campaign) {
     return <div>No campaign found -- bug!</div>;
   }
-  console.log(`loaded campaign layout in ${performance.now() - start}ms`);
+  // todo: add basic nav box, that takes up the same amount of space as the initiative bar
   return (
     <CampaignId value={campaign.id}>
-      <div className="mx-2 flex flex-col overflow-hidden max-h-full h-full gap-5">
+      <div
+        className={`mx-2 flex flex-col overflow-hidden max-h-full h-full gap-5 relative `}
+      >
         {children}
       </div>
     </CampaignId>

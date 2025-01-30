@@ -2,15 +2,27 @@ import { isStringMeaningful } from "./utils";
 import type { Campaign } from "./types";
 import { appRoutes } from "@/app/routes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getUserCampaigns } from "@/server/api/utils";
+import { getSystems, getUserCampaigns } from "@/server/api/utils";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { AngryIcon, ChevronRight } from "lucide-react";
 import { LidndAuth, type LidndUser, UserUtils } from "@/app/authentication";
-import { ServerCampaign } from "@/server/campaigns";
+import { ServerCampaign } from "@/server/sdk/campaigns";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import * as R from "remeda";
 import * as CampaignUtils from "@/utils/campaigns";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
+import { CampaignDescriptionForm } from "@/app/[username]/campaign-description-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { createCampaign } from "./actions";
+import { Button } from "@/components/ui/button";
+import { LidndDialog } from "@/components/ui/lidnd_dialog";
 
 export default async function Page(props: {
   params: Promise<{ username: string }>;
@@ -23,19 +35,51 @@ export default async function Page(props: {
     return redirect("/login");
   }
 
-  const userCampaigns = await getUserCampaigns(user.id);
-
-  if (userCampaigns && userCampaigns.length === 1) {
-    // might as well redirect to the first campaign
-    const firstCampaign = userCampaigns[0];
-    if (!firstCampaign) {
-      throw new Error("Impossible!");
-    }
-    return redirect(appRoutes.campaign(firstCampaign, user));
-  }
+  const [userCampaigns, systems] = await Promise.all([
+    getUserCampaigns(user.id),
+    getSystems(),
+  ]);
 
   return (
     <div className="flex w-full flex-col gap-10 p-5">
+      <Link href={appRoutes.creatures(user)}>
+        <Button variant={"outline"}>
+          Creatures <AngryIcon />
+        </Button>
+      </Link>
+      <LidndDialog
+        trigger={
+          <Button className="max-w-sm mx-auto mt-5">Create new campaign</Button>
+        }
+        title={"Create new campaign"}
+        content={
+          <form action={createCampaign} className="flex flex-col gap-5 w-full">
+            <div className="flex gap-2 flex-col">
+              <LidndTextInput
+                variant="ghost"
+                type="text"
+                name="name"
+                className="text-xl"
+                placeholder="Name"
+              />
+              <CampaignDescriptionForm />
+              <Select name="system_id" required>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select a system" />
+                </SelectTrigger>
+                <SelectContent>
+                  {systems.map((system) => (
+                    <SelectItem key={system.id} value={system.id}>
+                      {system.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button type="submit">Create a new campaign</Button>
+          </form>
+        }
+      />
       {R.sort(userCampaigns, CampaignUtils.sortRecent).map((campaign) => (
         <CampaignCard key={campaign.id} campaign={campaign} user={user} />
       ))}
@@ -57,7 +101,7 @@ async function CampaignCard(props: CampaignCardProps) {
   );
 
   return (
-    <Link href={appRoutes.campaign(campaign, user)} className="w-full">
+    <Link href={appRoutes.campaign({ campaign, user })} className="w-full">
       <Card className=" flex flex-col relative transition-all border-2 shadow-lg hover:bg-gray-200 w-full ">
         <CardHeader className="flex gap-2 flex-col">
           <CardTitle>

@@ -1,24 +1,18 @@
 "use client";
 
-import { FullCreatureAddForm } from "@/app/[username]/[campaign_slug]/encounter/full-creature-add-form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { Plus } from "lucide-react";
+import { Plus, Trash } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/trpc/react";
 import type { Creature } from "@/server/api/router";
-import { useMutation } from "@tanstack/react-query";
-import { getCreaturePostForm } from "@/app/[username]/[campaign_slug]/encounter/utils";
-import type { CreaturePost } from "@/app/[username]/[campaign_slug]/encounter/types";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
-import { DataTable } from "@/app/[username]/creatures/creatures-table";
-import { columns } from "@/app/[username]/creatures/columns";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
-import { postCreature } from "@/app/[username]/actions";
-import { CreatureUtils } from "@/utils/creatures";
+import { Card } from "@/components/ui/card";
+import { groupBy } from "remeda";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");
@@ -27,11 +21,11 @@ export default function CreaturesPage() {
     name,
   });
   const [selectedCreatureId, setSelectedCreatureId] = useState<string | null>(
-    null,
+    null
   );
 
   const selectedCreature = creatures?.find(
-    (creature) => creature.id === selectedCreatureId,
+    (creature) => creature.id === selectedCreatureId
   );
 
   const {
@@ -52,37 +46,17 @@ export default function CreaturesPage() {
     },
   });
 
-  const { mutate: createCreature } = useMutation({
-    mutationFn: async (rawData: CreaturePost) => {
-      const formData = getCreaturePostForm({
-        ...rawData,
-        max_hp: rawData.max_hp ? rawData.max_hp : 1,
-      });
-      return await postCreature(formData);
-    },
-    onSettled: async () => {
-      await getUserCreatures.invalidate({ name });
-    },
-    onMutate: async (data) => {
-      await getUserCreatures.cancel({ name });
-      const previous = getUserCreatures.getData({ name });
-      getUserCreatures.setData({ name }, (old) => {
-        if (!old) {
-          return old;
-        }
-        return [...old, CreatureUtils.placeholder(data)];
-      });
-      return { previous };
-    },
-  });
-
   const displayCreatures = isDeletePending
     ? creatures?.filter((creature) => creature.id !== deletedId)
     : creatures;
 
+  const groupedCreatures = groupBy(displayCreatures ?? [], (c) =>
+    c.is_player ? "player" : "npc"
+  );
+
   return (
-    <div className="grid md:grid-cols-2">
-      <div className="flex flex-col gap-3">
+    <div className="flex w-full">
+      <div className="flex flex-col gap-3 w-full">
         <div className={"flex gap-5 relative"}>
           <Input
             placeholder="Search"
@@ -100,29 +74,50 @@ export default function CreaturesPage() {
               </DialogTrigger>
               <DialogContent className="max-w-[900px] w-full overflow-auto">
                 <DialogTitle>Add creature</DialogTitle>
-                <FullCreatureAddForm uploadCreature={createCreature} />
               </DialogContent>
             </Dialog>
           </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <span className={!name ? "opacity-100" : "opacity-0"}>
-            {displayCreatures?.length} / 30
-          </span>
-          <div className="flex gap-10 flex-wrap ">
-            {displayCreatures && (
-              <DataTable
-                columns={columns}
-                data={displayCreatures}
-                onRowClick={(row) => setSelectedCreatureId(row.original.id)}
-              />
-            )}
+        <div className="flex flex-col w-full gap-10">
+          <div>
+            <h1>DM creatures</h1>
+            <div className="flex w-full gap-2 flex-wrap">
+              {groupedCreatures?.npc?.map((creature) => (
+                <Card key={creature.id} className="flex gap-2 p-3 items-center">
+                  <CreatureIcon creature={creature} size="medium" />
+                  <span className="text-lg">{creature.name}</span>
+                  <Button
+                    variant="ghost"
+                    className="text-red-300"
+                    onClick={() => deleteCreature(creature.id)}
+                  >
+                    <Trash />
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h1>Player creatures</h1>
+            <div className="flex w-full gap-2 flex-wrap">
+              {groupedCreatures?.player?.map((creature) => (
+                <Card key={creature.id} className="flex gap-2 p-3 items-center">
+                  <CreatureIcon creature={creature} size="medium" />
+                  <span className="text-lg">{creature.name}</span>
+                  <Button
+                    variant="ghost"
+                    className="text-red-300"
+                    onClick={() => deleteCreature(creature.id)}
+                  >
+                    <Trash />
+                  </Button>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-      <div className="hidden md:block">
-        <FullCreatureAddForm uploadCreature={createCreature} />
-      </div>
+      <div className="hidden md:block"></div>
       <Dialog
         open={selectedCreatureId !== null}
         onOpenChange={(isOpen) =>
@@ -163,7 +158,7 @@ function CreatureUpdateDialog({
 
 function CreatureUpdateForm({ creature }: { creature: Creature }) {
   const [challengeRating, setChallengeRating] = useState(
-    creature.challenge_rating,
+    creature.challenge_rating
   );
   const [maxHp, setMaxHp] = useState(creature.max_hp);
   const [name, setName] = useState(creature.name);

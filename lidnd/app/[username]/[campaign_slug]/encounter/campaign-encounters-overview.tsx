@@ -5,18 +5,13 @@ import * as R from "remeda";
 import React, { createContext, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import {
+  BookIcon,
   Clock,
-  Eye,
   GripVertical,
   MoreVertical,
-  Pencil,
-  Plus,
   Skull,
-  Smile,
   Trash,
-  User,
-  UserPlus,
-  X,
+  Users,
 } from "lucide-react";
 import { api } from "@/trpc/react";
 import type {
@@ -24,43 +19,27 @@ import type {
   EncounterWithParticipants,
   Participant,
 } from "@/server/api/router";
-import {
-  useAddExistingToParty,
-  useAddNewToParty,
-  useCampaign,
-  useRemoveFromParty,
-  useUpdateCampaign,
-} from "../hooks";
+import { useCampaign, useUpdateCampaign } from "../campaign-hooks";
 import { ButtonWithTooltip } from "@/components/ui/tip";
-import {
-  MonsterUploadForm,
-  PlayerUploadForm,
-} from "@/encounters/full-creature-add-form";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
 import { EncounterUtils } from "@/utils/encounters";
-import { LidndDialog, LidndPlusDialog } from "@/components/ui/lidnd_dialog";
+import { LidndPlusDialog } from "@/components/ui/lidnd_dialog";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useUser } from "@/app/[username]/user-provider";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
-import { ScrollArea } from "@/components/ui/scroll-area";
-
 import {
   useDeleteEncounter,
   useUpdateCampaignEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import { appRoutes } from "@/app/routes";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useDebouncedCallback } from "use-debounce";
 import { compareCreatedAt, formatSeconds } from "@/lib/utils";
 import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { LidndPopover } from "@/encounters/base-popover";
-import type { CampaignWithData } from "@/server/campaigns";
-import { AddCreatureButton } from "@/encounters/add-creature-button";
+import type { CampaignWithData } from "@/server/sdk/campaigns";
 import { useRouter } from "next/navigation";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { useEditor } from "@tiptap/react";
@@ -69,160 +48,20 @@ import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { Switch } from "@/components/ui/switch";
 
-export function ExistingCreaturesForPartyAdd({
-  campaignId,
-}: {
-  campaignId: string;
-}) {
-  const [name, setName] = useState("");
-  const { data: creatures } = api.getUserCreatures.useQuery({
-    name,
-  });
-  const { mutate: addCreature } = useAddExistingToParty(campaignId);
-  const creaturesPlayersFirst = R.sort(creatures ?? [], (a, b) =>
-    a.is_player ? -1 : b.is_player ? 1 : 0,
-  );
-  return (
-    <div className="flex flex-col gap-5">
-      <Input
-        placeholder="Search..."
-        type="text"
-        onChange={(e) => setName(e.target.value)}
-        value={name}
-      />
-      <div className={"flex flex-col gap-2 h-96 overflow-auto"}>
-        {creaturesPlayersFirst?.map((creature) => (
-          <AddCreatureButton
-            creature={creature}
-            key={creature.id}
-            onClick={() =>
-              addCreature({ player: creature, campaign_id: campaignId })
-            }
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
-  const { mutate: removePlayer } = useRemoveFromParty(campaign);
-
-  // kinda wonky, if we just use playersInCampaign it won't update correctly.
-  const { data: reactiveCampaign } = api.campaignById.useQuery(campaign.id, {
-    placeholderData: (prev) => prev,
-  });
-
-  const { mutate: onPlayerUpload } = useAddNewToParty(campaign);
-  const { mutate: updateCampaign } = useUpdateCampaign(campaign);
-  const [partyLevel, setPartyLevel] = React.useState(
-    campaign?.party_level ?? 1,
-  );
-  const [isEditingParty, setIsEditingParty] = React.useState(false);
-
-  const handlePartyLevelChange = useDebouncedCallback((level: string) => {
-    const stringAsInt = parseInt(level);
-    if (!isNaN(stringAsInt)) {
-      updateCampaign({
-        ...campaign,
-        party_level: Math.max(1, stringAsInt),
-      });
-    }
-  });
+  const user = useUser();
+  const partyLink = appRoutes.party({ campaign, user });
 
   return (
     <div className="flex gap-5">
-      <div className="flex">
-        {reactiveCampaign?.campaignToPlayers.map(({ player }) => (
-          <div
-            key={player.id}
-            className="flex flex-col justify-center items-center"
-          >
-            <CreatureIcon
-              key={player.id}
-              creature={player}
-              size="v-small"
-              objectFit="contain"
-            />
-            {isEditingParty ? (
-              <span className="flex gap-2 items-center w-full justify-between">
-                <ButtonWithTooltip
-                  variant="ghost"
-                  text="Delete"
-                  className="opacity-25"
-                  onClick={() => removePlayer(player.id)}
-                >
-                  <X />
-                </ButtonWithTooltip>
-              </span>
-            ) : null}
-          </div>
-        ))}
-        <ButtonWithTooltip
-          text={isEditingParty ? "Done" : "Edit party"}
-          variant="ghost"
-          onClick={() => setIsEditingParty(!isEditingParty)}
-        >
-          {isEditingParty ? <Eye /> : <Pencil />}
-        </ButtonWithTooltip>
-        {isEditingParty ? (
-          <LidndDialog
-            title={"Add new party member"}
-            trigger={
-              <ButtonWithTooltip text="Add new party member" variant="ghost">
-                <UserPlus />
-              </ButtonWithTooltip>
-            }
-            content={
-              <Tabs defaultValue="new">
-                <span className="flex gap-1 flex-wrap pr-2">
-                  <TabsList>
-                    <TabsTrigger value="new">
-                      <Plus /> Add new creature
-                    </TabsTrigger>
-                    <TabsTrigger value="existing">
-                      <UserPlus /> Existing creatures
-                    </TabsTrigger>
-                  </TabsList>
-                </span>
-                <TabsContent value="new">
-                  <Tabs defaultValue="player">
-                    <TabsList>
-                      <TabsTrigger value="player" className="flex gap-3">
-                        <User /> Player
-                      </TabsTrigger>
-                      <TabsTrigger value="npc" className="flex gap-3">
-                        <Smile /> NPC
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="npc">
-                      <MonsterUploadForm uploadCreature={onPlayerUpload} />
-                    </TabsContent>
-                    <TabsContent value="player">
-                      <PlayerUploadForm uploadCreature={onPlayerUpload} />
-                    </TabsContent>
-                  </Tabs>
-                </TabsContent>
-                <TabsContent value="existing">
-                  <ExistingCreaturesForPartyAdd campaignId={campaign.id} />
-                </TabsContent>
-              </Tabs>
-            }
-          />
-        ) : null}
+      <div className="flex -space-x-2">
+        <Link href={partyLink}>
+          <Button variant="ghost">
+            Party
+            <Users />
+          </Button>
+        </Link>
       </div>
-      <label className="flex gap-2 items-center font-light whitespace-nowrap">
-        Level
-        <Input
-          type="number"
-          className="w-16"
-          value={partyLevel}
-          onChange={(e) => {
-            setPartyLevel(Math.max(1, parseInt(e.target.value)));
-            handlePartyLevelChange(e.target.value);
-          }}
-        />
-      </label>
     </div>
   );
 }
@@ -237,7 +76,7 @@ export function SessionEncounters() {
   const activeEncounters = campaignEncounters
     ? R.sort(
         EncounterUtils.byStatus(campaignEncounters).active ?? [],
-        compareCreatedAt,
+        compareCreatedAt
       )
     : [];
   const user = useUser();
@@ -270,7 +109,7 @@ export function SessionEncounters() {
   const sumActiveDuration = R.sumBy(activeEncounters, (e) =>
     EncounterUtils.durationSeconds(e, {
       playerLevel: campaign?.party_level,
-    }),
+    })
   );
 
   return (
@@ -308,11 +147,14 @@ export function SessionEncounters() {
         setAcceptDrop(false);
       }}
       className={clsx(
-        "flex-col flex w-full gap-3 transition-all rounded-sm max-h-full",
+        "flex-col flex w-full gap-3 transition-all rounded-sm max-h-full"
       )}
     >
       <div className="flex justify-between items-center w-full">
-        <span className="text-lg text-gray-900 font-bold">Session docket</span>
+        <h1 className={"text-2xl gap-5 flex items-center"}>
+          <BookIcon />
+          <span className="py-2 text-xl">Session docket</span>
+        </h1>
         <span className="opacity-50 flex items-center gap-2 text-sm ml-auto">
           <Clock className="text-4xl" />
           <span>Est. duration:</span>
@@ -329,7 +171,7 @@ export function SessionEncounters() {
         </Button>
       </div>
 
-      <ul
+      <div
         className={clsx(
           "flex overflow-auto max-h-full p-2 gap-2 border-2 border-dashed h-32 items-center",
 
@@ -337,7 +179,7 @@ export function SessionEncounters() {
             "border-black": acceptDrop,
             "items-center justify-center": activeEncounters?.length === 0,
             "border-transparent": activeEncounters?.length > 0 && !acceptDrop,
-          },
+          }
         )}
       >
         {activeEncounters?.length === 0
@@ -359,17 +201,17 @@ export function SessionEncounters() {
               }
               key={encounter.id}
               encounterCard={
-                <Link href={appRoutes.encounter(campaign, encounter, user)}>
+                <Link href={appRoutes.encounter({ campaign, encounter, user })}>
                   <Card
                     className={clsx(
-                      "flex transition-all p-4 gap-3 justify-between items-center max-w-sm",
+                      "flex transition-all p-4 gap-3 justify-between items-center max-w-sm"
                     )}
                     draggable
                     onDragStart={(e) => {
                       typedDrag.set(
                         e.dataTransfer,
                         dragTypes.encounter,
-                        encounter,
+                        encounter
                       );
                     }}
                   >
@@ -387,7 +229,7 @@ export function SessionEncounters() {
             />
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }
@@ -409,7 +251,7 @@ class EncounterArchiveStore {
 }
 
 const EncounterArchiveContext = createContext<EncounterArchiveStore | null>(
-  null,
+  null
 );
 
 export function EncounterArchive() {
@@ -419,7 +261,10 @@ export function EncounterArchive() {
   const { mutate: updateEncounter } = useUpdateCampaignEncounter();
   const { data: encounters } = api.encountersInCampaign.useQuery(campaignId);
   const inactiveEncounters = encounters
-    ? R.sort(encounters, compareCreatedAt).reverse()
+    ? R.sort(
+        EncounterUtils.byStatus(encounters).inactive ?? [],
+        compareCreatedAt
+      ).reverse()
     : [];
 
   const lastOrder = inactiveEncounters?.length
@@ -434,7 +279,7 @@ export function EncounterArchive() {
           <span className="py-2 text-xl">Encounters</span>
           <CreateEncounterButton category="inactive" />
         </h1>
-        <ScrollArea
+        <div
           key={"inactive"}
           onDrop={(e) => {
             if (!acceptDrop) {
@@ -442,7 +287,7 @@ export function EncounterArchive() {
             }
             const encounter = typedDrag.get(
               e.dataTransfer,
-              dragTypes.encounter,
+              dragTypes.encounter
             );
             if (!encounter) {
               console.error("No encounter found when dragging");
@@ -475,11 +320,11 @@ export function EncounterArchive() {
               "border-black": acceptDrop,
               "border-transparent": !acceptDrop,
             },
-            "border-2 border-dashed flex flex-col w-full transition-all rounded-md max-h-full overflow-auto h-full",
+            "border-2 border-dashed flex  justify-center transition-all rounded-md max-h-full overflow-auto h-full"
           )}
         >
           <InactiveEncounterList />
-        </ScrollArea>
+        </div>
       </EncounterArchiveContext.Provider>
     </div>
   );
@@ -503,7 +348,10 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
   const campaignId = useCampaignId();
   const { data: encounters } = api.encountersInCampaign.useQuery(campaignId);
   const inactiveEncounters = encounters
-    ? R.sort(encounters, compareCreatedAt).reverse()
+    ? R.sort(
+        EncounterUtils.inactiveEncounters(encounters),
+        compareCreatedAt
+      ).reverse()
     : [];
 
   const [campaign] = useCampaign();
@@ -511,7 +359,7 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
   const user = useUser();
   const { mutate: updateCampaign } = useUpdateCampaign(campaign);
   return (
-    <ul className="flex flex-col border-t-2">
+    <ul className="flex flex-col gap-3">
       {inactiveEncounters?.length === 0 ? (
         <EncounterSkeleton unmoving>No encounters</EncounterSkeleton>
       ) : null}
@@ -531,10 +379,8 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
             }
             key={encounter.id}
             encounterCard={
-              <div
-                className={clsx(
-                  "flex w-full gap-3 hover:bg-gray-100 border-b-2",
-                )}
+              <Card
+                className={clsx("flex w-[600px] px-5 gap-3 hover:bg-gray-100")}
                 draggable
                 onDragStart={(e) => {
                   typedDrag.set(e.dataTransfer, dragTypes.encounter, encounter);
@@ -547,7 +393,7 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
                 }}
               >
                 <Link
-                  href={appRoutes.encounter(campaign, encounter, user)}
+                  href={appRoutes.encounter({ campaign, encounter, user })}
                   className="flex gap-3 w-full  h-20 items-center"
                 >
                   <div className="flex items-center text-gray-500">
@@ -583,7 +429,7 @@ const InactiveEncounterList = observer(function InactiveEncounterList() {
                   </LidndPopover>
                   <DifficultyBadge encounter={encounter} />
                 </div>
-              </div>
+              </Card>
             }
           />
         );
@@ -622,7 +468,7 @@ export function CreateEncounterButton({
       },
       onSuccess: async (encounter) => {
         if (!createMore) {
-          router.push(appRoutes.encounter(campaign, encounter, user));
+          router.push(appRoutes.encounter({ campaign, encounter, user }));
         }
 
         return await Promise.all([
@@ -654,6 +500,7 @@ export function CreateEncounterButton({
     <LidndPlusDialog
       text="Create new encounter"
       dialogTitle="Create new encounter"
+      variant="default"
     >
       <form
         onSubmit={(e) => {
@@ -724,15 +571,15 @@ function DraggableEncounterCard(props: {
 }) {
   const { encounter, category, previousOrder, nextOrder } = props;
   const [acceptDrop, setAcceptDrop] = useState<"none" | "top" | "bottom">(
-    "none",
+    "none"
   );
   const { mutate: updateEncounter } = useUpdateCampaignEncounter();
   return (
-    <li
+    <div
       onDrop={(e) => {
         const droppedEncounter = typedDrag.get(
           e.dataTransfer,
-          dragTypes.encounter,
+          dragTypes.encounter
         );
         if (!droppedEncounter) {
           console.error("No encounter found when dragging");
@@ -747,10 +594,10 @@ function DraggableEncounterCard(props: {
         setAcceptDrop("none");
       }}
       key={encounter.id}
-      className={clsx("transition-all -mb-[2px] flex-grow-0 cursor-grab")}
+      className={clsx("transition-all flex-grow-0 h-fit w-fit")}
     >
       {props.encounterCard}
-    </li>
+    </div>
   );
 }
 export function MonstersInEncounter({
@@ -769,15 +616,19 @@ export function MonstersInEncounter({
 
   return (
     <div className="flex -space-x-4">
-      {participants?.map((p) => (
-        <button
-          className="rounded-full w-12 h-12 flex items-center justify-center overflow-hidden border-2 border-white bg-white"
-          key={p.id}
-          onClick={() => onClick?.(p)}
-        >
-          <CreatureIcon creature={p.creature} size="v-small" />
-        </button>
-      ))}
+      {participants?.length === 0 ? (
+        <div className="text-gray-400">no opponents</div>
+      ) : (
+        participants?.map((p) => (
+          <button
+            className="rounded-full w-12 h-12 flex items-center justify-center overflow-hidden border-2 border-white bg-white"
+            key={p.id}
+            onClick={() => onClick?.(p)}
+          >
+            <CreatureIcon creature={p.creature} size="v-small" />
+          </button>
+        ))
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import type { LidndContext } from "@/server/api/base-trpc";
-import { ServerCampaign } from "@/server/campaigns";
-import { ServerEncounter } from "@/server/encounters";
+import { ServerCampaign } from "@/server/sdk/campaigns";
+import { ServerEncounter } from "@/server/sdk/encounters";
 import { cache } from "react";
 
 type CampaignSlug = {
