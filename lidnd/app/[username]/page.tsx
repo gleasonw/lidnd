@@ -97,7 +97,7 @@ async function CampaignCard(props: CampaignCardProps) {
 
   const players = await ServerCampaign.campaignById(
     UserUtils.context(user),
-    campaign.id,
+    campaign.id
   );
 
   return (

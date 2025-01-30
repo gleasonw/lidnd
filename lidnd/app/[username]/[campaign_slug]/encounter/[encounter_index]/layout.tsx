@@ -26,10 +26,10 @@ export default async function EncounterLayout(props: {
   }
   const campaign = await ServerCampaign.campaignFromSlug(
     { user },
-    param.campaign_slug,
+    param.campaign_slug
   );
   const encounter = campaign?.encounters.find(
-    (e) => e.index_in_campaign === parseInt(param.encounter_index),
+    (e) => e.index_in_campaign === parseInt(param.encounter_index)
   );
   if (!encounter) {
     return <div>No encounter found</div>;

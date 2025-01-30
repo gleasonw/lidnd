@@ -147,7 +147,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
             participants: ParticipantUtils.assignColumn(
               old.participants,
               newColumn.column_id,
-              newColumn.participant_id,
+              newColumn.participant_id
             ),
           };
         });
@@ -181,7 +181,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         onDrop={(e) => {
           const droppedParticipant = typedDrag.get(
             e.dataTransfer,
-            dragTypes.participant,
+            dragTypes.participant
           );
           if (!droppedParticipant) {
             console.error("No participant found when dragging");
@@ -284,11 +284,11 @@ function StatColumnSplitter({
     const currentColumns = getColumns.getData(encounterId);
     const leftColumnStart = currentColumns?.find((c) => c.id === leftColumnId);
     const rightColumnStart = currentColumns?.find(
-      (c) => c.id === rightColumnId,
+      (c) => c.id === rightColumnId
     );
     if (!leftColumnStart || !rightColumnStart) {
       throw new Error(
-        "no columns found when attempting to update percent width",
+        "no columns found when attempting to update percent width"
       );
     }
     let isPendingSetStateForFrame: number | null = null;

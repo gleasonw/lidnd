@@ -120,7 +120,7 @@ export const InitiativeTracker = observer(function InitiativeTracker() {
             )}
             {isEditingInitiative ? <InitiativeInput participant={p} /> : null}
           </div>
-        ),
+        )
       )}
       <ButtonWithTooltip
         variant="ghost"
@@ -222,7 +222,7 @@ function TopBarParticipantCard({
         participant.is_active ? "h-32" : "h-20",
         index < activeIndex
           ? "opacity-60 hover:opacity-100"
-          : "hover:opacity-60",
+          : "hover:opacity-60"
       )}
       style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
       {...props}
