@@ -222,7 +222,7 @@ export type PlayerUpload = Pick<CreatureUpload, "name" | "iconImage">;
 export function usePlayerCreatureForm() {
   return useForm<PlayerUpload>({
     resolver: zodResolver(
-      z.object({ name: z.string(), iconImage: z.instanceof(File).optional() }),
+      z.object({ name: z.string(), iconImage: z.instanceof(File).optional() })
     ),
     defaultValues: { name: "" },
   });
@@ -321,9 +321,13 @@ export function useAwsImageUpload({
           status: "pending",
         });
         fileUploadTasks.push(
-          uploadFileToAWS(statBlockImage, statBlockPresigned),
+          uploadFileToAWS(statBlockImage, statBlockPresigned)
         );
         dimensionTasks.push(readImageHeightWidth(statBlockImage));
+      }
+
+      if (fileUploadTasks.length === 0) {
+        throw new Error("No files to upload");
       }
 
       await Promise.all(fileUploadTasks);
@@ -378,7 +382,7 @@ export function useAwsImageUpload({
 async function pollForUploadSuccess(
   creature: Creature,
   uiStore: UIStore,
-  type: "icon" | "statBlock",
+  type: "icon" | "statBlock"
 ) {
   const url = CreatureUtils.awsURL(creature, type);
   for (let i = 0; i < 5; i++) {
@@ -423,7 +427,7 @@ async function uploadFileToAWS(file: File, presignedUrl: string) {
 }
 
 async function readImageHeightWidth(
-  file: File,
+  file: File
 ): Promise<{ height: number; width: number }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

@@ -26,7 +26,7 @@ import {
   Plus,
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React from "react";
+import React, { useState } from "react";
 import { OpponentParticipantForm } from "./participant-upload-form";
 import Image from "next/image";
 import { CreatureUtils } from "@/utils/creatures";
@@ -167,6 +167,7 @@ export const imageStyle = { objectFit: "contain" } as const;
 
 export function GMCreatureCard(props: CardProps) {
   const uiStore = useEncounterUIStore();
+  const [imageError, setImageError] = useState(false);
   return (
     <TopBarParticipantCard
       onClick={() => uiStore.setSelectedParticipantId(props.participant.id)}
@@ -175,13 +176,20 @@ export function GMCreatureCard(props: CardProps) {
         typedDrag.set(e.dataTransfer, dragTypes.participant, props.participant)
       }
       overrideIcon={
-        <Image
-          src={CreatureUtils.awsURL(props.participant.creature, "icon")}
-          alt={props.participant.creature.name}
-          style={imageStyle}
-          width={props.participant.creature.icon_width}
-          height={props.participant.creature.icon_height}
-        />
+        imageError ? (
+          <span className="p-3 font-bold">
+            {ParticipantUtils.initials(props.participant)}
+          </span>
+        ) : (
+          <Image
+            src={CreatureUtils.awsURL(props.participant.creature, "icon")}
+            alt={props.participant.creature.name}
+            style={imageStyle}
+            width={props.participant.creature.icon_width}
+            height={props.participant.creature.icon_height}
+            onError={() => setImageError(true)}
+          />
+        )
       }
       {...props}
     >

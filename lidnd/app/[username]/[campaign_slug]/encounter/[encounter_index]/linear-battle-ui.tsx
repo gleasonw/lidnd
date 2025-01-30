@@ -56,7 +56,7 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
 
   return (
     <div
-      className="flex relative gap-1 w-full h-full max-h-full overflow-hidden"
+      className="flex relative w-full h-full max-h-full overflow-hidden"
       ref={containerRef}
     >
       <ParentWidthContext.Provider value={parentWidth}>

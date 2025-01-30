@@ -18,20 +18,17 @@ export const CreatureStatBlock = observer(
     const status = uiStore.getStatBlockUploadStatus(creature);
 
     const statblock = (
-      <div>
-        {status}
-        <Image
-          quality={100}
-          style={{ objectFit: "contain" }}
-          className="max-h-full w-full max-w-fit"
-          src={CreatureUtils.awsURL(creature, "statBlock")}
-          alt={creature.name}
-          width={creature.stat_block_width}
-          height={creature.stat_block_height}
-          onError={() => console.log("error loading image")}
-          ref={ref}
-        />
-      </div>
+      <Image
+        quality={100}
+        style={{ objectFit: "contain" }}
+        className="max-h-full w-full max-w-fit"
+        src={CreatureUtils.awsURL(creature, "statBlock")}
+        alt={creature.name}
+        width={creature.stat_block_width}
+        height={creature.stat_block_height}
+        onError={() => console.log("error loading image")}
+        ref={ref}
+      />
     );
     switch (status) {
       case "idle":
@@ -51,5 +48,5 @@ export const CreatureStatBlock = observer(
       }
     }
   },
-  { forwardRef: true },
+  { forwardRef: true }
 );

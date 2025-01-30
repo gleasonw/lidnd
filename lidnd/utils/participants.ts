@@ -150,6 +150,14 @@ function sortLinearly<
   );
 }
 
+function initials({ creature }: { creature: { name: string } }) {
+  return creature.name
+    .split(" ")
+    .map((word) => word.charAt(0))
+    .join("")
+    .toUpperCase();
+}
+
 function isActivatable(p: {
   hp: number;
   is_active: boolean;
@@ -164,6 +172,7 @@ function isActivatable(p: {
 }
 
 export const ParticipantUtils = {
+  initials,
   isAdversary,
   isPlayer,
   iconHexColor,

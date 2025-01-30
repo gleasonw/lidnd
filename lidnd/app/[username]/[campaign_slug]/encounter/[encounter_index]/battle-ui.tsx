@@ -4,7 +4,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
 import type { Participant, ParticipantWithData } from "@/server/api/router";
@@ -40,7 +40,7 @@ import {
   ReminderInput,
   Reminders,
 } from "@/encounters/[encounter_index]/reminders";
-import { Grip, MoreHorizontal, PlayIcon } from "lucide-react";
+import { Grip, MoreHorizontal, PlayIcon, User } from "lucide-react";
 import { useEncounterLinks } from "../link-hooks";
 import Link from "next/link";
 import { imageStyle, InitiativeTracker } from "./battle-bar";
@@ -447,6 +447,7 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   className?: string;
 }) {
   const uiStore = useEncounterUIStore();
+  const [error, setError] = useState<boolean>(false);
   return participant.creature_id === "pending" ? (
     <span>Loading</span>
   ) : (
@@ -456,14 +457,19 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
       })}
       style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
     >
-      <Image
-        src={CreatureUtils.awsURL(participant.creature, "icon")}
-        alt={participant.creature.name}
-        style={imageStyle}
-        width={participant.creature.icon_width}
-        height={participant.creature.icon_height}
-        className="w-36 h-36"
-      />
+      {error ? (
+        <User className="w-36 h-36" />
+      ) : (
+        <Image
+          src={CreatureUtils.awsURL(participant.creature, "icon")}
+          alt={participant.creature.name}
+          style={imageStyle}
+          width={participant.creature.icon_width}
+          height={participant.creature.icon_height}
+          className="w-36 h-36"
+          onError={() => setError(true)}
+        />
+      )}
     </div>
   );
 });

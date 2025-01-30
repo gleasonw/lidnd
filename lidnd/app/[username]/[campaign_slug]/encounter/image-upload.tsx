@@ -73,12 +73,17 @@ export function ImageUpload({
         >
           <X />
         </Button>
-        <Image
-          src={previewUrl}
-          alt={"preview image for " + image?.name}
-          width={previewSize}
-          height={previewSize}
-        />
+        <div className="flex max-h-[700px]">
+          {" "}
+          <Image
+            src={previewUrl}
+            alt={"preview image for " + image?.name}
+            width={previewSize}
+            height={previewSize}
+            className="object-contain"
+          />
+        </div>
+
         <input
           type="hidden"
           name={fileInputProps?.name}
