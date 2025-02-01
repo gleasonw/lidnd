@@ -222,7 +222,7 @@ export type PlayerUpload = Pick<CreatureUpload, "name" | "iconImage">;
 export function usePlayerCreatureForm() {
   return useForm<PlayerUpload>({
     resolver: zodResolver(
-      z.object({ name: z.string(), iconImage: z.instanceof(File).optional() })
+      z.object({ name: z.string(), iconImage: z.instanceof(File).optional() }),
     ),
     defaultValues: { name: "" },
   });
@@ -299,7 +299,6 @@ export function useAwsImageUpload({ form, onSuccess }: AwsImageUploadArgs) {
   }) => {
     try {
       const fileUploadTasks = [];
-      const dimensionTasks = [];
       const iconImage = form.getValues("iconImage");
       const statBlockImage = form.getValues("statBlockImage");
 
@@ -307,13 +306,18 @@ export function useAwsImageUpload({ form, onSuccess }: AwsImageUploadArgs) {
         throw new Error("No images found in form");
       }
 
+      const dimensionTasks: Record<
+        "statBlock" | "icon",
+        Promise<{ height: number; width: number }>
+      > = {} as any;
+
       if (iconPresigned && iconImage) {
         uiStore.setUploadStatusForCreature(creature, {
           type: "icon",
           status: "pending",
         });
         fileUploadTasks.push(uploadFileToAWS(iconImage, iconPresigned));
-        dimensionTasks.push(readImageHeightWidth(iconImage));
+        dimensionTasks["icon"] = readImageHeightWidth(iconImage);
       }
 
       if (statBlockPresigned && statBlockImage) {
@@ -322,9 +326,9 @@ export function useAwsImageUpload({ form, onSuccess }: AwsImageUploadArgs) {
           status: "pending",
         });
         fileUploadTasks.push(
-          uploadFileToAWS(statBlockImage, statBlockPresigned)
+          uploadFileToAWS(statBlockImage, statBlockPresigned),
         );
-        dimensionTasks.push(readImageHeightWidth(statBlockImage));
+        dimensionTasks["statBlock"] = readImageHeightWidth(statBlockImage);
       }
 
       if (fileUploadTasks.length === 0) {
@@ -333,9 +337,19 @@ export function useAwsImageUpload({ form, onSuccess }: AwsImageUploadArgs) {
 
       await Promise.all(fileUploadTasks);
 
-      const dimensions = await Promise.all(dimensionTasks);
+      const dimensions = await Promise.all(
+        Object.entries(dimensionTasks).map(async ([key, task]) => ({
+          key,
+          value: await task,
+        })),
+      );
 
-      const [statBlockDimensions, iconDimensions] = dimensions;
+      const keyedResults = Object.fromEntries(
+        dimensions.map(({ key, value }) => [key, value]),
+      ) as Record<"statBlock" | "icon", { height: number; width: number }>;
+      const statBlockDimensions = keyedResults["statBlock"];
+      const iconDimensions = keyedResults["icon"];
+
       updateCreature({
         ...creature,
         stat_block_height:
@@ -383,7 +397,7 @@ export function useAwsImageUpload({ form, onSuccess }: AwsImageUploadArgs) {
 async function pollForUploadSuccess(
   creature: Creature,
   uiStore: UIStore,
-  type: "icon" | "statBlock"
+  type: "icon" | "statBlock",
 ) {
   const url = CreatureUtils.awsURL(creature, type);
   for (let i = 0; i < 5; i++) {
@@ -428,7 +442,7 @@ async function uploadFileToAWS(file: File, presignedUrl: string) {
 }
 
 async function readImageHeightWidth(
-  file: File
+  file: File,
 ): Promise<{ height: number; width: number }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
