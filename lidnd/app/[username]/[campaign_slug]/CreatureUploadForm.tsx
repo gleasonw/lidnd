@@ -285,7 +285,9 @@ export function useAwsImageUpload({ form, onSuccess }: AwsImageUploadArgs) {
   const uiStore = useUIStore();
   const { mutate: updateCreature } = api.updateCreature.useMutation({
     onSuccess: () => {
-      console.log("upload completed");
+      //todo: think about how to better align success with the image upload completing
+      // not just the mutation
+      onSuccess?.();
     },
   });
   return async ({
@@ -370,7 +372,6 @@ export function useAwsImageUpload({ form, onSuccess }: AwsImageUploadArgs) {
           console.error(e);
         });
       }
-      onSuccess?.();
     } catch (error) {
       console.error(error);
       if (statBlockPresigned) {
