@@ -40,8 +40,7 @@ import {
   ReminderInput,
   Reminders,
 } from "@/encounters/[encounter_index]/reminders";
-import { Grip, MoreHorizontal, PlayIcon, User } from "lucide-react";
-import { useEncounterLinks } from "../link-hooks";
+import { Grip, MoreHorizontal, User } from "lucide-react";
 import Link from "next/link";
 import { imageStyle, InitiativeTracker } from "./battle-bar";
 import { EncounterDifficulty } from "./encounter-difficulty";
@@ -55,34 +54,40 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
 import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
+import { EncounterUtils } from "@/utils/encounters";
+import { appRoutes } from "@/app/routes";
+import { useUser } from "@/app/[username]/user-provider";
 
 // TODO: existing creatures for ally/player upload?
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
   const [encounter] = useEncounter();
-  const { rollEncounter } = useEncounterLinks();
+  const user = useUser();
 
   switch (encounter.status) {
     case "prep":
       return (
         <div className="flex flex-col max-h-full overflow-hidden h-full gap-3">
           <div className="flex flex-col w-full">
-            <div className="flex gap-2 items-baseline ml-[var(--campaign-nav-width)]">
-              <Card className="flex shadow-none w-[800px] items-center justify-between p-3 gap-3 ">
-                <EncounterDifficulty />
-                <Link href={rollEncounter} className="text-lg">
-                  <ButtonWithTooltip text={"Roll initiative"}>
-                    <PlayIcon />
-                  </ButtonWithTooltip>
+            <div className="flex gap-2 justify-evenly items-center p-8 flex-wrap ml-[var(--campaign-nav-width)]">
+              <div className="flex items-center gap-1">
+                {EncounterUtils.allies(encounter).map((a) => (
+                  <CreatureIcon key={a.id} creature={a.creature} size="small" />
+                ))}
+                <Link href={appRoutes.party({ campaign, user })}>
+                  <Button variant="outline">Edit party</Button>
                 </Link>
-              </Card>
+              </div>
               <ReminderInput />
             </div>
           </div>
 
           <div className="w-full overflow-hidden flex gap-3 h-full">
-            <Card className="p-4 overflow-auto w-[700px] h-full">
+            <Card className="shadow-none w-[700px] p-3 flex flex-col gap-5">
+              <section className="items-center flex gap-3 flex-col">
+                <EncounterDifficulty />
+              </section>
               <OpponentParticipantForm />
             </Card>
             <EncounterBattlePreview />

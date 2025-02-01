@@ -7,6 +7,9 @@ import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { MoveLeft } from "lucide-react";
 
 export default async function CampaignPage(props: {
   params: Promise<{ campaign_slug: string; user_id: string }>;
@@ -31,10 +34,18 @@ export default async function CampaignPage(props: {
 
   return (
     <CampaignId value={campaignData.id}>
-      <div className="flex flex-col gap-5 max-h-full overflow-hidden h-full">
-        <SessionEncounters />
-        <div className="max-h-full flex flex-col overflow-auto h-full">
-          <EncounterArchive />
+      <div className="flex flex-col w-full justify-center items-center">
+        <Link href={appRoutes.dashboard(user)} className="mr-auto opacity-40">
+          <Button variant="ghost">
+            <MoveLeft />
+            All campaigns
+          </Button>
+        </Link>
+        <div className="flex flex-col gap-5 max-h-full overflow-hidden h-full w-full max-w-4xl">
+          <SessionEncounters />
+          <div className="max-h-full flex flex-col overflow-auto h-full">
+            <EncounterArchive />
+          </div>
         </div>
       </div>
     </CampaignId>

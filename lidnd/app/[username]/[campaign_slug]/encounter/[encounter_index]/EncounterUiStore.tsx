@@ -14,6 +14,7 @@ class EncounterUIStore {
   isEditingInitiative = false;
   userDismissedReminder = false;
   isDraggingBattleCard = false;
+  filterExistingCreaturesByCrBudget = false;
   /**
    * participantId -> ref
    *  */
@@ -85,6 +86,11 @@ class EncounterUIStore {
   setSelectedParticipantId = (id: string) => {
     this.selectedParticipantId = id;
     this.scrollToParticipant(id);
+  };
+
+  toggleFilterCreaturesByCrBudget = () => {
+    this.filterExistingCreaturesByCrBudget =
+      !this.filterExistingCreaturesByCrBudget;
   };
 
   dispose() {

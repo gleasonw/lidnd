@@ -12,7 +12,7 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 import { useEncounter } from "@/encounters/[encounter_index]/hooks";
 import { api } from "@/trpc/react";
 import { EncounterUtils } from "@/utils/encounters";
-import { Plus, X } from "lucide-react";
+import { Clock, Plus, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React from "react";
 
@@ -90,24 +90,39 @@ export function ReminderInput() {
       }}
       className="flex flex-col gap-3 rounded-lg"
     >
-      <section className="flex gap-3 items-center p-3">
-        <LidndTextInput
-          variant="ghost"
-          placeholder="Reminder text"
-          value={reminder}
-          onChange={(e) => setReminder(e.target.value)}
-        />
-        <LidndTextInput
-          variant="ghost"
-          type="number"
-          value={alertAfterRound}
-          onChange={(e) =>
-            setAlertAfterRound(coerceInt(e.target.value).toString())
-          }
-          placeholder="After round (0 = all)"
-          className="w-72"
-        />
-        <Button type="submit" variant="ghost">
+      <section className="flex gap-3 p-3 items-end flex-wrap">
+        <label>
+          <div className="flex gap-2 items-center opacity-60">
+            <Clock />
+            Remind
+          </div>
+
+          <LidndTextInput
+            variant="ghost"
+            placeholder="Reinforcements..."
+            value={reminder}
+            onChange={(e) => setReminder(e.target.value)}
+          />
+        </label>
+
+        <label>
+          <div className="flex gap-2 items-center opacity-60">
+            on round (0 = all)
+          </div>
+          <LidndTextInput
+            type="number"
+            variant="ghost"
+            placeholder="1"
+            className="w-24"
+            value={alertAfterRound}
+            onChange={(e) =>
+              setAlertAfterRound(coerceInt(e.target.value).toString())
+            }
+          />
+        </label>
+
+        <Button type="submit" variant="outline">
+          Add
           <Plus />
         </Button>
       </section>

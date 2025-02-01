@@ -25,7 +25,6 @@ import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
 import { EncounterUtils } from "@/utils/encounters";
-import { LidndPlusDialog } from "@/components/ui/lidnd_dialog";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useUser } from "@/app/[username]/user-provider";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
@@ -277,8 +276,9 @@ export function EncounterArchive() {
         <h1 className={"text-2xl gap-5 flex items-center"}>
           <Skull />
           <span className="py-2 text-xl">Encounters</span>
-          <CreateEncounterButton category="inactive" />
         </h1>
+        <CreateEncounterButton category="inactive" />
+
         <div
           key={"inactive"}
           onDrop={(e) => {
@@ -497,11 +497,7 @@ export function CreateEncounterButton({
   });
 
   return (
-    <LidndPlusDialog
-      text="Create new encounter"
-      dialogTitle="Create new encounter"
-      variant="default"
-    >
+    <Card className="px-3 pb-3">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -539,7 +535,7 @@ export function CreateEncounterButton({
           </div>
         </div>
       </form>
-    </LidndPlusDialog>
+    </Card>
   );
 }
 

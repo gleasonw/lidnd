@@ -2,11 +2,11 @@
 
 import { useEncounter } from "@/encounters/[encounter_index]/hooks";
 
-export function EncounterRoundIndicator() {
+export function EncounterDetails() {
   const [encounter] = useEncounter();
   switch (encounter.status) {
     case "prep":
-      return null;
+      return <span className="font-bold">{encounter.name}</span>;
     case "run":
       return (
         <div className="flex gap-2 text-xl font-semibold items-center">

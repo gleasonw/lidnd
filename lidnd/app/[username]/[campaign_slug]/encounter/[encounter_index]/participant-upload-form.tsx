@@ -20,6 +20,10 @@ import {
   OppponentCreatureUploadForm,
   useCreatureForm,
 } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
+import { Toggle } from "@/components/ui/toggle";
+import { EncounterUtils } from "@/utils/encounters";
+import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
+import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 
 /**
  * We don't actually upload these, but we want to make sure the user has
@@ -106,17 +110,24 @@ export function OpponentParticipantForm() {
   );
 }
 
-export function ExistingMonster({
+export const ExistingMonster = observer(function ExistingMonster({
   onUpload,
 }: {
   onUpload?: (creature: Creature) => void;
 }) {
   const [name, setName] = useState("");
   const [encounter] = useEncounter();
+  const uiStore = useEncounterUIStore();
   const { data: creatures } = api.getUserCreatures.useQuery({
     name,
     is_player: false,
   });
+  const [campaign] = useCampaign();
+  const crBudget = EncounterUtils.remainingCr(encounter, campaign);
+
+  const creaturesToDisplay = uiStore.filterExistingCreaturesByCrBudget
+    ? creatures?.filter((c) => c.challenge_rating <= crBudget)
+    : creatures;
 
   return (
     <div className="flex flex-col max-h-full gap-5 ">
@@ -126,9 +137,15 @@ export function ExistingMonster({
         onChange={(e) => setName(e.target.value)}
         value={name}
       />
+      <Toggle
+        onPressedChange={uiStore.toggleFilterCreaturesByCrBudget}
+        pressed={uiStore.filterExistingCreaturesByCrBudget}
+      >
+        In CR budget
+      </Toggle>
       <Suspense key={name} fallback={<div>Loading creatures</div>}>
         <div className={"flex flex-col overflow-auto gap-3 py-3"}>
-          {creatures?.map((creature) => (
+          {creaturesToDisplay?.map((creature) => (
             <ListedCreature
               key={creature.id}
               creature={creature}
@@ -140,7 +157,7 @@ export function ExistingMonster({
       </Suspense>
     </div>
   );
-}
+});
 
 export interface ListedCreatureProps {
   creature: Creature;

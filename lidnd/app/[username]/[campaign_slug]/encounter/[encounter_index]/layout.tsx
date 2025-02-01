@@ -3,13 +3,12 @@ import { EncounterUI } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { isEncounterPathParams } from "@/server/utils";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { LidndAuth } from "@/app/authentication";
-import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { appRoutes } from "@/app/routes";
 import { Home } from "lucide-react";
 import css from "./EncounterLayout.module.css";
-import { EncounterRoundIndicator } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
-import { ButtonWithTooltip } from "@/components/ui/tip";
+import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
+import { Button } from "@/components/ui/button";
 
 export default async function EncounterLayout(props: {
   children: React.ReactNode;
@@ -41,7 +40,7 @@ export default async function EncounterLayout(props: {
           className={`relative ${css.root} flex flex-col overflow-hidden max-h-full`}
         >
           <div className={`${css.encounterNav} absolute top-0 left-0 z-50`}>
-            <Card
+            <div
               className={`items-center justify-center gap-3 flex flex-col w-full h-full`}
             >
               <Link
@@ -51,12 +50,13 @@ export default async function EncounterLayout(props: {
                 })}
                 className="flex gap-3"
               >
-                <ButtonWithTooltip text="Back to campaign" variant="outline">
+                <Button variant="ghost" className="opacity-60">
                   <Home />
-                </ButtonWithTooltip>
+                  Campaign
+                </Button>
               </Link>
-              <EncounterRoundIndicator />
-            </Card>
+              <EncounterDetails />
+            </div>
           </div>
           {props.children}
         </div>

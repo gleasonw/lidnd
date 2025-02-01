@@ -89,12 +89,20 @@ function inactiveEncounters<E extends { label: Encounter["label"] }>(
 
 const DEFAULT_LEVEL = 1;
 
+function remainingCr(
+  e: EncounterWithParticipants,
+  c: { party_level?: number }
+) {
+  return EncounterUtils.goalCr(e, c) - EncounterUtils.totalCr(e);
+}
+
 export const EncounterUtils = {
   inactiveEncounters,
   start,
   difficultyCssClasses,
   difficultyClassForCR,
   cssClassForDifficulty,
+  remainingCr,
 
   goalCr(e: EncounterWithParticipants, c: { party_level?: number }) {
     const { easyTier, standardTier, hardTier } = this.findCRBudget(
