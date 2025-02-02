@@ -1,6 +1,7 @@
-import type { LidndContext } from "@/server/api/base-trpc";
+import { type LidndContext } from "@/server/api/base-trpc";
 import { db } from "@/server/db";
-import { campaigns } from "@/server/db/schema";
+import { campaigns, encounters } from "@/server/db/schema";
+import { ServerEncounter } from "@/server/sdk/encounters";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { cache } from "react";
@@ -11,6 +12,30 @@ export const ServerCampaign = {
       .select()
       .from(campaigns)
       .where(eq(campaigns.user_id, ctx.user.id));
+  },
+
+  addCreatureToAllEncounters: async function (
+    ctx: LidndContext,
+    args: { creatureId: string; campaign: { id: string } },
+    dbObject = db
+  ) {
+    // add player to all encounters in campaign
+    const campaignEncounters = await db.query.encounters.findMany({
+      where: eq(encounters.campaign_id, args.campaign.id),
+    });
+    console.log({ campaignEncounters });
+    await Promise.all(
+      campaignEncounters.map((e) =>
+        ServerEncounter.addParticipant(
+          ctx,
+          {
+            encounter_id: e.id,
+            creature_id: args.creatureId,
+          },
+          dbObject
+        )
+      )
+    );
   },
 
   campaignFromSlug: cache(async function (

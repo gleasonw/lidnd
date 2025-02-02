@@ -1,6 +1,5 @@
 import { TRPCError } from "@trpc/server";
 import {
-  encounters,
   participants,
   creatures,
   settings,
@@ -18,6 +17,7 @@ import {
   updateEncounterSchema,
   updateSettingsSchema,
   creatureUploadSchema,
+  encounters,
 } from "@/server/db/schema";
 import { eq, and, ilike } from "drizzle-orm";
 import { db } from "@/server/db";
@@ -572,6 +572,9 @@ export const appRouter = t.router({
               eq(campaignToPlayer.player_id, opts.input.player_id)
             )
           );
+        await tx
+          .delete(participants)
+          .where(eq(participants.creature_id, opts.input.player_id));
       });
     }),
 
@@ -591,7 +594,6 @@ export const appRouter = t.router({
           opts.input.campaign_id,
           tx
         );
-        console.log({ opts });
 
         const { creature, statBlockPresigned, iconPresigned } =
           await ServerCreature.create(opts.ctx, opts.input.creature, {
@@ -604,10 +606,18 @@ export const appRouter = t.router({
             message: "Failed to create creature",
           });
         }
-        await tx.insert(campaignToPlayer).values({
-          campaign_id: campaign.id,
-          player_id: creature.id,
-        });
+        await Promise.all([
+          tx.insert(campaignToPlayer).values({
+            campaign_id: campaign.id,
+            player_id: creature.id,
+          }),
+          ServerCampaign.addCreatureToAllEncounters(
+            opts.ctx,
+            { creatureId: creature.id, campaign },
+            tx
+          ),
+        ]);
+
         return {
           newPartyMember: creature,
           statBlockPresigned,
@@ -643,10 +653,17 @@ export const appRouter = t.router({
           });
         }
 
-        await tx.insert(campaignToPlayer).values({
-          campaign_id: campaign.id,
-          player_id: opts.input.creature.id,
-        });
+        await Promise.all([
+          tx.insert(campaignToPlayer).values({
+            campaign_id: campaign.id,
+            player_id: opts.input.creature.id,
+          }),
+          ServerCampaign.addCreatureToAllEncounters(
+            opts.ctx,
+            { creatureId: opts.input.creature.id, campaign },
+            tx
+          ),
+        ]);
       });
     }),
 

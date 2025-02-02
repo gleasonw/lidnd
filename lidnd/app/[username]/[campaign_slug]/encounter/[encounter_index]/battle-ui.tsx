@@ -40,7 +40,7 @@ import {
   ReminderInput,
   Reminders,
 } from "@/encounters/[encounter_index]/reminders";
-import { Grip, MoreHorizontal, User } from "lucide-react";
+import { Grip, MoreHorizontal, Play, User } from "lucide-react";
 import Link from "next/link";
 import { imageStyle, InitiativeTracker } from "./battle-bar";
 import { EncounterDifficulty } from "./encounter-difficulty";
@@ -57,6 +57,7 @@ import Image from "next/image";
 import { EncounterUtils } from "@/utils/encounters";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
+import { useEncounterLinks } from "@/encounters/link-hooks";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -64,11 +65,12 @@ export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
   const [encounter] = useEncounter();
   const user = useUser();
+  const { rollEncounter } = useEncounterLinks();
 
   switch (encounter.status) {
     case "prep":
       return (
-        <div className="flex flex-col max-h-full overflow-hidden h-full gap-3">
+        <div className="flex flex-col max-h-full overflow-auto h-full">
           <div className="flex flex-col w-full">
             <div className="flex gap-2 justify-evenly items-center p-8 flex-wrap ml-[var(--campaign-nav-width)]">
               <div className="flex items-center gap-1">
@@ -79,17 +81,30 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   <Button variant="outline">Edit party</Button>
                 </Link>
               </div>
+
               <ReminderInput />
+              <Link href={rollEncounter}>
+                <Button>
+                  <Play /> Roll initiative
+                </Button>
+              </Link>
+            </div>
+          </div>
+          <div className="w-[700px] flex mx-auto justify-center flex-col gap-5">
+            <div className="bg-white rounded-md p-3">
+              <DescriptionTextArea />
+            </div>
+            <div className="">
+              <Card className="shadow-lg  h-[850px] p-3 flex flex-col gap-5">
+                <section className="items-center flex gap-3 flex-col">
+                  <EncounterDifficulty />
+                </section>
+                <OpponentParticipantForm />
+              </Card>
             </div>
           </div>
 
-          <div className="w-full overflow-hidden flex gap-3 h-full">
-            <Card className="shadow-none w-[700px] p-3 flex flex-col gap-5">
-              <section className="items-center flex gap-3 flex-col">
-                <EncounterDifficulty />
-              </section>
-              <OpponentParticipantForm />
-            </Card>
+          <div className="w-full flex gap-3 h-full">
             <EncounterBattlePreview />
           </div>
         </div>
@@ -99,7 +114,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
         <section className="flex flex-col max-h-full min-h-0 h-full">
           <InitiativeTracker />
           <Reminders />
-          <div className="flex gap-4 flex-col w-full max-h-full overflow-hidden h-full">
+          <div className="flex gap-4 flex-col w-full max-h-full h-full">
             {/**create space for the overlaid initiative tracker */}
             {encounter.status === "run" && <div className="my-5" />}
             {encounter.description ? (
@@ -336,7 +351,7 @@ export const BattleCardLayout = observer(function BattleCardLayout({
           "shadow-lg shadow-blue-800":
             ParticipantUtils.isFriendly(participant) && participant.is_active,
         },
-        className
+        className,
       )}
       {...props}
     >
@@ -505,7 +520,7 @@ export function HealthMeterOverlay({
         {
           "bg-gray-500": percentDamage >= 100,
           "bg-red-500": percentDamage !== 100,
-        }
+        },
       )}
     />
   );

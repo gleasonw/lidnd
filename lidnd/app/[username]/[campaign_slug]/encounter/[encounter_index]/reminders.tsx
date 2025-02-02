@@ -54,7 +54,7 @@ export function ReminderInput() {
             reminder: newReminder.reminder ?? "",
             ...newReminder,
           },
-          old
+          old,
         );
       });
       return previousEncounter;
@@ -88,7 +88,7 @@ export function ReminderInput() {
         setAlertAfterRound("");
         setReminder("");
       }}
-      className="flex flex-col gap-3 rounded-lg"
+      className="flex bg-white flex-col gap-3 rounded-lg"
     >
       <section className="flex gap-3 p-3 items-end flex-wrap">
         <label>
@@ -130,10 +130,7 @@ export function ReminderInput() {
         .slice()
         .sort((a, b) => a.alert_after_round - b.alert_after_round)
         .map((reminder) => (
-          <div
-            className="flex gap-1 shadow-md border items-center p-3"
-            key={reminder.id}
-          >
+          <div className="flex gap-1 items-center p-3" key={reminder.id}>
             <span className="flex-grow">{reminder.reminder}</span>
             <span>after round {reminder.alert_after_round}</span>
             <ButtonWithTooltip

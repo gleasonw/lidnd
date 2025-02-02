@@ -6,7 +6,11 @@ export function EncounterDetails() {
   const [encounter] = useEncounter();
   switch (encounter.status) {
     case "prep":
-      return <span className="font-bold">{encounter.name}</span>;
+      return (
+        <>
+          <span className="font-bold">{encounter.name}</span>
+        </>
+      );
     case "run":
       return (
         <div className="flex gap-2 text-xl font-semibold items-center">
