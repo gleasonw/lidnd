@@ -12,7 +12,6 @@ import {
   MoreVertical,
   Skull,
   Trash,
-  Users,
 } from "lucide-react";
 import { api } from "@/trpc/react";
 import type {
