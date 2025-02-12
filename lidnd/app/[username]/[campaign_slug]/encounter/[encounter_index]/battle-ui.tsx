@@ -114,7 +114,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
         <section className="flex flex-col max-h-full min-h-0 h-full">
           <InitiativeTracker />
           <Reminders />
-          <div className="flex gap-4 flex-col w-full max-h-full h-full">
+          <div className="flex gap-4 flex-col w-full max-h-full h-full overflow-hidden">
             {/**create space for the overlaid initiative tracker */}
             {encounter.status === "run" && <div className="my-5" />}
             {encounter.description ? (
@@ -342,7 +342,7 @@ export const BattleCardLayout = observer(function BattleCardLayout({
   return (
     <div
       className={clsx(
-        "bg-white h-full shadow-sm w-full flex flex-col transition-all group",
+        "bg-white h-full max-h-full overflow-hidden  shadow-sm w-full flex flex-col transition-all group",
         {
           "shadow-lg shadow-red-800":
             !ParticipantUtils.isFriendly(participant) && participant.is_active,
@@ -351,7 +351,7 @@ export const BattleCardLayout = observer(function BattleCardLayout({
           "shadow-lg shadow-blue-800":
             ParticipantUtils.isFriendly(participant) && participant.is_active,
         },
-        className,
+        className
       )}
       {...props}
     >
@@ -520,7 +520,7 @@ export function HealthMeterOverlay({
         {
           "bg-gray-500": percentDamage >= 100,
           "bg-red-500": percentDamage !== 100,
-        },
+        }
       )}
     />
   );
