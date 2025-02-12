@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import {
   BookIcon,
   Clock,
+  Edit,
   GripVertical,
   MoreVertical,
   Skull,
@@ -54,10 +55,12 @@ export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
   return (
     <div className="flex gap-5">
       <div className="flex -space-x-2">
+        {campaign.campaignToPlayers.map((p) => (
+          <CreatureIcon key={p.id} creature={p.player} size="small" />
+        ))}
         <Link href={partyLink}>
           <Button variant="ghost">
-            Party
-            <Users />
+            <Edit />
           </Button>
         </Link>
       </div>
@@ -149,6 +152,7 @@ export function SessionEncounters() {
         "flex-col flex w-full gap-3 transition-all rounded-sm max-h-full"
       )}
     >
+      <CampaignParty campaign={campaign} />
       <div className="flex justify-between items-center w-full">
         <h1 className={"text-2xl gap-5 flex items-center"}>
           <BookIcon />
