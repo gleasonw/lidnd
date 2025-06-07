@@ -269,7 +269,7 @@ export function useUpdateCampaignEncounter() {
   const updateEncounter = (
     encounter: Omit<
       UpsertEncounter,
-      "user_id" | "campaign_id" | "index_in_campaign"
+      "user_id" | "campaign_id" | "index_in_campaign" | "session_id"
     > & {
       id: string;
     }

@@ -156,6 +156,38 @@ export const campaignToPlayerRelations = relations(
   })
 );
 
+export const gameSessions = pgTable(
+  "gameSessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    campaign_id: uuid("campaign_id")
+      .notNull()
+      .references(() => campaigns.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 256 }).notNull(),
+    description: text("description"),
+    created_at: timestamp("created_at").defaultNow(),
+  },
+  (t) => {
+    return {
+      userIndex: index("user_index_game_sessions").on(t.user_id),
+    };
+  }
+);
+
+export const gameSessionRelations = relations(
+  gameSessions,
+  ({ one, many }) => ({
+    campaign: one(campaigns, {
+      fields: [gameSessions.campaign_id],
+      references: [campaigns.id],
+    }),
+    encounters: many(encounters),
+  })
+);
+
 export const encounters = pgTable(
   "encounters",
   {
@@ -167,6 +199,7 @@ export const encounters = pgTable(
     description: text("description"),
     started_at: timestamp("started_at"),
     created_at: timestamp("created_at").defaultNow(),
+    session_id: uuid("session_id").references(() => gameSessions.id),
     campaign_id: uuid("campaign_id")
       .notNull()
       .references(() => campaigns.id, { onDelete: "cascade" }),
@@ -191,6 +224,10 @@ export const encounters = pgTable(
 export const encountersRelations = relations(encounters, ({ many, one }) => ({
   participants: many(participants),
   reminders: many(reminders),
+  session: one(gameSessions, {
+    fields: [encounters.session_id],
+    references: [gameSessions.id],
+  }),
   campaigns: one(campaigns, {
     fields: [encounters.campaign_id],
     references: [campaigns.id],
