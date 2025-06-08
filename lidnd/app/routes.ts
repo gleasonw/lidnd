@@ -12,6 +12,18 @@ export const appRoutes = {
     return `/${user.username}`;
   },
 
+  gameSession: function ({
+    user,
+    campaign,
+    gameSessionId,
+  }: {
+    user: LidndUser;
+    campaign: { slug: string };
+    gameSessionId: string;
+  }) {
+    return `${this.campaign({ campaign, user })}?game_session=${gameSessionId}`;
+  },
+
   creatures: function (user: LidndUser) {
     return `${this.dashboard(user)}/creatures`;
   },

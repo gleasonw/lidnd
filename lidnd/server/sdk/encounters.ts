@@ -1,4 +1,4 @@
-import type { LidndContext } from "@/server/api/base-trpc";
+import { protectedProcedure, type LidndContext } from "@/server/api/base-trpc";
 import { db } from "@/server/db";
 import {
   reminders,
@@ -6,11 +6,106 @@ import {
   participants,
   type EncounterStatus,
   stat_columns,
+  updateEncounterSchema,
+  type EncounterInsert,
 } from "@/server/db/schema";
-import type { InsertParticipant, Participant } from "@/server/api/router";
+import type {
+  Encounter,
+  InsertParticipant,
+  Participant,
+} from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import * as R from "remeda";
+import _ from "lodash";
+import { ServerCampaign } from "@/server/sdk/campaigns";
+
+async function create(
+  ctx: LidndContext,
+  input: Omit<EncounterInsert, "id" | "created_at" | "user_id">,
+  dbObject = db
+) {
+  return await db.transaction(async (tx) => {
+    const encountersInCampaign = await ServerEncounter.encountersInCampaign(
+      ctx,
+      input.campaign_id
+    );
+
+    const indexInCampaign = _.maxBy(
+      encountersInCampaign,
+      (e) => e.index_in_campaign
+    );
+
+    const currentMaxIndex = indexInCampaign
+      ? indexInCampaign.index_in_campaign
+      : 0;
+
+    const newIndex = currentMaxIndex + 1;
+
+    const [encounter, { campaignToPlayers }] = await Promise.all([
+      tx
+        .insert(encounters)
+        .values({
+          ...input,
+          name: input.name ?? "Unnamed encounter",
+          user_id: ctx.user.id,
+          index_in_campaign: newIndex,
+          status: "prep",
+        })
+        .returning(),
+      ServerCampaign.campaignByIdThrows(ctx, input.campaign_id, tx),
+    ]);
+
+    const encounterResult = encounter[0];
+
+    if (encounterResult === undefined) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create encounter",
+      });
+    }
+    // add two columns
+    await tx.insert(stat_columns).values([
+      {
+        encounter_id: encounterResult.id,
+        percent_width: 50,
+      },
+      {
+        encounter_id: encounterResult.id,
+        percent_width: 50,
+      },
+    ]);
+
+    if (campaignToPlayers && campaignToPlayers.length > 0) {
+      await Promise.all(
+        campaignToPlayers.map(({ player: creature }) =>
+          ServerEncounter.addParticipant(
+            ctx,
+            {
+              encounter_id: encounterResult.id,
+              creature_id: creature.id,
+              is_ally: !creature.is_player,
+              hp: creature.is_player ? 1 : creature.max_hp,
+              creature,
+            },
+            tx
+          )
+        )
+      );
+    }
+
+    const result = encounter[0];
+
+    if (result === undefined) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create encounter",
+      });
+    }
+
+    return result;
+  });
+}
 
 // todo: allow callers to pass in an encounter they've already fetched
 async function addParticipant(
@@ -102,6 +197,7 @@ async function getEncounters(ctx: LidndContext, encounterIds: string[]) {
 }
 
 export const ServerEncounter = {
+  create,
   getEncounters,
   encountersInCampaign: async function (
     ctx: LidndContext,

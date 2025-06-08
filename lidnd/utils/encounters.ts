@@ -381,6 +381,7 @@ export const EncounterUtils = {
       index_in_campaign: encounter.index_in_campaign ?? 0,
       is_editing_columns: encounter.is_editing_columns ?? true,
       target_difficulty: encounter.target_difficulty ?? "standard",
+      session_id: encounter.session_id ?? null,
     };
   },
 

@@ -59,6 +59,45 @@ export const ServerCampaign = {
     });
   }),
 
+  sessionFromId: async function (
+    ctx: LidndContext,
+    gameSessionId: string,
+    dbObject = db
+  ) {
+    return await dbObject.query.gameSessions.findFirst({
+      where: (sessions, { eq, and }) =>
+        and(eq(sessions.id, gameSessionId), eq(sessions.user_id, ctx.user.id)),
+      with: {
+        encounters: {
+          with: {
+            participants: true,
+          },
+        },
+      },
+    });
+  },
+
+  sessionsForCampaign: async function (
+    ctx: LidndContext,
+    campaignId: string,
+    dbObject = db
+  ) {
+    return await dbObject.query.gameSessions.findMany({
+      where: (sessions, { eq, and }) =>
+        and(
+          eq(sessions.campaign_id, campaignId),
+          eq(sessions.user_id, ctx.user.id)
+        ),
+      with: {
+        encounters: {
+          with: {
+            participants: true,
+          },
+        },
+      },
+    });
+  },
+
   campaignById: async function (
     ctx: LidndContext,
     campaignId: string,

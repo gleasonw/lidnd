@@ -18,6 +18,10 @@ import {
 import { createSelectSchema, createInsertSchema } from "drizzle-zod";
 
 export type DbSpell = InferInsertModel<typeof spells>;
+export type EncounterInsert = Omit<
+  InferInsertModel<typeof encounters>,
+  "user_id"
+>;
 
 export const spells = pgTable("spells", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -430,6 +434,7 @@ export const updateCampaignSchema = createInsertSchema(campaigns);
 export const encounterInsertSchema = createInsertSchema(encounters);
 export const reminderInsertSchema = createInsertSchema(reminders);
 export const creaturesSchema = createSelectSchema(creatures);
+export const gameSessionSchema = createInsertSchema(gameSessions);
 
 export const updateSettingsSchema = insertSettingsSchema
   .omit({ user_id: true })
