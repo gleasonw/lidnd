@@ -158,44 +158,6 @@ function EncounterSkeleton({
   );
 }
 
-function DraggableEncounterCard(props: {
-  encounter: EncounterWithParticipants;
-  category: Encounter["label"];
-  previousOrder: number;
-  nextOrder: number;
-  encounterCard: React.ReactNode;
-}) {
-  const { encounter, category, previousOrder, nextOrder } = props;
-  const [acceptDrop, setAcceptDrop] = useState<"none" | "top" | "bottom">(
-    "none"
-  );
-  const { mutate: updateEncounter } = useUpdateCampaignEncounter();
-  return (
-    <div
-      onDrop={(e) => {
-        const droppedEncounter = typedDrag.get(
-          e.dataTransfer,
-          dragTypes.encounter
-        );
-        if (!droppedEncounter) {
-          console.error("No encounter found when dragging");
-          return;
-        }
-        const updateOrder = acceptDrop === "bottom" ? nextOrder : previousOrder;
-        updateEncounter({
-          id: droppedEncounter.id,
-          label: category,
-          order: (encounter.order + updateOrder) / 2,
-        });
-        setAcceptDrop("none");
-      }}
-      key={encounter.id}
-      className={clsx("transition-all flex-grow-0 h-fit w-fit")}
-    >
-      {props.encounterCard}
-    </div>
-  );
-}
 export function MonstersInEncounter({
   id,
   onClick,

@@ -42,6 +42,20 @@ export async function createEncounter(encounter: EncounterInsert) {
   return newEncounter;
 }
 
+export async function deleteEncounter(encounter: { id: string }) {
+  const user = await LidndAuth.getUser();
+  if (!user) {
+    console.error("No user found, cannot delete encounter");
+    return { message: "No user found", status: 400 };
+  }
+  const deletedEncounter = await ServerEncounter.deleteEncounter(
+    { user },
+    encounter
+  );
+  revalidatePath(`/`);
+  return deletedEncounter;
+}
+
 export async function logOut() {
   const session = await getPageSession();
   if (!session) return redirect("/login");

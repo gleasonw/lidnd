@@ -15,6 +15,7 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 import type { Participant } from "@/server/api/router";
 import type { StatColumn } from "@/server/api/columns-router";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import clsx from "clsx";
 
 //todo: custom margin when in editing layout mode
 
@@ -171,12 +172,19 @@ export const StatColumnComponent = observer(function StatColumnComponent({
     },
   });
   const isLastColumn = columns && index === columns.length - 1;
+  const columnHasNoParticipants = encounter.participants.every(
+    (ep) => ep.column_id !== column.id
+  );
   return (
     <>
       <div
-        className={`flex flex-col h-full max-h-full overflow-hidden items-start relative ${
-          acceptDrop && "outline outline-blue-500"
-        }`}
+        className={clsx(
+          `flex flex-col h-full max-h-full overflow-hidden items-start relative`,
+          {
+            "outline outline-blue-500": acceptDrop,
+            "bg-gray-100 opacity-50": columnHasNoParticipants,
+          }
+        )}
         style={{ width: `${column.percent_width}%` }}
         onDrop={(e) => {
           const droppedParticipant = typedDrag.get(

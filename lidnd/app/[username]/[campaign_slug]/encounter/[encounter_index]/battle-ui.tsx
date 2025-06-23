@@ -64,8 +64,8 @@ import { useEncounterLinks } from "@/encounters/link-hooks";
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
   const [encounter] = useEncounter();
-  const user = useUser();
   const { rollEncounter } = useEncounterLinks();
+  const user = useUser();
 
   switch (encounter.status) {
     case "prep":
@@ -83,29 +83,27 @@ export const EncounterBattleUI = observer(function BattleUI() {
               </div>
 
               <ReminderInput />
+
               <Link href={rollEncounter}>
-                <Button>
-                  <Play /> Roll initiative
-                </Button>
+                <Button>Start</Button>
               </Link>
             </div>
           </div>
-          <div className="w-[700px] flex mx-auto justify-center flex-col gap-5">
-            <div className="bg-white rounded-md p-3">
-              <DescriptionTextArea />
+          <div className="flex max-w-full max-h-full">
+            <div className="w-[700px] flex mx-auto justify-center flex-col gap-5">
+              <div className="">
+                <Card className="shadow-lg  h-[850px] p-3 flex flex-col gap-5">
+                  <section className="items-center flex gap-3 flex-col">
+                    <EncounterDifficulty />
+                  </section>
+                  <OpponentParticipantForm />
+                </Card>
+              </div>
             </div>
-            <div className="">
-              <Card className="shadow-lg  h-[850px] p-3 flex flex-col gap-5">
-                <section className="items-center flex gap-3 flex-col">
-                  <EncounterDifficulty />
-                </section>
-                <OpponentParticipantForm />
-              </Card>
-            </div>
-          </div>
 
-          <div className="w-full flex gap-3 h-full">
-            <EncounterBattlePreview />
+            <div className="w-full flex gap-3 h-full p-5">
+              <EncounterBattlePreview />
+            </div>
           </div>
         </div>
       );
@@ -210,6 +208,9 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
     .sort(ParticipantUtils.sortLinearly);
   return (
     <div className="flex flex-col max-h-full overflow-hidden h-full">
+      {participantsInColumn.length === 0 ? (
+        <div className="">No stat blocks yet</div>
+      ) : null}
       {participantsInColumn.map((p) => (
         <div
           className="max-h-full h-full flex flex-col overflow-hidden"

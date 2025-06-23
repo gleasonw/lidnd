@@ -1,6 +1,8 @@
 import {
   CampaignParty,
   CreateEncounterForm,
+  DifficultyBadge,
+  MonstersInEncounter,
 } from "./encounter/campaign-encounters-overview";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { appRoutes } from "@/app/routes";
@@ -9,7 +11,16 @@ import { LidndAuth, UserUtils } from "@/app/authentication";
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { MoveLeft, Plus, Calendar, BookIcon, Clock } from "lucide-react";
+import {
+  MoveLeft,
+  Plus,
+  Calendar,
+  BookIcon,
+  Clock,
+  GripVertical,
+  MoreVertical,
+  Trash,
+} from "lucide-react";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { db } from "@/server/db";
 import * as R from "remeda";
@@ -18,7 +29,22 @@ import { Input } from "@/components/ui/input";
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { EncounterUtils } from "@/utils/encounters";
-import { formatSeconds } from "@/lib/utils";
+import { compareCreatedAt, formatSeconds } from "@/lib/utils";
+import { typedDrag, dragTypes } from "@/app/[username]/utils";
+import { Card } from "@/components/ui/card";
+import { ButtonWithTooltip } from "@/components/ui/tip";
+import { LidndPopover } from "@/encounters/base-popover";
+import clsx from "clsx";
+import { api } from "@/trpc/react";
+import {
+  useCampaign,
+  useUpdateCampaign,
+} from "@/app/[username]/[campaign_slug]/campaign-hooks";
+import { useDeleteEncounter } from "@/encounters/[encounter_index]/hooks";
+import { useUser } from "@/app/[username]/user-provider";
+import type { EncounterWithParticipants } from "@/server/api/router";
+import type { Campaign } from "@/app/[username]/types";
+import { deleteEncounter } from "@/app/[username]/actions";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -260,30 +286,75 @@ async function GameSessionView({
             </span>
           </div>
 
-          <div className="grid grid-cols-4 w-full max-h-full gap-2 items-center">
+          <div className="flex flex-wrap w-full max-h-full gap-2 items-center">
             {encountersInSession.map((encounter) => (
-              <Link
+              <EncounterCard
                 key={encounter.id}
-                href={appRoutes.encounter({ campaign, encounter, user })}
-              >
-                <Button>
-                  <div className="flex flex-col items-start">
-                    <span className="font-medium">{encounter.name}</span>
-                    {encounter.description && (
-                      <span className="text-sm text-muted-foreground">
-                        {encounter.description}
-                      </span>
-                    )}
-                  </div>
-                  <span className="ml-auto text-xs opacity-70">
-                    {encounter.participants.length} participants
-                  </span>
-                </Button>
-              </Link>
+                encounter={encounter}
+                campaign={campaign}
+              />
             ))}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+async function EncounterCard({
+  encounter,
+  campaign,
+}: {
+  encounter: EncounterWithParticipants;
+  campaign: Campaign;
+}) {
+  const user = await LidndAuth.getUser();
+  if (!user) {
+    console.error("No user found, cannot render encounter card");
+    return <div>No user found</div>;
+  }
+  return (
+    <Card
+      className={clsx("flex px-5 gap-3 max-w-[600px] hover:bg-gray-100")}
+      draggable
+    >
+      <Link
+        href={appRoutes.encounter({ campaign, encounter, user })}
+        className="flex gap-3 w-full  h-20 items-center"
+      >
+        <div className="flex items-center text-gray-500">
+          <GripVertical className="flex-shrink-0 flex-grow-0" />
+        </div>
+        <h2 className={"flex items-center"}>
+          <span className="max-w-full truncate">
+            {encounter.name ? encounter.name : "Unnamed"}
+          </span>
+        </h2>
+
+        <MonstersInEncounter id={encounter.id} />
+      </Link>
+
+      <div className="ml-auto flex gap-2 items-center pr-5">
+        <LidndPopover
+          trigger={
+            <ButtonWithTooltip text="More" variant="ghost">
+              <MoreVertical />
+            </ButtonWithTooltip>
+          }
+        >
+          <Button
+            variant="ghost"
+            className="text-red-500"
+            onClick={() => {
+              deleteEncounter(encounter);
+            }}
+          >
+            Delete encounter
+            <Trash />
+          </Button>
+        </LidndPopover>
+        <DifficultyBadge encounter={encounter} />
+      </div>
+    </Card>
   );
 }

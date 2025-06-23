@@ -196,7 +196,16 @@ async function getEncounters(ctx: LidndContext, encounterIds: string[]) {
   });
 }
 
+async function deleteEncounter(ctx: LidndContext, encounter: { id: string }) {
+  return await db
+    .delete(encounters)
+    .where(
+      and(eq(encounters.id, encounter.id), eq(encounters.user_id, ctx.user.id))
+    );
+}
+
 export const ServerEncounter = {
+  deleteEncounter,
   create,
   getEncounters,
   encountersInCampaign: async function (
