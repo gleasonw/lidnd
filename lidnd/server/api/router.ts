@@ -9,7 +9,6 @@ import {
   reminders,
   campaigns,
   campaignToPlayer,
-  stat_columns,
   creaturesSchema,
   encounterInsertSchema,
   reminderInsertSchema,
@@ -37,6 +36,7 @@ import { protectedProcedure, publicProcedure, t } from "@/server/api/base-trpc";
 import { encountersRouter } from "@/server/api/encounters-router";
 import { participantsRouter } from "./participants-router";
 import { ServerCreature } from "@/server/sdk/creatures";
+import { gameSessionRouter } from "@/server/api/game-session-router";
 
 export type Encounter = typeof encounters.$inferSelect;
 export type Creature = typeof creatures.$inferSelect;
@@ -70,6 +70,7 @@ export const appRouter = t.router({
 
   ...encountersRouter,
   ...participantsRouter,
+  ...gameSessionRouter,
   encounterById: protectedProcedure.input(z.string()).query(async (opts) => {
     const encounter = await ServerEncounter.encounterById(opts.ctx, opts.input);
     if (!encounter) {
@@ -137,90 +138,7 @@ export const appRouter = t.router({
       )
     )
     .mutation(async (opts) => {
-      return await db.transaction(async (tx) => {
-        const encountersInCampaign = await ServerEncounter.encountersInCampaign(
-          opts.ctx,
-          opts.input.campaign_id
-        );
-
-        const indexInCampaign = _.maxBy(
-          encountersInCampaign,
-          (e) => e.index_in_campaign
-        );
-
-        const currentMaxIndex = indexInCampaign
-          ? indexInCampaign.index_in_campaign
-          : 0;
-
-        const newIndex = currentMaxIndex + 1;
-
-        const [encounter, { campaignToPlayers }] = await Promise.all([
-          tx
-            .insert(encounters)
-            .values({
-              ...opts.input,
-              name: opts.input.name ?? "Unnamed encounter",
-              user_id: opts.ctx.user.id,
-              index_in_campaign: newIndex,
-              status: "prep",
-            })
-            .returning(),
-          ServerCampaign.campaignByIdThrows(
-            opts.ctx,
-            opts.input.campaign_id,
-            tx
-          ),
-        ]);
-
-        const encounterResult = encounter[0];
-
-        if (encounterResult === undefined) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to create encounter",
-          });
-        }
-        // add two columns
-        await tx.insert(stat_columns).values([
-          {
-            encounter_id: encounterResult.id,
-            percent_width: 50,
-          },
-          {
-            encounter_id: encounterResult.id,
-            percent_width: 50,
-          },
-        ]);
-
-        if (campaignToPlayers && campaignToPlayers.length > 0) {
-          await Promise.all(
-            campaignToPlayers.map(({ player: creature }) =>
-              ServerEncounter.addParticipant(
-                opts.ctx,
-                {
-                  encounter_id: encounterResult.id,
-                  creature_id: creature.id,
-                  is_ally: !creature.is_player,
-                  hp: creature.is_player ? 1 : creature.max_hp,
-                  creature,
-                },
-                tx
-              )
-            )
-          );
-        }
-
-        const result = encounter[0];
-
-        if (result === undefined) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to create encounter",
-          });
-        }
-
-        return result;
-      });
+      return await ServerEncounter.create(opts.ctx, opts.input);
     }),
 
   updateEncounter: protectedProcedure

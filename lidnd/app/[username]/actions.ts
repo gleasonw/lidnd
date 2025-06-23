@@ -2,10 +2,14 @@
 
 import { getPageSession } from "@/server/api/utils";
 import { redirect } from "next/navigation";
-import { campaigns, encounters } from "@/server/db/schema";
+import {
+  campaigns,
+  encounterInsertSchema,
+  encounters,
+  type EncounterInsert,
+} from "@/server/db/schema";
 import { z } from "zod";
 import { db } from "@/server/db";
-import { parse } from "@conform-to/zod";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { campaignInsertSchema } from "@/app/[username]/types";
@@ -14,6 +18,43 @@ import { appRoutes } from "@/app/routes";
 import { LidndAuth } from "@/app/authentication";
 import type { LidndUser } from "@/app/authentication";
 import _ from "lodash";
+import { ServerEncounter } from "@/server/sdk/encounters";
+import { parseWithZod } from "@conform-to/zod";
+
+export async function createEncounter(encounter: EncounterInsert) {
+  const user = await LidndAuth.getUser();
+  if (!user) {
+    console.error("No user found, cannot create encounter");
+    return { message: "No user found", status: 400 };
+  }
+  const encounterInput = encounterInsertSchema
+    .omit({ user_id: true })
+    .safeParse(encounter);
+  if (!encounterInput.success) {
+    console.error("Encounter input parsing failed", encounterInput.error);
+    return { message: "Invalid input", status: 400 };
+  }
+  const newEncounter = await ServerEncounter.create(
+    { user },
+    encounterInput.data
+  );
+  revalidatePath(`/`);
+  return newEncounter;
+}
+
+export async function deleteEncounter(encounter: { id: string }) {
+  const user = await LidndAuth.getUser();
+  if (!user) {
+    console.error("No user found, cannot delete encounter");
+    return { message: "No user found", status: 400 };
+  }
+  const deletedEncounter = await ServerEncounter.deleteEncounter(
+    { user },
+    encounter
+  );
+  revalidatePath(`/`);
+  return deletedEncounter;
+}
 
 export async function logOut() {
   const session = await getPageSession();
@@ -23,16 +64,16 @@ export async function logOut() {
 }
 
 export async function createCampaign(formdata: FormData) {
-  const campaign = parse(formdata, {
+  const campaign = parseWithZod(formdata, {
     schema: campaignInsertSchema.merge(
       z.object({
         user_id: z.optional(z.string()),
         slug: z.optional(z.string()),
-      }),
+      })
     ),
   });
 
-  if (!campaign.value) {
+  if (campaign.status !== "success") {
     return { message: campaign.error, status: 400 };
   }
 
@@ -74,7 +115,7 @@ export async function deleteCampaign(user: LidndUser, id: string) {
 
 export async function updateEncounterDescription(
   id: string,
-  formData: FormData,
+  formData: FormData
 ) {
   const user = await LidndAuth.getUser();
 
@@ -83,11 +124,11 @@ export async function updateEncounterDescription(
     return NextResponse.json({ error: "No session found." }, { status: 400 });
   }
 
-  const parsedForm = parse(formData, {
+  const parsedForm = parseWithZod(formData, {
     schema: z.object({ description: z.string().optional() }),
   });
 
-  if (!parsedForm.value) {
+  if (parsedForm.status !== "success") {
     return { message: parsedForm.error, status: 400 };
   }
 
