@@ -9,7 +9,6 @@ import {
   reminders,
   campaigns,
   campaignToPlayer,
-  stat_columns,
   creaturesSchema,
   encounterInsertSchema,
   reminderInsertSchema,

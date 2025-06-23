@@ -6,19 +6,15 @@ import { Card } from "@/components/ui/card";
 import { Edit } from "lucide-react";
 import { api } from "@/trpc/react";
 import type {
-  Encounter,
   EncounterWithParticipants,
   Participant,
 } from "@/server/api/router";
 import { useCampaign } from "../campaign-hooks";
-import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ParticipantUtils } from "@/utils/participants";
-import clsx from "clsx";
 import { EncounterUtils } from "@/utils/encounters";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useUser } from "@/app/[username]/user-provider";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
-import { useUpdateCampaignEncounter } from "@/encounters/[encounter_index]/hooks";
 import { appRoutes } from "@/app/routes";
 import { Badge } from "@/components/ui/badge";
 import type { CampaignWithData } from "@/server/sdk/campaigns";
@@ -136,25 +132,6 @@ export function CreateEncounterForm({
         </div>
       </form>
     </Card>
-  );
-}
-
-function EncounterSkeleton({
-  unmoving = false,
-  children,
-}: {
-  unmoving?: boolean;
-  children?: React.ReactNode;
-}) {
-  if (unmoving) {
-    return (
-      <div className="flex flex-col transition-all w-full h-44 items-center justify-center">
-        {children}
-      </div>
-    );
-  }
-  return (
-    <Card className="flex flex-col transition-all w-full h-44 animate-pulse bg-gray-200" />
   );
 }
 

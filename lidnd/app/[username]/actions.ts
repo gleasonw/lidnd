@@ -124,11 +124,11 @@ export async function updateEncounterDescription(
     return NextResponse.json({ error: "No session found." }, { status: 400 });
   }
 
-  const parsedForm = parse(formData, {
+  const parsedForm = parseWithZod(formData, {
     schema: z.object({ description: z.string().optional() }),
   });
 
-  if (!parsedForm.value) {
+  if (parsedForm.status !== "success") {
     return { message: parsedForm.error, status: 400 };
   }
 

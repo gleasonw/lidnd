@@ -29,19 +29,11 @@ import { Input } from "@/components/ui/input";
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { EncounterUtils } from "@/utils/encounters";
-import { compareCreatedAt, formatSeconds } from "@/lib/utils";
-import { typedDrag, dragTypes } from "@/app/[username]/utils";
+import { formatSeconds } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { LidndPopover } from "@/encounters/base-popover";
 import clsx from "clsx";
-import { api } from "@/trpc/react";
-import {
-  useCampaign,
-  useUpdateCampaign,
-} from "@/app/[username]/[campaign_slug]/campaign-hooks";
-import { useDeleteEncounter } from "@/encounters/[encounter_index]/hooks";
-import { useUser } from "@/app/[username]/user-provider";
 import type { EncounterWithParticipants } from "@/server/api/router";
 import type { Campaign } from "@/app/[username]/types";
 import { deleteEncounter } from "@/app/[username]/actions";
@@ -345,7 +337,8 @@ async function EncounterCard({
           <Button
             variant="ghost"
             className="text-red-500"
-            onClick={() => {
+            onClick={async () => {
+              "use server";
               deleteEncounter(encounter);
             }}
           >

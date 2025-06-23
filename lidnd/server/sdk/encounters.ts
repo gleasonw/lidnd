@@ -1,4 +1,4 @@
-import { protectedProcedure, type LidndContext } from "@/server/api/base-trpc";
+import { type LidndContext } from "@/server/api/base-trpc";
 import { db } from "@/server/db";
 import {
   reminders,
@@ -6,14 +6,9 @@ import {
   participants,
   type EncounterStatus,
   stat_columns,
-  updateEncounterSchema,
   type EncounterInsert,
 } from "@/server/db/schema";
-import type {
-  Encounter,
-  InsertParticipant,
-  Participant,
-} from "@/server/api/router";
+import type { InsertParticipant, Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import * as R from "remeda";
