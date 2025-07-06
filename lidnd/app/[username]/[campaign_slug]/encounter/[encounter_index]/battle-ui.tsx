@@ -323,37 +323,6 @@ export const ParticipantBattleData = observer(function BattleCard({
                   <BattleCardCreatureName participant={participant} />
                   <BattleCardTools participant={participant} />
                 </div>
-                <div className="flex flex-wrap gap-3 items-center">
-                  {participant.status_effects?.map((se) => (
-                    <LidndPopover
-                      key={se.id}
-                      className="flex flex-col gap-5 items-center"
-                      trigger={
-                        <Label
-                          className={`flex items-center gap-2 hover:bg-gray-100 hover:cursor-pointer`}
-                        >
-                          <span className="mr-auto flex gap-2 items-center">
-                            <EffectIcon effect={se.effect} />
-                            {ParticipantEffectUtils.name(se)}
-                          </span>
-                          {!!se.save_ends_dc && (
-                            <span>({se.save_ends_dc})</span>
-                          )}
-                        </Label>
-                      }
-                    >
-                      {ParticipantEffectUtils.description(se)}
-                      <Button
-                        onClick={() => removeStatusEffect(se)}
-                        variant="ghost"
-                        className="text-red-500"
-                      >
-                        Remove
-                      </Button>
-                    </LidndPopover>
-                  ))}
-                  <StatusInput participant={participant} />
-                </div>
                 <LidndTextArea editor={editor} />
               </div>
             </div>
