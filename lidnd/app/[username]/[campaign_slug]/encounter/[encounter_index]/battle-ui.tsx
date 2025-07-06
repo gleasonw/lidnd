@@ -9,7 +9,7 @@ import { motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
 import type { Participant, ParticipantWithData } from "@/server/api/router";
 import { LidndPopover } from "@/encounters/base-popover";
-import { EffectIcon, StatusInput } from "./status-input";
+import { EffectIcon } from "./status-input";
 import {
   LinearBattleUI,
   ParentWidthContext,
@@ -35,7 +35,6 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-import { Label } from "@/components/ui/label";
 import {
   ReminderInput,
   Reminders,
@@ -293,8 +292,6 @@ export const ParticipantBattleData = observer(function BattleCard({
     placeholder: "Monster notes",
   });
 
-  const { mutate: removeStatusEffect } = useRemoveStatusEffect();
-
   const editor = useEditor({
     extensions: [StarterKit, configuredPlaceholder],
     content: participant.notes,
@@ -313,7 +310,7 @@ export const ParticipantBattleData = observer(function BattleCard({
       <BattleCardLayout key={participant.id} participant={participant}>
         <div className="flex gap-4 p-5 items-center w-full">
           <BattleCardContent>
-            <div className="flex gap-2 items-center w-full justify-between">
+            <div className="flex gap-2 w-full justify-between">
               <BattleCardCreatureIcon
                 participant={participant}
                 className="flex-shrink-0 flex-grow-0"
@@ -324,10 +321,9 @@ export const ParticipantBattleData = observer(function BattleCard({
                   <BattleCardTools participant={participant} />
                 </div>
                 <LidndTextArea editor={editor} />
+                <ParticipantHealthForm participant={participant} />
               </div>
             </div>
-
-            <ParticipantHealthForm participant={participant} />
           </BattleCardContent>
         </div>
       </BattleCardLayout>

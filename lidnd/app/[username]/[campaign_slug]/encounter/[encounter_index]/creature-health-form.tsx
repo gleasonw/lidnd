@@ -71,7 +71,50 @@ export function ParticipantHealthForm({
   const hpPercent = ParticipantUtils.healthPercent(participant);
 
   return (
-    <div className="flex flex-wrap gap-5 w-full">
+    <div className="flex gap-5 flex-col w-full">
+      <div className="flex gap-4 text-2xl">
+        <Input
+          placeholder="HP"
+          type="number"
+          className="w-32"
+          value={hpDiff}
+          onChange={(e) => {
+            if (!isNaN(parseInt(e.target.value))) {
+              setHpDiff(parseInt(e.target.value));
+            } else {
+              setHpDiff("");
+            }
+          }}
+        />
+        <Button
+          variant="outline"
+          className={"bg-red-100 text-red-700 gap-3 flex items-center"}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleHPChange(
+              typeof hpDiff === "number"
+                ? participant.hp - hpDiff
+                : participant.hp
+            );
+          }}
+        >
+          <Sword /> Damage
+        </Button>
+        <Button
+          variant="outline"
+          className={"bg-green-100 text-green-700 gap-3 flex items-center"}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleHPChange(
+              typeof hpDiff === "number"
+                ? participant.hp + hpDiff
+                : participant.hp
+            );
+          }}
+        >
+          <Heart /> Heal
+        </Button>
+      </div>
       <div className="flex max-w-full w-full gap-2">
         <span className="w-full h-10 shadow-md relative border bg-red-100">
           <span
@@ -107,7 +150,7 @@ export function ParticipantHealthForm({
                 setTempHp(
                   typeof tempHpDiff === "number"
                     ? participant.temporary_hp - tempHpDiff
-                    : participant.temporary_hp,
+                    : participant.temporary_hp
                 );
               }}
             >
@@ -134,7 +177,7 @@ export function ParticipantHealthForm({
                 setTempHp(
                   typeof tempHpDiff === "number"
                     ? participant.temporary_hp + tempHpDiff
-                    : participant.temporary_hp,
+                    : participant.temporary_hp
                 );
               }}
             >
@@ -142,51 +185,6 @@ export function ParticipantHealthForm({
             </Button>
           </div>
         </LidndPopover>
-      </div>
-      <div className="flex flex-wrap gap-8">
-        <div className="flex gap-4 text-2xl">
-          <Input
-            placeholder="HP"
-            type="number"
-            className="w-32"
-            value={hpDiff}
-            onChange={(e) => {
-              if (!isNaN(parseInt(e.target.value))) {
-                setHpDiff(parseInt(e.target.value));
-              } else {
-                setHpDiff("");
-              }
-            }}
-          />
-          <Button
-            variant="outline"
-            className={"bg-red-100 text-red-700 gap-3 flex items-center"}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleHPChange(
-                typeof hpDiff === "number"
-                  ? participant.hp - hpDiff
-                  : participant.hp,
-              );
-            }}
-          >
-            <Sword /> Damage
-          </Button>
-          <Button
-            variant="outline"
-            className={"bg-green-100 text-green-700 gap-3 flex items-center"}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleHPChange(
-                typeof hpDiff === "number"
-                  ? participant.hp + hpDiff
-                  : participant.hp,
-              );
-            }}
-          >
-            <Heart /> Heal
-          </Button>
-        </div>
       </div>
     </div>
   );
