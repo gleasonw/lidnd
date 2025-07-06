@@ -149,9 +149,7 @@ function EncounterBattlePreview() {
         <ParentWidthContext.Provider value={parentWidth}>
           {columns?.map((c, i) => (
             <StatColumnComponent column={c} index={i} key={c.id}>
-              <div className="flex flex-col gap-5 border border-t-0 w-full max-h-full overflow-hidden h-full bg-white">
-                <PreviewCardsForColumn column={c} />
-              </div>
+              <PreviewCardsForColumn column={c} />
             </StatColumnComponent>
           ))}
         </ParentWidthContext.Provider>
@@ -203,9 +201,12 @@ function BattleCardTools({ participant }: { participant: Participant }) {
 
 function PreviewCardsForColumn({ column }: { column: StatColumn }) {
   const [encounter] = useEncounter();
-  const participantsInColumn = encounter.participants
-    .filter((p) => p.column_id === column.id)
-    .sort(ParticipantUtils.sortLinearly);
+  const participantsInColumn = EncounterUtils.participantsForColumn(
+    encounter,
+    column
+  );
+  const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
+
   return (
     <div className="flex flex-col max-h-full overflow-hidden h-full">
       {participantsInColumn.length === 0 ? (
@@ -214,17 +215,53 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
       {participantsInColumn.map((p) => (
         <div
           className="max-h-full h-full flex flex-col overflow-hidden"
-          key={p.id}
+          key={p
+            .map((p) => p.id)
+            .sort()
+            .join("-")}
         >
-          <div className="w-full flex gap-2 p-4">
-            <CreatureIcon creature={p.creature} size="small" />
-            <BattleCardCreatureName participant={p} />
-            <BattleCardTools participant={p} />
-          </div>
+          {p.map((p, i) => (
+            <div className="w-full flex gap-2 p-4" key={p.id}>
+              <CreatureIcon creature={p.creature} size="small" />
+              <BattleCardCreatureName participant={p} />
+              {i === 0 ? (
+                <BattleCardTools participant={p} />
+              ) : (
+                <LidndPopover
+                  trigger={
+                    <ButtonWithTooltip
+                      text="More"
+                      variant="ghost"
+                      className="ml-auto"
+                    >
+                      <MoreHorizontal />
+                    </ButtonWithTooltip>
+                  }
+                  className="ml-auto flex"
+                >
+                  <Button
+                    onClick={() =>
+                      removeParticipant({
+                        encounter_id: p.encounter_id,
+                        participant_id: p.id,
+                      })
+                    }
+                    variant="destructive"
+                  >
+                    Remove participant
+                  </Button>
+                </LidndPopover>
+              )}
+            </div>
+          ))}
 
-          <div className="w-full h-full max-h-full overflow-hidden">
-            <CreatureStatBlock creature={p.creature} />
-          </div>
+          {p[0]?.creature ? (
+            <div className="w-full h-full max-h-full overflow-hidden">
+              <CreatureStatBlock creature={p[0]?.creature} />
+            </div>
+          ) : (
+            <div> no creature for first participant... a bug</div>
+          )}
         </div>
       ))}
     </div>
@@ -240,7 +277,7 @@ export type BattleCardProps = {
   ref: (ref: HTMLDivElement) => void;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export const BattleCard = observer(function BattleCard({
+export const ParticipantBattleData = observer(function BattleCard({
   participant,
   extraHeaderButtons,
   ref,
@@ -324,7 +361,6 @@ export const BattleCard = observer(function BattleCard({
             <ParticipantHealthForm participant={participant} />
           </BattleCardContent>
         </div>
-        <CreatureStatBlock creature={participant.creature} />
       </BattleCardLayout>
     </div>
   );

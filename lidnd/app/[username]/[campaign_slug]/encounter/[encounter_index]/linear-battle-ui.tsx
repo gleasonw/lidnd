@@ -1,7 +1,7 @@
 "use client";
-import React, { createContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
-import { BattleCard } from "./battle-ui";
+import { ParticipantBattleData } from "./battle-ui";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { useEncounter } from "@/encounters/[encounter_index]/hooks";
 import { observer } from "mobx-react-lite";
@@ -12,10 +12,12 @@ import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { AddColumn } from "@/app/public/images/icons/AddColumn";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
-import type { Participant } from "@/server/api/router";
 import type { StatColumn } from "@/server/api/columns-router";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import clsx from "clsx";
+import { EncounterUtils } from "@/utils/encounters";
+import type React from "react";
+import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
 
 //todo: custom margin when in editing layout mode
 
@@ -68,13 +70,40 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
 });
 
 export function StatColumns() {
-  const encounterId = useEncounterId();
+  const [encounter] = useEncounter();
+  const encounterId = encounter.id;
   const { data: columns } = api.getColumns.useQuery(encounterId);
+  const { registerBattleCardRef } = useEncounterUIStore();
+
+  const participantsByColumn = EncounterUtils.participantsByColumn(encounter);
+
+  //todo: have battlecard take an array of participants instead of just one
+
   return columns?.map((c, index) => (
     <StatColumnComponent column={c} index={index} key={c.id}>
       <ScrollArea className="flex flex-col gap-5 border-t-0 w-full max-h-screen h-full overflow-hidden ">
         <div className="flex flex-col gap-5">
-          <BattleCards column={c} />
+          {participantsByColumn[c.id]?.map((p) => (
+            <div key={p.map((p) => p.id).join("-")}>
+              <div className="flex flex-col gap-5">
+                {p.map((p) => (
+                  <ParticipantBattleData
+                    participant={p}
+                    ref={(ref) => registerBattleCardRef(p.id, ref)}
+                    data-is-active={p.is_active}
+                    data-participant-id={p.id}
+                    key={p.id}
+                  />
+                ))}
+              </div>
+
+              {p[0]?.creature ? (
+                <CreatureStatBlock creature={p[0]?.creature} />
+              ) : (
+                <div>no creature... probably a bug</div>
+              )}
+            </div>
+          ))}
         </div>
       </ScrollArea>
     </StatColumnComponent>
@@ -122,12 +151,12 @@ export const StatColumnComponent = observer(function StatColumnComponent({
   children,
   toolbarExtra,
 }: {
-  column: StatColumn & { participants: Participant[] };
+  column: StatColumn;
   index: number;
   children: React.ReactNode;
   toolbarExtra?: React.ReactNode;
 }) {
-  const [acceptDrop, setAcceptDrop] = React.useState(false);
+  const [acceptDrop, setAcceptDrop] = useState(false);
   const { encounterById, getColumns } = api.useUtils();
   const encounterId = useEncounterId();
   const [encounter] = useEncounter();
@@ -242,8 +271,9 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         ) : null}
 
         {toolbarExtra}
-
-        {children}
+        <div className="flex flex-col gap-5 border border-t-0 w-full max-h-full overflow-hidden h-full bg-white">
+          {children}
+        </div>
       </div>
       <StatColumnSplitter
         rightColumnId={columns?.[index + 1]?.id}
@@ -254,24 +284,6 @@ export const StatColumnComponent = observer(function StatColumnComponent({
   );
 });
 
-function BattleCards({ column }: { column: StatColumn }) {
-  const [encounter] = useEncounter();
-  const { registerBattleCardRef } = useEncounterUIStore();
-
-  const participantsInColumn = encounter.participants
-    .filter((p) => p.column_id === column.id)
-    .sort(ParticipantUtils.sortLinearly);
-
-  return participantsInColumn.map((p) => (
-    <BattleCard
-      participant={p}
-      ref={(ref) => registerBattleCardRef(p.id, ref)}
-      data-is-active={p.is_active}
-      data-participant-id={p.id}
-      key={p.id}
-    />
-  ));
-}
 //todo: instead of updating a width which causes a full re-render of the stat column component,
 // set a css var on the parent ref. keep react out of the loop
 //like-wise for parent width?
@@ -282,7 +294,7 @@ function StatColumnSplitter({
   rightColumnId?: string;
   leftColumnId: string;
 }) {
-  const parentWidth = React.useContext(ParentWidthContext);
+  const parentWidth = useContext(ParentWidthContext);
   const { getColumns } = api.useUtils();
   const encounterId = useEncounterId();
   const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();

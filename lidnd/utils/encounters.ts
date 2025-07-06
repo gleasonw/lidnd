@@ -96,7 +96,37 @@ function remainingCr(
   return EncounterUtils.goalCr(e, c) - EncounterUtils.totalCr(e);
 }
 
+/** we want to group participants with the same creature into one column, to avoid
+ * duplicating stat blocks. we just take the first participant, sorted, as the column_id source of truth
+ */
+function participantsByColumn(e: EncounterWithParticipants) {
+  const byCreature = R.groupBy(e.participants, (p) => p.creature_id);
+  return Object.values(byCreature)?.reduce((acc, curr) => {
+    const columnFor = curr
+      .slice()
+      .sort(ParticipantUtils.sortLinearly)
+      .at(0)?.column_id;
+    if (!columnFor) return acc;
+    const inColumn = acc[columnFor];
+    if (inColumn && inColumn.length > 0) {
+      acc[columnFor]?.push(curr);
+      return acc;
+    }
+    acc[columnFor] = [curr];
+    return acc;
+  }, {} as Record<string, ParticipantWithData[][]>);
+}
+
+function participantsForColumn(
+  e: EncounterWithParticipants,
+  column: { id: string }
+): ParticipantWithData[][] {
+  return participantsByColumn(e)[column.id] ?? [];
+}
+
 export const EncounterUtils = {
+  participantsByColumn,
+  participantsForColumn,
   inactiveEncounters,
   start,
   difficultyCssClasses,
