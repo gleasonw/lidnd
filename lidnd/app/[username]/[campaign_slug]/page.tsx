@@ -17,7 +17,6 @@ import {
   Calendar,
   BookIcon,
   Clock,
-  GripVertical,
   MoreVertical,
   Trash,
 } from "lucide-react";
@@ -31,7 +30,6 @@ import { and, eq } from "drizzle-orm";
 import { EncounterUtils } from "@/utils/encounters";
 import { formatSeconds } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { ButtonWithTooltip } from "@/components/ui/tip";
 import { LidndPopover } from "@/encounters/base-popover";
 import clsx from "clsx";
 import type { EncounterWithParticipants } from "@/server/api/router";
@@ -306,17 +304,11 @@ async function EncounterCard({
     return <div>No user found</div>;
   }
   return (
-    <Card
-      className={clsx("flex px-5 gap-3 max-w-[600px] hover:bg-gray-100")}
-      draggable
-    >
+    <Card className={clsx("flex px-5 gap-3 max-w-[600px] items-center")}>
       <Link
         href={appRoutes.encounter({ campaign, encounter, user })}
         className="flex gap-3 w-full  h-20 items-center"
       >
-        <div className="flex items-center text-gray-500">
-          <GripVertical className="flex-shrink-0 flex-grow-0" />
-        </div>
         <h2 className={"flex items-center"}>
           <span className="max-w-full truncate">
             {encounter.name ? encounter.name : "Unnamed"}
@@ -325,29 +317,26 @@ async function EncounterCard({
 
         <MonstersInEncounter id={encounter.id} />
       </Link>
-
-      <div className="ml-auto flex gap-2 items-center pr-5">
-        <LidndPopover
-          trigger={
-            <ButtonWithTooltip text="More" variant="ghost">
-              <MoreVertical />
-            </ButtonWithTooltip>
-          }
-        >
-          <Button
-            variant="ghost"
-            className="text-red-500"
-            onClick={async () => {
-              "use server";
-              deleteEncounter(encounter);
-            }}
-          >
-            Delete encounter
-            <Trash />
+      <LidndPopover
+        trigger={
+          <Button variant="ghost">
+            <MoreVertical />
           </Button>
-        </LidndPopover>
-        <DifficultyBadge encounter={encounter} />
-      </div>
+        }
+      >
+        <Button
+          variant="ghost"
+          className="text-red-500"
+          onClick={async () => {
+            "use server";
+            deleteEncounter(encounter);
+          }}
+        >
+          Delete encounter
+          <Trash />
+        </Button>
+      </LidndPopover>
+      <DifficultyBadge encounter={encounter} />
     </Card>
   );
 }
