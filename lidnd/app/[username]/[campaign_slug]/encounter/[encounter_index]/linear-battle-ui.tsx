@@ -72,12 +72,12 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
 export function StatColumns() {
   const [encounter] = useEncounter();
   const encounterId = encounter.id;
+  //TODO: some weirdness here, looks like we still have participants on the column...
+  // do we actually assign participants to columns?
   const { data: columns } = api.getColumns.useQuery(encounterId);
   const { registerBattleCardRef } = useEncounterUIStore();
 
   const participantsByColumn = EncounterUtils.participantsByColumn(encounter);
-
-  //todo: have battlecard take an array of participants instead of just one
 
   return columns?.map((c, index) => (
     <StatColumnComponent column={c} index={index} key={c.id}>
@@ -86,15 +86,18 @@ export function StatColumns() {
           {participantsByColumn[c.id]?.map((p) => (
             <div key={p.map((p) => p.id).join("-")}>
               <div className="flex flex-col gap-5">
-                {p.map((p) => (
-                  <ParticipantBattleData
-                    participant={p}
-                    ref={(ref) => registerBattleCardRef(p.id, ref)}
-                    data-is-active={p.is_active}
-                    data-participant-id={p.id}
-                    key={p.id}
-                  />
-                ))}
+                {p
+                  .slice()
+                  .sort(ParticipantUtils.sortLinearly)
+                  .map((p) => (
+                    <ParticipantBattleData
+                      participant={p}
+                      ref={(ref) => registerBattleCardRef(p.id, ref)}
+                      data-is-active={p.is_active}
+                      data-participant-id={p.id}
+                      key={p.id}
+                    />
+                  ))}
               </div>
 
               {p[0]?.creature ? (

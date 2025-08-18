@@ -215,8 +215,8 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
         <div
           className="max-h-full h-full flex flex-col overflow-hidden"
           key={p
+            .sort(ParticipantUtils.sortLinearly)
             .map((p) => p.id)
-            .sort()
             .join("-")}
         >
           {p.map((p, i) => (

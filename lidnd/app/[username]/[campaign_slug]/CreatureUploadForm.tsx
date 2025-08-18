@@ -62,7 +62,7 @@ export function AllyCreatureUploadForm({
           name="statBlockImage"
           render={({ field }) => (
             <ImageUpload
-              dropContainerClassName="h-52"
+              dropContainerClassName="h-30"
               onUpload={(image) => {
                 field.onChange(image);
               }}
@@ -152,7 +152,7 @@ export function OppponentCreatureUploadForm({
           name="statBlockImage"
           render={({ field }) => (
             <ImageUpload
-              dropContainerClassName="h-52"
+              dropContainerClassName="h-30 p-5"
               onUpload={(image) => {
                 field.onChange(image);
               }}
@@ -222,7 +222,7 @@ export type PlayerUpload = Pick<CreatureUpload, "name" | "iconImage">;
 export function usePlayerCreatureForm() {
   return useForm<PlayerUpload>({
     resolver: zodResolver(
-      z.object({ name: z.string(), iconImage: z.instanceof(File).optional() }),
+      z.object({ name: z.string(), iconImage: z.instanceof(File).optional() })
     ),
     defaultValues: { name: "" },
   });
@@ -328,7 +328,7 @@ export function useAwsImageUpload({ form, onSuccess }: AwsImageUploadArgs) {
           status: "pending",
         });
         fileUploadTasks.push(
-          uploadFileToAWS(statBlockImage, statBlockPresigned),
+          uploadFileToAWS(statBlockImage, statBlockPresigned)
         );
         dimensionTasks["statBlock"] = readImageHeightWidth(statBlockImage);
       }
@@ -343,11 +343,11 @@ export function useAwsImageUpload({ form, onSuccess }: AwsImageUploadArgs) {
         Object.entries(dimensionTasks).map(async ([key, task]) => ({
           key,
           value: await task,
-        })),
+        }))
       );
 
       const keyedResults = Object.fromEntries(
-        dimensions.map(({ key, value }) => [key, value]),
+        dimensions.map(({ key, value }) => [key, value])
       ) as Record<"statBlock" | "icon", { height: number; width: number }>;
       const statBlockDimensions = keyedResults["statBlock"];
       const iconDimensions = keyedResults["icon"];
@@ -398,7 +398,7 @@ export function useAwsImageUpload({ form, onSuccess }: AwsImageUploadArgs) {
 async function pollForUploadSuccess(
   creature: Creature,
   uiStore: UIStore,
-  type: "icon" | "statBlock",
+  type: "icon" | "statBlock"
 ) {
   const url = CreatureUtils.awsURL(creature, type);
   for (let i = 0; i < 5; i++) {
@@ -443,7 +443,7 @@ async function uploadFileToAWS(file: File, presignedUrl: string) {
 }
 
 async function readImageHeightWidth(
-  file: File,
+  file: File
 ): Promise<{ height: number; width: number }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
