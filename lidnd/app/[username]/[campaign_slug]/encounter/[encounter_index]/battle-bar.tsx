@@ -118,7 +118,12 @@ export const InitiativeTracker = observer(function InitiativeTracker() {
                 activeIndex={activeIndex}
               />
             )}
-            {isEditingInitiative ? <InitiativeInput participant={p} /> : null}
+            {isEditingInitiative ? (
+              <InitiativeInput
+                className="absolute top-0 left-0 "
+                participant={p}
+              />
+            ) : null}
           </div>
         )
       )}

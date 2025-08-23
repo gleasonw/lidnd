@@ -30,11 +30,11 @@ export default function InitiativeInput({
 
   return (
     <label className={className}>
-      Initiative
       <Input
         type="number"
         value={initiative}
         className="w-16"
+        aria-label="Initiative"
         tabIndex={tabIndex}
         onChange={(e) => {
           setInitiative(!isNaN(parseInt(e.target.value)) ? e.target.value : "");
