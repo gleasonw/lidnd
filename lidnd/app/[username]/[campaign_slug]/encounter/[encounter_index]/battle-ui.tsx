@@ -113,7 +113,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
           <Reminders />
           <div className="flex gap-4 flex-col w-full max-h-full h-full overflow-hidden">
             {/**create space for the overlaid initiative tracker */}
-            {encounter.status === "run" && <div className="my-5" />}
+            {encounter.status === "run" && <div className="my-1" />}
             {encounter.description ? (
               <div className="bg-white p-5">
                 <DescriptionTextArea />

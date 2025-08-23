@@ -91,7 +91,7 @@ export const InitiativeTracker = observer(function InitiativeTracker() {
 
   return (
     <div
-      className={`pl-[var(--campaign-nav-width)] flex overflow-visible h-20 z-20 gap-2 w-full bottom-0`}
+      className={`pl-[var(--campaign-nav-width)] flex overflow-visible h-20 flex-shrink-0 z-20 gap-2 w-full bottom-0`}
     >
       <ButtonWithTooltip
         className="h-full shadow-lg"
@@ -227,7 +227,7 @@ function TopBarParticipantCard({
     <div
       className={clsx(
         "w-auto border-4 flex justify-center items-center transition-all max-h-full overflow-hidden max-w-[200px]",
-        participant.is_active ? "h-32" : "h-20",
+        participant.is_active ? "h-20" : "h-14",
         index < activeIndex
           ? "opacity-60 hover:opacity-100"
           : "hover:opacity-60"
