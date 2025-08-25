@@ -20,8 +20,12 @@ export const CreatureStatBlock = observer(
     const statblock = (
       <Image
         quality={100}
-        style={{ objectFit: "contain" }}
-        className="max-h-full w-full max-w-fit"
+        style={{
+          objectFit: "contain",
+          width: creature.stat_block_width,
+          height: creature.stat_block_height,
+        }}
+        className="max-h-full w-full"
         src={CreatureUtils.awsURL(creature, "statBlock")}
         alt={creature.name}
         width={creature.stat_block_width}
