@@ -25,7 +25,7 @@ export const CreatureStatBlock = observer(
           width: creature.stat_block_width,
           height: creature.stat_block_height,
         }}
-        className="max-h-full w-full"
+        className="max-h-full w-full object-top"
         src={CreatureUtils.awsURL(creature, "statBlock")}
         alt={creature.name}
         width={creature.stat_block_width}
