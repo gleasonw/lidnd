@@ -70,12 +70,12 @@ export function ParticipantHealthForm({
   const hpPercent = ParticipantUtils.healthPercent(participant);
 
   return (
-    <div className="flex gap-5 flex-col w-full">
-      <div className="flex gap-4 text-2xl">
+    <div className="flex gap-3 flex-col w-full">
+      <div className="flex gap-3 text-lg flex-wrap">
         <Input
           placeholder="HP"
           type="number"
-          className="w-32"
+          className="w-28"
           value={hpDiff}
           onChange={(e) => {
             if (!isNaN(parseInt(e.target.value))) {
@@ -87,7 +87,7 @@ export function ParticipantHealthForm({
         />
         <Button
           variant="outline"
-          className={"bg-red-100 text-red-700 gap-3 flex items-center"}
+          className={"bg-red-100 text-red-700 gap-2 flex items-center text-base px-3"}
           onClick={(e) => {
             e.stopPropagation();
             handleHPChange(
@@ -101,7 +101,7 @@ export function ParticipantHealthForm({
         </Button>
         <Button
           variant="outline"
-          className={"bg-green-100 text-green-700 gap-3 flex items-center"}
+          className={"bg-green-100 text-green-700 gap-2 flex items-center text-base px-3"}
           onClick={(e) => {
             e.stopPropagation();
             handleHPChange(
@@ -114,8 +114,8 @@ export function ParticipantHealthForm({
           <Heart /> Heal
         </Button>
       </div>
-      <div className="flex max-w-full w-full gap-2">
-        <span className="w-full h-10 shadow-md relative border bg-red-100">
+      <div className="flex max-w-full w-full gap-2 items-center">
+        <span className="w-full h-8 shadow-md relative border bg-red-100 rounded-md">
           <span
             className={`absolute bg-green-500 h-full transition-all`}
             style={{
@@ -129,14 +129,17 @@ export function ParticipantHealthForm({
             }}
           />
           <span className="flex w-full items-center justify-center h-full">
-            <span className="z-10 text-xl text-white">
+            <span className="z-10 text-sm font-semibold text-white">
               {participant.hp} / {ParticipantUtils.maxHp(participant)}
             </span>
           </span>
         </span>
         <LidndPopover
           trigger={
-            <Button variant="outline" className="bg-blue-100 text-blue-700">
+            <Button
+              variant="outline"
+              className="bg-blue-100 text-blue-700 px-3 py-1 text-sm"
+            >
               <Shield /> Temp
             </Button>
           }

@@ -660,7 +660,7 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   ) : (
     <div
       className={clsx(
-        "relative border-4 items-center flex justify-center",
+        "relative border-2 rounded-lg items-center flex justify-center p-1",
         className,
         {
           "opacity-50": !(uiStore.selectedParticipantId === participant.id),
@@ -669,7 +669,7 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
       style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
     >
       {error ? (
-        <User className="w-36 h-36" />
+        <User className="w-28 h-28" />
       ) : (
         <Image
           src={CreatureUtils.awsURL(participant.creature, "icon")}
@@ -677,7 +677,7 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
           style={imageStyle}
           width={participant.creature.icon_width}
           height={participant.creature.icon_height}
-          className="w-36 h-36"
+          className="w-28 h-28"
           onError={() => setError(true)}
         />
       )}
