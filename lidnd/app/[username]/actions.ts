@@ -16,7 +16,6 @@ import { campaignInsertSchema } from "@/app/[username]/types";
 import { and, eq } from "drizzle-orm";
 import { appRoutes } from "@/app/routes";
 import { LidndAuth } from "@/app/authentication";
-import type { LidndUser } from "@/app/authentication";
 import _ from "lodash";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { parseWithZod } from "@conform-to/zod";
@@ -103,14 +102,26 @@ export async function createCampaign(formdata: FormData) {
   redirect(appRoutes.campaign({ campaign: createdCampaign[0], user }));
 }
 
-export async function deleteCampaign(user: LidndUser, id: string) {
+export async function deleteCampaign(formData: FormData) {
+  const user = await LidndAuth.getUser();
+
+  if (!user) {
+    console.error("No user found, cannot delete campaign");
+    throw new Error("No user found");
+  }
+
+  const campaignId = formData.get("campaign_id");
+
+  if (typeof campaignId !== "string" || campaignId.length === 0) {
+    throw new Error("Campaign id is required");
+  }
+
   await db
     .delete(campaigns)
-    .where(and(eq(campaigns.id, id), eq(campaigns.user_id, user.id)))
+    .where(and(eq(campaigns.id, campaignId), eq(campaigns.user_id, user.id)))
     .returning();
 
   revalidatePath(appRoutes.dashboard(user));
-  redirect(appRoutes.dashboard(user));
 }
 
 export async function updateEncounterDescription(
