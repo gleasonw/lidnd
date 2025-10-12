@@ -19,6 +19,7 @@ import {
   BookIcon,
   Clock,
   MoreHorizontal,
+  Pencil,
 } from "lucide-react";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { db } from "@/server/db";
@@ -587,43 +588,69 @@ async function GameSessionView({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-        <Card className="border border-border/60 bg-card p-6 shadow-sm">
-          <form action={updateSessionDetails} className="flex flex-col gap-5">
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="session-name">
-                Session name
-              </label>
-              <Input
-                id="session-name"
-                name="name"
-                defaultValue={session.name}
-                required
-              />
+        <Card className="flex flex-col gap-5 border border-border/60 bg-card p-6 shadow-sm">
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold tracking-tight">Session details</h2>
+            <p className="text-sm text-muted-foreground">
+              Keep the overview tidy and jump in to edit only when you need to tweak
+              the name or summary.
+            </p>
+          </div>
+          <dl className="grid gap-4 text-sm sm:grid-cols-2">
+            <div className="space-y-1">
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                Title
+              </dt>
+              <dd className="font-medium text-foreground">{session.name}</dd>
             </div>
-            <div className="space-y-2">
-              <label
-                className="text-sm font-medium"
-                htmlFor="session-description"
-              >
-                Session summary
-              </label>
-              <Textarea
-                id="session-description"
-                name="description"
-                defaultValue={session.description ?? ""}
-                rows={4}
-                placeholder="Objectives, table notes, or reminders for this session."
-              />
+            <div className="space-y-1">
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                Summary
+              </dt>
+              <dd className="text-muted-foreground">
+                {session.description?.length ? session.description : "No summary yet"}
+              </dd>
             </div>
-            <div className="text-xs text-muted-foreground">
-              Updates save across the campaign once you click save.
-            </div>
-            <div className="flex justify-end">
-              <Button type="submit" className="gap-2">
-                Save session details
-              </Button>
-            </div>
-          </form>
+          </dl>
+          <details className="group rounded-lg border border-dashed border-border/70 bg-muted/30 p-4">
+            <summary className="flex cursor-pointer items-center justify-between gap-2 text-sm font-medium text-foreground focus:outline-none [&::-webkit-details-marker]:hidden">
+              <span>Edit session details</span>
+              <Pencil className="h-4 w-4 text-muted-foreground transition group-open:rotate-90" />
+            </summary>
+            <form action={updateSessionDetails} className="mt-4 flex flex-col gap-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="session-name">
+                  Session name
+                </label>
+                <Input
+                  id="session-name"
+                  name="name"
+                  defaultValue={session.name}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="session-description">
+                  Session summary
+                </label>
+                <Textarea
+                  id="session-description"
+                  name="description"
+                  defaultValue={session.description ?? ""}
+                  rows={4}
+                  placeholder="Objectives, table notes, or reminders for this session."
+                />
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Updates save across the campaign once you click save.
+              </div>
+              <div className="flex justify-end">
+                <Button type="submit" className="gap-2">
+                  Save session details
+                </Button>
+              </div>
+            </form>
+          </details>
         </Card>
 
         <div className="flex flex-col gap-4">
