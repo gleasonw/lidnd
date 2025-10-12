@@ -1,18 +1,15 @@
 "use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { use, useState } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Edit } from "lucide-react";
 import { api } from "@/trpc/react";
-import type { Participant } from "@/server/api/router";
 import { useCampaign } from "../campaign-hooks";
-import { ParticipantUtils } from "@/utils/participants";
 import {
   EncounterUtils,
   type EncounterWithParticipantDifficulty,
 } from "@/utils/encounters";
-import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useUser } from "@/app/[username]/user-provider";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { appRoutes } from "@/app/routes";
@@ -23,9 +20,7 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-import { Switch } from "@/components/ui/switch";
 import { createEncounter } from "@/app/[username]/actions";
-import { useEncounter } from "@/encounters/[encounter_index]/hooks";
 
 export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
   const user = useUser();

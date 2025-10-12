@@ -146,7 +146,6 @@ async function CampaignCard(props: CampaignCardProps) {
   ]);
 
   const sessionList = R.sort(sessions ?? [], sortSessionsByRecent);
-  const latestSession = sessionList.at(0);
   const campaignRoute = appRoutes.campaign({ campaign, user });
   const campaignName = isStringMeaningful(campaign.name)
     ? campaign.name

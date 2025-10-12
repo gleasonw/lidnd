@@ -10,7 +10,6 @@ import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Calendar, MoveLeft, Plus, Trash2 } from "lucide-react";
-import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { db } from "@/server/db";
 import * as R from "remeda";
 import { encounters, gameSessions } from "@/server/db/schema";
@@ -271,11 +270,9 @@ async function SessionCreateForm({
     }
     const name = form.get("name")?.toString() || "New Session";
     const description = form.get("description")?.toString() || "";
-     const name = form.get("name")?.toString() || "New Session";
-     const description = form.get("description")?.toString() || "";
-     if (!name) {
-       throw new Error("Name is required");
-     }
+    if (!name) {
+      throw new Error("Name is required");
+    }
     if (!name) {
       throw new Error("Name is required");
     }
