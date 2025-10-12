@@ -98,7 +98,7 @@ class EncounterUIStore {
   }
 }
 
-const EncounterUIContext = createContext<EncounterUIStore | null>(null);
+export const EncounterUIContext = createContext<EncounterUIStore | null>(null);
 
 export function useEncounterUIStore() {
   const store = useContext(EncounterUIContext);

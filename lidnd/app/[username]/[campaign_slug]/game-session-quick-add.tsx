@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { api } from "@/trpc/react";
 import type { Creature } from "@/server/api/router";
 import { Loader2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAddExistingCreatureAsParticipant } from "@/encounters/[encounter_index]/hooks";
 
 type QuickAddParticipantsButtonProps = {
   encounterId: string;
@@ -23,34 +24,30 @@ export function QuickAddParticipantsButton({
   className,
 }: QuickAddParticipantsButtonProps) {
   const [search, setSearch] = useState("");
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [addAsAlly, setAddAsAlly] = useState(false);
 
-  const utils = api.useUtils();
   const creaturesQuery = api.getUserCreatures.useQuery({
     name: search,
     is_player: addAsAlly ? true : false,
   });
 
-  const addMutation = api.addExistingCreatureAsParticipant.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.encounterById.invalidate(encounterId),
-        utils.encountersInCampaign.invalidate(campaignId),
-        utils.campaignById.invalidate(campaignId),
-      ]);
-    },
+  const addMonster = useAddExistingCreatureAsParticipant({
+    id: encounterId,
+    campaign_id: campaignId,
   });
 
-  const isLoading = creaturesQuery.isLoading || addMutation.isPending;
+  const isLoading = creaturesQuery.isLoading || addMonster.isPending;
 
-  const creaturesToDisplay = useMemo(() => {
-    return creaturesQuery.data ?? [];
-  }, [creaturesQuery.data]);
+  const creaturesToDisplay = creaturesQuery.data ?? [];
 
   async function handleAdd(creature: Creature) {
-    if (addMutation.isPending) return;
+    if (addMonster.isPending) return;
 
-    await addMutation.mutateAsync({
+    setSearch("");
+    setIsPopoverOpen(false);
+
+    addMonster.mutateAsync({
       encounter_id: encounterId,
       creature_id: creature.id,
       is_ally: addAsAlly,
@@ -61,14 +58,15 @@ export function QuickAddParticipantsButton({
   return (
     <LidndPopover
       className="w-80 p-0"
+      open={isPopoverOpen}
+      onOpenChange={setIsPopoverOpen}
       trigger={
         <Button
           size="sm"
           variant="outline"
-          className={cn("gap-2", className)}
+          className={cn("gap-2 rounded-full", className)}
         >
           <Plus className="h-4 w-4" />
-          Quick add
         </Button>
       }
     >
@@ -111,7 +109,7 @@ export function QuickAddParticipantsButton({
                 type="button"
                 onClick={() => handleAdd(creature)}
                 className="flex w-full items-center justify-between rounded-sm border border-transparent px-3 py-2 text-left text-sm transition hover:border-border hover:bg-muted/60"
-                disabled={addMutation.isPending}
+                disabled={addMonster.isPending}
               >
                 <div className="flex flex-col truncate">
                   <span className="truncate font-medium">{creature.name}</span>
@@ -127,9 +125,9 @@ export function QuickAddParticipantsButton({
           )}
         </div>
 
-        {addMutation.error ? (
+        {addMonster.error ? (
           <p className="text-xs font-medium text-destructive">
-            {addMutation.error.message}
+            {addMonster.error.message}
           </p>
         ) : null}
       </div>

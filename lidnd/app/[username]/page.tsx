@@ -256,22 +256,8 @@ async function CampaignCard(props: CampaignCardProps) {
       <CardFooter className="flex flex-wrap items-center justify-between gap-2 pt-0">
         <div className="flex flex-wrap items-center gap-2">
           <Link href={campaignRoute} className="inline-flex">
-            <Button size="sm">Manage campaign</Button>
+            <Button size="sm">Manage</Button>
           </Link>
-          {latestSession ? (
-            <Link
-              href={appRoutes.gameSession({
-                user,
-                campaign,
-                gameSessionId: latestSession.id,
-              })}
-              className="inline-flex"
-            >
-              <Button size="sm" variant="outline">
-                Resume last session
-              </Button>
-            </Link>
-          ) : null}
         </div>
 
         <DeleteCampaignDialog

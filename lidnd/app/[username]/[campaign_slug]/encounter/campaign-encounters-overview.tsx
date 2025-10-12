@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { use, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Edit } from "lucide-react";
 import { api } from "@/trpc/react";
@@ -25,6 +25,7 @@ import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { Switch } from "@/components/ui/switch";
 import { createEncounter } from "@/app/[username]/actions";
+import { useEncounter } from "@/encounters/[encounter_index]/hooks";
 
 export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
   const user = useUser();
@@ -69,7 +70,6 @@ export function CreateEncounterForm({
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [createMore, setCreateMore] = useState(false);
 
   const configuredPlaceholder = Placeholder.configure({
     placeholder: "Objectives, monster tactics, etc...",
@@ -120,50 +120,10 @@ export function CreateEncounterForm({
         <LidndTextArea placeholder="Encounter description" editor={editor} />
         <div className="flex justify-between items-center">
           <div className="ml-auto flex gap-2 items-center">
-            <label className="flex gap-2">
-              <Switch
-                defaultChecked={createMore}
-                onCheckedChange={(checked) => setCreateMore(checked)}
-              />
-              <span>Create more</span>
-            </label>
             <Button type="submit">{"Create"}</Button>
           </div>
         </div>
       </form>
     </Card>
-  );
-}
-
-export function MonstersInEncounter({
-  id,
-  onClick,
-}: {
-  id: string;
-  onClick?: (p: Participant) => void;
-}) {
-  const campaignId = useCampaignId();
-  const { data: encounters } = api.encountersInCampaign.useQuery(campaignId);
-
-  const participants = encounters
-    ?.find((encounter) => encounter.id === id)
-    ?.participants.filter((p) => !ParticipantUtils.isPlayer(p));
-
-  return (
-    <div className="flex -space-x-4">
-      {participants?.length === 0 ? (
-        <div className="text-gray-400">no opponents</div>
-      ) : (
-        participants?.map((p) => (
-          <button
-            className="rounded-full w-12 h-12 flex items-center justify-center overflow-hidden border-2 border-white bg-white"
-            key={p.id}
-            onClick={() => onClick?.(p)}
-          >
-            <CreatureIcon creature={p.creature} size="v-small" />
-          </button>
-        ))
-      )}
-    </div>
   );
 }

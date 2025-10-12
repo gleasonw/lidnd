@@ -7,8 +7,11 @@ import type { UpsertEncounter } from "@/app/[username]/types";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
-import type { Encounter } from "@/server/api/router";
-import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
+import {
+  EncounterUIContext,
+  useEncounterUIStore,
+} from "@/encounters/[encounter_index]/EncounterUiStore";
+import { useContext } from "react";
 
 export function useEncounter() {
   const currentEncounterId = useEncounterId();
@@ -27,10 +30,13 @@ export function useEncounter() {
   });
 }
 
+//TODO: this should really be done in the backend, we shouldn't have to chain the call ourselves on the front
 export function useCycleNextTurn() {
   const [encounter] = useEncounter();
   const { encounterById } = api.useUtils();
-  const uiStore = useEncounterUIStore();
+  // nullable uiStore since we sometimes call this outside the encounter run ui, and optional
+  // is an easy way to just not do encounter ui stuff, versus throwing an error since no provider
+  const uiStore = useContext(EncounterUIContext);
 
   return api.cycleNextTurn.useMutation({
     onSettled: async () => {
@@ -46,11 +52,11 @@ export function useCycleNextTurn() {
 
         const newlyActiveParticipant = participants.find((p) => p.is_active);
         if (newlyActiveParticipant) {
-          uiStore.scrollToParticipant(newlyActiveParticipant.id);
+          uiStore?.scrollToParticipant(newlyActiveParticipant.id);
         }
 
         if (old.current_round !== updatedRoundNumber) {
-          uiStore.resetViewedState();
+          uiStore?.resetViewedState();
         }
 
         return { ...old, participants, current_round: updatedRoundNumber };
@@ -336,7 +342,10 @@ export function useRemoveStatusEffect() {
   });
 }
 
-export function useAddExistingCreatureAsParticipant(encounter: Encounter) {
+export function useAddExistingCreatureAsParticipant(encounter: {
+  id: string;
+  campaign_id: string;
+}) {
   const id = encounter.id;
   const { cancelAll, invalidateAll } = useEncounterQueryUtils();
   const { encounterById } = api.useUtils();
