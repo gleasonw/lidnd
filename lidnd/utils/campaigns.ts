@@ -2,10 +2,10 @@ import type { Campaign } from "@/app/[username]/types";
 import type { Encounter } from "@/server/api/router";
 
 export function sortRecent(a: Campaign, b: Campaign) {
-  if (a.created_at && b.created_at) {
-    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-  }
-  return 0;
+  const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+  const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+
+  return bTime - aTime;
 }
 
 export function encounterFromUrl(
