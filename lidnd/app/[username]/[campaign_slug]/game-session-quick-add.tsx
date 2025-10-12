@@ -44,15 +44,15 @@ export function QuickAddParticipantsButton({
   async function handleAdd(creature: Creature) {
     if (addMonster.isPending) return;
 
-    setSearch("");
-    setIsPopoverOpen(false);
-
-    addMonster.mutateAsync({
+    await addMonster.mutateAsync({
       encounter_id: encounterId,
       creature_id: creature.id,
       is_ally: addAsAlly,
       hp: creature.max_hp ?? 1,
     });
+
+    setSearch("");
+    setIsPopoverOpen(false);
   }
 
   return (
