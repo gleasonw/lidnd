@@ -55,10 +55,6 @@ export default async function Page(props: {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-3xl font-semibold tracking-tight">Campaigns</h1>
-            <p className="text-sm text-muted-foreground">
-              Jump back into your worlds, manage sessions, and keep your prep
-              organised.
-            </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Link href={appRoutes.creatures(user)}>
