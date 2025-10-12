@@ -15,11 +15,9 @@ import {
   Calendar,
   MoveLeft,
   Plus,
-  Trash,
   Trash2,
   BookIcon,
   Clock,
-  MoreVertical,
   MoreHorizontal,
 } from "lucide-react";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
@@ -27,18 +25,17 @@ import { db } from "@/server/db";
 import * as R from "remeda";
 import { encounters, gameSessions } from "@/server/db/schema";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { EncounterUtils } from "@/utils/encounters";
 import { formatSeconds } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import clsx from "clsx";
 import type { EncounterWithParticipants } from "@/server/api/router";
-import type { Campaign } from "@/app/[username]/types";
 import { deleteEncounter } from "@/app/[username]/actions";
-import { LidndPopover } from "@/encounters/base-popover";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { QuickAddParticipantsButton } from "./game-session-quick-add";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -465,116 +462,304 @@ async function GameSessionView({
     console.error("No user found, cannot view game session");
     return <div>No user found</div>;
   }
-  const [encountersInSession, campaign] = await Promise.all([
-    await db.query.encounters.findMany({
-      where: and(
-        eq(encounters.session_id, gameSessionId),
-        eq(encounters.user_id, user.id)
-      ),
-      with: {
-        participants: {
-          with: {
-            creature: true,
-            status_effects: {
-              with: {
-                effect: true,
-              },
-            },
-          },
-        },
-      },
-    }),
+
+  const [session, campaign] = await Promise.all([
+    await ServerCampaign.sessionFromId({ user }, gameSessionId),
     await ServerCampaign.campaignById({ user }, campaignId),
   ]);
+
   if (!campaign) {
     console.error("No campaign found for game session");
     return <div>No campaign found</div>;
   }
-  const sumActiveDuration = R.sumBy(encountersInSession, (e) =>
-    EncounterUtils.durationSeconds(e, {
-      playerLevel: campaign?.party_level,
-    })
-  );
-  return (
-    <div className="flex flex-col w-full justify-center items-center">
-      <div className="flex flex-col gap-5 max-h-full overflow-hidden h-full w-full max-w-6xl">
-        <div className="h-[200px]">
-          <CreateEncounterForm gameSessionId={gameSessionId} />
-        </div>
-        <div className="flex flex-col">
-          <div className="flex justify-between items-center w-full">
-            <h1 className={"text-2xl gap-5 flex items-center"}>
-              <BookIcon />
-              <span className="py-2 text-xl">Session docket</span>
-            </h1>
-            <span className="opacity-50 flex items-center gap-2 text-sm ml-auto">
-              <Clock className="text-4xl" />
-              <span>Est. duration:</span>
-              {formatSeconds(sumActiveDuration)}
-            </span>
-          </div>
 
-          <div className="flex flex-wrap w-full max-h-full gap-2 items-center">
-            {encountersInSession.map((encounter) => (
-              <EncounterCard
-                key={encounter.id}
-                encounter={encounter}
-                campaign={campaign}
-              />
-            ))}
-          </div>
+  if (!session) {
+    console.error("No session found");
+    return <div>No session found</div>;
+  }
+
+  const campaignRoute = appRoutes.campaign({ campaign, user });
+  const sessionRoute = appRoutes.gameSession({
+    campaign,
+    user,
+    gameSessionId,
+  });
+
+  const sortedEncounters = R.sort(session.encounters ?? [], (a, b) => {
+    return (
+      (b.created_at ? new Date(b.created_at).getTime() : 0) -
+      (a.created_at ? new Date(a.created_at).getTime() : 0)
+    );
+  });
+
+  const encounterCount = sortedEncounters.length;
+  const totalDurationSeconds = Math.round(
+    R.sumBy(sortedEncounters, (encounter) =>
+      EncounterUtils.durationSeconds(encounter as EncounterWithParticipants, {
+        playerLevel: campaign.party_level,
+      })
+    )
+  );
+
+  const createdLabel = session.created_at
+    ? new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+      }).format(
+        session.created_at instanceof Date
+          ? session.created_at
+          : new Date(session.created_at)
+      )
+    : null;
+
+  async function updateSessionDetails(formData: FormData) {
+    "use server";
+
+    const name = formData.get("name")?.toString().trim();
+    const description = formData.get("description")?.toString().trim();
+
+    if (!name) {
+      throw new Error("Session name is required");
+    }
+
+    await db
+      .update(gameSessions)
+      .set({
+        name,
+        description: description && description.length > 0 ? description : null,
+      })
+      .where(
+        and(
+          eq(gameSessions.id, session.id),
+          eq(gameSessions.user_id, user.id)
+        )
+      );
+
+    await Promise.all([
+      revalidatePath(campaignRoute),
+      revalidatePath(sessionRoute),
+    ]);
+  }
+
+  async function removeEncounter(formData: FormData) {
+    "use server";
+
+    const encounterId = formData.get("encounter_id")?.toString();
+
+    if (!encounterId) {
+      throw new Error("Encounter id is required");
+    }
+
+    await deleteEncounter({ id: encounterId });
+
+    await Promise.all([
+      revalidatePath(campaignRoute),
+      revalidatePath(sessionRoute),
+    ]);
+  }
+
+  return (
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <Link href={campaignRoute}>
+          <Button
+            variant="ghost"
+            className="px-2 text-sm opacity-60 hover:opacity-100"
+          >
+            <MoveLeft className="mr-2 h-4 w-4" />
+            Back to campaign
+          </Button>
+        </Link>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+          {createdLabel ? <span>Created {createdLabel}</span> : null}
+          <Badge variant="secondary" className="flex items-center gap-2 text-xs">
+            <BookIcon className="h-3.5 w-3.5" />
+            {encounterCount} encounter
+            {encounterCount === 1 ? "" : "s"}
+          </Badge>
+          <Badge variant="outline" className="flex items-center gap-2 text-xs">
+            <Clock className="h-3.5 w-3.5" />
+            {encounterCount > 0
+              ? formatSeconds(totalDurationSeconds)
+              : "Add encounters to estimate runtime"}
+          </Badge>
         </div>
       </div>
-    </div>
-  );
-}
 
-async function EncounterCard({
-  encounter,
-  campaign,
-}: {
-  encounter: EncounterWithParticipants;
-  campaign: Campaign;
-}) {
-  const user = await LidndAuth.getUser();
-  if (!user) {
-    console.error("No user found, cannot render encounter card");
-    return <div>No user found</div>;
-  }
-  return (
-    <Card className={clsx("flex px-5 gap-3 max-w-[600px] items-center")}>
-      <Link
-        href={appRoutes.encounter({ campaign, encounter, user })}
-        className="flex gap-3 w-full  h-20 items-center"
-      >
-        <h2 className={"flex items-center"}>
-          <span className="max-w-full truncate">
-            {encounter.name ? encounter.name : "Unnamed"}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+        <Card className="border border-border/60 bg-card p-6 shadow-sm">
+          <form action={updateSessionDetails} className="flex flex-col gap-5">
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="session-name">
+                Session name
+              </label>
+              <Input
+                id="session-name"
+                name="name"
+                defaultValue={session.name}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label
+                className="text-sm font-medium"
+                htmlFor="session-description"
+              >
+                Session summary
+              </label>
+              <Textarea
+                id="session-description"
+                name="description"
+                defaultValue={session.description ?? ""}
+                rows={4}
+                placeholder="Objectives, table notes, or reminders for this session."
+              />
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Updates save across the campaign once you click save.
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" className="gap-2">
+                Save session details
+              </Button>
+            </div>
+          </form>
+        </Card>
+
+        <div className="flex flex-col gap-4">
+          <CreateEncounterForm gameSessionId={session.id} />
+          <Card className="border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+            Build encounters here or quick add creatures from your vault to keep
+            this session battle-ready.
+          </Card>
+        </div>
+      </div>
+
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <BookIcon className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-xl font-semibold">Encounters</h2>
+          </div>
+          <span className="text-sm text-muted-foreground">
+            Sorted by most recent activity
           </span>
-        </h2>
+        </div>
 
-        <MonstersInEncounter id={encounter.id} />
-      </Link>
-      <LidndPopover
-        trigger={
-          <Button variant="ghost">
-            <MoreVertical />
-          </Button>
-        }
-      >
-        <Button
-          variant="ghost"
-          className="text-red-500"
-          onClick={async () => {
-            "use server";
-            deleteEncounter(encounter);
-          }}
-        >
-          Delete encounter
-          <Trash />
-        </Button>
-      </LidndPopover>
-      <DifficultyBadge encounter={encounter} />
-    </Card>
+        {encounterCount === 0 ? (
+          <div className="rounded-lg border border-dashed py-16 text-center text-sm text-muted-foreground">
+            <p className="text-base font-medium text-foreground">
+              No encounters in this session yet
+            </p>
+            <p>Add an encounter or quick add saved creatures to get started.</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            {sortedEncounters.map((encounter) => {
+              const encounterDuration = Math.round(
+                EncounterUtils.durationSeconds(
+                  encounter as EncounterWithParticipants,
+                  {
+                    playerLevel: campaign.party_level,
+                  }
+                )
+              );
+              const encounterCreatedLabel = encounter.created_at
+                ? new Intl.DateTimeFormat(undefined, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(
+                    encounter.created_at instanceof Date
+                      ? encounter.created_at
+                      : new Date(encounter.created_at)
+                  )
+                : null;
+
+              return (
+                <Card
+                  key={encounter.id}
+                  className="flex flex-col gap-4 border border-border/60 bg-background p-5 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold tracking-tight">
+                        {encounter.name ?? "Unnamed encounter"}
+                      </h3>
+                      {encounter.description ? (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {encounter.description}
+                        </p>
+                      ) : null}
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                        {encounterCreatedLabel ? (
+                          <span>Updated {encounterCreatedLabel}</span>
+                        ) : null}
+                        <Badge
+                          variant="secondary"
+                          className="flex items-center gap-1 text-[0.7rem]"
+                        >
+                          <Clock className="h-3 w-3" />
+                          {formatSeconds(encounterDuration)}
+                        </Badge>
+                        <Badge
+                          variant="outline"
+                          className="text-[0.7rem]"
+                        >
+                          {encounter.participants.length} participant
+                          {encounter.participants.length === 1 ? "" : "s"}
+                        </Badge>
+                      </div>
+                    </div>
+                    <DifficultyBadge encounter={encounter} />
+                  </div>
+                  <MonstersInEncounter id={encounter.id} />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={appRoutes.observe(encounter.id)}
+                      className="flex"
+                    >
+                      <Button size="sm" variant="secondary">
+                        Observe
+                      </Button>
+                    </Link>
+                    <Link
+                      href={appRoutes.encounter({
+                        campaign,
+                        encounter,
+                        user,
+                      })}
+                      className="flex"
+                    >
+                      <Button size="sm" variant="outline">
+                        Edit encounter
+                      </Button>
+                    </Link>
+                    <QuickAddParticipantsButton
+                      encounterId={encounter.id}
+                      campaignId={campaign.id}
+                    />
+                    <form action={removeEncounter} className="ml-auto">
+                      <input
+                        type="hidden"
+                        name="encounter_id"
+                        value={encounter.id}
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="gap-2 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Remove
+                      </Button>
+                    </form>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
