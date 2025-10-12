@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import {
   Calendar,
   ChevronDown,
-  Ellipsis,
   MoveLeft,
   Plus,
   Trash,
@@ -22,6 +21,7 @@ import {
   BookIcon,
   Clock,
   MoreVertical,
+  MoreHorizontal,
 } from "lucide-react";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { db } from "@/server/db";
@@ -139,7 +139,10 @@ export default async function CampaignPage(props: {
       .update(encounters)
       .set({ session_id: null })
       .where(
-        and(eq(encounters.session_id, sessionId), eq(encounters.user_id, user.id))
+        and(
+          eq(encounters.session_id, sessionId),
+          eq(encounters.user_id, user.id)
+        )
       );
 
     await db
@@ -170,7 +173,10 @@ export default async function CampaignPage(props: {
         <header className="flex flex-col gap-6 border-b pb-6">
           <div className="flex items-center justify-between gap-4">
             <Link href={appRoutes.dashboard(user)}>
-              <Button variant="ghost" className="px-2 text-sm opacity-60 hover:opacity-100">
+              <Button
+                variant="ghost"
+                className="px-2 text-sm opacity-60 hover:opacity-100"
+              >
                 <MoveLeft className="mr-2 h-4 w-4" />
                 All campaigns
               </Button>
@@ -273,7 +279,8 @@ export default async function CampaignPage(props: {
                             </p>
                           ) : null}
                           <p className="text-xs text-muted-foreground">
-                            {encounterCount} encounter{encounterCount === 1 ? "" : "s"}
+                            {encounterCount} encounter
+                            {encounterCount === 1 ? "" : "s"}
                           </p>
                         </div>
                       </div>
@@ -286,15 +293,23 @@ export default async function CampaignPage(props: {
                             gameSessionId: session.id,
                           })}
                         >
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <Ellipsis className="h-4 w-4" />
+                          <Button variant="ghost" size="sm" className="gap-2">
+                            <MoreHorizontal className="h-4 w-4" />
                             Manage session
                           </Button>
                         </Link>
 
                         <form action={deleteSession}>
-                          <input type="hidden" name="session_id" value={session.id} />
-                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                          <input
+                            type="hidden"
+                            name="session_id"
+                            value={session.id}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive"
+                          >
                             <Trash2 className="h-4 w-4" />
                             <span className="sr-only">Delete session</span>
                           </Button>
@@ -373,7 +388,9 @@ export default async function CampaignPage(props: {
                       <div className="flex flex-wrap items-center justify-end gap-3">
                         <LidndDialog
                           title={`Add encounter to ${session.name}`}
-                          content={<CreateEncounterForm gameSessionId={session.id} />}
+                          content={
+                            <CreateEncounterForm gameSessionId={session.id} />
+                          }
                           trigger={
                             <Button size="sm" className="gap-2">
                               <Plus className="h-4 w-4" />
