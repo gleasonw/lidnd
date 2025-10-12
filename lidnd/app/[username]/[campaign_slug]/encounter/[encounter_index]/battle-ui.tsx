@@ -702,6 +702,7 @@ export function MinionCardStack({ minionCount }: { minionCount: number }) {
 export function HealthMeterOverlay({
   participant,
 }: BattleCardParticipantProps) {
+  //nice
   const percentDamage = ParticipantUtils.percentDamage(participant);
   return (
     <div
