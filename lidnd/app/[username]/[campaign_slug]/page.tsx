@@ -271,12 +271,11 @@ async function SessionCreateForm({
     }
     const name = form.get("name")?.toString() || "New Session";
     const description = form.get("description")?.toString() || "";
-    console.log(
-      "Creating new session with name:",
-      name,
-      "and description:",
-      description
-    );
+     const name = form.get("name")?.toString() || "New Session";
+     const description = form.get("description")?.toString() || "";
+     if (!name) {
+       throw new Error("Name is required");
+     }
     if (!name) {
       throw new Error("Name is required");
     }
