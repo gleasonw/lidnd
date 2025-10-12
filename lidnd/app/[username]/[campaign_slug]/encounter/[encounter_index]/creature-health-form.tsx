@@ -11,7 +11,6 @@ import {
   useUpdateEncounterMinionParticipant,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { useDebouncedCallback } from "use-debounce";
-import React from "react";
 import { Heart, Minus, Plus, Shield, Sword } from "lucide-react";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { LidndPopover } from "@/encounters/base-popover";

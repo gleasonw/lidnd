@@ -82,11 +82,11 @@ export default async function CampaignPage(props: {
     "use server";
     if (!user) {
       console.error("No user found, cannot create session");
-      return { message: "No user found", status: 400 };
+      throw new Error("No user found");
     }
     if (!campaignData) {
       console.error("No campaign data found, cannot create session");
-      return { message: "No campaign found", status: 400 };
+      throw new Error("No campaign found");
     }
     const name = form.get("name")?.toString() || "New Session";
     const description = form.get("description")?.toString() || "";
@@ -97,17 +97,16 @@ export default async function CampaignPage(props: {
       description
     );
     if (!name) {
-      return { message: "Name is required", status: 400 };
+      throw new Error("Name is required");
     }
 
-    const newSession = await db.insert(gameSessions).values({
+    await db.insert(gameSessions).values({
       name,
       description,
       user_id: user.id,
       campaign_id: campaignData.id,
     });
     revalidatePath(appRoutes.campaign({ campaign: campaignData, user }));
-    return newSession;
   }
 
   return (

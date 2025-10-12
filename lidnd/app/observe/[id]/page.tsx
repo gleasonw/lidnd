@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import React from "react";
 import type { ParticipantWithData } from "@/server/api/router";
 import { Card } from "@/components/ui/card";
 import clsx from "clsx";

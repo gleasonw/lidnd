@@ -66,6 +66,7 @@ import { useUser } from "@/app/[username]/user-provider";
 import { useEncounterLinks } from "@/encounters/link-hooks";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
+import { Input } from "@/components/ui/input";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -367,20 +368,70 @@ function GroupParticipantTools({
       },
     });
   return (
-    <Button
-      onClick={() =>
-        updateCreatureHasPlayedThisRound({
-          encounter_id: id,
-          participant_id: participant.id,
-          has_played_this_round: !participant.has_played_this_round,
-        })
-      }
-      variant={participant.has_played_this_round ? "default" : "outline"}
-    >
-      {participant.has_played_this_round ? "Played" : "Hasn't Played"}
-    </Button>
+    <div className="flex gap-2">
+      <Button
+        className="w-full"
+        onClick={() =>
+          updateCreatureHasPlayedThisRound({
+            encounter_id: id,
+            participant_id: participant.id,
+            has_played_this_round: !participant.has_played_this_round,
+          })
+        }
+        variant={participant.has_played_this_round ? "default" : "outline"}
+      >
+        {participant.has_played_this_round ? "Played" : "Hasn't Played"}
+      </Button>
+      <GroupParticipantHPOverride participant={participant} />
+    </div>
   );
 }
+
+const GroupParticipantHPOverride = observer(
+  function GroupParticipantHPOverride({
+    participant,
+  }: {
+    participant: ParticipantWithData;
+  }) {
+    const uiStore = useEncounterUIStore();
+    const [maxHpOverride, setMaxHpOverride] = useState(
+      participant.max_hp_override?.toString() ?? ""
+    );
+    const { mutate: updateParticipant } = useUpdateEncounterParticipant();
+    if (!uiStore.isEditingInitiative) {
+      return null;
+    }
+    const maxHpAsNumber = Number(maxHpOverride);
+    const isValidMaxHp = !isNaN(maxHpAsNumber) && maxHpAsNumber > 0;
+    return (
+      <div className="flex">
+        <Input
+          type="number"
+          className="w-32"
+          placeholder="Override"
+          value={maxHpOverride ?? ""}
+          onChange={(e) => {
+            setMaxHpOverride(e.target.value);
+          }}
+        />
+        <Button
+          variant="ghost"
+          disabled={!isValidMaxHp}
+          onClick={() =>
+            updateParticipant({
+              ...participant,
+              max_hp_override: maxHpAsNumber,
+              hp: maxHpAsNumber,
+            })
+          }
+        >
+          {" "}
+          Override max hp{" "}
+        </Button>
+      </div>
+    );
+  }
+);
 
 const GroupBattleUITools = observer(function GroupBattleUITools() {
   const { toggleEditingInitiative } = useEncounterUIStore();
@@ -399,7 +450,7 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
           {EncounterUtils.monsters(encounter)
             .filter((m) => !m.has_played_this_round)
             .map((m) => (
-              <div>{ParticipantUtils.name(m)}</div>
+              <div key={m.id}>{ParticipantUtils.name(m)}</div>
             ))}
         </div>
       </div>

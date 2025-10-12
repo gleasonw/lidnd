@@ -78,6 +78,9 @@ function isMinion(p: ParticipantWithCreature): p is MinionParticipant {
 }
 
 function maxHp(p: ParticipantWithCreature) {
+  if (p.max_hp_override && p.max_hp_override > 0) {
+    return p.max_hp_override;
+  }
   return p.creature.max_hp;
 }
 

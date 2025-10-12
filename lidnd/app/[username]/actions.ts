@@ -74,14 +74,14 @@ export async function createCampaign(formdata: FormData) {
   });
 
   if (campaign.status !== "success") {
-    return { message: campaign.error, status: 400 };
+    throw new Error(`Invalid form data: ${campaign.error}`);
   }
 
   const user = await LidndAuth.getUser();
 
   if (!user) {
     console.log("user not logged in");
-    return { message: "No session found.", status: 400 };
+    throw new Error("No session found.");
   }
 
   const campaignSlug = _.kebabCase(campaign.value.name);
@@ -96,7 +96,7 @@ export async function createCampaign(formdata: FormData) {
     .returning();
 
   if (createdCampaign.length === 0 || !createdCampaign[0]) {
-    return { message: "Failed to create campaign", status: 400 };
+    throw new Error("Failed to create campaign");
   }
 
   revalidatePath("/campaigns");

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Edit } from "lucide-react";
 import { api } from "@/trpc/react";

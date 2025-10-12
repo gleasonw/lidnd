@@ -52,18 +52,6 @@ export const CreatureIcon = observer(function CreatureIcon({
   const dimensions = iconDimensions(creature, size);
   const [retryCount, setRetryCount] = React.useState(0);
 
-  const onError = React.useCallback(
-    (e) => {
-      if (retryCount < 3) {
-        console.log("retrying");
-        setTimeout(() => setRetryCount(retryCount + 1), 500);
-      } else {
-        console.error(e);
-      }
-    },
-    [retryCount]
-  );
-
   const icon = (
     <Avatar>
       <AvatarImage
@@ -72,7 +60,14 @@ export const CreatureIcon = observer(function CreatureIcon({
         width={dimensions.width}
         height={dimensions.height}
         fetchPriority="high"
-        onError={onError}
+        onError={(e) => {
+          if (retryCount < 3) {
+            console.log("retrying");
+            setTimeout(() => setRetryCount(retryCount + 1), 500);
+          } else {
+            console.error(e);
+          }
+        }}
       />
       <AvatarFallback>{creature.name}</AvatarFallback>
     </Avatar>

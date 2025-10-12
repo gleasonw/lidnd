@@ -18,7 +18,7 @@ export function defaultParticipant(
     id: string;
     encounter_id: string;
     creature_id: string;
-  },
+  }
 ): Participant {
   return {
     is_active: p.is_active ?? false,
@@ -33,7 +33,7 @@ export function defaultParticipant(
     notes: p.notes ?? "",
     temporary_hp: p.temporary_hp ?? 0,
     hex_color: p.hex_color ?? "#1890FF",
-
+    max_hp_override: p.max_hp_override ?? null,
     column_id: p.column_id ?? null,
     ...p,
   };

@@ -255,6 +255,7 @@ export const participants = pgTable(
     is_ally: boolean("is_ally").default(false).notNull(),
     initiative: integer("initiative").default(0).notNull(),
     hp: integer("hp").default(1).notNull(),
+    max_hp_override: integer("max_hp_override"),
     is_active: boolean("is_active").default(false).notNull(),
     has_surprise: boolean("has_surprise").default(false).notNull(),
     minion_count: integer("minion_count"),

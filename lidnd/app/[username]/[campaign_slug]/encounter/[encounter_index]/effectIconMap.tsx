@@ -21,7 +21,6 @@ import {
   Timer,
   Thermometer,
 } from "lucide-react";
-import React from "react";
 
 const dndEffects = [
   "Blinded",
