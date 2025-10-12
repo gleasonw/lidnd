@@ -446,7 +446,7 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
             Campaign
           </Button>
         </Link>
-        <div className="grid grid-cols-3 bg-white p-1">
+        <div className="grid grid-cols-3 bg-white p-1 gap-3">
           {EncounterUtils.monsters(encounter)
             .filter((m) => !m.has_played_this_round)
             .map((m) => (
