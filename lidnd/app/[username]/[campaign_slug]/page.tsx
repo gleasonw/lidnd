@@ -13,7 +13,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
-  ChevronDown,
   MoveLeft,
   Plus,
   Trash,
@@ -38,6 +37,8 @@ import type { EncounterWithParticipants } from "@/server/api/router";
 import type { Campaign } from "@/app/[username]/types";
 import { deleteEncounter } from "@/app/[username]/actions";
 import { LidndPopover } from "@/encounters/base-popover";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -81,6 +82,12 @@ export default async function CampaignPage(props: {
   const sessionsInCampaign = await ServerCampaign.sessionsForCampaign(
     { user },
     campaignData.id
+  );
+
+  const sortedSessions = R.sort(
+    sessionsInCampaign,
+    (a, b) =>
+      (b.created_at?.getTime() ?? 0) - (a.created_at?.getTime() ?? 0)
   );
 
   const createdAtLabel = campaignData.created_at
@@ -249,7 +256,7 @@ export default async function CampaignPage(props: {
             />
           </div>
 
-          {sessionsInCampaign.length === 0 ? (
+          {sortedSessions.length === 0 ? (
             <div className="rounded-lg border border-dashed py-16 text-center text-sm text-muted-foreground">
               <p className="font-medium text-base text-foreground">
                 No sessions yet
@@ -258,34 +265,72 @@ export default async function CampaignPage(props: {
             </div>
           ) : (
             <div className="space-y-4">
-              {sessionsInCampaign.map((session) => {
+              {sortedSessions.map((session) => {
                 const encounterCount = session.encounters?.length ?? 0;
+                const estimatedDuration = Math.round(
+                  session.encounters?.reduce((total, encounter) => {
+                    return (
+                      total +
+                      EncounterUtils.durationSeconds(encounter, {
+                        playerLevel: campaignData.party_level,
+                      })
+                    );
+                  }, 0) ?? 0
+                );
+                const createdLabel = session.created_at
+                  ? new Intl.DateTimeFormat(undefined, {
+                      dateStyle: "medium",
+                    }).format(
+                      session.created_at instanceof Date
+                        ? session.created_at
+                        : new Date(session.created_at)
+                    )
+                  : null;
 
                 return (
-                  <details
+                  <Card
                     key={session.id}
-                    className="group rounded-lg border bg-card shadow-sm"
+                    className="border border-border/60 bg-card shadow-sm"
                   >
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
-                      <div className="flex items-start gap-3">
-                        <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
-                        <div className="space-y-1">
-                          <p className="text-lg font-semibold leading-none">
+                    <div className="flex flex-col gap-6 p-6">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {createdLabel ? `Created ${createdLabel}` : "Session"}
+                          </div>
+                          <h3 className="text-xl font-semibold tracking-tight">
                             {session.name}
-                          </p>
+                          </h3>
                           {session.description ? (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="max-w-2xl text-sm text-muted-foreground">
                               {session.description}
                             </p>
                           ) : null}
-                          <p className="text-xs text-muted-foreground">
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2 text-xs font-medium text-muted-foreground">
+                          <Badge
+                            variant="secondary"
+                            className="flex items-center gap-2 text-xs"
+                          >
+                            <BookIcon className="h-3.5 w-3.5" />
                             {encounterCount} encounter
                             {encounterCount === 1 ? "" : "s"}
-                          </p>
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="flex items-center gap-2 text-xs"
+                          >
+                            <Clock className="h-3.5 w-3.5" />
+                            {encounterCount > 0
+                              ? formatSeconds(estimatedDuration)
+                              : "No encounters yet"}
+                          </Badge>
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center justify-end gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Link
                           href={appRoutes.gameSession({
                             user,
@@ -293,13 +338,26 @@ export default async function CampaignPage(props: {
                             gameSessionId: session.id,
                           })}
                         >
-                          <Button variant="ghost" size="sm" className="gap-2">
+                          <Button size="sm" className="gap-2">
                             <MoreHorizontal className="h-4 w-4" />
-                            Manage session
+                            Open session
                           </Button>
                         </Link>
 
-                        <form action={deleteSession}>
+                        <LidndDialog
+                          title={`Add encounter to ${session.name}`}
+                          content={
+                            <CreateEncounterForm gameSessionId={session.id} />
+                          }
+                          trigger={
+                            <Button size="sm" variant="secondary" className="gap-2">
+                              <Plus className="h-4 w-4" />
+                              Add encounter
+                            </Button>
+                          }
+                        />
+
+                        <form action={deleteSession} className="ml-auto">
                           <input
                             type="hidden"
                             name="session_id"
@@ -307,50 +365,49 @@ export default async function CampaignPage(props: {
                           />
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
+                            size="sm"
+                            className="gap-2 text-destructive hover:text-destructive"
                           >
                             <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Delete session</span>
+                            Delete session
                           </Button>
                         </form>
                       </div>
-                    </summary>
 
-                    <div className="space-y-4 border-t px-5 py-4">
+                      <Separator />
+
                       {encounterCount === 0 ? (
                         <div className="rounded-md border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
                           No encounters yet in this session.
                         </div>
                       ) : (
-                        <ul className="space-y-3">
+                        <ul className="grid gap-4 md:grid-cols-2">
                           {session.encounters?.map((encounter) => (
                             <li
                               key={encounter.id}
-                              className="flex flex-col gap-3 rounded-md border bg-background p-4 sm:flex-row sm:items-center sm:justify-between"
+                              className="flex flex-col gap-4 rounded-lg border bg-background p-4"
                             >
-                              <div className="flex flex-col gap-3">
-                                <span className="text-base font-medium">
-                                  {encounter.name || "Unnamed encounter"}
-                                </span>
-                                {encounter.description ? (
-                                  <span className="text-sm text-muted-foreground line-clamp-2">
-                                    {encounter.description}
-                                  </span>
-                                ) : null}
-                                <div className="flex flex-wrap items-center gap-3">
-                                  <DifficultyBadge encounter={encounter} />
-                                  <MonstersInEncounter id={encounter.id} />
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="space-y-1">
+                                  <p className="text-base font-medium">
+                                    {encounter.name || "Unnamed encounter"}
+                                  </p>
+                                  {encounter.description ? (
+                                    <p className="text-sm text-muted-foreground line-clamp-2">
+                                      {encounter.description}
+                                    </p>
+                                  ) : null}
                                 </div>
+                                <DifficultyBadge encounter={encounter} />
                               </div>
-
+                              <MonstersInEncounter id={encounter.id} />
                               <div className="flex flex-wrap items-center gap-2">
                                 <Link
                                   href={appRoutes.observe(encounter.id)}
                                   className="flex"
                                 >
                                   <Button size="sm" variant="secondary">
-                                    View
+                                    Observe
                                   </Button>
                                 </Link>
                                 <Link
@@ -365,7 +422,7 @@ export default async function CampaignPage(props: {
                                     Edit
                                   </Button>
                                 </Link>
-                                <form action={removeEncounter}>
+                                <form action={removeEncounter} className="ml-auto">
                                   <input
                                     type="hidden"
                                     name="encounter_id"
@@ -384,23 +441,8 @@ export default async function CampaignPage(props: {
                           ))}
                         </ul>
                       )}
-
-                      <div className="flex flex-wrap items-center justify-end gap-3">
-                        <LidndDialog
-                          title={`Add encounter to ${session.name}`}
-                          content={
-                            <CreateEncounterForm gameSessionId={session.id} />
-                          }
-                          trigger={
-                            <Button size="sm" className="gap-2">
-                              <Plus className="h-4 w-4" />
-                              Add encounter
-                            </Button>
-                          }
-                        />
-                      </div>
                     </div>
-                  </details>
+                  </Card>
                 );
               })}
             </div>
