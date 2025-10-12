@@ -3,7 +3,14 @@ import { redirect } from "next/navigation";
 import { AngryIcon, Calendar, Plus, Trash2 } from "lucide-react";
 import { LidndAuth, type LidndUser, UserUtils } from "@/app/authentication";
 import { appRoutes } from "@/app/routes";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { Button } from "@/components/ui/button";
@@ -111,7 +118,9 @@ export default async function Page(props: {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-10 text-center">
-          <h2 className="text-xl font-semibold">You haven't created a campaign yet</h2>
+          <h2 className="text-xl font-semibold">
+            You haven't created a campaign yet
+          </h2>
           <p className="max-w-md text-sm text-muted-foreground">
             Start your first world to track encounters, organise sessions, and
             invite your players. Use the button above to create a new campaign.
@@ -145,9 +154,7 @@ async function CampaignCard(props: CampaignCardProps) {
   const campaignDescription = toPlainText(
     campaignDetails?.description ?? campaign.description ?? ""
   );
-  const createdAt = campaign.created_at
-    ? new Date(campaign.created_at)
-    : null;
+  const createdAt = campaign.created_at ? new Date(campaign.created_at) : null;
   const createdAtLabel = createdAt
     ? new Intl.DateTimeFormat(undefined, {
         dateStyle: "medium",
@@ -169,17 +176,23 @@ async function CampaignCard(props: CampaignCardProps) {
         </div>
 
         {campaignDetails?.campaignToPlayers?.length ? (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 h-10">
             {campaignDetails.campaignToPlayers.map(({ player }) => (
               <CreatureIcon key={player.id} creature={player} size="small" />
             ))}
           </div>
-        ) : null}
+        ) : (
+          <div className="h-10">
+            <span className="text-sm text-muted-foreground">
+              No players yet
+            </span>
+          </div>
+        )}
 
         {createdAtLabel ? (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calendar className="h-3 w-3" />
-            <span>Created {createdAtLabel}</span>
+            <span>{createdAtLabel}</span>
           </div>
         ) : null}
       </CardHeader>
@@ -288,8 +301,8 @@ function DeleteCampaignDialog(props: {
       content={
         <form action={deleteCampaign} className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">
-            This will permanently remove <strong>{campaignName}</strong> and
-            all of its sessions and encounters. This action cannot be undone.
+            This will permanently remove <strong>{campaignName}</strong> and all
+            of its sessions and encounters. This action cannot be undone.
           </p>
           <input type="hidden" name="campaign_id" value={campaignId} />
           <Button type="submit" variant="destructive">
