@@ -11,7 +11,11 @@ import { Button } from "@/components/ui/button";
 
 export default async function EncounterLayout(props: {
   children: React.ReactNode;
-  params: Promise<{ id: string; campaign_slug: string }>;
+  params: Promise<{
+    encounter_index: string;
+    campaign_slug: string;
+    username: string;
+  }>;
 }) {
   const user = await LidndAuth.getUser();
   if (!user) {

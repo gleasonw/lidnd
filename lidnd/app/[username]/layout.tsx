@@ -10,14 +10,11 @@ import { eq } from "drizzle-orm";
 
 export default async function CampaignsLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ campaign_slug: string }>;
 }) {
   const now = performance.now();
   const user = await LidndAuth.getUser();
-  console.log(await params);
 
   if (!user) {
     const headersList = await headers();
