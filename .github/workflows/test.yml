@@ -13,15 +13,19 @@ jobs:
         node-version: [20]
     defaults:
       run:
-        working-directory: lidnd/
+        working-directory: lidnd/lidnd   # 👈 run steps inside subdir
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
         with:
           version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
-      - run: pnpm install
+          cache-dependency-path: lidnd/lidnd/pnpm-lock.yaml  # 👈 point to lockfile
+
+      - run: pnpm install --frozen-lockfile
       - run: pnpm vitest run
