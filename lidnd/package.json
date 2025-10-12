@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbo",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "migrate": "drizzle-kit generate:pg && bun run migrate.ts",
     "generate-api-types": "pnpm dlx openapi-typescript http://localhost:8000/openapi.json -o ./app/schema.d.ts"
   },
@@ -53,9 +53,9 @@
     "@trpc/server": "11.0.0-rc.502",
     "@types/dompurify": "^3.0.5",
     "@types/node": "20.5.7",
-    "@types/react": "npm:types-react@19.0.0-rc.1",
+    "@types/react": "19.2.2",
     "@types/react-beautiful-dnd": "^13.1.8",
-    "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
+    "@types/react-dom": "19.2.1",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "arctic": "^1.9.2",
     "autoprefixer": "10.4.15",
@@ -68,7 +68,7 @@
     "drizzle-orm": "^0.30.10",
     "drizzle-zod": "^0.5.1",
     "embla-carousel-react": "^8.3.0",
-    "eslint-config-next": "15.0.0",
+    "eslint-config-next": "16.0.0-beta.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "framer-motion": "^10.18.0",
     "lodash": "^4.17.21",
@@ -77,14 +77,14 @@
     "lucide-react": "^0.277.0",
     "mobx": "^6.13.5",
     "mobx-react-lite": "^4.1.0",
-    "next": "15.1.6",
+    "next": "16.0.0-beta.0",
     "openapi-fetch": "^0.7.10",
     "oslo": "^1.2.0",
     "pg": "^8.13.0",
     "postcss": "8.4.29",
     "postgres": "^3.4.4",
-    "react": "19.0.0-rc-65a56d0e-20241020",
-    "react-dom": "19.0.0-rc-65a56d0e-20241020",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
     "react-hook-form": "^7.53.1",
     "react-query": "^3.39.3",
     "remeda": "^2.16.0",
@@ -100,6 +100,7 @@
     "zod": "3.22.4"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.1.0",
     "@eslint/js": "^9.13.0",
     "@types/lodash": "^4.17.12",
     "babel-plugin-react-compiler": "19.0.0-beta-8a03594-20241020",
@@ -115,8 +116,8 @@
   },
   "pnpm": {
     "overrides": {
-      "@types/react": "npm:types-react@19.0.0-rc.1",
-      "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1"
+      "@types/react": "19.2.2",
+      "@types/react-dom": "19.2.1"
     }
   },
   "packageManager": "pnpm@10.5.2+sha512.da9dc28cd3ff40d0592188235ab25d3202add8a207afbedc682220e4a0029ffbff4562102b9e6e46b4e3f9e8bd53e6d05de48544b0c57d4b0179e22c76d1199b"

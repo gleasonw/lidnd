@@ -19,9 +19,7 @@ const nextConfig = {
       },
     ],
   },
-  experimental: {
-    reactCompiler: isProd,
-  },
+  reactCompiler: true,
 } satisfies NextConfig;
 
 export default nextConfig;
