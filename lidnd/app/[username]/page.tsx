@@ -50,7 +50,7 @@ export default async function Page(props: {
   const sortedCampaigns = R.sort(userCampaigns, CampaignUtils.sortRecent);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 overflow-auto">
       <header className="flex flex-col gap-6 border-b pb-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
