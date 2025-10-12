@@ -24,6 +24,13 @@ type EncounterWithParticipants<
   participants: T[];
 };
 
+export type EncounterWithParticipantDifficulty = {
+  participants: Array<{
+    creature: { challenge_rating: number; is_player: boolean };
+    is_ally: boolean;
+  }>;
+};
+
 type Cyclable = {
   participants: ParticipantWithData[];
   current_round: number;
@@ -38,14 +45,17 @@ const difficulties = {
 
 type Difficulty = keyof typeof difficulties;
 
-function difficultyCssClasses(e: EncounterWithParticipants, c: Campaign) {
+function difficultyCssClasses(
+  e: EncounterWithParticipantDifficulty,
+  c: Campaign
+) {
   const difficulty = EncounterUtils.difficulty(e, c?.party_level);
   return cssClassForDifficulty(difficulty);
 }
 
 function difficultyClassForCR(
   cr: number,
-  e: EncounterWithParticipants,
+  e: EncounterWithParticipantDifficulty,
   c: { party_level?: number }
 ) {
   const difficulty = EncounterUtils.difficultyForCR(cr, e, c?.party_level ?? 1);
@@ -195,19 +205,24 @@ export const EncounterUtils = {
     return encounter.campaigns.system.initiative_type;
   },
 
-  totalCr(encounter: { participants: EncounterWithData["participants"] }) {
+  totalCr(encounter: EncounterWithParticipantDifficulty) {
     return _.sumBy(encounter.participants, (p) => {
       if (p.is_ally) return 0;
       return ParticipantUtils.challengeRating(p);
     });
   },
 
-  playerCount(encounter: { participants: EncounterWithData["participants"] }) {
+  playerCount(encounter: {
+    participants: Array<{ creature: { is_player: boolean } }>;
+  }) {
     return encounter.participants.filter((p) => ParticipantUtils.isPlayer(p))
       .length;
   },
 
-  findCRBudget(encounter: EncounterWithParticipants, playersLevel: number) {
+  findCRBudget(
+    encounter: EncounterWithParticipantDifficulty,
+    playersLevel: number
+  ) {
     if (playersLevel < 1 || playersLevel > 20) {
       throw new Error("playerLevel must be between 1 and 20");
     }
@@ -318,7 +333,7 @@ export const EncounterUtils = {
   },
 
   difficulty(
-    encounter: EncounterWithParticipants,
+    encounter: EncounterWithParticipantDifficulty,
     playerLevel?: number | null
   ) {
     const finalPlayerLevel = playerLevel ?? 1;
@@ -329,7 +344,7 @@ export const EncounterUtils = {
 
   difficultyForCR(
     cr: number,
-    encounter: EncounterWithParticipants,
+    encounter: EncounterWithParticipantDifficulty,
     playerLevel: number
   ): Difficulty {
     const { standardTier, hardTier } = this.findCRBudget(

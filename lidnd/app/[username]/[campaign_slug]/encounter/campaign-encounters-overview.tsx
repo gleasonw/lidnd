@@ -5,13 +5,13 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Edit } from "lucide-react";
 import { api } from "@/trpc/react";
-import type {
-  EncounterWithParticipants,
-  Participant,
-} from "@/server/api/router";
+import type { Participant } from "@/server/api/router";
 import { useCampaign } from "../campaign-hooks";
 import { ParticipantUtils } from "@/utils/participants";
-import { EncounterUtils } from "@/utils/encounters";
+import {
+  EncounterUtils,
+  type EncounterWithParticipantDifficulty,
+} from "@/utils/encounters";
 import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useUser } from "@/app/[username]/user-provider";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
@@ -49,7 +49,7 @@ export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
 export function DifficultyBadge({
   encounter,
 }: {
-  encounter: EncounterWithParticipants;
+  encounter: EncounterWithParticipantDifficulty;
 }) {
   const [campaign] = useCampaign();
   const diffColor = EncounterUtils.difficultyCssClasses(encounter, campaign);
