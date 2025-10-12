@@ -71,7 +71,16 @@ export const ServerCampaign = {
       with: {
         encounters: {
           with: {
-            participants: true,
+            participants: {
+              with: {
+                creature: true,
+                status_effects: {
+                  with: {
+                    effect: true,
+                  },
+                },
+              },
+            },
           },
         },
       },

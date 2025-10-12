@@ -20,6 +20,37 @@ import _ from "lodash";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { parseWithZod } from "@conform-to/zod";
 
+export async function removeEncounter({
+  encounterId,
+  campaignId,
+}: {
+  encounterId: string;
+  campaignId: string;
+}) {
+  "use server";
+
+  const user = await LidndAuth.getUser();
+  if (!user) {
+    console.error("No user found, cannot delete encounter");
+    throw new Error("No user found");
+  }
+  const campaign = await db.query.campaigns.findFirst({
+    where: and(eq(campaigns.id, campaignId), eq(campaigns.user_id, user.id)),
+  });
+  if (!campaign) {
+    throw new Error(
+      "Campaign not found or you do not have permission to modify it"
+    );
+  }
+
+  if (!encounterId) {
+    throw new Error("Encounter id is required");
+  }
+
+  await deleteEncounter({ id: encounterId });
+  revalidatePath(appRoutes.campaign({ campaign, user }));
+}
+
 export async function createEncounter(encounter: EncounterInsert) {
   const user = await LidndAuth.getUser();
   if (!user) {
