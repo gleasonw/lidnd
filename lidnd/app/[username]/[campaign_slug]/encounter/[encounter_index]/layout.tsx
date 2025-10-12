@@ -7,7 +7,6 @@ import Link from "next/link";
 import { appRoutes } from "@/app/routes";
 import { Home } from "lucide-react";
 import css from "./EncounterLayout.module.css";
-import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 import { Button } from "@/components/ui/button";
 
 export default async function EncounterLayout(props: {
@@ -39,25 +38,27 @@ export default async function EncounterLayout(props: {
         <div
           className={`relative ${css.root} flex flex-col overflow-hidden max-h-full`}
         >
-          <div className={`${css.encounterNav} absolute top-0 left-0 z-50`}>
-            <div
-              className={`items-center justify-center gap-3 flex flex-col w-full h-full`}
-            >
-              <Link
-                href={appRoutes.campaign({
-                  campaign: { ...campaign, slug: param.campaign_slug },
-                  user,
-                })}
-                className="flex gap-3"
+          {/**we don't really have space for this nav on group initiative... might need to rethink slightly */}
+          {campaign?.system.initiative_type === "linear" && (
+            <div className={` absolute top-0 left-0 z-50`}>
+              <div
+                className={`items-center justify-center gap-3 flex flex-col w-full h-full`}
               >
-                <Button variant="ghost" className="opacity-60">
-                  <Home />
-                  Campaign
-                </Button>
-              </Link>
-              <EncounterDetails />
+                <Link
+                  href={appRoutes.campaign({
+                    campaign: { ...campaign, slug: param.campaign_slug },
+                    user,
+                  })}
+                  className="flex gap-3"
+                >
+                  <Button variant="ghost" className="opacity-60">
+                    <Home />
+                    Campaign
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
           {props.children}
         </div>
       </EncounterId>

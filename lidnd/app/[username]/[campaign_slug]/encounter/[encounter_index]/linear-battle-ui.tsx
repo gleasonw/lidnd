@@ -84,22 +84,22 @@ export function StatColumns() {
       <ScrollArea className="flex flex-col gap-5 border-t-0 w-full max-h-screen h-full overflow-hidden ">
         <div className="flex flex-col gap-5">
           {participantsByColumn[c.id]?.map((p) => (
-            <div key={p.map((p) => p.id).join("-")}>
-              <div className="flex flex-col gap-5">
-                {p
-                  .slice()
-                  .sort(ParticipantUtils.sortLinearly)
-                  .map((p) => (
-                    <ParticipantBattleData
-                      participant={p}
-                      ref={(ref) => registerBattleCardRef(p.id, ref)}
-                      data-is-active={p.is_active}
-                      data-participant-id={p.id}
-                      key={p.id}
-                    />
-                  ))}
-              </div>
-
+            <div
+              className="flex flex-col gap-5"
+              key={p.map((p) => p.id).join("-")}
+            >
+              {p
+                .slice()
+                .sort(ParticipantUtils.sortLinearly)
+                .map((p) => (
+                  <ParticipantBattleData
+                    participant={p}
+                    ref={(ref) => registerBattleCardRef(p.id, ref)}
+                    data-is-active={p.is_active}
+                    data-participant-id={p.id}
+                    key={p.id}
+                  />
+                ))}
               {p[0]?.creature ? (
                 <CreatureStatBlock creature={p[0]?.creature} />
               ) : (

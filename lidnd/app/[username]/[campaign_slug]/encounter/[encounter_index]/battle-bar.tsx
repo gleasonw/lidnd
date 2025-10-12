@@ -30,6 +30,7 @@ import React, { useState } from "react";
 import { OpponentParticipantForm } from "./participant-upload-form";
 import Image from "next/image";
 import { CreatureUtils } from "@/utils/creatures";
+import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 
 export function ToggleEditingMode() {
   const [encounter] = useEncounter();
@@ -91,8 +92,9 @@ export const InitiativeTracker = observer(function InitiativeTracker() {
 
   return (
     <div
-      className={`pl-[var(--campaign-nav-width)] flex overflow-visible h-20 flex-shrink-0 z-20 gap-2 w-full bottom-0`}
+      className={`justify-center flex overflow-visible h-20 flex-shrink-0 z-20 gap-2 w-full bottom-0`}
     >
+      <EncounterDetails />
       <ButtonWithTooltip
         className="h-full shadow-lg"
         variant="outline"
@@ -127,13 +129,14 @@ export const InitiativeTracker = observer(function InitiativeTracker() {
           </div>
         )
       )}
+
       <ButtonWithTooltip
-        variant="ghost"
-        className="self-stretch h-full flex"
-        text="Edit initiative and columns"
-        onClick={() => toggleEditingInitiative()}
+        className="h-full shadow-lg flex items-center"
+        onClick={cycleNext}
+        disabled={isTurnLoading}
+        text="Next turn"
       >
-        <ListOrdered />
+        <ChevronRightIcon />
       </ButtonWithTooltip>
       <LidndDialog
         title={"Add monster"}
@@ -149,12 +152,12 @@ export const InitiativeTracker = observer(function InitiativeTracker() {
         }
       />
       <ButtonWithTooltip
-        className="h-full shadow-lg flex items-center"
-        onClick={cycleNext}
-        disabled={isTurnLoading}
-        text="Next turn"
+        variant="ghost"
+        className="self-stretch h-full flex"
+        text="Edit initiative and columns"
+        onClick={() => toggleEditingInitiative()}
       >
-        <ChevronRightIcon />
+        <ListOrdered />
       </ButtonWithTooltip>
     </div>
   );

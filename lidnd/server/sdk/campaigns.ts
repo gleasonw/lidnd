@@ -55,6 +55,7 @@ export const ServerCampaign = {
             player: true,
           },
         },
+        system: true,
       },
     });
   }),

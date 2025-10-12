@@ -11,5 +11,6 @@ export function useEncounterLinks() {
   return {
     rollEncounter: appRoutes.rollEncounter({ campaign, encounter, user }),
     encounter: appRoutes.encounter({ campaign, encounter, user }),
+    campaignLink: appRoutes.campaign({ campaign, user }),
   };
 }

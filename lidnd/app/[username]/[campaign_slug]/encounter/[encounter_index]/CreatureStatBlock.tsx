@@ -2,9 +2,11 @@
 import { useUIStore } from "@/app/UIStore";
 import type { Creature } from "@/server/api/router";
 import { CreatureUtils } from "@/utils/creatures";
+import { trace } from "mobx";
 import { observer } from "mobx-react-lite";
 import Image from "next/image";
 import type React from "react";
+import { useMemo } from "react";
 
 export const CreatureStatBlock = observer(
   function CreatureStatBlock({
@@ -14,37 +16,21 @@ export const CreatureStatBlock = observer(
     creature: Creature;
     ref: React.ForwardedRef<HTMLImageElement>;
   }) {
+    trace();
     const uiStore = useUIStore();
     const status = uiStore.getStatBlockUploadStatus(creature);
 
-    const statblock = (
-      <Image
-        quality={100}
-        style={{
-          objectFit: "contain",
-          width: creature.stat_block_width,
-          height: creature.stat_block_height,
-        }}
-        className="max-h-full w-full object-top"
-        src={CreatureUtils.awsURL(creature, "statBlock")}
-        alt={creature.name}
-        width={creature.stat_block_width}
-        height={creature.stat_block_height}
-        onError={() => console.log("error loading image")}
-        ref={ref}
-      />
-    );
     switch (status) {
       case "idle":
-        return statblock;
+        return <CreatureStatBlockImage creature={creature} ref={ref} />;
       case "pending":
         return <div>pending</div>;
       case "success":
-        return statblock;
+        return <CreatureStatBlockImage creature={creature} ref={ref} />;
       case "error":
         return <div>error</div>;
       case undefined:
-        return statblock;
+        return <CreatureStatBlockImage creature={creature} ref={ref} />;
       default: {
         //@ts-expect-error - exhaustive check
         const _: never = status;
@@ -54,3 +40,33 @@ export const CreatureStatBlock = observer(
   },
   { forwardRef: true }
 );
+
+function CreatureStatBlockImage({
+  creature,
+  ref,
+}: {
+  creature: Creature;
+  ref: React.ForwardedRef<HTMLImageElement>;
+}) {
+  const style = useMemo(
+    () =>
+      ({
+        objectFit: "contain",
+        width: creature.stat_block_width,
+      } as const),
+    [creature.stat_block_width]
+  );
+  return (
+    <Image
+      priority
+      quality={100}
+      style={style}
+      className="max-h-full w-full object-top"
+      src={CreatureUtils.awsURL(creature, "statBlock")}
+      alt={creature.name}
+      width={creature.stat_block_width}
+      height={creature.stat_block_height}
+      ref={ref}
+    />
+  );
+}

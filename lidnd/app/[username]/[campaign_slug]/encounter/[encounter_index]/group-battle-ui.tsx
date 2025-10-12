@@ -31,33 +31,29 @@ export function GroupBattleUI() {
   const monsters = EncounterUtils.monsters(encounter);
   const players = EncounterUtils.allies(encounter);
 
-  const selectedMonster = monsters.find(
-    (monster) => monster.id === dmSelectedCreature
-  );
-
   return (
-    <div>
-      <GroupBattleLayout
-        monsters={monsters.map((monster, index) => (
-          <GroupBattleCard
-            key={monster.id + index}
-            onClick={() => setDmSelectedCreature(monster.id)}
-            participant={monster}
-            isSelected={monster.id === dmSelectedCreature}
-          />
-        ))}
-        players={players.map((player, index) => (
+    <div className="flex flex-col overflow-auto">
+      <div className="flex border-blue-500 mx-auto">
+        {players.map((player, index) => (
           <GroupBattleCard
             key={player.id + index}
             participant={player}
             isSelected={player.id === dmSelectedCreature}
           />
         ))}
-      >
-        {selectedMonster && (
-          <CreatureStatBlock creature={selectedMonster.creature} />
-        )}
-      </GroupBattleLayout>
+      </div>
+      <div className="flex flex-wrap border-red-500">
+        {monsters.map((monster, index) => (
+          <div key={monster.id + index}>
+            <GroupBattleCard
+              onClick={() => setDmSelectedCreature(monster.id)}
+              participant={monster}
+              isSelected={monster.id === dmSelectedCreature}
+            />
+            <CreatureStatBlock creature={monster.creature} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
