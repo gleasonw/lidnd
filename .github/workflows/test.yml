@@ -11,6 +11,9 @@ jobs:
     strategy:
       matrix:
         node-version: [20]
+    defaults:
+      run:
+        working-directory: lidnd/
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
