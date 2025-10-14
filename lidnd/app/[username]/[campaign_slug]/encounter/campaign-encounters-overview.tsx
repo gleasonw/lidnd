@@ -58,8 +58,10 @@ export function DifficultyBadge({
 
 export function CreateEncounterForm({
   gameSessionId,
+  buttonExtra,
 }: {
   gameSessionId: string;
+  buttonExtra?: React.ReactNode;
 }) {
   const [campaign] = useCampaign();
 
@@ -115,6 +117,7 @@ export function CreateEncounterForm({
         <LidndTextArea placeholder="Encounter description" editor={editor} />
         <div className="flex justify-between items-center">
           <div className="ml-auto flex gap-2 items-center">
+            {buttonExtra}
             <Button type="submit">{"Create"}</Button>
           </div>
         </div>

@@ -208,7 +208,6 @@ async function CampaignCard(props: CampaignCardProps) {
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-muted-foreground">
             <span>Sessions</span>
-            <span>{sessionList.length}</span>
           </div>
 
           {sessionList.length ? (

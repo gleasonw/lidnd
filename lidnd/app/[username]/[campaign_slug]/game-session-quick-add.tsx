@@ -16,12 +16,14 @@ type QuickAddParticipantsButtonProps = {
   encounterId: string;
   campaignId: string;
   className?: string;
+  innerText?: string;
 };
 
 export function QuickAddParticipantsButton({
   encounterId,
   campaignId,
   className,
+  innerText,
 }: QuickAddParticipantsButtonProps) {
   const [search, setSearch] = useState("");
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -67,6 +69,7 @@ export function QuickAddParticipantsButton({
           className={cn("gap-2 rounded-full", className)}
         >
           <Plus className="h-4 w-4" />
+          {innerText}
         </Button>
       }
     >

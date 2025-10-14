@@ -25,6 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -224,15 +225,17 @@ export default async function CampaignPage(props: {
                       {encounterCount === 0 ? (
                         <CreateEncounterForm gameSessionId={session.id} />
                       ) : (
-                        <ul className="grid gap-4 md:grid-cols-2">
-                          {session.encounters?.map((encounter) => (
-                            <EncounterCard
-                              key={encounter.id}
-                              encounter={encounter}
-                            />
-                          ))}
-                          <CreateEncounterForm gameSessionId={session.id} />
-                        </ul>
+                        <>
+                          <ul className="grid gap-4 md:grid-cols-2">
+                            {session.encounters?.map((encounter) => (
+                              <EncounterCard
+                                key={encounter.id}
+                                encounter={encounter}
+                              />
+                            ))}
+                          </ul>
+                          <CreateEncounterButton gameSessionId={session.id} />
+                        </>
                       )}
                     </div>
                   </Card>

@@ -37,44 +37,46 @@ function EncounterDetails() {
             {encounterData.name || "Unnamed encounter"}
           </p>
           {encounterData.description ? (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {encounterData.description}
-            </p>
+            <p
+              className="text-sm text-muted-foreground line-clamp-2"
+              dangerouslySetInnerHTML={{ __html: encounterData.description }}
+            />
           ) : null}
         </div>
         <DifficultyBadge encounter={encounterData} />
       </div>
-      <div className="flex gap-2 items-baseline">
-        <div className="flex -space-x-4 h-16">
-          {monsters?.map((p) => (
-            <button
-              className="rounded-full w-12 h-12 flex items-center justify-center overflow-hidden border-2 border-white bg-white"
-              key={p.id}
-              onClick={() =>
-                removeParticipant({
-                  participant_id: p.id,
-                  encounter_id: encounterData.id,
-                })
-              }
-            >
-              <CreatureIcon creature={p.creature} size="v-small" />
-            </button>
-          ))}
-          {monsters?.length === 0 && (
-            <span className="text-gray-500 text-sm">Add adversary</span>
-          )}
-        </div>
+      <div className="flex gap-2">
+        {monsters.length > 0 && (
+          <div className="flex -space-x-4 h-16">
+            {monsters?.map((p) => (
+              <button
+                className="rounded-full w-12 h-12 flex items-center justify-center overflow-hidden border-2 border-white bg-white"
+                key={p.id}
+                onClick={() =>
+                  removeParticipant({
+                    participant_id: p.id,
+                    encounter_id: encounterData.id,
+                  })
+                }
+              >
+                <CreatureIcon creature={p.creature} size="v-small" />
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center w-12 h-12">
           <QuickAddParticipantsButton
             encounterId={encounterData.id}
             campaignId={campaignData.id}
+            innerText={monsters && monsters.length > 0 ? "" : "Monsters"}
           />
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <Link href={encounterLink} className="flex">
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="ghost">
             Edit
           </Button>
         </Link>
