@@ -227,12 +227,19 @@ export default async function CampaignPage(props: {
                       ) : (
                         <>
                           <ul className="grid gap-4 md:grid-cols-2">
-                            {session.encounters?.map((encounter) => (
-                              <EncounterCard
-                                key={encounter.id}
-                                encounter={encounter}
-                              />
-                            ))}
+                            {session.encounters
+                              ?.slice()
+                              .sort(
+                                (a, b) =>
+                                  (a.created_at?.getTime() ?? 0) -
+                                  (b.created_at?.getTime() ?? 0)
+                              )
+                              .map((encounter) => (
+                                <EncounterCard
+                                  key={encounter.id}
+                                  encounter={encounter}
+                                />
+                              ))}
                           </ul>
                           <CreateEncounterButton gameSessionId={session.id} />
                         </>

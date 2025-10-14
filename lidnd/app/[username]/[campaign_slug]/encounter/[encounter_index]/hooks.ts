@@ -101,6 +101,47 @@ export function useSelectedCreature() {
   return selectedCreature;
 }
 
+export function useUpdateParticipantHasPlayed() {
+  const id = useEncounterId();
+  const uiStore = useEncounterUIStore();
+  const { encounterById } = api.useUtils();
+  return api.updateGroupTurn.useMutation({
+    onMutate: async ({
+      encounter_id,
+      has_played_this_round,
+      participant_id,
+    }) => {
+      await encounterById.cancel(encounter_id);
+      const previousEncounterData = encounterById.getData(encounter_id);
+      encounterById.setData(encounter_id, (old) => {
+        if (!old) {
+          return;
+        }
+
+        const { updatedParticipants, updatedRoundNumber } =
+          EncounterUtils.updateGroupTurn(
+            participant_id,
+            has_played_this_round,
+            old
+          );
+        if (old.current_round !== updatedRoundNumber) {
+          uiStore.resetViewedState();
+        }
+
+        return {
+          ...old,
+          participants: updatedParticipants,
+          current_round: updatedRoundNumber,
+        };
+      });
+      return { previousEncounterData };
+    },
+    onSettled: async () => {
+      return await encounterById.invalidate(id);
+    },
+  });
+}
+
 export function useRemoveParticipantFromEncounter() {
   const id = useEncounterId();
   const {

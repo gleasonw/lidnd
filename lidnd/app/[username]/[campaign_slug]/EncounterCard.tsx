@@ -45,7 +45,7 @@ function EncounterDetails() {
         </div>
         <DifficultyBadge encounter={encounterData} />
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 h-12">
         {monsters.length > 0 && (
           <div className="flex -space-x-4 h-16">
             {monsters?.map((p) => (

@@ -28,6 +28,7 @@ import {
   useRemoveParticipantFromEncounter,
   useRemoveStatusEffect,
   useStartEncounter,
+  useUpdateParticipantHasPlayed,
   useUpdateEncounterParticipant,
 } from "@/encounters/[encounter_index]/hooks";
 import { useDebouncedCallback } from "use-debounce";
@@ -360,13 +361,8 @@ function GroupParticipantTools({
   participant: ParticipantWithData;
 }) {
   const id = useEncounterId();
-  const { encounterById } = api.useUtils();
   const { mutate: updateCreatureHasPlayedThisRound } =
-    api.updateGroupTurn.useMutation({
-      onSettled: async () => {
-        return await encounterById.invalidate(id);
-      },
-    });
+    useUpdateParticipantHasPlayed();
   return (
     <div className="flex gap-2">
       <Button
@@ -456,9 +452,12 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
       </div>
 
       <div className="flex">
-        {EncounterUtils.players(encounter).map((p) => (
-          <GroupPlayerDoneToggle player={p} key={p.id} />
-        ))}
+        {EncounterUtils.players(encounter)
+          .slice()
+          .sort((a, b) => a.creature.name.localeCompare(b.creature.name))
+          .map((p) => (
+            <GroupPlayerDoneToggle player={p} key={p.id} />
+          ))}
       </div>
       <EncounterDetails />
 
@@ -489,13 +488,8 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
 
 function GroupPlayerDoneToggle({ player }: { player: ParticipantWithData }) {
   const id = useEncounterId();
-  const { encounterById } = api.useUtils();
   const { mutate: updateCreatureHasPlayedThisRound } =
-    api.updateGroupTurn.useMutation({
-      onSettled: async () => {
-        return await encounterById.invalidate(id);
-      },
-    });
+    useUpdateParticipantHasPlayed();
   return (
     <div className="flex flex-col items-center gap-2 p-2">
       <div className="">{player.creature.name}</div>
