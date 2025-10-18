@@ -339,35 +339,38 @@ export const ParticipantBattleData = observer(function BattleCard({
       <BattleCardLayout key={participant.id} participant={participant}>
         <div className="flex flex-col gap-3 w-full p-3">
           <div className="flex gap-2 items-center justify-between">
-            <div className="flex gap-4 items-center relative">
+            <div className="flex gap-4 items-center w-full relative">
               <BattleCardCreatureIcon
                 participant={participant}
                 className="flex-shrink-0 flex-grow-0"
               />
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-3">
-                  <div className="flex flex-col">
-                    <div className="flex gap-2 items-center relative">
+              <div className="flex flex-col gap-2 w-full">
+                <div className="flex gap-3 w-full">
+                  <div className="flex flex-col gap-2 w-full">
+                    <div className="flex gap-2 items-center relative w-full justify-between flex-wrap">
                       <BattleCardCreatureName participant={participant} />
-                      <div className="font-bold">
-                        {participant.hp} / {ParticipantUtils.maxHp(participant)}
+                      <ParticipantHealthForm participant={participant} />
+                      {encounterUiStore.isEditingInitiative && (
+                        <GroupParticipantHPOverride participant={participant} />
+                      )}
+                    </div>
+                    <div className="flex gap-2 w-full items-center">
+                      <div className="w-full border h-6 relative bg-red-400 flex items-center justify-center">
+                        <span className="whitespace-nowrap text-white absolute z-10">
+                          {participant.hp} /{" "}
+                          {ParticipantUtils.maxHp(participant)}
+                        </span>
+                        <div
+                          className="absolute bg-green-400 h-full left-0"
+                          style={{
+                            width: `${ParticipantUtils.healthPercent(
+                              participant
+                            )}%`,
+                          }}
+                        />
                       </div>
                     </div>
-                    <div className="w-full border h-3 relative">
-                      <div
-                        className="absolute bg-green-400 h-full"
-                        style={{
-                          width: `${ParticipantUtils.healthPercent(
-                            participant
-                          )}%`,
-                        }}
-                      />
-                    </div>
                   </div>
-                  <ParticipantHealthForm participant={participant} />
-                  {encounterUiStore.isEditingInitiative && (
-                    <GroupParticipantHPOverride participant={participant} />
-                  )}
                 </div>
                 <div className="flex items-center gap-5">
                   <Button
@@ -678,11 +681,11 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   return participant.creature_id === "pending" ? (
     <span>Loading</span>
   ) : (
-    <div className="flex items-center">
+    <div className="flex">
       <div
         className={clsx(
           { "border-4": participant.hex_color },
-          "relative h-16 w-16"
+          "relative h-20 w-20"
         )}
         style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
       >
