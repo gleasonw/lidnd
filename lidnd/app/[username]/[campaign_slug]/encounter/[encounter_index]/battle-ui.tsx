@@ -40,14 +40,7 @@ import {
   ReminderInput,
   Reminders,
 } from "@/encounters/[encounter_index]/reminders";
-import {
-  Grip,
-  Home,
-  ListOrdered,
-  MoreHorizontal,
-  Plus,
-  User,
-} from "lucide-react";
+import { Grip, Home, ListOrdered, MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 import { imageStyle, InitiativeTracker } from "./battle-bar";
 import { EncounterDifficulty } from "./encounter-difficulty";
@@ -333,17 +326,17 @@ export const ParticipantBattleData = observer(function BattleCard({
         <div className="flex gap-4 p-3 items-center w-full">
           <BattleCardContent>
             <div className="flex gap-2 w-full justify-between">
-              <BattleCardCreatureIcon
-                participant={participant}
-                className="flex-shrink-0 flex-grow-0"
-              />
               <div className="flex flex-col gap-3 w-full ">
-                <div className="flex justify-between gap-2 items-center">
-                  <BattleCardCreatureName participant={participant} />
-                  <div className="text-lg font-bold px-5">
-                    {participant.hp} / {ParticipantUtils.maxHp(participant)}
+                <div className="flex gap-2 items-center justify-between flex-wrap">
+                  <div className="flex gap-5">
+                    <BattleCardCreatureIcon
+                      participant={participant}
+                      className="flex-shrink-0 flex-grow-0"
+                    />
+                    <BattleCardCreatureName participant={participant} />
                   </div>
-                  <div className="flex ml-auto gap-2">
+
+                  <div className="flex gap-2">
                     {campaign.system.initiative_type === "group" && (
                       <GroupParticipantTools participant={participant} />
                     )}
@@ -355,7 +348,26 @@ export const ParticipantBattleData = observer(function BattleCard({
                 {participant.notes || encounterUiStore.isEditingInitiative ? (
                   <LidndTextArea editor={editor} />
                 ) : null}
-                <ParticipantHealthForm participant={participant} />
+                <ParticipantHealthForm
+                  participant={participant}
+                  extraInputs={
+                    <div className="flex gap-2 items-center">
+                      <div className="font-bold">
+                        {participant.hp} / {ParticipantUtils.maxHp(participant)}
+                      </div>
+                      <div className="border h-2 w-40 relative">
+                        <div
+                          className="absolute bg-green-500 h-full"
+                          style={{
+                            width: `${ParticipantUtils.healthPercent(
+                              participant
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  }
+                />
               </div>
             </div>
           </BattleCardContent>
@@ -661,33 +673,33 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   className?: string;
 }) {
   const [error, setError] = useState<boolean>(false);
+
+  if (error) {
+    // TODO: maybe revisit, just figure that no icon is better than just a random user icon or whatever.
+    // space is a premium, and if there IS an icon, it helps emphasize the creature,
+    // since special creatures are more likely to have an icon
+    return null;
+  }
   return participant.creature_id === "pending" ? (
     <span>Loading</span>
   ) : (
-    <div
-      className={clsx(
-        "relative border-4 items-center flex justify-center",
-        className
-      )}
-      style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
-    >
+    <div className="flex items-center">
       <div
-        className="bg-red-400 absolute w-full opacity-90 bottom-0"
-        style={{ height: `${ParticipantUtils.percentDamage(participant)}%` }}
-      />
-      {error ? (
-        <User className="w-24 h-24" />
-      ) : (
+        className={clsx(
+          { "border-4": participant.hex_color },
+          "relative h-16 w-16"
+        )}
+        style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
+      >
         <Image
           src={CreatureUtils.awsURL(participant.creature, "icon")}
           alt={participant.creature.name}
           style={imageStyle}
           width={participant.creature.icon_width}
           height={participant.creature.icon_height}
-          className="w-24 h-24"
           onError={() => setError(true)}
         />
-      )}
+      </div>
     </div>
   );
 });

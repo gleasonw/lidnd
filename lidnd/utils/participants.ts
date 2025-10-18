@@ -26,7 +26,7 @@ function iconHexColor(participant: ParticipantWithCreature) {
   if (isFriendly(participant)) {
     return "#2563eb";
   }
-  return participant.hex_color ?? "#dc2626";
+  return participant.hex_color ?? "";
 }
 
 function assignColumn<T extends Pick<Participant, "id" | "column_id">>(

@@ -13,11 +13,14 @@ import { useDebouncedCallback } from "use-debounce";
 import { Heart, Minus, Plus, Shield, Sword } from "lucide-react";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { LidndPopover } from "@/encounters/base-popover";
+import { ButtonWithTooltip } from "@/components/ui/tip";
 
 export function ParticipantHealthForm({
   participant,
+  extraInputs,
 }: {
   participant: ParticipantWithData;
+  extraInputs?: React.ReactNode;
 }) {
   const [hpDiff, setHpDiff] = useState<string | number>("");
   const [tempHpDiff, setTempHpDiff] = useState<number | string>("");
@@ -67,103 +70,105 @@ export function ParticipantHealthForm({
   }
 
   return (
-    <div className="flex gap-5 flex-col w-full">
-      <div className="flex gap-4 text-lg flex-wrap">
-        <Input
-          placeholder="HP"
-          type="number"
-          className="w-32"
-          value={hpDiff}
-          onChange={(e) => {
-            if (!isNaN(parseInt(e.target.value))) {
-              setHpDiff(parseInt(e.target.value));
-            } else {
-              setHpDiff("");
-            }
-          }}
-        />
-        <Button
-          variant="outline"
-          className={"bg-red-100 text-red-700 gap-3 flex items-center"}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleHPChange(
-              typeof hpDiff === "number"
-                ? participant.hp - hpDiff
-                : participant.hp
-            );
-          }}
-        >
-          <Sword /> Damage
-        </Button>
-        <Button
-          variant="outline"
-          className={"bg-green-100 text-green-700 gap-3 flex items-center"}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleHPChange(
-              typeof hpDiff === "number"
-                ? participant.hp + hpDiff
-                : participant.hp
-            );
-          }}
-        >
-          <Heart /> Heal
-        </Button>
-        <LidndPopover
-          trigger={
-            <Button
-              variant="outline"
-              className="bg-blue-100 opacity-50 text-blue-700"
-            >
-              <Shield /> Temp
-            </Button>
+    <div className="flex gap-4 text-lg flex-wrap">
+      {extraInputs}
+      <Input
+        placeholder="HP"
+        type="number"
+        className="w-20"
+        value={hpDiff}
+        onChange={(e) => {
+          if (!isNaN(parseInt(e.target.value))) {
+            setHpDiff(parseInt(e.target.value));
+          } else {
+            setHpDiff("");
           }
-        >
-          <div className="flex gap-4">
-            <Button
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation();
-                setTempHp(
-                  typeof tempHpDiff === "number"
-                    ? participant.temporary_hp - tempHpDiff
-                    : participant.temporary_hp
-                );
-              }}
-            >
-              <Minus />
-            </Button>
-            <LidndTextInput
-              variant="ghost"
-              placeholder="Temp HP"
-              type="number"
-              className="w-32 text-sm"
-              value={tempHpDiff}
-              onChange={(e) => {
-                if (!isNaN(parseInt(e.target.value))) {
-                  setTempHpDiff(parseInt(e.target.value));
-                } else {
-                  setTempHpDiff("");
-                }
-              }}
-            />
-            <Button
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation();
-                setTempHp(
-                  typeof tempHpDiff === "number"
-                    ? participant.temporary_hp + tempHpDiff
-                    : participant.temporary_hp
-                );
-              }}
-            >
-              <Plus />
-            </Button>
-          </div>
-        </LidndPopover>
-      </div>
+        }}
+      />
+      <ButtonWithTooltip
+        text="Damage"
+        variant="outline"
+        className={"bg-red-100 text-red-700 gap-3 flex items-center"}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleHPChange(
+            typeof hpDiff === "number"
+              ? participant.hp - hpDiff
+              : participant.hp
+          );
+        }}
+      >
+        <Sword />
+      </ButtonWithTooltip>
+      <ButtonWithTooltip
+        text="Heal"
+        variant="outline"
+        className={"bg-green-100 text-green-700 gap-3 flex items-center"}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleHPChange(
+            typeof hpDiff === "number"
+              ? participant.hp + hpDiff
+              : participant.hp
+          );
+        }}
+      >
+        <Heart />
+      </ButtonWithTooltip>
+      <LidndPopover
+        trigger={
+          <ButtonWithTooltip
+            variant="outline"
+            className="bg-blue-100 opacity-50 text-blue-700"
+            text="Temporary HP"
+          >
+            <Shield />
+          </ButtonWithTooltip>
+        }
+      >
+        <div className="flex gap-4">
+          <Button
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation();
+              setTempHp(
+                typeof tempHpDiff === "number"
+                  ? participant.temporary_hp - tempHpDiff
+                  : participant.temporary_hp
+              );
+            }}
+          >
+            <Minus />
+          </Button>
+          <LidndTextInput
+            variant="ghost"
+            placeholder="Temp HP"
+            type="number"
+            className="w-32 text-sm"
+            value={tempHpDiff}
+            onChange={(e) => {
+              if (!isNaN(parseInt(e.target.value))) {
+                setTempHpDiff(parseInt(e.target.value));
+              } else {
+                setTempHpDiff("");
+              }
+            }}
+          />
+          <Button
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation();
+              setTempHp(
+                typeof tempHpDiff === "number"
+                  ? participant.temporary_hp + tempHpDiff
+                  : participant.temporary_hp
+              );
+            }}
+          >
+            <Plus />
+          </Button>
+        </div>
+      </LidndPopover>
     </div>
   );
 }
