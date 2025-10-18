@@ -83,27 +83,37 @@ export function StatColumns() {
     <StatColumnComponent column={c} index={index} key={c.id}>
       <ScrollArea className="flex flex-col gap-5 border-t-0 w-full max-h-screen h-full overflow-hidden ">
         <div className="flex flex-col divide-solid divide-y-2 gap-2">
-          {participantsByColumn[c.id]?.map((p) => (
-            <div className="flex flex-col" key={p.map((p) => p.id).join("-")}>
-              {p
-                .slice()
-                .sort(ParticipantUtils.sortLinearly)
-                .map((p) => (
-                  <ParticipantBattleData
-                    participant={p}
-                    ref={(ref) => registerBattleCardRef(p.id, ref)}
-                    data-is-active={p.is_active}
-                    data-participant-id={p.id}
-                    key={p.id}
-                  />
-                ))}
-              {p[0]?.creature ? (
-                <CreatureStatBlock creature={p[0]?.creature} />
-              ) : (
-                <div>no creature... probably a bug</div>
-              )}
-            </div>
-          ))}
+          {participantsByColumn[c.id]
+            ?.slice()
+            .sort(
+              (groupA, groupB) =>
+                groupA
+                  .at(0)
+                  ?.creature.name.localeCompare(
+                    groupB.at(0)?.creature.name ?? ""
+                  ) || 0
+            )
+            .map((p) => (
+              <div className="flex flex-col" key={p.map((p) => p.id).join("-")}>
+                {p
+                  .slice()
+                  .sort(ParticipantUtils.sortLinearly)
+                  .map((p) => (
+                    <ParticipantBattleData
+                      participant={p}
+                      ref={(ref) => registerBattleCardRef(p.id, ref)}
+                      data-is-active={p.is_active}
+                      data-participant-id={p.id}
+                      key={p.id}
+                    />
+                  ))}
+                {p[0]?.creature ? (
+                  <CreatureStatBlock creature={p[0]?.creature} />
+                ) : (
+                  <div>no creature... probably a bug</div>
+                )}
+              </div>
+            ))}
         </div>
       </ScrollArea>
     </StatColumnComponent>
