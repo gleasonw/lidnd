@@ -11,6 +11,8 @@ type ImageUploadStatus = "idle" | "pending" | "success" | "error";
  */
 class EncounterUIStore {
   selectedParticipantId: string | null = null;
+
+  /** TODO: this is sort of the "this ui is only sometimes important for inputs, so only show it when we toggle this flag" bit of state. should probably find a better way to tuck away secondary inputs/ui */
   isEditingInitiative = false;
   userDismissedReminder = false;
   isDraggingBattleCard = false;

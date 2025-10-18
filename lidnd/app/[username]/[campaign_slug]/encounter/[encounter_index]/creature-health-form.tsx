@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import type { ParticipantWithData, Participant } from "@/server/api/router";
 import { useState } from "react";
 import { toNumber } from "lodash";
-import { ParticipantUtils } from "@/utils/participants";
 import {
   useUpdateEncounterParticipant,
   useUpdateEncounterMinionParticipant,
@@ -67,11 +66,9 @@ export function ParticipantHealthForm({
     });
   }
 
-  const hpPercent = ParticipantUtils.healthPercent(participant);
-
   return (
     <div className="flex gap-5 flex-col w-full">
-      <div className="flex gap-4 text-2xl">
+      <div className="flex gap-4 text-lg flex-wrap">
         <Input
           placeholder="HP"
           type="number"
@@ -113,30 +110,12 @@ export function ParticipantHealthForm({
         >
           <Heart /> Heal
         </Button>
-      </div>
-      <div className="flex max-w-full w-full gap-2">
-        <span className="w-full h-10 shadow-md relative border bg-red-100">
-          <span
-            className={`absolute bg-green-500 h-full transition-all`}
-            style={{
-              width: `${hpPercent}%`,
-            }}
-          />
-          <span
-            className={`absolute bg-blue-500 h-full transition-all z-10`}
-            style={{
-              width: `${ParticipantUtils.tempHpPercent(participant) * 100}%`,
-            }}
-          />
-          <span className="flex w-full items-center justify-center h-full">
-            <span className="z-10 text-xl text-white">
-              {participant.hp} / {ParticipantUtils.maxHp(participant)}
-            </span>
-          </span>
-        </span>
         <LidndPopover
           trigger={
-            <Button variant="outline" className="bg-blue-100 text-blue-700">
+            <Button
+              variant="outline"
+              className="bg-blue-100 opacity-50 text-blue-700"
+            >
               <Shield /> Temp
             </Button>
           }

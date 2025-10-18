@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -187,7 +187,7 @@ function BattleCardTools({ participant }: { participant: Participant }) {
     <>
       <Button
         variant="ghost"
-        className="z-10 ml-auto cursor-grab"
+        className="z-10  cursor-grab"
         onDragStart={(e) => {
           typedDrag.set(e.dataTransfer, dragTypes.participant, participant);
           uiStore.startDraggingBattleCard();
@@ -304,6 +304,7 @@ export const ParticipantBattleData = observer(function BattleCard({
   ref,
   ...props
 }: BattleCardProps) {
+  const encounterUiStore = useEncounterUIStore();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
 
   const debouncedUpdate = useDebouncedCallback((participant: Participant) => {
@@ -329,7 +330,7 @@ export const ParticipantBattleData = observer(function BattleCard({
   return (
     <div className={`relative flex-col gap-6 w-full flex`} ref={ref} {...props}>
       <BattleCardLayout key={participant.id} participant={participant}>
-        <div className="flex gap-4 p-5 items-center w-full">
+        <div className="flex gap-4 p-3 items-center w-full">
           <BattleCardContent>
             <div className="flex gap-2 w-full justify-between">
               <BattleCardCreatureIcon
@@ -337,14 +338,23 @@ export const ParticipantBattleData = observer(function BattleCard({
                 className="flex-shrink-0 flex-grow-0"
               />
               <div className="flex flex-col gap-3 w-full ">
-                {campaign.system.initiative_type === "group" && (
-                  <GroupParticipantTools participant={participant} />
-                )}
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-2 items-center">
                   <BattleCardCreatureName participant={participant} />
-                  <BattleCardTools participant={participant} />
+                  <div className="text-lg font-bold px-5">
+                    {participant.hp} / {ParticipantUtils.maxHp(participant)}
+                  </div>
+                  <div className="flex ml-auto gap-2">
+                    {campaign.system.initiative_type === "group" && (
+                      <GroupParticipantTools participant={participant} />
+                    )}
+                    <div className="text-gray-500">
+                      <BattleCardTools participant={participant} />
+                    </div>
+                  </div>
                 </div>
-                <LidndTextArea editor={editor} />
+                {participant.notes || encounterUiStore.isEditingInitiative ? (
+                  <LidndTextArea editor={editor} />
+                ) : null}
                 <ParticipantHealthForm participant={participant} />
               </div>
             </div>
@@ -605,38 +615,41 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
     "#ff1a13",
   ];
   const labelColors = [...pastelLabels, ...solidColors];
+  const encounterUiStore = useEncounterUIStore();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   return (
-    <span className="flex gap-2 items-center font-bold">
-      <CardTitle className="text-xl  truncate max-w-full">
+    <span className="flex gap-2 items-center">
+      <span className="text-xl  truncate max-w-full">
         {ParticipantUtils.name(participant)}
-      </CardTitle>
-      <LidndPopover
-        trigger={
-          <Button
-            style={{
-              backgroundColor: ParticipantUtils.iconHexColor(participant),
-            }}
-            variant="ghost"
-          />
-        }
-      >
-        <div className="grid grid-cols-3">
-          {labelColors.map((color, index) => (
+      </span>
+      {encounterUiStore.isEditingInitiative && (
+        <LidndPopover
+          trigger={
             <Button
-              key={index}
-              style={{ backgroundColor: color }}
-              variant="ghost"
-              onClick={() => {
-                updateParticipant({
-                  ...participant,
-                  hex_color: color === participant.hex_color ? null : color,
-                });
+              style={{
+                backgroundColor: ParticipantUtils.iconHexColor(participant),
               }}
+              variant="ghost"
             />
-          ))}
-        </div>
-      </LidndPopover>
+          }
+        >
+          <div className="grid grid-cols-3">
+            {labelColors.map((color, index) => (
+              <Button
+                key={index}
+                style={{ backgroundColor: color }}
+                variant="ghost"
+                onClick={() => {
+                  updateParticipant({
+                    ...participant,
+                    hex_color: color === participant.hex_color ? null : color,
+                  });
+                }}
+              />
+            ))}
+          </div>
+        </LidndPopover>
+      )}
     </span>
   );
 });
@@ -647,7 +660,6 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
 }: BattleCardParticipantProps & {
   className?: string;
 }) {
-  const uiStore = useEncounterUIStore();
   const [error, setError] = useState<boolean>(false);
   return participant.creature_id === "pending" ? (
     <span>Loading</span>
@@ -655,13 +667,14 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
     <div
       className={clsx(
         "relative border-4 items-center flex justify-center",
-        className,
-        {
-          "opacity-50": !(uiStore.selectedParticipantId === participant.id),
-        }
+        className
       )}
       style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
     >
+      <div
+        className="bg-red-400 absolute w-full opacity-90 bottom-0"
+        style={{ height: `${ParticipantUtils.percentDamage(participant)}%` }}
+      />
       {error ? (
         <User className="w-36 h-36" />
       ) : (
@@ -671,7 +684,7 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
           style={imageStyle}
           width={participant.creature.icon_width}
           height={participant.creature.icon_height}
-          className="w-36 h-36"
+          className="w-24 h-24"
           onError={() => setError(true)}
         />
       )}
