@@ -209,7 +209,9 @@ async function CampaignCard(props: CampaignCardProps) {
       <CardFooter className="flex flex-wrap items-center justify-between gap-2 pt-0">
         <div className="flex flex-wrap items-center gap-2">
           <Link href={campaignRoute} className="inline-flex">
-            <Button size="sm">Manage</Button>
+            <Button size="sm" variant="secondary">
+              Manage
+            </Button>
           </Link>
         </div>
 
