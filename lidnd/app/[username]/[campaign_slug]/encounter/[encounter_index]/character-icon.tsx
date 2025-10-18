@@ -3,6 +3,7 @@
 import { useUIStore } from "@/app/UIStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreatureUtils } from "@/utils/creatures";
+import { ParticipantUtils } from "@/utils/participants";
 import { observer } from "mobx-react-lite";
 import React from "react";
 
@@ -44,6 +45,7 @@ export const CreatureIcon = observer(function CreatureIcon({
     icon_width: number;
     icon_height: number;
     name: string;
+    is_player: boolean;
   };
   size?: IconSize;
 }) {
@@ -51,6 +53,10 @@ export const CreatureIcon = observer(function CreatureIcon({
   const status = uiStore.getIconUploadStatus(creature);
   const dimensions = iconDimensions(creature, size);
   const [retryCount, setRetryCount] = React.useState(0);
+
+  const initials = ParticipantUtils.initials({ creature });
+  const fallbackText = initials ? initials.slice(0, 2) : "?";
+  const fallbackColor = creature.is_player ? "#2563eb" : "#b91c1c";
 
   const icon = (
     <Avatar>
@@ -69,7 +75,12 @@ export const CreatureIcon = observer(function CreatureIcon({
           }
         }}
       />
-      <AvatarFallback>{creature.name}</AvatarFallback>
+      <AvatarFallback
+        className="text-lg font-semibold uppercase tracking-wide text-white"
+        style={{ backgroundColor: fallbackColor }}
+      >
+        {fallbackText}
+      </AvatarFallback>
     </Avatar>
   );
 

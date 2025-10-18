@@ -204,53 +204,14 @@ async function CampaignCard(props: CampaignCardProps) {
             No description provided.
           </p>
         )}
-
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            <span>Sessions</span>
-          </div>
-
-          {sessionList.length ? (
-            <ul className="flex flex-col gap-2">
-              {sessionList.slice(0, 3).map((session) => (
-                <li
-                  key={session.id}
-                  className="flex items-center justify-between gap-3 text-sm"
-                >
-                  <span className="truncate" title={session.name}>
-                    {session.name}
-                  </span>
-                  <Link
-                    href={appRoutes.gameSession({
-                      user,
-                      campaign,
-                      gameSessionId: session.id,
-                    })}
-                    className="text-xs font-medium text-primary hover:underline"
-                  >
-                    View
-                  </Link>
-                </li>
-              ))}
-              {sessionList.length > 3 ? (
-                <li className="text-xs text-muted-foreground">
-                  + {sessionList.length - 3} more session
-                  {sessionList.length - 3 === 1 ? "" : "s"}
-                </li>
-              ) : null}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No sessions yet. Create one from the campaign page.
-            </p>
-          )}
-        </div>
       </CardContent>
 
       <CardFooter className="flex flex-wrap items-center justify-between gap-2 pt-0">
         <div className="flex flex-wrap items-center gap-2">
           <Link href={campaignRoute} className="inline-flex">
-            <Button size="sm">Manage</Button>
+            <Button size="sm" variant="secondary">
+              Manage
+            </Button>
           </Link>
         </div>
 
