@@ -676,7 +676,7 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
         style={{ height: `${ParticipantUtils.percentDamage(participant)}%` }}
       />
       {error ? (
-        <User className="w-36 h-36" />
+        <User className="w-24 h-24" />
       ) : (
         <Image
           src={CreatureUtils.awsURL(participant.creature, "icon")}
