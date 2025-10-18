@@ -94,10 +94,7 @@ export function StatColumns() {
                   ) || 0
             )
             .map((p) => (
-              <div
-                className="flex flex-col gap-2"
-                key={p.map((p) => p.id).join("-")}
-              >
+              <div className="flex flex-col" key={p.map((p) => p.id).join("-")}>
                 {p
                   .slice()
                   .sort(ParticipantUtils.sortLinearly)
