@@ -325,92 +325,82 @@ export const ParticipantBattleData = observer(function BattleCard({
     },
   });
 
-  const [campaign] = useCampaign();
+  const { mutate: updateCreatureHasPlayedThisRound } =
+    useUpdateParticipantHasPlayed();
 
   return (
-    <div className={`relative flex-col gap-6 w-full flex`} ref={ref} {...props}>
+    <div
+      className={clsx(`relative flex-col gap-6 w-full flex`, {
+        "opacity-50": participant.has_played_this_round,
+      })}
+      ref={ref}
+      {...props}
+    >
       <BattleCardLayout key={participant.id} participant={participant}>
-        <div className="flex gap-4 p-3 items-center w-full">
-          <BattleCardContent>
-            <div className="flex gap-2 w-full justify-between">
-              <div className="flex flex-col gap-3 w-full ">
-                <div className="flex gap-2 items-center justify-between flex-wrap">
-                  <div className="flex gap-5">
-                    <BattleCardCreatureIcon
-                      participant={participant}
-                      className="flex-shrink-0 flex-grow-0"
-                    />
-                    <BattleCardCreatureName participant={participant} />
-                  </div>
-
-                  <div className="flex gap-2">
-                    {campaign.system.initiative_type === "group" && (
-                      <GroupParticipantTools participant={participant} />
-                    )}
-                    <div className="text-gray-500">
-                      <BattleCardTools participant={participant} />
-                    </div>
-                  </div>
-                </div>
-                {participant.notes || encounterUiStore.isEditingInitiative ? (
-                  <LidndTextArea editor={editor} />
-                ) : null}
-                <ParticipantHealthForm
-                  participant={participant}
-                  extraInputs={
-                    <div className="flex gap-2 items-center">
+        <div className="flex flex-col gap-3 w-full p-3">
+          <div className="flex gap-2 items-center justify-between">
+            <div className="flex gap-4 items-center relative">
+              <BattleCardCreatureIcon
+                participant={participant}
+                className="flex-shrink-0 flex-grow-0"
+              />
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-3">
+                  <div className="flex flex-col">
+                    <div className="flex gap-2 items-center relative">
+                      <BattleCardCreatureName participant={participant} />
                       <div className="font-bold">
                         {participant.hp} / {ParticipantUtils.maxHp(participant)}
                       </div>
-                      <div className="border h-2 w-32 relative">
-                        <div
-                          className="absolute bg-green-500 h-full"
-                          style={{
-                            width: `${ParticipantUtils.healthPercent(
-                              participant
-                            )}%`,
-                          }}
-                        />
-                      </div>
                     </div>
-                  }
-                />
+                    <div className="w-full border h-3 relative">
+                      <div
+                        className="absolute bg-green-400 h-full"
+                        style={{
+                          width: `${ParticipantUtils.healthPercent(
+                            participant
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <ParticipantHealthForm participant={participant} />
+                  {encounterUiStore.isEditingInitiative && (
+                    <GroupParticipantHPOverride participant={participant} />
+                  )}
+                </div>
+                <div className="flex items-center gap-5">
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      updateCreatureHasPlayedThisRound({
+                        encounter_id: participant.encounter_id,
+                        participant_id: participant.id,
+                        has_played_this_round:
+                          !participant.has_played_this_round,
+                      })
+                    }
+                  >
+                    {participant.has_played_this_round ? <Check /> : "Ready"}
+                  </Button>
+                  <LidndTextArea editor={editor} />
+                </div>
               </div>
             </div>
-          </BattleCardContent>
+
+            <div className="flex gap-2">
+              {encounterUiStore.isEditingInitiative && (
+                <div className="text-gray-500">
+                  <BattleCardTools participant={participant} />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </BattleCardLayout>
     </div>
   );
 });
-
-function GroupParticipantTools({
-  participant,
-}: {
-  participant: ParticipantWithData;
-}) {
-  const id = useEncounterId();
-  const { mutate: updateCreatureHasPlayedThisRound } =
-    useUpdateParticipantHasPlayed();
-  return (
-    <div className="flex gap-2">
-      <Button
-        className="w-full"
-        onClick={() =>
-          updateCreatureHasPlayedThisRound({
-            encounter_id: id,
-            participant_id: participant.id,
-            has_played_this_round: !participant.has_played_this_round,
-          })
-        }
-        variant={participant.has_played_this_round ? "default" : "outline"}
-      >
-        {participant.has_played_this_round ? <Check /> : "Hasn't Played"}
-      </Button>
-      <GroupParticipantHPOverride participant={participant} />
-    </div>
-  );
-}
 
 const GroupParticipantHPOverride = observer(
   function GroupParticipantHPOverride({
@@ -463,37 +453,16 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
   const { campaignLink } = useEncounterLinks();
   const [encounter] = useEncounter();
   return (
-    <div className="flex p-2 gap-3">
-      <div className="flex">
-        <Link href={campaignLink} className="flex gap-3">
-          <Button variant="ghost" className="opacity-60">
-            <Home />
-            Campaign
-          </Button>
-        </Link>
-      </div>
-      <div className="flex gap-2">
-        <div className="flex gap-5 flex-wrap">
-          {EncounterUtils.monsters(encounter)
-            .filter((m) => !m.has_played_this_round)
-            .map((m) => (
-              <div key={m.id}>{ParticipantUtils.name(m)}</div>
-            ))}
-        </div>
-        <div className="flex">
-          {EncounterUtils.players(encounter)
-            .slice()
-            .sort((a, b) => a.creature.name.localeCompare(b.creature.name))
-            .map((p) => (
-              <GroupPlayerDoneToggle player={p} key={p.id} />
-            ))}
-        </div>
-      </div>
+    <div className="flex p-2 gap-3 items-center">
+      <Link href={campaignLink} className="flex gap-3">
+        <Button variant="ghost" className="opacity-60">
+          <Home />
+        </Button>
+      </Link>
       <EncounterDetails />
-
       <ButtonWithTooltip
         variant="ghost"
-        className="self-stretch h-full flex"
+        className="self-stretch h-full flex p-2"
         text="Edit initiative and columns"
         onClick={() => toggleEditingInitiative()}
       >
@@ -505,37 +474,56 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
         trigger={
           <ButtonWithTooltip
             variant="ghost"
-            className="self-stretch h-full flex"
+            className="self-stretch h-full flex p-2"
             text="Add monster"
           >
             <Plus />
           </ButtonWithTooltip>
         }
       />
+      <div className="flex gap-1 flex-wrap bg-white p-1">
+        {EncounterUtils.monsters(encounter).map((m) => (
+          <GroupParticipantDoneToggle participant={m} key={m.id} />
+        ))}
+      </div>
+
+      <div className="flex gap-1 flex-wrap bg-white p-1">
+        {EncounterUtils.players(encounter)
+          .slice()
+          .sort((a, b) => a.creature.name.localeCompare(b.creature.name))
+          .map((p) => (
+            <GroupParticipantDoneToggle participant={p} key={p.id} />
+          ))}
+      </div>
     </div>
   );
 });
 
-function GroupPlayerDoneToggle({ player }: { player: ParticipantWithData }) {
+function GroupParticipantDoneToggle({
+  participant,
+}: {
+  participant: ParticipantWithData;
+}) {
   const id = useEncounterId();
   const { mutate: updateCreatureHasPlayedThisRound } =
     useUpdateParticipantHasPlayed();
   return (
-    <div className="flex items-center gap-2 p-2">
-      <Button
-        onClick={() =>
-          updateCreatureHasPlayedThisRound({
-            encounter_id: id,
-            participant_id: player.id,
-            has_played_this_round: !player.has_played_this_round,
-          })
-        }
-        variant={player.has_played_this_round ? "default" : "outline"}
-      >
-        {player.creature.name}
-        {player.has_played_this_round ? <Check /> : ""}
-      </Button>
-    </div>
+    <Button
+      variant="ghost"
+      onClick={() =>
+        updateCreatureHasPlayedThisRound({
+          encounter_id: id,
+          participant_id: participant.id,
+          has_played_this_round: !participant.has_played_this_round,
+        })
+      }
+      className={clsx("flex gap-1", {
+        "text-gray-400": participant.has_played_this_round,
+      })}
+    >
+      {participant.creature.name}
+      {participant.has_played_this_round ? <Check /> : ""}
+    </Button>
   );
 }
 

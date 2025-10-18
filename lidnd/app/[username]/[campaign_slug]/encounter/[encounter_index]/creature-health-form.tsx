@@ -69,19 +69,6 @@ export function ParticipantHealthForm({
   return (
     <div className="flex gap-4 text-lg">
       {extraInputs}
-      <Input
-        placeholder="HP"
-        type="number"
-        className="w-20"
-        value={hpDiff}
-        onChange={(e) => {
-          if (!isNaN(parseInt(e.target.value))) {
-            setHpDiff(parseInt(e.target.value));
-          } else {
-            setHpDiff("");
-          }
-        }}
-      />
       <ButtonWithTooltip
         text="Damage"
         variant="outline"
@@ -97,6 +84,19 @@ export function ParticipantHealthForm({
       >
         <Sword />
       </ButtonWithTooltip>
+      <Input
+        placeholder="HP"
+        type="number"
+        className="w-16"
+        value={hpDiff}
+        onChange={(e) => {
+          if (!isNaN(parseInt(e.target.value))) {
+            setHpDiff(parseInt(e.target.value));
+          } else {
+            setHpDiff("");
+          }
+        }}
+      />
       <ButtonWithTooltip
         text="Heal"
         variant="outline"
