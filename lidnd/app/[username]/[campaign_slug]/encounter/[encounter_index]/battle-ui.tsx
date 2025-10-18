@@ -40,7 +40,14 @@ import {
   ReminderInput,
   Reminders,
 } from "@/encounters/[encounter_index]/reminders";
-import { Grip, Home, ListOrdered, MoreHorizontal, Plus } from "lucide-react";
+import {
+  Check,
+  Grip,
+  Home,
+  ListOrdered,
+  MoreHorizontal,
+  Plus,
+} from "lucide-react";
 import Link from "next/link";
 import { imageStyle, InitiativeTracker } from "./battle-bar";
 import { EncounterDifficulty } from "./encounter-difficulty";
@@ -355,7 +362,7 @@ export const ParticipantBattleData = observer(function BattleCard({
                       <div className="font-bold">
                         {participant.hp} / {ParticipantUtils.maxHp(participant)}
                       </div>
-                      <div className="border h-2 w-40 relative">
+                      <div className="border h-2 w-32 relative">
                         <div
                           className="absolute bg-green-500 h-full"
                           style={{
@@ -398,7 +405,7 @@ function GroupParticipantTools({
         }
         variant={participant.has_played_this_round ? "default" : "outline"}
       >
-        {participant.has_played_this_round ? "Played" : "Hasn't Played"}
+        {participant.has_played_this_round ? <Check /> : "Hasn't Played"}
       </Button>
       <GroupParticipantHPOverride participant={participant} />
     </div>
@@ -457,29 +464,30 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
   const [encounter] = useEncounter();
   return (
     <div className="flex p-2 gap-3">
-      <div className="flex mr-auto">
+      <div className="flex">
         <Link href={campaignLink} className="flex gap-3">
           <Button variant="ghost" className="opacity-60">
             <Home />
             Campaign
           </Button>
         </Link>
-        <div className="grid grid-cols-3 bg-white p-1 gap-3">
+      </div>
+      <div className="flex gap-2">
+        <div className="flex gap-5 flex-wrap">
           {EncounterUtils.monsters(encounter)
             .filter((m) => !m.has_played_this_round)
             .map((m) => (
               <div key={m.id}>{ParticipantUtils.name(m)}</div>
             ))}
         </div>
-      </div>
-
-      <div className="flex">
-        {EncounterUtils.players(encounter)
-          .slice()
-          .sort((a, b) => a.creature.name.localeCompare(b.creature.name))
-          .map((p) => (
-            <GroupPlayerDoneToggle player={p} key={p.id} />
-          ))}
+        <div className="flex">
+          {EncounterUtils.players(encounter)
+            .slice()
+            .sort((a, b) => a.creature.name.localeCompare(b.creature.name))
+            .map((p) => (
+              <GroupPlayerDoneToggle player={p} key={p.id} />
+            ))}
+        </div>
       </div>
       <EncounterDetails />
 
@@ -513,9 +521,7 @@ function GroupPlayerDoneToggle({ player }: { player: ParticipantWithData }) {
   const { mutate: updateCreatureHasPlayedThisRound } =
     useUpdateParticipantHasPlayed();
   return (
-    <div className="flex flex-col items-center gap-2 p-2">
-      <div className="">{player.creature.name}</div>
-
+    <div className="flex items-center gap-2 p-2">
       <Button
         onClick={() =>
           updateCreatureHasPlayedThisRound({
@@ -526,7 +532,8 @@ function GroupPlayerDoneToggle({ player }: { player: ParticipantWithData }) {
         }
         variant={player.has_played_this_round ? "default" : "outline"}
       >
-        {player.has_played_this_round ? "Played" : "Hasn't Played"}
+        {player.creature.name}
+        {player.has_played_this_round ? <Check /> : ""}
       </Button>
     </div>
   );
