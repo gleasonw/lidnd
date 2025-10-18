@@ -82,12 +82,9 @@ export function StatColumns() {
   return columns?.map((c, index) => (
     <StatColumnComponent column={c} index={index} key={c.id}>
       <ScrollArea className="flex flex-col gap-5 border-t-0 w-full max-h-screen h-full overflow-hidden ">
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col">
           {participantsByColumn[c.id]?.map((p) => (
-            <div
-              className="flex flex-col gap-5"
-              key={p.map((p) => p.id).join("-")}
-            >
+            <div className="flex flex-col" key={p.map((p) => p.id).join("-")}>
               {p
                 .slice()
                 .sort(ParticipantUtils.sortLinearly)
