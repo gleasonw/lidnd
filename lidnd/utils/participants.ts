@@ -61,7 +61,10 @@ function isFriendly(p: { is_ally: boolean; creature: { is_player: boolean } }) {
 }
 
 // need to just create a "role" field on the participant
-function isAdversary(p: ParticipantWithCreature) {
+function isAdversary(p: {
+  is_ally: boolean;
+  creature: { is_player: boolean };
+}) {
   return !isFriendly(p);
 }
 

@@ -263,7 +263,9 @@ export const participants = pgTable(
     hex_color: text("hex_color"),
     notes: text("notes"),
     temporary_hp: integer("temporary_hp").default(0).notNull(),
-    column_id: uuid("stat_column_id"),
+    column_id: uuid("stat_column_id").references(() => stat_columns.id, {
+      onDelete: "set null",
+    }),
     has_played_this_round: boolean("has_played_this_round")
       .default(false)
       .notNull(),

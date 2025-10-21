@@ -36,6 +36,21 @@ type Cyclable = {
   current_round: number;
 };
 
+export function monstersWithNoColumn<
+  E extends {
+    participants: Array<{
+      column_id: string | null;
+      is_ally: boolean;
+      creature: { is_player: boolean };
+    }>;
+  }
+>(e: E): Array<E["participants"][number]> {
+  return e.participants.filter(
+    (p) =>
+      (!p.column_id || p.column_id === null) && ParticipantUtils.isAdversary(p)
+  );
+}
+
 const difficulties = {
   Easy: "Easy",
   Standard: "Standard",
@@ -143,6 +158,7 @@ export const EncounterUtils = {
   difficultyClassForCR,
   cssClassForDifficulty,
   remainingCr,
+  participantsWithNoColumn: monstersWithNoColumn,
 
   goalCr(e: EncounterWithParticipants, c: { party_level?: number }) {
     const { easyTier, standardTier, hardTier } = this.findCRBudget(

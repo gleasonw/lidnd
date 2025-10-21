@@ -78,6 +78,8 @@ export const EncounterBattleUI = observer(function BattleUI() {
   const { rollEncounter } = useEncounterLinks();
   const user = useUser();
 
+  const monsters = EncounterUtils.participantsWithNoColumn(encounter);
+
   switch (encounter.status) {
     case "prep":
       return (
@@ -145,6 +147,16 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 <DescriptionTextArea />
               </div>
             ) : null}
+            {monsters.length > 0 ? (
+              <div className="flex w-full flex-wrap">
+                {monsters.map((p) => (
+                  <div key={p.id}>
+                    <span>{ParticipantUtils.name(p)}</span>
+                    <ColumnDragButton participant={p} />
+                  </div>
+                ))}
+              </div>
+            ) : null}
 
             <LinearBattleUI />
           </div>
@@ -179,23 +191,30 @@ function EncounterBattlePreview() {
   );
 }
 
-function BattleCardTools({ participant }: { participant: Participant }) {
-  const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
+function ColumnDragButton({ participant }: { participant: Participant }) {
   const uiStore = useEncounterUIStore();
 
   return (
+    <Button
+      variant="ghost"
+      className="z-10  cursor-grab"
+      onDragStart={(e) => {
+        typedDrag.set(e.dataTransfer, dragTypes.participant, participant);
+        uiStore.startDraggingBattleCard();
+      }}
+      draggable
+    >
+      <Grip />
+    </Button>
+  );
+}
+
+function BattleCardTools({ participant }: { participant: Participant }) {
+  const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
+
+  return (
     <>
-      <Button
-        variant="ghost"
-        className="z-10  cursor-grab"
-        onDragStart={(e) => {
-          typedDrag.set(e.dataTransfer, dragTypes.participant, participant);
-          uiStore.startDraggingBattleCard();
-        }}
-        draggable
-      >
-        <Grip />
-      </Button>
+      <ColumnDragButton participant={participant} />
       <LidndPopover
         trigger={
           <ButtonWithTooltip text="More" variant="ghost">
