@@ -331,7 +331,7 @@ export const ParticipantBattleData = observer(function BattleCard({
   }, 500);
 
   const configuredPlaceholder = Placeholder.configure({
-    placeholder: "Monster notes",
+    placeholder: "notes",
   });
 
   const editor = useEditor({
@@ -366,46 +366,50 @@ export const ParticipantBattleData = observer(function BattleCard({
               <div className="flex flex-col gap-2 w-full">
                 <div className="flex gap-3 w-full">
                   <div className="flex flex-col gap-2 w-full">
-                    <div className="flex gap-2 items-center relative w-full justify-between flex-wrap">
+                    <div className="flex gap-2 items-center relative w-full justify-between">
                       <BattleCardCreatureName participant={participant} />
-                      <ParticipantHealthForm participant={participant} />
+                      <LidndTextArea editor={editor} />
+                      <Button
+                        variant="secondary"
+                        onClick={() =>
+                          updateCreatureHasPlayedThisRound({
+                            encounter_id: participant.encounter_id,
+                            participant_id: participant.id,
+                            has_played_this_round:
+                              !participant.has_played_this_round,
+                          })
+                        }
+                      >
+                        {participant.has_played_this_round ? (
+                          <Check />
+                        ) : (
+                          "Ready"
+                        )}
+                      </Button>
+
                       {encounterUiStore.isEditingInitiative && (
                         <GroupParticipantHPOverride participant={participant} />
                       )}
                     </div>
-                    <div className="flex gap-2 w-full items-center">
-                      <div className="w-full border h-6 relative bg-red-400 flex items-center justify-center">
-                        <span className="whitespace-nowrap text-white absolute z-10">
-                          {participant.hp} /{" "}
-                          {ParticipantUtils.maxHp(participant)}
-                        </span>
-                        <div
-                          className="absolute bg-green-400 h-full left-0"
-                          style={{
-                            width: `${ParticipantUtils.healthPercent(
-                              participant
-                            )}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-5">
-                  <Button
-                    variant="secondary"
-                    onClick={() =>
-                      updateCreatureHasPlayedThisRound({
-                        encounter_id: participant.encounter_id,
-                        participant_id: participant.id,
-                        has_played_this_round:
-                          !participant.has_played_this_round,
-                      })
-                    }
-                  >
-                    {participant.has_played_this_round ? <Check /> : "Ready"}
-                  </Button>
-                  <LidndTextArea editor={editor} />
+                <div className="flex gap-2 w-full">
+                  <ParticipantHealthForm participant={participant} />
+                  <div className="flex gap-2 w-full items-center">
+                    <div className="w-full border h-6 relative bg-red-400 flex items-center justify-center">
+                      <span className="whitespace-nowrap text-white absolute z-10">
+                        {participant.hp} / {ParticipantUtils.maxHp(participant)}
+                      </span>
+                      <div
+                        className="absolute bg-green-400 h-full left-0"
+                        style={{
+                          width: `${ParticipantUtils.healthPercent(
+                            participant
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

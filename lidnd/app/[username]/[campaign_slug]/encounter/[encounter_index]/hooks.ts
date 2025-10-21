@@ -206,6 +206,8 @@ export function useUpdateEncounterParticipant() {
         }
 
         if (newParticipant.hp <= 0) {
+          // TODO: make sure that the next participant in the column gets
+          // assigned the column id of this fallen monster, to avoid a weird switch
           if (newParticipant.is_active) {
             cycleNext({ encounter_id: id });
           }
