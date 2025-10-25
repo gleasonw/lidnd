@@ -258,6 +258,10 @@ export const participants = pgTable(
     max_hp_override: integer("max_hp_override"),
     is_active: boolean("is_active").default(false).notNull(),
     has_surprise: boolean("has_surprise").default(false).notNull(),
+    // TODO: inanimate is a hack flag to allow malice and other things the dm needs to track to sit inside the
+    // column layout. really we should have some "encounter element" system that lets us add things
+    // to the column layout without those things becoming participants.
+    inanimate: boolean("inanimate").default(false).notNull(),
     minion_count: integer("minion_count"),
     nickname: text("nickname"),
     hex_color: text("hex_color"),

@@ -30,6 +30,7 @@ import {
   useStartEncounter,
   useUpdateParticipantHasPlayed,
   useUpdateEncounterParticipant,
+  useEncounterHotkey,
 } from "@/encounters/[encounter_index]/hooks";
 import { useDebouncedCallback } from "use-debounce";
 import { useEditor } from "@tiptap/react";
@@ -75,8 +76,16 @@ export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
   const [encounter] = useEncounter();
   const { mutate: startEncounter } = useStartEncounter();
+  const uiStore = useEncounterUIStore();
   const { rollEncounter } = useEncounterLinks();
   const user = useUser();
+
+  useEncounterHotkey("k", (e) => {
+    if (e.metaKey || e.ctrlKey) {
+      e.preventDefault();
+      uiStore.toggleParticipantEdit();
+    }
+  });
 
   const monsters = EncounterUtils.participantsWithNoColumn(encounter);
 
@@ -361,59 +370,63 @@ export const ParticipantBattleData = observer(function BattleCard({
     >
       <BattleCardLayout key={participant.id} participant={participant}>
         <div className="flex flex-col gap-3 w-full p-3">
-          <div className="flex gap-2 items-center justify-between">
-            <div className="flex gap-4 items-center w-full relative">
-              <BattleCardCreatureIcon
-                participant={participant}
-                className="flex-shrink-0 flex-grow-0"
-              />
-              <div className="flex flex-col gap-2 w-full">
-                <div className="flex gap-3 w-full">
-                  <div className="flex flex-col gap-2 w-full">
-                    <div className="flex gap-2 items-center relative w-full justify-between">
-                      <BattleCardCreatureName participant={participant} />
-                      <LidndTextArea editor={editor} />
-                      <Button
-                        variant="secondary"
-                        onClick={() =>
-                          updateCreatureHasPlayedThisRound({
-                            encounter_id: participant.encounter_id,
-                            participant_id: participant.id,
-                            has_played_this_round:
-                              !participant.has_played_this_round,
-                          })
-                        }
-                      >
-                        {participant.has_played_this_round ? (
-                          <Check />
-                        ) : (
-                          "Ready"
-                        )}
-                      </Button>
+          {participant.inanimate ? null : (
+            <div className="flex gap-2 items-center justify-between">
+              <div className="flex gap-4 items-center w-full relative">
+                <BattleCardCreatureIcon
+                  participant={participant}
+                  className="flex-shrink-0 flex-grow-0"
+                />
+                <div className="flex flex-col gap-2 w-full">
+                  <div className="flex gap-3 w-full">
+                    <div className="flex flex-col gap-2 w-full">
+                      <div className="flex gap-2 items-center relative w-full justify-between">
+                        <BattleCardCreatureName participant={participant} />
+                        <LidndTextArea editor={editor} />
+                        <Button
+                          variant="secondary"
+                          onClick={() =>
+                            updateCreatureHasPlayedThisRound({
+                              encounter_id: participant.encounter_id,
+                              participant_id: participant.id,
+                              has_played_this_round:
+                                !participant.has_played_this_round,
+                            })
+                          }
+                        >
+                          {participant.has_played_this_round ? (
+                            <Check />
+                          ) : (
+                            "Ready"
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex gap-2 w-full">
-                  <ParticipantHealthForm participant={participant} />
-                  <div className="flex gap-2 w-full items-center">
-                    <div className="w-full border h-6 relative bg-red-400 flex items-center justify-center">
-                      <span className="whitespace-nowrap text-white absolute z-10">
-                        {participant.hp} / {ParticipantUtils.maxHp(participant)}
-                      </span>
-                      <div
-                        className="absolute bg-green-400 h-full left-0"
-                        style={{
-                          width: `${ParticipantUtils.healthPercent(
-                            participant
-                          )}%`,
-                        }}
-                      />
+                  <div className="flex gap-2 w-full">
+                    <ParticipantHealthForm participant={participant} />
+                    <div className="flex gap-2 w-full items-center">
+                      <div className="w-full border h-6 relative bg-red-400 flex items-center justify-center">
+                        <span className="whitespace-nowrap text-white absolute z-10">
+                          {participant.hp} /{" "}
+                          {ParticipantUtils.maxHp(participant)}
+                        </span>
+                        <div
+                          className="absolute bg-green-400 h-full left-0"
+                          style={{
+                            width: `${ParticipantUtils.healthPercent(
+                              participant
+                            )}%`,
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
+
           {encounterUiStore.isEditingInitiative && (
             <div className="flex w-full flex-wrap">
               <GroupParticipantHPOverride participant={participant} />
@@ -423,6 +436,7 @@ export const ParticipantBattleData = observer(function BattleCard({
                 ) : null}
                 <BattleCardTools participant={participant} />
               </div>
+              <InanimateParticipantButton participant={participant} />
             </div>
           )}
         </div>
@@ -430,6 +444,28 @@ export const ParticipantBattleData = observer(function BattleCard({
     </div>
   );
 });
+
+// TODO: inanimate is a hack flag to allow malice and other things the dm needs to track to sit inside the
+// column layout. really we should have some "encounter element" system that lets us add things
+// to the column layout without those things becoming participants.
+function InanimateParticipantButton(props: {
+  participant: ParticipantWithData;
+}) {
+  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
+  return (
+    <Button
+      variant="ghost"
+      onClick={() =>
+        updateParticipant({
+          ...props.participant,
+          inanimate: !props.participant.inanimate,
+        })
+      }
+    >
+      {props.participant.inanimate ? "Unmark Inanimate" : "Mark Inanimate"}
+    </Button>
+  );
+}
 
 const GroupParticipantHPOverride = observer(
   function GroupParticipantHPOverride({
@@ -478,7 +514,8 @@ const GroupParticipantHPOverride = observer(
 );
 
 const GroupBattleUITools = observer(function GroupBattleUITools() {
-  const { toggleEditingInitiative } = useEncounterUIStore();
+  const { toggleParticipantEdit: toggleEditingInitiative } =
+    useEncounterUIStore();
   const { campaignLink } = useEncounterLinks();
   const [encounter] = useEncounter();
   return (
@@ -511,9 +548,14 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
         }
       />
       <div className="flex gap-1 flex-wrap bg-white p-1">
-        {EncounterUtils.monsters(encounter).map((m) => (
-          <GroupParticipantDoneToggle participant={m} key={m.id} />
-        ))}
+        {EncounterUtils.monsters(encounter)
+          // TODO: janky hack to allow malice and other things the dm needs to track to sit inside the
+          // column layout. really we should have some "encounter element" system that lets us add things
+          // to the column layout without those things becoming participants.
+          .filter((m) => !m.inanimate)
+          .map((m) => (
+            <GroupParticipantDoneToggle participant={m} key={m.id} />
+          ))}
       </div>
 
       <div className="flex gap-1 flex-wrap bg-white p-1">

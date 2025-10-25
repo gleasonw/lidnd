@@ -7,7 +7,7 @@ import { createContext, useContext, useEffect, useMemo } from "react";
 type ImageUploadStatus = "idle" | "pending" | "success" | "error";
 
 /**
- * Manages simple ui state
+ * Manages ui state that is not persisted in db
  */
 class EncounterUIStore {
   selectedParticipantId: string | null = null;
@@ -47,7 +47,7 @@ class EncounterUIStore {
     makeAutoObservable(this);
   }
 
-  toggleEditingInitiative = () => {
+  toggleParticipantEdit = () => {
     this.isEditingInitiative = !this.isEditingInitiative;
   };
 

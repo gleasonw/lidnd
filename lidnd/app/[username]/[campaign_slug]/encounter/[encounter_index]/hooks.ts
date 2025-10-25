@@ -13,6 +13,23 @@ import {
 } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { useContext } from "react";
 
+import { useEffect } from "react";
+
+export function useEncounterHotkey(
+  key: string,
+  handler: (e: KeyboardEvent) => void
+) {
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key.toLowerCase() === key.toLowerCase() && !e.repeat) {
+        handler(e);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [key, handler]);
+}
+
 export function useEncounter() {
   const currentEncounterId = useEncounterId();
 

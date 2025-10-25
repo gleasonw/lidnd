@@ -35,6 +35,7 @@ export function defaultParticipant(
     hex_color: p.hex_color ?? "#1890FF",
     max_hp_override: p.max_hp_override ?? null,
     column_id: p.column_id ?? null,
+    inanimate: p.inanimate ?? false,
     ...p,
   };
 }

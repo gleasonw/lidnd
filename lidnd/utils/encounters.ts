@@ -28,6 +28,7 @@ export type EncounterWithParticipantDifficulty = {
   participants: Array<{
     creature: { challenge_rating: number; is_player: boolean };
     is_ally: boolean;
+    inanimate: boolean;
   }>;
 };
 
@@ -229,7 +230,7 @@ export const EncounterUtils = {
 
   totalCr(encounter: EncounterWithParticipantDifficulty) {
     return _.sumBy(encounter.participants, (p) => {
-      if (p.is_ally) return 0;
+      if (p.is_ally || p.inanimate) return 0;
       return ParticipantUtils.challengeRating(p);
     });
   },
@@ -618,7 +619,7 @@ export const EncounterUtils = {
       }
     });
     const allHavePlayed = updatedParticipants.every(
-      (p) => p.has_played_this_round
+      (p) => p.has_played_this_round || p.inanimate
     );
     if (allHavePlayed) {
       return {

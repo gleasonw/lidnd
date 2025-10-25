@@ -61,7 +61,7 @@ export const InitiativeTracker = observer(function InitiativeTracker() {
   const {
     setSelectedParticipantId,
     isEditingInitiative,
-    toggleEditingInitiative,
+    toggleParticipantEdit: toggleEditingInitiative,
   } = useEncounterUIStore();
   const { mutate: cycleNextMutation, isPending: isLoadingNextTurn } =
     useCycleNextTurn();
