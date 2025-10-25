@@ -9,23 +9,16 @@ import { LidndAuth, UserUtils } from "@/app/authentication";
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Calendar, MoveLeft, Plus, Trash2 } from "lucide-react";
+import { Calendar, MoveLeft, Trash2 } from "lucide-react";
 import { db } from "@/server/db";
 import * as R from "remeda";
 import { encounters, gameSessions } from "@/server/db/schema";
-import { Input } from "@/components/ui/input";
 import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { Card } from "@/components/ui/card";
 import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
-import {
-  Dialog,
-  DialogContent,
-  DialogOverlay,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
+import { SessionCreateForm } from "@/app/[username]/[campaign_slug]/CreateSessionForm";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -146,19 +139,7 @@ export default async function CampaignPage(props: {
               <h2 className="text-xl font-semibold">Sessions</h2>
             </div>
             {/*TODO: wacky bug that makes the next dialog disappear if this one isn't present. moving fast for now */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add session
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-h-screen overflow-auto sm:max-w-[1000px]">
-                <DialogTitle>Create new session</DialogTitle>
-                <SessionCreateForm campaignData={campaignData} />
-              </DialogContent>
-              <DialogOverlay />
-            </Dialog>
+            <SessionCreateForm campaignData={campaignData} />
           </div>
           {sortedSessions.length === 0 ? (
             <div className="flex flex-col gap-4">
@@ -253,72 +234,5 @@ export default async function CampaignPage(props: {
         </section>
       </div>
     </CampaignId>
-  );
-}
-
-async function SessionCreateForm({
-  campaignData,
-}: {
-  campaignData: { id: string; name: string; slug: string };
-}) {
-  const user = await LidndAuth.getUser();
-  if (!user) {
-    console.error("No session found, layout should have redirected");
-    return redirect(appRoutes.login);
-  }
-  const campaignRoute = appRoutes.campaign({ campaign: campaignData, user });
-
-  async function createNewSession(form: FormData) {
-    "use server";
-    if (!user) {
-      console.error("No user found, cannot create session");
-      throw new Error("No user found");
-    }
-    if (!campaignData) {
-      console.error("No campaign data found, cannot create session");
-      throw new Error("No campaign found");
-    }
-    const name = form.get("name")?.toString() || "New Session";
-    const description = form.get("description")?.toString() || "";
-    if (!name) {
-      throw new Error("Name is required");
-    }
-    if (!name) {
-      throw new Error("Name is required");
-    }
-
-    await db.insert(gameSessions).values({
-      name,
-      description,
-      user_id: user.id,
-      campaign_id: campaignData.id,
-    });
-    revalidatePath(campaignRoute);
-  }
-  return (
-    <form action={createNewSession} className="flex flex-col gap-4">
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Session name</label>
-        <Input
-          type="text"
-          name="name"
-          placeholder="Enter session name"
-          className="w-full"
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Session description</label>
-        <Input
-          type="text"
-          name="description"
-          placeholder="Enter session description"
-          className="w-full"
-        />
-      </div>
-      <Button type="submit" className="w-full">
-        Create Session
-      </Button>
-    </form>
   );
 }

@@ -118,8 +118,7 @@ export default async function Page(props: {
             You haven't created a campaign yet
           </h2>
           <p className="max-w-md text-sm text-muted-foreground">
-            Start your first world to track encounters, organise sessions, and
-            invite your players. Use the button above to create a new campaign.
+            Start a campaign to track encounters.
           </p>
         </div>
       )}

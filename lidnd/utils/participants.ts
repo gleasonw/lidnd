@@ -6,6 +6,8 @@ import type {
 } from "@/server/api/router";
 import type { AddCreature, AddParticipant } from "@/types";
 import { CreatureUtils } from "@/utils/creatures";
+import { EncounterUtils, type ColumnableParticipant } from "@/utils/encounters";
+import * as R from "remeda";
 
 type ParticipantWithCreature = Participant & { creature: Creature };
 type MinionParticipant = ParticipantWithCreature & { minion_count: number };
@@ -29,12 +31,38 @@ function iconHexColor(participant: ParticipantWithCreature) {
   return participant.hex_color ?? "";
 }
 
-function assignColumn<T extends Pick<Participant, "id" | "column_id">>(
-  participants: T[],
-  columnId: string,
-  participantId: string
-) {
-  return participants.map((p) => {
+/** I'm starting to realize that really encounter utils is all we want, since state from
+ * some objects impacts others, and the encounter has all that state...
+ */
+function assignColumn<
+  E extends { participants: CP[] },
+  CP extends ColumnableParticipant
+>(encounter: E, columnId: string, participantId: string) {
+  const columnLeaders = EncounterUtils.participantColumnLeaders(encounter);
+  const assigneeIsColumnLeader = columnLeaders.find(
+    (p) => p.id === participantId
+  );
+  if (assigneeIsColumnLeader && assigneeIsColumnLeader.column_id) {
+    const participantsByCreature = R.groupBy(
+      encounter.participants,
+      (p) => p.creature_id
+    );
+    const participantsToUpdate = new Set(
+      participantsByCreature[assigneeIsColumnLeader.creature_id]
+    );
+    // need to update column id of all followers
+    const newParticipants = encounter.participants.map((p) => {
+      if (participantsToUpdate.has(p)) {
+        return {
+          ...p,
+          column_id: columnId,
+        };
+      }
+      return p;
+    });
+    return { ...encounter, participants: newParticipants };
+  }
+  const newParticipants = encounter.participants.map((p) => {
     if (p.id === participantId) {
       return {
         ...p,
@@ -43,6 +71,7 @@ function assignColumn<T extends Pick<Participant, "id" | "column_id">>(
     }
     return p;
   });
+  return { ...encounter, participants: newParticipants };
 }
 
 function statBlockAspectRatio(participant: ParticipantWithCreature) {

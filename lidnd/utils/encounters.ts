@@ -121,10 +121,16 @@ function remainingCr(
   return EncounterUtils.goalCr(e, c) - EncounterUtils.totalCr(e);
 }
 
+export type ColumnableParticipant = Pick<
+  Participant,
+  "creature_id" | "column_id" | "initiative" | "id" | "created_at"
+>;
 /** we want to group participants with the same creature into one column, to avoid
  * duplicating stat blocks. we just take the first participant, sorted, as the column_id source of truth
  */
-function participantsByColumn(e: EncounterWithParticipants) {
+function participantsByColumn<CP extends ColumnableParticipant>(e: {
+  participants: Array<CP>;
+}) {
   const byCreature = R.groupBy(e.participants, (p) => p.creature_id);
   return Object.values(byCreature)?.reduce((acc, curr) => {
     const columnFor = curr
@@ -139,7 +145,7 @@ function participantsByColumn(e: EncounterWithParticipants) {
     }
     acc[columnFor] = [curr];
     return acc;
-  }, {} as Record<string, ParticipantWithData[][]>);
+  }, {} as Record<string, CP[][]>);
 }
 
 function participantsForColumn(
@@ -528,10 +534,47 @@ export const EncounterUtils = {
     );
   },
 
+  participantColumnLeaders<CP extends ColumnableParticipant>(encounter: {
+    participants: CP[];
+  }) {
+    const participantsByColumn = this.participantsByColumn(encounter);
+    // that is, the participant defining the column of the creature group. Shouldn't be necessary
+    // once we guarantee creatures always have the same column
+    return Object.values(participantsByColumn)
+      .flatMap((columnParticipants) =>
+        columnParticipants.map((group) => group[0])
+      )
+      .filter((p) => p !== undefined);
+  },
+
+  destinationColumnForNewParticipant(
+    newParticipant: { creature_id: string },
+    encounter: EncounterWithData
+  ) {
+    const columnLeaders = this.participantColumnLeaders(encounter);
+    const participantOfSameCreature = columnLeaders.find(
+      (p) => p.creature_id === newParticipant.creature_id
+    );
+    if (participantOfSameCreature) {
+      return participantOfSameCreature.column_id;
+    }
+    return (
+      R.firstBy(encounter.columns, (col) => col.participants.length)?.id || null
+    );
+  },
+
   addParticipant(
     newParticipant: ParticipantWithData,
     encounter: EncounterWithData
   ) {
+    const destColumnId = this.destinationColumnForNewParticipant(
+      newParticipant,
+      encounter
+    );
+    if (destColumnId) {
+      newParticipant.column_id = destColumnId;
+    }
+
     return {
       ...encounter,
       participants: [...encounter.participants, newParticipant],

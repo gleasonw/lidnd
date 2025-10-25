@@ -85,7 +85,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
       return (
         <div className="flex flex-col max-h-full overflow-auto h-full">
           <div className="flex flex-col w-full">
-            <div className="flex gap-2 justify-evenly items-center p-8 flex-wrap ml-[var(--campaign-nav-width)]">
+            <div className="flex gap-2 justify-evenly items-center p-8 flex-wrap">
               <div className="flex items-center gap-1">
                 {EncounterUtils.allies(encounter).map((a) => (
                   <CreatureIcon key={a.id} creature={a.creature} size="small" />
@@ -112,8 +112,8 @@ export const EncounterBattleUI = observer(function BattleUI() {
               )}
             </div>
           </div>
-          <div className="flex max-w-full max-h-full">
-            <div className="w-[700px] flex mx-auto justify-center flex-col gap-5">
+          <div className="flex max-w-full max-h-full flex-col sm:flex-row">
+            <div className="max-w-[700px] flex mx-auto justify-center flex-col gap-5">
               <div className="">
                 <Card className="shadow-lg  h-[850px] p-3 flex flex-col gap-5">
                   <section className="items-center flex gap-3 flex-col">
@@ -214,7 +214,6 @@ function BattleCardTools({ participant }: { participant: Participant }) {
 
   return (
     <>
-      <ColumnDragButton participant={participant} />
       <LidndPopover
         trigger={
           <ButtonWithTooltip text="More" variant="ghost">
@@ -265,7 +264,10 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
               <CreatureIcon creature={p.creature} size="small" />
               <BattleCardCreatureName participant={p} />
               {i === 0 ? (
-                <BattleCardTools participant={p} />
+                <>
+                  <BattleCardTools participant={p} />
+                  <ColumnDragButton participant={p} />
+                </>
               ) : (
                 <LidndPopover
                   trigger={
@@ -315,12 +317,14 @@ export type BattleCardProps = {
   isSelected?: boolean;
   extraHeaderButtons?: React.ReactNode;
   ref: (ref: HTMLDivElement) => void;
+  indexInGroup: number;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export const ParticipantBattleData = observer(function BattleCard({
   participant,
   extraHeaderButtons,
   ref,
+  indexInGroup,
   ...props
 }: BattleCardProps) {
   const encounterUiStore = useEncounterUIStore();
@@ -386,10 +390,6 @@ export const ParticipantBattleData = observer(function BattleCard({
                           "Ready"
                         )}
                       </Button>
-
-                      {encounterUiStore.isEditingInitiative && (
-                        <GroupParticipantHPOverride participant={participant} />
-                      )}
                     </div>
                   </div>
                 </div>
@@ -413,15 +413,18 @@ export const ParticipantBattleData = observer(function BattleCard({
                 </div>
               </div>
             </div>
-
-            <div className="flex gap-2">
-              {encounterUiStore.isEditingInitiative && (
-                <div className="text-gray-500">
-                  <BattleCardTools participant={participant} />
-                </div>
-              )}
-            </div>
           </div>
+          {encounterUiStore.isEditingInitiative && (
+            <div className="flex w-full flex-wrap">
+              <GroupParticipantHPOverride participant={participant} />
+              <div className="text-gray-500">
+                {indexInGroup === 0 ? (
+                  <ColumnDragButton participant={participant} />
+                ) : null}
+                <BattleCardTools participant={participant} />
+              </div>
+            </div>
+          )}
         </div>
       </BattleCardLayout>
     </div>

@@ -460,6 +460,7 @@ export const creatureUploadSchema = insertCreatureSchema
   .omit({ user_id: true });
 
 export type CreaturePost = z.infer<typeof creatureUploadSchema>;
+export type GameSessionPost = z.infer<typeof gameSessionSchema>;
 // encounter_id will be provided by hook
 // creature_id will come after creature is inserted
 

@@ -11,9 +11,9 @@ import {
 import type { InsertParticipant, Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql, inArray } from "drizzle-orm";
-import * as R from "remeda";
 import _ from "lodash";
 import { ServerCampaign } from "@/server/sdk/campaigns";
+import { EncounterUtils } from "@/utils/encounters";
 
 async function create(
   ctx: LidndContext,
@@ -103,24 +103,27 @@ async function create(
 }
 
 // todo: allow callers to pass in an encounter they've already fetched
+// todo: there are some mutations in here that optimistic updates aren't handling.
+// we should define a "recipe" and then persist the results
 async function addParticipant(
   ctx: LidndContext,
   participant: InsertParticipant & { creature?: { is_player: boolean } },
   dbObject = db
 ) {
   return await dbObject.transaction(async (tx) => {
-    const [newParticipant, e] = await Promise.all([
+    const [newParticipantResult, e] = await Promise.all([
       tx.insert(participants).values(participant).returning(),
       ServerEncounter.encounterByIdThrows(ctx, participant.encounter_id, tx),
     ]);
-    if (!newParticipant[0]) {
+    const newParticipant = newParticipantResult[0];
+    if (!newParticipant) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to add participant",
       });
     }
 
-    if (newParticipant[0].column_id) {
+    if (newParticipant.column_id) {
       return;
     }
 
@@ -145,12 +148,15 @@ async function addParticipant(
       }
     }
 
-    const columnToAssign = R.firstBy(e.columns, (c) => c.participants.length);
+    const columnToAssign = EncounterUtils.destinationColumnForNewParticipant(
+      newParticipant,
+      e
+    );
     if (columnToAssign) {
       const pWithColumn = await tx
         .update(participants)
-        .set({ column_id: columnToAssign.id })
-        .where(eq(participants.id, newParticipant[0].id))
+        .set({ column_id: columnToAssign })
+        .where(eq(participants.id, newParticipant.id))
         .returning();
       if (!pWithColumn[0]) {
         throw new TRPCError({
@@ -177,8 +183,8 @@ async function addParticipant(
     await tx
       .update(participants)
       .set({ column_id: newColumn[0].id })
-      .where(eq(participants.id, newParticipant[0].id));
-    return newParticipant[0];
+      .where(eq(participants.id, newParticipant.id));
+    return newParticipant;
   });
 }
 

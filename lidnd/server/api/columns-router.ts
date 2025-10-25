@@ -4,10 +4,11 @@ import { participants, stat_columns } from "@/server/db/schema";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { TRPCError } from "@trpc/server";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, SQL, sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import * as R from "remeda";
+import { ParticipantUtils } from "@/utils/participants";
 
 const columnInsertSchema = createInsertSchema(stat_columns);
 const columnSelectSchema = createSelectSchema(stat_columns);
@@ -217,13 +218,38 @@ export const columnsRouter = {
       })
     )
     .mutation(async (opts) => {
-      await ServerEncounter.encounterByIdThrows(
+      const encounter = await ServerEncounter.encounterByIdThrows(
         opts.ctx,
         opts.input.encounter_id
       );
+      const encounterWithUpdatedParticipants = ParticipantUtils.assignColumn(
+        encounter,
+        opts.input.column_id,
+        opts.input.participant_id
+      );
+      if (encounterWithUpdatedParticipants.participants.length === 0) {
+        throw new TRPCError({
+          message: `no participants found after assigning column, something went very wrong`,
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
+      // TODO: maybe extract this into a batch update function, kind of a pain,
+      // but necessary if we'll be doing lots of these "recipe" functional updates
+      const sqlUpdates: SQL[] = [];
+      const participantIds = [];
+      sqlUpdates.push(sql`(case`);
+      for (const updatedParticipant of encounterWithUpdatedParticipants.participants) {
+        sqlUpdates.push(
+          sql`when ${participants.id} = ${updatedParticipant.id} then ${updatedParticipant.column_id}::uuid`
+        );
+        participantIds.push(updatedParticipant.id);
+      }
+      sqlUpdates.push(sql`end)`);
+      const finalSql = sql.join(sqlUpdates, sql.raw(" "));
+      console.log({ finalSql });
       await db
         .update(participants)
-        .set({ column_id: opts.input.column_id })
-        .where(eq(participants.id, opts.input.participant_id));
+        .set({ column_id: finalSql })
+        .where(inArray(participants.id, participantIds));
     }),
 };

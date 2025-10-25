@@ -40,7 +40,7 @@ export function useUploadParticipant({
           console.error(`data missing in createCreatureInEncounter`);
           return;
         }
-        return EncounterUtils.addParticipant(
+        const optimisticParticipant =
           ParticipantUtils.placeholderParticipantWithData(
             {
               ...data.participant,
@@ -52,9 +52,8 @@ export function useUploadParticipant({
               user_id: "pending",
               is_player: Boolean(data.creature.is_player),
             }
-          ),
-          old
-        );
+          );
+        return EncounterUtils.addParticipant(optimisticParticipant, old);
       });
       return { previousEncounterData };
     },

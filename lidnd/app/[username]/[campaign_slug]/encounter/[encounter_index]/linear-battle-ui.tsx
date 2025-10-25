@@ -98,13 +98,14 @@ export function StatColumns() {
                 {p
                   .slice()
                   .sort(ParticipantUtils.sortLinearly)
-                  .map((p) => (
+                  .map((p, i) => (
                     <ParticipantBattleData
                       participant={p}
                       ref={(ref) => registerBattleCardRef(p.id, ref)}
                       data-is-active={p.is_active}
                       data-participant-id={p.id}
                       key={p.id}
+                      indexInGroup={i}
                     />
                   ))}
                 {p[0]?.creature ? (
@@ -182,14 +183,11 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         const previousEncounter = encounterById.getData(encounterId);
         encounterById.setData(encounterId, (old) => {
           if (!old) return old;
-          return {
-            ...old,
-            participants: ParticipantUtils.assignColumn(
-              old.participants,
-              newColumn.column_id,
-              newColumn.participant_id
-            ),
-          };
+          return ParticipantUtils.assignColumn(
+            encounter,
+            newColumn.column_id,
+            newColumn.participant_id
+          );
         });
         return { previousEncounter };
       },

@@ -4,10 +4,7 @@ import * as schema from "./schema";
 
 let queryClient: ReturnType<typeof postgres>;
 
-const db_url =
-  process.env.NODE_ENV === "production"
-    ? process.env.DATABASE_URL
-    : "postgresql://postgres:postgres@localhost:5432/dnd";
+const db_url = process.env.DATABASE_URL;
 
 if (!db_url) {
   throw new Error("DATABASE_URL not set");
@@ -26,5 +23,5 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // for query purposes
-export const db = drizzle(queryClient, { schema });
+export const db = drizzle(queryClient, { schema, logger: true });
 export { queryClient };

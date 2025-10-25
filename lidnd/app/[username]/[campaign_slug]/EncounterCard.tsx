@@ -31,20 +31,22 @@ function EncounterDetails() {
   const monsters = EncounterUtils.monsters(encounterData);
   return (
     <li className="flex flex-col gap-4 rounded-lg border bg-background p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-base font-medium">
-            {encounterData.name || "Unnamed encounter"}
-          </p>
-          {encounterData.description ? (
-            <p
-              className="text-sm text-muted-foreground line-clamp-2"
-              dangerouslySetInnerHTML={{ __html: encounterData.description }}
-            />
-          ) : null}
+      <Link href={encounterLink}>
+        <div className="flex items-start justify-between gap-3 hover:bg-gray-10">
+          <div className="space-y-1">
+            <p className="text-base font-medium">
+              {encounterData.name || "Unnamed encounter"}
+            </p>
+            {encounterData.description ? (
+              <p
+                className="text-sm text-muted-foreground line-clamp-2"
+                dangerouslySetInnerHTML={{ __html: encounterData.description }}
+              />
+            ) : null}
+          </div>
+          <DifficultyBadge encounter={encounterData} />
         </div>
-        <DifficultyBadge encounter={encounterData} />
-      </div>
+      </Link>
       <div className="flex gap-2 h-12">
         {monsters.length > 0 && (
           <div className="flex -space-x-4 h-16">
@@ -73,27 +75,19 @@ function EncounterDetails() {
           />
         </div>
       </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Link href={encounterLink} className="flex">
-          <Button size="sm" variant="ghost">
-            Edit
-          </Button>
-        </Link>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-destructive hover:text-destructive ml-auto"
-          onClick={() =>
-            removeEncounter({
-              encounterId: encounterData.id,
-              campaignId: campaignData.id,
-            })
-          }
-        >
-          Delete
-        </Button>
-      </div>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="text-destructive hover:text-destructive ml-auto"
+        onClick={() =>
+          removeEncounter({
+            encounterId: encounterData.id,
+            campaignId: campaignData.id,
+          })
+        }
+      >
+        Delete
+      </Button>
     </li>
   );
 }
