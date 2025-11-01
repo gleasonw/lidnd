@@ -551,18 +551,29 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
           </ButtonWithTooltip>
         }
       />
-      <div className="flex gap-1 flex-wrap bg-white p-1">
+      <div className="flex gap-1 flex-wrap  p-1">
         {EncounterUtils.monsters(encounter)
           // TODO: janky hack to allow malice and other things the dm needs to track to sit inside the
           // column layout. really we should have some "encounter element" system that lets us add things
           // to the column layout without those things becoming participants.
           .filter((m) => !m.inanimate)
           .map((m) => (
-            <GroupParticipantDoneToggle participant={m} key={m.id} />
+            <GroupParticipantDoneToggle
+              participant={m}
+              key={m.id}
+              buttonExtra={
+                <div
+                  className="w-3 h-3"
+                  style={{
+                    backgroundColor: ParticipantUtils.iconHexColor(m),
+                  }}
+                />
+              }
+            />
           ))}
       </div>
 
-      <div className="flex gap-1 flex-wrap bg-white p-1">
+      <div className="flex gap-1 flex-wrap  p-1">
         {EncounterUtils.players(encounter)
           .slice()
           .sort((a, b) => a.creature.name.localeCompare(b.creature.name))
@@ -576,15 +587,17 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
 
 function GroupParticipantDoneToggle({
   participant,
+  buttonExtra,
 }: {
   participant: ParticipantWithData;
+  buttonExtra?: React.ReactNode;
 }) {
   const id = useEncounterId();
   const { mutate: updateCreatureHasPlayedThisRound } =
     useUpdateParticipantHasPlayed();
   return (
     <Button
-      variant="ghost"
+      variant={participant.has_played_this_round ? "ghost" : "outline"}
       onClick={() =>
         updateCreatureHasPlayedThisRound({
           encounter_id: id,
@@ -592,12 +605,13 @@ function GroupParticipantDoneToggle({
           has_played_this_round: !participant.has_played_this_round,
         })
       }
-      className={clsx("flex gap-1", {
-        "text-gray-400": participant.has_played_this_round,
+      className={clsx("flex gap-1 rounded-md", {
+        "opacity-50": participant.has_played_this_round,
       })}
     >
       {participant.creature.name}
       {participant.has_played_this_round ? <Check /> : ""}
+      {buttonExtra}
     </Button>
   );
 }
