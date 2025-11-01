@@ -5,9 +5,7 @@ import {
 } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 import { api } from "@/trpc/react";
 import { CreatureUtils } from "@/utils/creatures";
-
 import { useEditor } from "@tiptap/react";
-
 import StarterKit from "@tiptap/starter-kit";
 import type { UseFormReturn } from "react-hook-form";
 
@@ -150,7 +148,7 @@ export function useRemoveFromParty(campaign: { id: string }) {
         return {
           ...old,
           campaignToPlayers: old.campaignToPlayers.filter(
-            (p) => p.player_id !== player_id,
+            (p) => p.player_id !== player_id
           ),
         };
       });

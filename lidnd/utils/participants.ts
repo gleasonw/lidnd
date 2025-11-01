@@ -4,7 +4,7 @@ import type {
   Participant,
   ParticipantWithData,
 } from "@/server/api/router";
-import type { AddCreature, AddParticipant } from "@/types";
+import type { AddCreature, AddParticipant, System } from "@/types";
 import { CreatureUtils } from "@/utils/creatures";
 import { EncounterUtils, type ColumnableParticipant } from "@/utils/encounters";
 import * as R from "remeda";
@@ -180,6 +180,22 @@ function updateMinionCount(
   return Math.max(newMinionCount, 0);
 }
 
+function participantOutOfTurn(
+  p: { is_active: boolean; has_played_this_round: boolean },
+  campaign: { system: { initiative_type: System["initiative_type"] } }
+) {
+  switch (campaign.system.initiative_type) {
+    case "group":
+      return p.has_played_this_round;
+    case "linear":
+      return !p.is_active;
+    default: {
+      const _exhaustiveCheck: never = campaign.system.initiative_type;
+      throw new Error(`Unhandled initiative type: ${_exhaustiveCheck}`);
+    }
+  }
+}
+
 function sortLinearly<
   T extends { initiative: number; created_at: Date | string; id: string }
 >(a: T, b: T) {
@@ -241,4 +257,5 @@ export const ParticipantUtils = {
   tempHpPercent,
   assignColumn,
   hasIcon,
+  outOfTurn: participantOutOfTurn,
 };

@@ -362,9 +362,7 @@ export const ParticipantBattleData = observer(function BattleCard({
 
   return (
     <div
-      className={clsx(`relative flex-col gap-6 w-full flex`, {
-        "opacity-50": participant.has_played_this_round,
-      })}
+      className={clsx(`relative flex-col gap-6 w-full flex`)}
       ref={ref}
       {...props}
     >
@@ -710,13 +708,21 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
     "#1f105b",
     "#ff1a13",
   ];
+  const [campaign] = useCampaign();
   const labelColors = [...pastelLabels, ...solidColors];
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   return (
     <span className="flex flex-col gap-1">
       <LidndPopover
         trigger={
-          <Button variant="ghost" className={`flex flex-col gap-0 h-auto px-0`}>
+          <Button
+            variant="ghost"
+            className={`flex flex-col gap-0 h-auto px-0 ${
+              ParticipantUtils.outOfTurn(participant, campaign)
+                ? "opacity-50"
+                : null
+            }`}
+          >
             <span className="text-xl truncate max-w-full">
               {ParticipantUtils.name(participant)}
             </span>

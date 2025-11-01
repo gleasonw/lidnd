@@ -148,9 +148,6 @@ export function GroupBattleCard({
         {...props}
         className={clsx(
           {
-            "opacity-40":
-              !(encounter?.current_round === 0 && participant.has_surprise) &&
-              participant.has_played_this_round,
             "outline-zinc-900 outline": isSelected,
           },
           "cursor-pointer relative"
