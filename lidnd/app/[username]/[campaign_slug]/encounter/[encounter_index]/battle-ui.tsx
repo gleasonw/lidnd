@@ -370,7 +370,9 @@ export const ParticipantBattleData = observer(function BattleCard({
     >
       <BattleCardLayout key={participant.id} participant={participant}>
         <div className="flex flex-col gap-3 w-full p-3">
-          {participant.inanimate ? null : (
+          {participant.inanimate ? (
+            <LidndTextArea editor={editor} />
+          ) : (
             <div className="flex gap-2 items-center justify-between">
               <div className="flex gap-4 items-center w-full relative">
                 {ParticipantUtils.hasIcon(participant) ? (
