@@ -31,6 +31,18 @@ function iconHexColor(participant: ParticipantWithCreature) {
   return participant.hex_color ?? "";
 }
 
+function hasIcon(participant: {
+  creature: { icon_width: number; icon_height: number };
+}) {
+  // TODO: so, in schema we set default icon_width and icon_height to 250 if no icon is set. but
+  // really we just need to know that the creature has no icon. For now, if set to 250, we assume no icon,
+  // which is wonky
+  return (
+    participant.creature.icon_width !== 250 &&
+    participant.creature.icon_height !== 250
+  );
+}
+
 /** I'm starting to realize that really encounter utils is all we want, since state from
  * some objects impacts others, and the encounter has all that state...
  */
@@ -228,4 +240,5 @@ export const ParticipantUtils = {
   healthPercent,
   tempHpPercent,
   assignColumn,
+  hasIcon,
 };

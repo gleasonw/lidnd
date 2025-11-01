@@ -373,10 +373,12 @@ export const ParticipantBattleData = observer(function BattleCard({
           {participant.inanimate ? null : (
             <div className="flex gap-2 items-center justify-between">
               <div className="flex gap-4 items-center w-full relative">
-                <BattleCardCreatureIcon
-                  participant={participant}
-                  className="flex-shrink-0 flex-grow-0"
-                />
+                {ParticipantUtils.hasIcon(participant) ? (
+                  <BattleCardCreatureIcon
+                    participant={participant}
+                    className="flex-shrink-0 flex-grow-0"
+                  />
+                ) : null}
                 <div className="flex flex-col gap-2 w-full">
                   <div className="flex gap-3 w-full">
                     <div className="flex flex-col gap-2 w-full">
