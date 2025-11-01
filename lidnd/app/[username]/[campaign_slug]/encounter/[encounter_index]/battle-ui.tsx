@@ -697,41 +697,40 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
     "#ff1a13",
   ];
   const labelColors = [...pastelLabels, ...solidColors];
-  const encounterUiStore = useEncounterUIStore();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   return (
-    <span className="flex gap-2 items-center">
-      <span className="text-xl  truncate max-w-full">
-        {ParticipantUtils.name(participant)}
-      </span>
-      {encounterUiStore.isEditingInitiative && (
-        <LidndPopover
-          trigger={
-            <Button
+    <span className="flex flex-col gap-1">
+      <LidndPopover
+        trigger={
+          <Button variant="ghost" className={`flex flex-col gap-0 h-auto px-0`}>
+            <span className="text-xl truncate max-w-full">
+              {ParticipantUtils.name(participant)}
+            </span>
+            <div
+              className="w-full h-1"
               style={{
-                backgroundColor: ParticipantUtils.iconHexColor(participant),
+                background: ParticipantUtils.iconHexColor(participant),
               }}
-              variant="ghost"
             />
-          }
-        >
-          <div className="grid grid-cols-3">
-            {labelColors.map((color, index) => (
-              <Button
-                key={index}
-                style={{ backgroundColor: color }}
-                variant="ghost"
-                onClick={() => {
-                  updateParticipant({
-                    ...participant,
-                    hex_color: color === participant.hex_color ? null : color,
-                  });
-                }}
-              />
-            ))}
-          </div>
-        </LidndPopover>
-      )}
+          </Button>
+        }
+      >
+        <div className="grid grid-cols-3">
+          {labelColors.map((color, index) => (
+            <Button
+              key={index}
+              style={{ backgroundColor: color }}
+              variant="ghost"
+              onClick={() => {
+                updateParticipant({
+                  ...participant,
+                  hex_color: color === participant.hex_color ? null : color,
+                });
+              }}
+            />
+          ))}
+        </div>
+      </LidndPopover>
     </span>
   );
 });
