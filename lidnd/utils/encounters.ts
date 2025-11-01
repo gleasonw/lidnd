@@ -413,15 +413,15 @@ export const EncounterUtils = {
   },
 
   monsters(encounter: EncounterWithParticipants<ParticipantWithData>) {
-    return this.participantsByName(encounter).filter(
-      (p) => !ParticipantUtils.isFriendly(p)
-    );
+    return this.participantsByName(encounter)
+      .filter((p) => !ParticipantUtils.isFriendly(p))
+      .sort(ParticipantUtils.sortLinearly);
   },
 
   allies(encounter: EncounterWithParticipants<ParticipantWithData>) {
-    return this.participantsByName(encounter).filter((p) =>
-      ParticipantUtils.isFriendly(p)
-    );
+    return this.participantsByName(encounter)
+      .filter((p) => ParticipantUtils.isFriendly(p))
+      .sort(ParticipantUtils.sortLinearly);
   },
 
   players(encounter: EncounterWithParticipants<ParticipantWithData>) {
