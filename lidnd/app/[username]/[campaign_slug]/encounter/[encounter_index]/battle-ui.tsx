@@ -73,7 +73,6 @@ import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 import { Input } from "@/components/ui/input";
 import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
-import { updateEncounter } from "@/encounters/encounterActions";
 
 // TODO: existing creatures for ally/player upload?
 
