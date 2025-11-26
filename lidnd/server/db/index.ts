@@ -23,5 +23,5 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // for query purposes
-export const db = drizzle(queryClient, { schema, logger: true });
+export const db = drizzle(queryClient, { schema });
 export { queryClient };

@@ -72,7 +72,7 @@ export function ParticipantHealthForm({
       <ButtonWithTooltip
         text="Damage"
         variant="outline"
-        className={"bg-red-100 text-red-700 gap-3 flex items-center"}
+        className={"bg-red-100 text-red-700 gap-3 p-2 flex items-center"}
         onClick={(e) => {
           e.stopPropagation();
           handleHPChange(
@@ -100,7 +100,7 @@ export function ParticipantHealthForm({
       <ButtonWithTooltip
         text="Heal"
         variant="outline"
-        className={"bg-green-100 text-green-700 gap-3 flex items-center"}
+        className={"bg-green-100 text-green-700 p-2 gap-3 flex items-center"}
         onClick={(e) => {
           e.stopPropagation();
           handleHPChange(

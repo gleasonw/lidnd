@@ -1,4 +1,4 @@
-import { creatureUploadSchema } from "../db/schema";
+import { campaignCreatureLink, creatureUploadSchema } from "../db/schema";
 import { db } from "@/server/db";
 import { creatures } from "@/server/db/schema";
 import { TRPCError } from "@trpc/server";
@@ -12,7 +12,11 @@ export const ServerCreature = {
   create: async function (
     ctx: LidndContext,
     uploadedCreature: z.infer<typeof creatureUploadSchema>,
-    { hasStatBlock, hasIcon }: { hasStatBlock: boolean; hasIcon: boolean },
+    {
+      hasStatBlock,
+      hasIcon,
+      campaignId,
+    }: { hasStatBlock: boolean; hasIcon: boolean; campaignId?: string },
     dbObject = db
   ) {
     console.log({ hasStatBlock, hasIcon });
@@ -49,6 +53,13 @@ export const ServerCreature = {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to create creature",
+      });
+    }
+
+    if (campaignId) {
+      await dbObject.insert(campaignCreatureLink).values({
+        campaign_id: campaignId,
+        creature_id: newCreature[0].id,
       });
     }
 

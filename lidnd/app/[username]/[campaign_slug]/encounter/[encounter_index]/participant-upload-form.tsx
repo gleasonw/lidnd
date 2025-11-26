@@ -116,18 +116,18 @@ export const ExistingMonster = observer(function ExistingMonster({
   onUpload?: (creature: Creature) => void;
 }) {
   const [name, setName] = useState("");
+  const [filterInCampaign, setFilterInCampaign] = useState(true);
   const [encounter] = useEncounter();
   const uiStore = useEncounterUIStore();
-  const { data: creatures } = api.getUserCreatures.useQuery({
-    name,
-    is_player: false,
-  });
   const [campaign] = useCampaign();
   const crBudget = EncounterUtils.remainingCr(encounter, campaign);
 
-  const creaturesToDisplay = uiStore.filterExistingCreaturesByCrBudget
-    ? creatures?.filter((c) => c.challenge_rating <= crBudget)
-    : creatures;
+  const { data: creatures } = api.getUserCreatures.useQuery({
+    name,
+    is_player: false,
+    campaignId: filterInCampaign ? encounter.campaign_id : undefined,
+    maxCR: uiStore.filterExistingCreaturesByCrBudget ? crBudget : undefined,
+  });
 
   return (
     <div className="flex flex-col max-h-full gap-5 ">
@@ -137,15 +137,26 @@ export const ExistingMonster = observer(function ExistingMonster({
         onChange={(e) => setName(e.target.value)}
         value={name}
       />
-      <Toggle
-        onPressedChange={uiStore.toggleFilterCreaturesByCrBudget}
-        pressed={uiStore.filterExistingCreaturesByCrBudget}
-      >
-        In CR budget
-      </Toggle>
+      <span>Cr budget: {crBudget}</span>
+      <div className="flex">
+        <Toggle
+          onPressedChange={uiStore.toggleFilterCreaturesByCrBudget}
+          pressed={uiStore.filterExistingCreaturesByCrBudget}
+          className="data-[state=on]:bg-gray-200"
+        >
+          In CR budget
+        </Toggle>
+        <Toggle
+          onPressedChange={() => setFilterInCampaign(!filterInCampaign)}
+          pressed={filterInCampaign}
+          className="data-[state=on]:bg-gray-200"
+        >
+          In Campaign
+        </Toggle>
+      </div>
       <Suspense key={name} fallback={<div>Loading creatures</div>}>
         <div className={"flex flex-col overflow-auto gap-3 py-3"}>
-          {creaturesToDisplay?.map((creature) => (
+          {creatures?.map((creature) => (
             <ListedCreature
               key={creature.id}
               creature={creature}

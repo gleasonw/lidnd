@@ -26,8 +26,10 @@ export default async function CampaignLayout(props: {
 
   const campaign = await ServerCampaign.campaignFromSlug(
     UserUtils.context(user),
-    params.campaign_slug,
+    params.campaign_slug
   );
+
+  console.log({ params });
 
   if (!campaign) {
     return <div>No campaign found -- bug!</div>;

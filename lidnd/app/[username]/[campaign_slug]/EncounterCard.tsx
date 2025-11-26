@@ -35,12 +35,6 @@ function EncounterDetails() {
             <p className="text-base font-medium">
               {encounterData.name || "Unnamed encounter"}
             </p>
-            {encounterData.description ? (
-              <p
-                className="text-sm text-muted-foreground line-clamp-2"
-                dangerouslySetInnerHTML={{ __html: encounterData.description }}
-              />
-            ) : null}
           </div>
           <DifficultyBadge encounter={encounterData} />
         </div>

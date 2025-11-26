@@ -20,8 +20,7 @@ export const participantsRouter = {
       })
     )
     .mutation(async (opts) => {
-      console.log(opts.input);
-      await ServerEncounter.encounterByIdThrows(
+      const encounter = await ServerEncounter.encounterByIdThrows(
         opts.ctx,
         opts.input.participant.encounter_id
       );
@@ -32,6 +31,7 @@ export const participantsRouter = {
           {
             hasStatBlock: opts.input.hasStatBlock,
             hasIcon: opts.input.hasIcon,
+            campaignId: encounter.campaign_id,
           },
           tx
         );

@@ -17,8 +17,9 @@ import {
   updateSettingsSchema,
   creatureUploadSchema,
   encounters,
+  campaignCreatureLink,
 } from "@/server/db/schema";
-import { eq, and, ilike } from "drizzle-orm";
+import { eq, and, ilike, lte, exists } from "drizzle-orm";
 import { db } from "@/server/db";
 import { z } from "zod";
 import { getIconAWSname, getStatBlockAWSname } from "@/server/api/utils";
@@ -389,7 +390,7 @@ export const appRouter = t.router({
       })
     )
     .mutation(async (opts) => {
-      const [userCreature, _] = await Promise.all([
+      const [userCreature, encounter] = await Promise.all([
         db
           .select()
           .from(creatures)
@@ -406,6 +407,17 @@ export const appRouter = t.router({
           code: "INTERNAL_SERVER_ERROR",
           message: "No creature found",
         });
+      }
+      if (encounter.campaign_id) {
+        void db
+          .insert(campaignCreatureLink)
+          .values({
+            campaign_id: encounter.campaign_id,
+            creature_id: userCreature[0].id,
+          })
+          .catch((err) => {
+            console.error("Failed to link creature to campaign", err);
+          });
       }
       return await ServerEncounter.addParticipant(opts.ctx, {
         hp: userCreature[0].max_hp,
@@ -681,6 +693,8 @@ export const appRouter = t.router({
       z.object({
         name: z.string().optional(),
         is_player: z.boolean().optional(),
+        maxCR: z.number().optional(),
+        campaignId: z.string().optional(),
       })
     )
     .query(async (opts) => {
@@ -690,6 +704,24 @@ export const appRouter = t.router({
       }
       if (opts.input.is_player !== undefined) {
         filters.push(eq(creatures.is_player, opts.input.is_player));
+      }
+      if (opts.input.maxCR !== undefined) {
+        filters.push(lte(creatures.challenge_rating, opts.input.maxCR));
+      }
+      if (opts.input.campaignId) {
+        filters.push(
+          exists(
+            db
+              .select()
+              .from(campaignCreatureLink)
+              .where(
+                and(
+                  eq(campaignCreatureLink.campaign_id, opts.input.campaignId),
+                  eq(campaignCreatureLink.creature_id, creatures.id)
+                )
+              )
+          )
+        );
       }
       return await db
         .select()

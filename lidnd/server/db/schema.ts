@@ -128,6 +128,7 @@ export const campaignRelations = relations(campaigns, ({ one, many }) => ({
   }),
   encounters: many(encounters),
   campaignToPlayers: many(campaignToPlayer),
+  creatureLinks: many(campaignCreatureLink),
 }));
 
 export const campaignToPlayer = pgTable(
@@ -347,7 +348,27 @@ export const creatures = pgTable(
 
 export const creatureRelations = relations(creatures, ({ many }) => ({
   participants: many(participants),
+  campaignLinks: many(campaignCreatureLink),
 }));
+
+export const campaignCreatureLink = pgTable(
+  "campaign_creature_link",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    campaign_id: uuid("campaign_id")
+      .notNull()
+      .references(() => campaigns.id, { onDelete: "cascade" }),
+    creature_id: uuid("creature_id")
+      .notNull()
+      .references(() => creatures.id, { onDelete: "cascade" }),
+  },
+  (t) => {
+    return {
+      campaignIndex: index("campaign_index_link").on(t.campaign_id),
+      creatureIndex: index("creature_index_link").on(t.creature_id),
+    };
+  }
+);
 
 export const status_effects = pgTable("status_effects", {
   id: uuid("id").primaryKey().defaultRandom(),

@@ -56,6 +56,26 @@ export const appRoutes = {
     return `${this.dashboard(user)}/${campaign.slug}`;
   },
 
+  creaturesForCampaign({
+    campaign,
+    user,
+  }: {
+    campaign: { slug: string };
+    user: LidndUser;
+  }) {
+    return `${this.campaign({ campaign, user })}?tab=creatures`;
+  },
+
+  sessionsForCampaign({
+    campaign,
+    user,
+  }: {
+    campaign: { slug: string };
+    user: LidndUser;
+  }) {
+    return `${this.campaign({ campaign, user })}?tab=sessions`;
+  },
+
   party(props: { campaign: { slug: string }; user: LidndUser }) {
     return `${this.campaign(props)}/party`;
   },

@@ -371,7 +371,7 @@ export const ParticipantBattleData = observer(function BattleCard({
             <LidndTextArea editor={editor} />
           ) : (
             <div className="flex gap-2 items-center justify-between">
-              <div className="flex gap-4 items-center w-full relative">
+              <div className="flex gap-2 items-center w-full relative">
                 {ParticipantUtils.hasIcon(participant) ? (
                   <BattleCardCreatureIcon
                     participant={participant}
@@ -521,36 +521,39 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
   const [encounter] = useEncounter();
   const { mutate: updateEncounter } = useUpdateEncounter();
   return (
-    <div className="flex gap-3 items-center">
-      <Link href={campaignLink} className="flex gap-3">
-        <Button variant="ghost" className="opacity-60">
-          <Home />
-        </Button>
-      </Link>
-      <EncounterDetails />
-      <ButtonWithTooltip
-        variant="ghost"
-        className="self-stretch h-full flex p-2"
-        text="Edit initiative and columns"
-        onClick={() => toggleEditingInitiative()}
-      >
-        <ListOrdered />
-      </ButtonWithTooltip>
-      <ButtonWithTooltip
-        text="Switch to prep mode"
-        variant="ghost"
-        className="flex text-gray-400"
-        onClick={() =>
-          updateEncounter({
-            status: "prep",
-            id: encounter.id,
-            campaign_id: encounter.campaign_id,
-            started_at: null,
-          })
-        }
-      >
-        <Edit />
-      </ButtonWithTooltip>
+    <div className="flex gap-3 flex-col sm:flex-row">
+      <div className="flex gap-3 items-center">
+        <Link href={campaignLink} className="flex gap-3">
+          <Button variant="ghost" className="opacity-60">
+            <Home />
+          </Button>
+        </Link>
+        <EncounterDetails />
+        <ButtonWithTooltip
+          variant="ghost"
+          className="self-stretch h-full flex p-2"
+          text="Edit initiative and columns"
+          onClick={() => toggleEditingInitiative()}
+        >
+          <ListOrdered />
+        </ButtonWithTooltip>
+        <ButtonWithTooltip
+          text="Switch to prep mode"
+          variant="ghost"
+          className="flex text-gray-400"
+          onClick={() =>
+            updateEncounter({
+              status: "prep",
+              id: encounter.id,
+              campaign_id: encounter.campaign_id,
+              started_at: null,
+            })
+          }
+        >
+          <Edit />
+        </ButtonWithTooltip>
+      </div>
+
       <div className="flex gap-1 flex-wrap  p-1">
         {EncounterUtils.monsters(encounter)
           // TODO: janky hack to allow malice and other things the dm needs to track to sit inside the
@@ -577,7 +580,7 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
           trigger={
             <ButtonWithTooltip
               variant="outline"
-              className="self-stretch h-full flex p-2"
+              className="flex p-2"
               text="Add monster"
             >
               <Plus />
@@ -620,6 +623,12 @@ function GroupParticipantDoneToggle({
       }
       className={clsx("flex gap-1 rounded-md", {
         "opacity-50": participant.has_played_this_round,
+        "bg-blue-200":
+          ParticipantUtils.isFriendly(participant) &&
+          !participant.has_played_this_round,
+        "bg-red-200":
+          !ParticipantUtils.isFriendly(participant) &&
+          !participant.has_played_this_round,
       })}
     >
       {participant.creature.name}
