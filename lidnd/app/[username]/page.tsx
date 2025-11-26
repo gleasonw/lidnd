@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AngryIcon, Calendar, Plus, Trash2 } from "lucide-react";
+import { AngryIcon, ArchiveIcon, Plus } from "lucide-react";
 import { LidndAuth, type LidndUser, UserUtils } from "@/app/authentication";
 import { appRoutes } from "@/app/routes";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -23,13 +22,17 @@ import {
 } from "@/components/ui/select";
 import { CampaignDescriptionForm } from "@/app/[username]/campaign-description-area";
 import { getSystems, getUserCampaigns } from "@/server/api/utils";
-import { createCampaign, deleteCampaign } from "./actions";
+import { createCampaign } from "./actions";
 import type { Campaign } from "./types";
 import { isStringMeaningful } from "./utils";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import * as CampaignUtils from "@/utils/campaigns";
 import * as R from "remeda";
+import { db } from "@/server/db";
+import { campaigns } from "@/server/db/schema";
+import { and, eq } from "drizzle-orm";
+import { ArchiveCampaignButton } from "@/app/[username]/ArchiveCampaignButton";
 
 export default async function Page(props: {
   params: Promise<{ username: string }>;
@@ -43,7 +46,12 @@ export default async function Page(props: {
   }
 
   const [userCampaigns, systems] = await Promise.all([
-    getUserCampaigns(user.id),
+    db
+      .select()
+      .from(campaigns)
+      .where(
+        and(eq(campaigns.user_id, user.id), eq(campaigns.is_archived, false))
+      ),
     getSystems(),
   ]);
 
@@ -105,6 +113,17 @@ export default async function Page(props: {
           </div>
         </div>
       </header>
+      <div>
+        <LidndDialog
+          trigger={
+            <Button variant="ghost" className="text-gray-400">
+              <ArchiveIcon />
+            </Button>
+          }
+          title="Archive campaigns"
+          content={<ArchiveCampaignDialog />}
+        />
+      </div>
 
       {sortedCampaigns.length ? (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -122,6 +141,27 @@ export default async function Page(props: {
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+async function ArchiveCampaignDialog() {
+  const user = await LidndAuth.getUser();
+  if (!user) {
+    redirect("/login");
+  }
+  const campaignsForUser = await getUserCampaigns(user.id);
+  return (
+    <div className="flex flex-col gap-2">
+      {campaignsForUser
+        ?.slice()
+        .sort((c1, c2) => (c1.is_archived ? -1 : 1))
+        .map((c) => (
+          <div key={c.id} className="flex gap-3 items-baseline">
+            <span>{c.name}</span>
+            <ArchiveCampaignButton campaign={c} />
+          </div>
+        ))}
     </div>
   );
 }
@@ -148,109 +188,52 @@ async function CampaignCard(props: CampaignCardProps) {
   const campaignDescription = toPlainText(
     campaignDetails?.description ?? campaign.description ?? ""
   );
-  const createdAt = campaign.created_at ? new Date(campaign.created_at) : null;
-  const createdAtLabel = createdAt
-    ? new Intl.DateTimeFormat(undefined, {
-        dateStyle: "medium",
-      }).format(createdAt)
-    : null;
 
   return (
-    <Card className="flex h-full flex-col border-muted shadow-sm">
-      <CardHeader className="gap-4 pb-0">
-        <div className="space-y-2">
-          <CardTitle className="text-xl">{campaignName}</CardTitle>
-          <CardDescription className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide">
-            <span>
-              {campaignDetails?.system?.name ?? "System not specified"}
-            </span>
-            <span className="text-muted-foreground">•</span>
-            <span>{sessionList.length} sessions</span>
-          </CardDescription>
-        </div>
-
-        {campaignDetails?.campaignToPlayers?.length ? (
-          <div className="flex flex-wrap items-center gap-2 h-10">
-            {campaignDetails.campaignToPlayers.map(({ player }) => (
-              <CreatureIcon key={player.id} creature={player} size="small" />
-            ))}
+    <Link href={campaignRoute}>
+      <Card className="flex h-full flex-col border-muted shadow-sm">
+        <CardHeader className="gap-4 pb-0">
+          <div className="space-y-2">
+            <CardTitle className="text-xl">{campaignName}</CardTitle>
+            <CardDescription className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide">
+              <span>
+                {campaignDetails?.system?.name ?? "System not specified"}
+              </span>
+              <span className="text-muted-foreground">•</span>
+              <span>{sessionList.length} sessions</span>
+            </CardDescription>
           </div>
-        ) : (
-          <div className="h-10">
-            <span className="text-sm text-muted-foreground">
-              No players yet
-            </span>
-          </div>
-        )}
 
-        {createdAtLabel ? (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Calendar className="h-3 w-3" />
-            <span>{createdAtLabel}</span>
-          </div>
-        ) : null}
-      </CardHeader>
+          {campaignDetails?.campaignToPlayers?.length ? (
+            <div className="flex flex-wrap items-center gap-2 h-10">
+              {campaignDetails.campaignToPlayers.map(({ player }) => (
+                <CreatureIcon key={player.id} creature={player} size="small" />
+              ))}
+            </div>
+          ) : (
+            <div className="h-10">
+              <span className="text-sm text-muted-foreground">
+                No players yet
+              </span>
+            </div>
+          )}
+        </CardHeader>
 
-      <CardContent className="flex flex-1 flex-col gap-6 pt-4">
-        {campaignDescription ? (
-          <p className="text-sm text-muted-foreground">
-            {campaignDescription.length > 200
-              ? `${campaignDescription.slice(0, 200)}…`
-              : campaignDescription}
-          </p>
-        ) : (
-          <p className="text-sm italic text-muted-foreground">
-            No description provided.
-          </p>
-        )}
-      </CardContent>
-
-      <CardFooter className="flex flex-wrap items-center justify-between gap-2 pt-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href={campaignRoute} className="inline-flex">
-            <Button size="sm" variant="secondary">
-              Manage
-            </Button>
-          </Link>
-        </div>
-
-        <DeleteCampaignDialog
-          campaignId={campaign.id}
-          campaignName={campaignName}
-        />
-      </CardFooter>
-    </Card>
-  );
-}
-
-function DeleteCampaignDialog(props: {
-  campaignId: string;
-  campaignName: string;
-}) {
-  const { campaignId, campaignName } = props;
-
-  return (
-    <LidndDialog
-      title="Delete campaign"
-      trigger={
-        <Button variant="ghost" size="sm" className="text-destructive">
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </Button>
-      }
-      content={
-        <form action={deleteCampaign} className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">
-            This will permanently remove <strong>{campaignName}</strong> and all
-            of its sessions and encounters. This action cannot be undone.
-          </p>
-          <input type="hidden" name="campaign_id" value={campaignId} />
-          <Button type="submit" variant="destructive">
-            Delete campaign
-          </Button>
-        </form>
-      }
-    />
+        <CardContent className="flex flex-1 flex-col gap-6 pt-4">
+          {campaignDescription ? (
+            <p className="text-sm text-muted-foreground">
+              {campaignDescription.length > 200
+                ? `${campaignDescription.slice(0, 200)}…`
+                : campaignDescription}
+            </p>
+          ) : (
+            <p className="text-sm italic text-muted-foreground">
+              No description provided.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 

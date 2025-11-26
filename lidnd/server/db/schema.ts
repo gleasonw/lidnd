@@ -105,6 +105,7 @@ export const campaigns = pgTable(
     focused_encounter_id: uuid("focused_encounter_id"),
     started_at: timestamp("started_at"),
     created_at: timestamp("created_at").defaultNow(),
+    is_archived: boolean("is_archived").default(false).notNull(),
     user_id: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -117,6 +118,8 @@ export const campaigns = pgTable(
     };
   }
 );
+
+export type CampaignInsert = InferInsertModel<typeof campaigns>;
 
 export const campaignRelations = relations(campaigns, ({ one, many }) => ({
   system: one(systems, {
