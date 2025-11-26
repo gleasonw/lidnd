@@ -1,9 +1,18 @@
 "use client";
 
 import { useEncounter } from "@/encounters/[encounter_index]/hooks";
+import { useEffect, useState } from "react";
 
 export function EncounterDetails() {
   const [encounter] = useEncounter();
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const intervalTimer = setInterval(() => {
+      setNow(Date.now());
+    }, 300000);
+    return () => clearInterval(intervalTimer);
+  });
   switch (encounter.status) {
     case "prep":
       return (
@@ -11,12 +20,23 @@ export function EncounterDetails() {
           <span className="font-bold">{encounter.name}</span>
         </>
       );
-    case "run":
+    case "run": {
+      const startTime = encounter.started_at
+        ? new Date(encounter.started_at)
+        : new Date(now);
+      const elapsedMs = now - startTime.getTime();
+      const minutes = Math.floor(elapsedMs / 1000 / 60);
       return (
-        <div className="flex gap-2 text-xl font-semibold items-center">
-          Round {encounter.current_round}
+        <div className="flex flex-col gap-1 text-xl font-semibold">
+          <span className="whitespace-nowrap">
+            Round {encounter.current_round}
+          </span>
+          <span className="text-sm text-gray-500">
+            {minutes === 0 ? "now" : `${minutes} minutes`}
+          </span>
         </div>
       );
+    }
     default: {
       // @ts-expect-error - exhaustive check
       const _: never = encounter.status;

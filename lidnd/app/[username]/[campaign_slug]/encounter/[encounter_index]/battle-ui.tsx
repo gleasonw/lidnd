@@ -31,6 +31,7 @@ import {
   useUpdateParticipantHasPlayed,
   useUpdateEncounterParticipant,
   useEncounterHotkey,
+  useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import { useDebouncedCallback } from "use-debounce";
 import { useEditor } from "@tiptap/react";
@@ -43,6 +44,7 @@ import {
 } from "@/encounters/[encounter_index]/reminders";
 import {
   Check,
+  Edit,
   Grip,
   Home,
   ListOrdered,
@@ -71,6 +73,7 @@ import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 import { Input } from "@/components/ui/input";
 import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
+import { updateEncounter } from "@/encounters/encounterActions";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -517,8 +520,9 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
     useEncounterUIStore();
   const { campaignLink } = useEncounterLinks();
   const [encounter] = useEncounter();
+  const { mutate: updateEncounter } = useUpdateEncounter();
   return (
-    <div className="flex p-2 gap-3 items-center">
+    <div className="flex gap-3 items-center">
       <Link href={campaignLink} className="flex gap-3">
         <Button variant="ghost" className="opacity-60">
           <Home />
@@ -533,19 +537,21 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
       >
         <ListOrdered />
       </ButtonWithTooltip>
-      <LidndDialog
-        title={"Add monster"}
-        content={<OpponentParticipantForm />}
-        trigger={
-          <ButtonWithTooltip
-            variant="ghost"
-            className="self-stretch h-full flex p-2"
-            text="Add monster"
-          >
-            <Plus />
-          </ButtonWithTooltip>
+      <ButtonWithTooltip
+        text="Switch to prep mode"
+        variant="ghost"
+        className="flex text-gray-400"
+        onClick={() =>
+          updateEncounter({
+            status: "prep",
+            id: encounter.id,
+            campaign_id: encounter.campaign_id,
+            started_at: null,
+          })
         }
-      />
+      >
+        <Edit />
+      </ButtonWithTooltip>
       <div className="flex gap-1 flex-wrap  p-1">
         {EncounterUtils.monsters(encounter)
           // TODO: janky hack to allow malice and other things the dm needs to track to sit inside the
@@ -566,6 +572,19 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
               }
             />
           ))}
+        <LidndDialog
+          title={"Add monster"}
+          content={<OpponentParticipantForm />}
+          trigger={
+            <ButtonWithTooltip
+              variant="outline"
+              className="self-stretch h-full flex p-2"
+              text="Add monster"
+            >
+              <Plus />
+            </ButtonWithTooltip>
+          }
+        />
       </div>
 
       <div className="flex gap-1 flex-wrap  p-1">
