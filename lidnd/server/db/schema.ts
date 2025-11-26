@@ -321,6 +321,8 @@ export const participantRelations = relations(
   })
 );
 
+export type CreatureInsert = InferInsertModel<typeof creatures>;
+
 export const creatures = pgTable(
   "creatures",
   {

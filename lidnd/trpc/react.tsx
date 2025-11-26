@@ -12,13 +12,20 @@ import { getUrl } from "./shared";
 export const api = createTRPCReact<AppRouter>();
 
 function makeQueryClient() {
-  return new QueryClient({
+  const qc = new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 60 * 1000,
       },
+      // mark all queries as stale after a mutation
+      mutations: {
+        onSuccess: () => {
+          qc.invalidateQueries();
+        },
+      },
     },
   });
+  return qc;
 }
 
 let browserQueryClient: QueryClient | undefined = undefined;

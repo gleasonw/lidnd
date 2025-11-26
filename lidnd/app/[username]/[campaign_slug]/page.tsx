@@ -25,6 +25,7 @@ import { ButtonWithTooltip } from "@/components/ui/tip";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
+import { RemoveCreatureFromCampaign } from "@/app/[username]/[campaign_slug]/RemoveCreatureFromCampaignButton";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -279,6 +280,7 @@ async function CampaignCreatures({ campaign }: { campaign: { id: string } }) {
           <div key={c.id} className="flex items-center gap-2">
             <CreatureIcon creature={c} />
             {c.name}
+            <RemoveCreatureFromCampaign creature={c} campaign={campaign} />
           </div>
         ))}
       </div>

@@ -38,6 +38,7 @@ import { encountersRouter } from "@/server/api/encounters-router";
 import { participantsRouter } from "./participants-router";
 import { ServerCreature } from "@/server/sdk/creatures";
 import { gameSessionRouter } from "@/server/api/game-session-router";
+import { revalidatePath } from "next/cache";
 
 export type Encounter = typeof encounters.$inferSelect;
 export type Creature = typeof creatures.$inferSelect;
@@ -409,21 +410,18 @@ export const appRouter = t.router({
         });
       }
       if (encounter.campaign_id) {
-        void db
-          .insert(campaignCreatureLink)
-          .values({
-            campaign_id: encounter.campaign_id,
-            creature_id: userCreature[0].id,
-          })
-          .catch((err) => {
-            console.error("Failed to link creature to campaign", err);
-          });
+        await db.insert(campaignCreatureLink).values({
+          campaign_id: encounter.campaign_id,
+          creature_id: userCreature[0].id,
+        });
       }
-      return await ServerEncounter.addParticipant(opts.ctx, {
+      const newP = await ServerEncounter.addParticipant(opts.ctx, {
         hp: userCreature[0].max_hp,
         creature: userCreature[0],
         ...opts.input,
       });
+      revalidatePath("/");
+      return newP;
     }),
   //#endregion
 
@@ -505,6 +503,7 @@ export const appRouter = t.router({
         await tx
           .delete(participants)
           .where(eq(participants.creature_id, opts.input.player_id));
+        revalidatePath(`/`);
       });
     }),
 
@@ -547,6 +546,7 @@ export const appRouter = t.router({
             tx
           ),
         ]);
+        revalidatePath(`/`);
 
         return {
           newPartyMember: creature,
@@ -626,6 +626,7 @@ export const appRouter = t.router({
           message: "Failed to update creature",
         });
       }
+      revalidatePath("/");
       return result[0];
     }),
 

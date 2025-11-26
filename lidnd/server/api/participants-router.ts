@@ -10,6 +10,7 @@ import { z } from "zod";
 import { ServerEncounter } from "../sdk/encounters";
 import { participantCreateSchema } from "../db/schema";
 import { ServerCreature } from "../sdk/creatures";
+import { revalidatePath } from "next/cache";
 
 export const participantsRouter = {
   uploadParticipant: protectedProcedure
@@ -46,6 +47,7 @@ export const participantsRouter = {
         );
         return [nc, np] as const;
       });
+      revalidatePath("/");
 
       return {
         participant: newParticipant,
