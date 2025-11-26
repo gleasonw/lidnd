@@ -51,7 +51,10 @@ export function DifficultyBadge({
   const diffColor = EncounterUtils.difficultyCssClasses(encounter, campaign);
   return (
     <Badge className={`${diffColor} flex-grow-0 h-8 text-sm rounded-sm`}>
-      {EncounterUtils.difficulty(encounter, campaign?.party_level)}
+      {EncounterUtils.difficulty({
+        encounter,
+        campaign,
+      })}
     </Badge>
   );
 }

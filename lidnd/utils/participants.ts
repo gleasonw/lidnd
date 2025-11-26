@@ -1,10 +1,11 @@
 import { defaultParticipant } from "@/app/[username]/[campaign_slug]/encounter/utils";
+import type { Campaign } from "@/app/[username]/types";
 import type {
   Creature,
   Participant,
   ParticipantWithData,
 } from "@/server/api/router";
-import type { AddCreature, AddParticipant, System } from "@/types";
+import type { AddCreature, AddParticipant } from "@/types";
 import { CreatureUtils } from "@/utils/creatures";
 import { EncounterUtils, type ColumnableParticipant } from "@/utils/encounters";
 import * as R from "remeda";
@@ -182,15 +183,15 @@ function updateMinionCount(
 
 function participantOutOfTurn(
   p: { is_active: boolean; has_played_this_round: boolean },
-  campaign: { system: { initiative_type: System["initiative_type"] } }
+  campaign: Pick<Campaign, "system">
 ) {
-  switch (campaign.system.initiative_type) {
-    case "group":
+  switch (campaign.system) {
+    case "drawsteel":
       return p.has_played_this_round;
-    case "linear":
+    case "dnd5e":
       return !p.is_active;
     default: {
-      const _exhaustiveCheck: never = campaign.system.initiative_type;
+      const _exhaustiveCheck: never = campaign.system;
       throw new Error(`Unhandled initiative type: ${_exhaustiveCheck}`);
     }
   }

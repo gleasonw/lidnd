@@ -91,6 +91,10 @@ export const systems = pgTable("systems", {
     .notNull(),
 });
 
+// previously we had a systems table, but really, we're not going to support dynamic system adds like that.
+// just hardcoded systems.
+export const systemEnum = pgEnum("system_enum", ["dnd5e", "drawsteel"]);
+
 export const campaigns = pgTable(
   "campaigns",
   {
@@ -98,6 +102,7 @@ export const campaigns = pgTable(
     system_id: uuid("system_id")
       .notNull()
       .references(() => systems.id, { onDelete: "cascade" }),
+    system: systemEnum("system").notNull().default("dnd5e"),
     name: varchar("name", { length: 256 }).notNull(),
     slug: varchar("slug", { length: 256 }).notNull().default(""),
     description: text("description"),
@@ -122,7 +127,7 @@ export const campaigns = pgTable(
 export type CampaignInsert = InferInsertModel<typeof campaigns>;
 
 export const campaignRelations = relations(campaigns, ({ one, many }) => ({
-  system: one(systems, {
+  legacySystem: one(systems, {
     fields: [campaigns.system_id],
     references: [systems.id],
   }),
@@ -221,6 +226,8 @@ export const encounters = pgTable(
     label: encounter_label_enum("label").default("active").notNull(),
     order: doublePrecision("order").default(1).notNull(),
     index_in_campaign: integer("index_in_campaign").notNull().default(0),
+    // specific to a drawsteel system, maybe eventually we split out a "drawsteel.average_victories" type of structure
+    average_victories: real("average_victories"),
   },
   (t) => {
     return {

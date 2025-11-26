@@ -365,7 +365,7 @@ export const ServerEncounter = {
         },
         campaigns: {
           with: {
-            system: true,
+            legacySystem: true,
           },
         },
       },

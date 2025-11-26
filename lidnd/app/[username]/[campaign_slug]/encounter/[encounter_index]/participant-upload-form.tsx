@@ -130,7 +130,7 @@ export const ExistingMonster = observer(function ExistingMonster({
   });
 
   return (
-    <div className="flex flex-col max-h-full gap-5 ">
+    <div className="flex flex-col max-h-full gap-5 w-full ">
       <Input
         placeholder="Search..."
         type="text"

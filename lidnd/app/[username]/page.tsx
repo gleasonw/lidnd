@@ -196,9 +196,7 @@ async function CampaignCard(props: CampaignCardProps) {
           <div className="space-y-2">
             <CardTitle className="text-xl">{campaignName}</CardTitle>
             <CardDescription className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide">
-              <span>
-                {campaignDetails?.system?.name ?? "System not specified"}
-              </span>
+              <span>{campaignDetails?.system ?? "System not specified"}</span>
               <span className="text-muted-foreground">•</span>
               <span>{sessionList.length} sessions</span>
             </CardDescription>

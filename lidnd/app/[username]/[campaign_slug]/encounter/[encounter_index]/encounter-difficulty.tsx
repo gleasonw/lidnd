@@ -1,6 +1,7 @@
 "use client";
 
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import {
   Select,
   SelectItem,
@@ -21,15 +22,28 @@ export function EncounterDifficulty() {
   const target = isPending
     ? variables.target_difficulty
     : encounter.target_difficulty;
-  const remainingBudget = EncounterUtils.remainingCr(encounter, campaign);
-  const difficulty = EncounterUtils.difficulty(
-    encounter,
-    campaign?.party_level
-  );
+
   return (
     <>
-      <label className="flex gap-3 items-baseline">
-        <span className="whitespace-nowrap">Goal difficulty is</span>
+      {campaign.system === "drawsteel" && (
+        <label>
+          <span>Average victories</span>
+          <LidndTextInput
+            type="number"
+            placeholder="0"
+            value={encounter.average_victories ?? ""}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value);
+              mutate({
+                ...encounter,
+                average_victories: isNaN(value) ? null : value,
+              });
+            }}
+          />
+        </label>
+      )}
+      <label className="">
+        <span className="whitespace-nowrap">Goal difficulty</span>
         <Select
           onValueChange={(v) => {
             console.log(v);
@@ -47,23 +61,13 @@ export function EncounterDifficulty() {
           </SelectContent>
         </Select>
       </label>
-
-      <div
-        className={`flex p-4 flex-col items-center justify-center gap-3 mx-auto bg-gray-200 rounded-md`}
-      >
-        {remainingBudget === 0 ? (
-          <span className="text-2xl font-bold">{difficulty}</span>
-        ) : remainingBudget < 0 ? (
-          <span className="text-2xl font-bold flex flex-col">
-            <span>{difficulty} </span>
-            <span>{`(+${remainingBudget})`}</span>
-          </span>
-        ) : (
-          <div className="flex gap-3 items-baseline">
-            <span className="text-2xl font-bold">{remainingBudget}</span>
-            <span className="text-sm">CR to spend</span>
-          </div>
-        )}
+      <div className="flex flex-col items-baseline">
+        <span className="text-sm whitespace-nowrap text-gray-400">
+          Remaining {campaign.system === "dnd5e" ? "CR" : "EV"}
+        </span>
+        <span className="text-2xl font-bold">
+          {EncounterUtils.remainingCr(encounter, campaign)}
+        </span>
       </div>
     </>
   );

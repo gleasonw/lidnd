@@ -33,13 +33,13 @@ export function CampaignDescriptionArea({
 
   const debouncedUpdate = useDebouncedCallback(async (description: string) => {
     // todo: wonky types
-    if (!campaign || !campaign.system?.id) {
+    if (!campaign || !campaign.legacySystem?.id) {
       return;
     }
 
     updateCampaign({
       ...campaign,
-      system_id: campaign.system?.id,
+      system_id: campaign.legacySystem?.id,
       description,
     });
   }, 500);

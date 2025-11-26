@@ -55,7 +55,7 @@ export const ServerCampaign = {
             player: true,
           },
         },
-        system: true,
+        legacySystem: true,
       },
     });
   }),
@@ -122,7 +122,7 @@ export const ServerCampaign = {
         and(eq(campaigns.id, campaignId), eq(campaigns.user_id, ctx.user.id)),
 
       with: {
-        system: true,
+        legacySystem: true,
         campaignToPlayers: {
           with: {
             player: true,

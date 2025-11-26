@@ -93,6 +93,11 @@ export const EncounterBattleUI = observer(function BattleUI() {
 
   const monsters = EncounterUtils.participantsWithNoColumn(encounter);
 
+  const difficulty = EncounterUtils.difficulty({
+    encounter,
+    campaign,
+  });
+
   switch (encounter.status) {
     case "prep":
       return (
@@ -105,7 +110,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
               <Button variant="outline">Edit party</Button>
             </Link>
             <div className="ml-auto">
-              {campaign.system.initiative_type === "linear" ? (
+              {campaign.system === "dnd5e" ? (
                 <Link href={rollEncounter}>
                   <Button>Start encounter</Button>
                 </Link>
@@ -123,14 +128,35 @@ export const EncounterBattleUI = observer(function BattleUI() {
           </div>
           <div className="flex flex-col gap-3 max-w-[800px] mx-auto">
             <div className="flex flex-wrap gap-3">
-              <Card className="flex flex-col p-2 gap-2">
+              <Card className="flex flex-col gap-2 p-2">
                 <EncounterDifficulty />
               </Card>
               <ReminderInput />
             </div>
-            <Card className="shadow-lg p-3 flex flex-col gap-5">
-              <EditModeOpponentForm />
-            </Card>
+            <div className="flex flex-wrap">
+              <Card className="shadow-lg p-3 flex flex-col gap-5 w-full">
+                <EditModeOpponentForm
+                  leftContent={
+                    <div className={`flex p-2 gap-7 rounded-md items-center`}>
+                      <div className="flex flex-col">
+                        <span className="text-sm text-gray-400">Current</span>
+                        <span className="text-2xl font-bold">{difficulty}</span>
+                      </div>
+
+                      <div className="flex flex-col items-baseline">
+                        <span className="text-sm whitespace-nowrap text-gray-400">
+                          Total {campaign.system === "dnd5e" ? "CR" : "EV"}
+                        </span>
+                        <span className="text-2xl font-bold">
+                          {EncounterUtils.totalCr(encounter)}
+                        </span>
+                      </div>
+                      <EncounterBudgetSlider />
+                    </div>
+                  }
+                />
+              </Card>
+            </div>
           </div>
 
           <div className="w-full flex gap-3 h-full">
@@ -141,7 +167,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
     case "run":
       return (
         <section className="flex flex-col max-h-full min-h-0 h-full">
-          {campaign.system.initiative_type === "linear" ? (
+          {campaign.system === "dnd5e" ? (
             <InitiativeTracker />
           ) : (
             <GroupBattleUITools />
@@ -177,6 +203,49 @@ export const EncounterBattleUI = observer(function BattleUI() {
     }
   }
 });
+
+function EncounterBudgetSlider() {
+  const [campaign] = useCampaign();
+  const [encounter] = useEncounter();
+
+  const tiers = EncounterUtils.findCRBudget({ encounter, campaign });
+
+  const max = tiers.hardTier + 10;
+  const easyCutOff = tiers.easyTier / max;
+  const standardCutoff = tiers.standardTier / max;
+  const hardCutoff = tiers.hardTier / max;
+
+  return (
+    <div className="w-full border h-5 relative">
+      <div
+        className="h-full bg-black absolute left-0 top-0"
+        style={{ width: `${(EncounterUtils.totalCr(encounter) / max) * 100}%` }}
+      />
+      <div
+        className="w-1 h-full bg-black absolute"
+        style={{ left: `${easyCutOff * 100}%` }}
+      >
+        <span className="absolute bottom-full">{tiers.easyTier}</span>
+
+        <span className="absolute top-full">Easy</span>
+      </div>
+      <div
+        className="w-1 h-full bg-black absolute"
+        style={{ left: `${standardCutoff * 100}%` }}
+      >
+        <span className="absolute bottom-full">{tiers.standardTier}</span>
+        <span className="absolute top-full">Standard</span>
+      </div>
+      <div
+        className="w-1 h-full bg-black absolute"
+        style={{ left: `${hardCutoff * 100}%` }}
+      >
+        <span className="absolute bottom-full">{tiers.hardTier}</span>
+        <span className="absolute top-full">Hard</span>
+      </div>
+    </div>
+  );
+}
 
 function EncounterBattlePreview() {
   const { data: columns } = api.getColumns.useQuery(useEncounterId());

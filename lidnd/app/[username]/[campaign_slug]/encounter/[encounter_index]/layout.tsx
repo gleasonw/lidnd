@@ -43,7 +43,7 @@ export default async function EncounterLayout(props: {
           className={`relative ${css.root} flex flex-col overflow-hidden max-h-full`}
         >
           {/**we don't really have space for this nav on group initiative... might need to rethink slightly */}
-          {campaign?.system.initiative_type === "linear" && (
+          {campaign?.system === "dnd5e" && (
             <div className={` absolute top-0 left-0 z-50`}>
               <div
                 className={`items-center justify-center gap-3 flex flex-col w-full h-full`}

@@ -8,7 +8,6 @@ import type {
   ParticipantWithData,
 } from "@/server/api/router";
 import type { EncounterWithData } from "@/server/sdk/encounters";
-import type { System } from "@/types";
 import * as R from "remeda";
 import { ParticipantUtils } from "@/utils/participants";
 import type { LidndUser } from "@/app/authentication";
@@ -30,6 +29,7 @@ export type EncounterWithParticipantDifficulty = {
     is_ally: boolean;
     inanimate: boolean;
   }>;
+  average_victories: Encounter["average_victories"];
 };
 
 type Cyclable = {
@@ -65,16 +65,23 @@ function difficultyCssClasses(
   e: EncounterWithParticipantDifficulty,
   c: Campaign
 ) {
-  const difficulty = EncounterUtils.difficulty(e, c?.party_level);
+  const difficulty = EncounterUtils.difficulty({
+    encounter: e,
+    campaign: c,
+  });
   return cssClassForDifficulty(difficulty);
 }
 
 function difficultyClassForCR(
   cr: number,
   e: EncounterWithParticipantDifficulty,
-  c: { party_level?: number }
+  c: Pick<Campaign, "system" | "party_level">
 ) {
-  const difficulty = EncounterUtils.difficultyForCR(cr, e, c?.party_level ?? 1);
+  const difficulty = EncounterUtils.difficultyForCR({
+    cr,
+    encounter: e,
+    campaign: c,
+  });
   return cssClassForDifficulty(difficulty);
 }
 
@@ -117,9 +124,14 @@ const DEFAULT_LEVEL = 1;
 
 function remainingCr(
   e: EncounterWithParticipants,
-  c: { party_level?: number }
+  c: Pick<Campaign, "system" | "party_level">
 ) {
-  return EncounterUtils.goalCr(e, c) - EncounterUtils.totalCr(e);
+  const val = EncounterUtils.goalCr(e, c) - EncounterUtils.totalCr(e);
+  console.log({
+    goal: EncounterUtils.goalCr(e, c),
+    total: EncounterUtils.totalCr(e),
+  });
+  return val;
 }
 
 export type ColumnableParticipant = Pick<
@@ -167,26 +179,40 @@ export const EncounterUtils = {
   remainingCr,
   participantsWithNoColumn: monstersWithNoColumn,
 
-  goalCr(e: EncounterWithParticipants, c: { party_level?: number }) {
-    const { easyTier, standardTier, hardTier } = this.findCRBudget(
-      e,
-      c.party_level ?? DEFAULT_LEVEL
-    );
-    if (e.target_difficulty === "easy") {
-      return easyTier;
+  goalCr(
+    e: EncounterWithParticipants,
+    c: Pick<Campaign, "system" | "party_level">
+  ) {
+    const { easyTier, standardTier, hardTier } = this.findCRBudget({
+      encounter: e,
+      campaign: c,
+    });
+    switch (e.target_difficulty) {
+      case "easy":
+        return easyTier;
+      case "standard":
+        return standardTier;
+      case "hard":
+        return hardTier;
+      default: {
+        const _: never = e.target_difficulty;
+        throw new Error(`Unknown target_difficulty: ${_}`);
+      }
     }
-    if (e.target_difficulty === "standard") {
-      return standardTier;
-    }
-    return hardTier;
   },
 
   nextTierAndDistance(
     e: EncounterWithParticipants,
-    c: { party_level?: number }
+    c: Pick<Campaign, "system" | "party_level">
   ): [Difficulty, number] {
-    const difficulty = this.difficulty(e, c.party_level ?? DEFAULT_LEVEL);
-    const tiers = this.findCRBudget(e, c.party_level ?? DEFAULT_LEVEL);
+    const difficulty = this.difficulty({
+      encounter: e,
+      campaign: c,
+    });
+    const tiers = this.findCRBudget({
+      encounter: e,
+      campaign: c,
+    });
     const total = this.totalCr(e);
     if (difficulty === "Easy") {
       return [difficulties.Standard, tiers.standardTier - total] as const;
@@ -224,8 +250,20 @@ export const EncounterUtils = {
     return appRoutes.encounter({ campaign, encounter, user });
   },
 
-  initiativeType(encounter: { campaigns: { system: System } }) {
-    return encounter.campaigns.system.initiative_type;
+  initiativeType(encounter: {
+    campaigns: Pick<Campaign, "system">;
+  }): "group" | "linear" {
+    const system = encounter.campaigns.system;
+    switch (system) {
+      case "dnd5e":
+        return "linear";
+      case "drawsteel":
+        return "group";
+      default: {
+        const _exhaustiveCheck: never = system;
+        throw new Error(`Unhandled initiative type: ${_exhaustiveCheck}`);
+      }
+    }
   },
 
   totalCr(encounter: EncounterWithParticipantDifficulty) {
@@ -242,45 +280,92 @@ export const EncounterUtils = {
       .length;
   },
 
-  findCRBudget(
-    encounter: EncounterWithParticipantDifficulty,
-    playersLevel: number
-  ) {
-    if (playersLevel < 1 || playersLevel > 20) {
-      throw new Error("playerLevel must be between 1 and 20");
+  findCRBudget(args: {
+    encounter: EncounterWithParticipantDifficulty;
+    campaign: Pick<Campaign, "system" | "party_level">;
+  }): { easyTier: number; standardTier: number; hardTier: number } {
+    const { encounter, campaign } = args;
+    const playersLevel = campaign.party_level ?? DEFAULT_LEVEL;
+    switch (campaign.system) {
+      case "dnd5e": {
+        if (playersLevel < 1 || playersLevel > 20) {
+          throw new Error("playerLevel must be between 1 and 20");
+        }
+
+        const foundLevel = encounterCRPerCharacter.find(
+          (cr) => cr.level === playersLevel
+        );
+
+        const alliesWeighted = _.sumBy(encounter?.participants, (p) => {
+          if (!p.is_ally) return 0;
+          return ParticipantUtils.challengeRating(p) * 4;
+        });
+
+        const playersAndAllies = this.playerCount(encounter) + alliesWeighted;
+
+        if (!foundLevel) {
+          throw new Error("No CR budget found for this player level");
+        }
+
+        const easyTier = foundLevel.easy * playersAndAllies;
+        const standardTier = foundLevel.standard * playersAndAllies;
+        const hardTier = foundLevel.hard * playersAndAllies;
+
+        return { easyTier, standardTier, hardTier };
+      }
+      case "drawsteel": {
+        if (playersLevel < 1 || playersLevel > 10) {
+          throw new Error("playerLevel must be between 1 and 10");
+        }
+        const numberOfHeroes = this.playerCount(encounter);
+        const averageVictories = encounter.average_victories ?? 0;
+        const adjustedHeroCount =
+          numberOfHeroes + Math.floor(averageVictories / 2);
+        const heroLevelEVBudget =
+          drawSteelEncounterGuidelines.heroLevels[
+            playersLevel.toString() as keyof typeof drawSteelEncounterGuidelines.heroLevels
+          ];
+        const budgetIndex = adjustedHeroCount - 1;
+        const partyEncounterStrength = heroLevelEVBudget[budgetIndex];
+        const oneHeroStrength = heroLevelEVBudget[0];
+        const threeHeroStrength = heroLevelEVBudget[2];
+        console.log({
+          budgetIndex,
+          partyEncounterStrength,
+          oneHeroStrength,
+          threeHeroStrength,
+          adjustedHeroCount,
+        });
+        if (partyEncounterStrength === undefined) {
+          throw new Error(
+            `No EV budget found for this number of heroes: ${adjustedHeroCount}`
+          );
+        }
+        return {
+          easyTier: partyEncounterStrength,
+          standardTier: partyEncounterStrength + oneHeroStrength,
+          hardTier: partyEncounterStrength + threeHeroStrength,
+        };
+      }
+      default: {
+        const _exhaustiveCheck: never = campaign.system;
+        throw new Error(`Unsupported system: ${_exhaustiveCheck}`);
+      }
     }
-
-    const foundLevel = encounterCRPerCharacter.find(
-      (cr) => cr.level === playersLevel
-    );
-
-    const alliesWeighted = _.sumBy(encounter?.participants, (p) => {
-      if (!p.is_ally) return 0;
-      return ParticipantUtils.challengeRating(p) * 4;
-    });
-
-    const playersAndAllies = this.playerCount(encounter) + alliesWeighted;
-
-    if (!foundLevel) {
-      throw new Error("No CR budget found for this player level");
-    }
-
-    const easyTier = foundLevel.easy * playersAndAllies;
-    const standardTier = foundLevel.standard * playersAndAllies;
-    const hardTier = foundLevel.hard * playersAndAllies;
-
-    return { easyTier, standardTier, hardTier };
   },
 
   durationSeconds(
     encounter: EncounterWithParticipants,
+    campaign: Pick<Campaign, "system" | "party_level">,
     opts?: {
       estimatedRounds?: number | null;
       estimatedTurnSeconds?: number | null;
-      playerLevel?: number | null;
     }
   ) {
-    const difficulty = this.difficulty(encounter, opts?.playerLevel);
+    const difficulty = this.difficulty({
+      encounter,
+      campaign,
+    });
     const finalEstimatedRounds =
       opts?.estimatedRounds ?? difficulty === "Deadly"
         ? 5
@@ -355,25 +440,31 @@ export const EncounterUtils = {
     ];
   },
 
-  difficulty(
-    encounter: EncounterWithParticipantDifficulty,
-    playerLevel?: number | null
-  ) {
-    const finalPlayerLevel = playerLevel ?? 1;
+  difficulty(args: {
+    encounter: EncounterWithParticipantDifficulty;
+    campaign: Pick<Campaign, "system" | "party_level">;
+  }) {
+    const { encounter, campaign } = args;
     const totalCr = this.totalCr(encounter);
+    console.log({ totalCr });
 
-    return this.difficultyForCR(totalCr, encounter, finalPlayerLevel);
+    return this.difficultyForCR({
+      cr: totalCr,
+      encounter,
+      campaign,
+    });
   },
 
-  difficultyForCR(
-    cr: number,
-    encounter: EncounterWithParticipantDifficulty,
-    playerLevel: number
-  ): Difficulty {
-    const { standardTier, hardTier } = this.findCRBudget(
+  difficultyForCR(args: {
+    cr: number;
+    encounter: EncounterWithParticipantDifficulty;
+    campaign: Pick<Campaign, "system" | "party_level">;
+  }): Difficulty {
+    const { cr, encounter, campaign } = args;
+    const { standardTier, hardTier } = this.findCRBudget({
       encounter,
-      playerLevel
-    );
+      campaign,
+    });
     if (cr < standardTier) {
       return difficulties.Easy;
     } else if (cr < hardTier) {
@@ -450,6 +541,7 @@ export const EncounterUtils = {
       is_editing_columns: encounter.is_editing_columns ?? true,
       target_difficulty: encounter.target_difficulty ?? "standard",
       session_id: encounter.session_id ?? null,
+      average_victories: encounter.average_victories ?? null,
     };
   },
 
@@ -857,3 +949,20 @@ export const encounterCRPerCharacter = [
   { level: 19, easy: 8, standard: 8.5, hard: 9.5, cap: 28 },
   { level: 20, easy: 8.5, standard: 9, hard: 10, cap: 30 },
 ];
+
+const drawSteelEncounterGuidelines = {
+  heroLevels: {
+    "1": [6, 12, 18, 24, 30, 36, 42, 48],
+    "2": [8, 16, 24, 32, 40, 48, 56, 64],
+    "3": [10, 20, 30, 40, 50, 60, 70, 80],
+    "4": [12, 24, 36, 48, 60, 72, 84, 96],
+    "5": [14, 28, 42, 56, 70, 84, 98, 112],
+    "6": [16, 32, 48, 64, 80, 96, 112, 128],
+    "7": [18, 36, 54, 72, 90, 108, 126, 144],
+    "8": [20, 40, 60, 80, 100, 120, 140, 160],
+    "9": [22, 44, 66, 88, 110, 132, 154, 176],
+    "10": [24, 48, 72, 96, 120, 144, 168, 192],
+  },
+  heroesColumnMeaning: "Number of heroes from 1–8",
+  victoryRule: "Add one hero for every 2 average victories",
+} as const;
