@@ -104,6 +104,7 @@ export async function createCampaign(formdata: FormData) {
   });
 
   if (campaign.status !== "success") {
+    console.error(campaign.error);
     throw new Error(`Invalid form data: ${campaign.error}`);
   }
 

@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import {
   ExistingMonster,
@@ -12,6 +11,7 @@ import { ImageUpload } from "@/encounters/image-upload";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Angry, FileText, Plus, PlusIcon, User } from "lucide-react";
 import { FormProvider } from "react-hook-form";
+import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 
 /**like the other form, but more flat.  */
 export function EditModeOpponentForm({
@@ -20,6 +20,7 @@ export function EditModeOpponentForm({
   leftContent?: React.ReactNode;
 }) {
   const { form, onSubmit, isPending } = useParticipantForm("opponent");
+  const [campaign] = useCampaign();
 
   return (
     <div className="flex flex-col gap-2">
@@ -39,19 +40,10 @@ export function EditModeOpponentForm({
           <FormProvider {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="flex flex-col gap-3 w-full"
+              className="flex flex-col gap-5 w-full p-3"
             >
-              <FormField
-                control={form.control}
-                name={"name"}
-                render={({ field }) => {
-                  return (
-                    <LidndTextInput required placeholder="Name" {...field} />
-                  );
-                }}
-              />
-              <div className="flex gap-3">
-                <div className="h-full">
+              <div className="flex gap-5">
+                <div className="w-[200px]">
                   <FormField
                     control={form.control}
                     name="iconImage"
@@ -71,6 +63,52 @@ export function EditModeOpponentForm({
                     }}
                   />
                 </div>
+                <div className="flex flex-col">
+                  <FormField
+                    control={form.control}
+                    name={"name"}
+                    render={({ field }) => {
+                      return (
+                        <LidndTextInput
+                          variant="ghost"
+                          required
+                          placeholder="Name"
+                          {...field}
+                        />
+                      );
+                    }}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={"max_hp"}
+                    render={({ field }) => (
+                      <LidndTextInput
+                        type="number"
+                        variant="ghost"
+                        required
+                        placeholder="HP"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={"challenge_rating"}
+                    render={({ field }) => (
+                      <LidndTextInput
+                        variant="ghost"
+                        type="number"
+                        placeholder={campaign.system === "dnd5e" ? "CR" : "EV"}
+                        {...field}
+                        value={field.value ?? ""}
+                      />
+                    )}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
                 <FormField
                   control={form.control}
                   name="statBlockImage"
@@ -90,31 +128,6 @@ export function EditModeOpponentForm({
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name={"max_hp"}
-                render={({ field }) => (
-                  <Input
-                    type="number"
-                    required
-                    placeholder="HP"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
-                )}
-              />
-              <FormField
-                control={form.control}
-                name={"challenge_rating"}
-                render={({ field }) => (
-                  <Input
-                    type="number"
-                    placeholder="Challenge Rating"
-                    {...field}
-                    value={field.value ?? ""}
-                  />
-                )}
-              />
               <Button
                 type="submit"
                 className="col-span-2 bg-gray-200"

@@ -210,6 +210,10 @@ function EncounterBudgetSlider() {
 
   const tiers = EncounterUtils.findCRBudget({ encounter, campaign });
 
+  if (tiers === "no-players") {
+    return <div>No players in encounter</div>;
+  }
+
   const max = tiers.hardTier + 10;
   const easyCutOff = tiers.easyTier / max;
   const standardCutoff = tiers.standardTier / max;

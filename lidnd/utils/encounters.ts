@@ -69,6 +69,9 @@ function difficultyCssClasses(
     encounter: e,
     campaign: c,
   });
+  if (difficulty === "no-players") {
+    return "";
+  }
   return cssClassForDifficulty(difficulty);
 }
 
@@ -82,6 +85,9 @@ function difficultyClassForCR(
     encounter: e,
     campaign: c,
   });
+  if (difficulty === "no-players") {
+    return "";
+  }
   return cssClassForDifficulty(difficulty);
 }
 
@@ -126,12 +132,12 @@ function remainingCr(
   e: EncounterWithParticipants,
   c: Pick<Campaign, "system" | "party_level">
 ) {
-  const val = EncounterUtils.goalCr(e, c) - EncounterUtils.totalCr(e);
-  console.log({
-    goal: EncounterUtils.goalCr(e, c),
-    total: EncounterUtils.totalCr(e),
-  });
-  return val;
+  const goalCr = EncounterUtils.goalCr(e, c);
+  if (goalCr === "no-players") {
+    return "no-players";
+  }
+  const totalCr = EncounterUtils.totalCr(e);
+  return goalCr - totalCr;
 }
 
 export type ColumnableParticipant = Pick<
@@ -183,10 +189,14 @@ export const EncounterUtils = {
     e: EncounterWithParticipants,
     c: Pick<Campaign, "system" | "party_level">
   ) {
-    const { easyTier, standardTier, hardTier } = this.findCRBudget({
+    const tiers = this.findCRBudget({
       encounter: e,
       campaign: c,
     });
+    if (tiers === "no-players") {
+      return "no-players";
+    }
+    const { easyTier, standardTier, hardTier } = tiers;
     switch (e.target_difficulty) {
       case "easy":
         return easyTier;
@@ -204,7 +214,7 @@ export const EncounterUtils = {
   nextTierAndDistance(
     e: EncounterWithParticipants,
     c: Pick<Campaign, "system" | "party_level">
-  ): [Difficulty, number] {
+  ): [Difficulty, number] | "no-players" {
     const difficulty = this.difficulty({
       encounter: e,
       campaign: c,
@@ -213,6 +223,10 @@ export const EncounterUtils = {
       encounter: e,
       campaign: c,
     });
+    if (tiers === "no-players") {
+      return "no-players";
+    }
+
     const total = this.totalCr(e);
     if (difficulty === "Easy") {
       return [difficulties.Standard, tiers.standardTier - total] as const;
@@ -283,7 +297,13 @@ export const EncounterUtils = {
   findCRBudget(args: {
     encounter: EncounterWithParticipantDifficulty;
     campaign: Pick<Campaign, "system" | "party_level">;
-  }): { easyTier: number; standardTier: number; hardTier: number } {
+  }):
+    | { easyTier: number; standardTier: number; hardTier: number }
+    | "no-players" {
+    const playerCount = this.playerCount(args.encounter);
+    if (playerCount === 0) {
+      return "no-players";
+    }
     const { encounter, campaign } = args;
     const playersLevel = campaign.party_level ?? DEFAULT_LEVEL;
     switch (campaign.system) {
@@ -301,7 +321,7 @@ export const EncounterUtils = {
           return ParticipantUtils.challengeRating(p) * 4;
         });
 
-        const playersAndAllies = this.playerCount(encounter) + alliesWeighted;
+        const playersAndAllies = playerCount + alliesWeighted;
 
         if (!foundLevel) {
           throw new Error("No CR budget found for this player level");
@@ -317,7 +337,7 @@ export const EncounterUtils = {
         if (playersLevel < 1 || playersLevel > 10) {
           throw new Error("playerLevel must be between 1 and 10");
         }
-        const numberOfHeroes = this.playerCount(encounter);
+        const numberOfHeroes = playerCount;
         const averageVictories = encounter.average_victories ?? 0;
         const adjustedHeroCount =
           numberOfHeroes + Math.floor(averageVictories / 2);
@@ -446,7 +466,6 @@ export const EncounterUtils = {
   }) {
     const { encounter, campaign } = args;
     const totalCr = this.totalCr(encounter);
-    console.log({ totalCr });
 
     return this.difficultyForCR({
       cr: totalCr,
@@ -459,12 +478,16 @@ export const EncounterUtils = {
     cr: number;
     encounter: EncounterWithParticipantDifficulty;
     campaign: Pick<Campaign, "system" | "party_level">;
-  }): Difficulty {
+  }): Difficulty | "no-players" {
     const { cr, encounter, campaign } = args;
-    const { standardTier, hardTier } = this.findCRBudget({
+    const tiers = this.findCRBudget({
       encounter,
       campaign,
     });
+    if (tiers === "no-players") {
+      return "no-players";
+    }
+    const { standardTier, hardTier } = tiers;
     if (cr < standardTier) {
       return difficulties.Easy;
     } else if (cr < hardTier) {

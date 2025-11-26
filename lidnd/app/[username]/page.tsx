@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CampaignDescriptionForm } from "@/app/[username]/campaign-description-area";
-import { getSystems, getUserCampaigns } from "@/server/api/utils";
+import { getUserCampaigns } from "@/server/api/utils";
 import { createCampaign } from "./actions";
 import type { Campaign } from "./types";
 import { isStringMeaningful } from "./utils";
@@ -30,7 +30,7 @@ import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import * as CampaignUtils from "@/utils/campaigns";
 import * as R from "remeda";
 import { db } from "@/server/db";
-import { campaigns } from "@/server/db/schema";
+import { campaigns, systemsEnumValues } from "@/server/db/schema";
 import { and, eq } from "drizzle-orm";
 import { ArchiveCampaignButton } from "@/app/[username]/ArchiveCampaignButton";
 
@@ -45,14 +45,13 @@ export default async function Page(props: {
     return redirect("/login");
   }
 
-  const [userCampaigns, systems] = await Promise.all([
+  const [userCampaigns] = await Promise.all([
     db
       .select()
       .from(campaigns)
       .where(
         and(eq(campaigns.user_id, user.id), eq(campaigns.is_archived, false))
       ),
-    getSystems(),
   ]);
 
   const sortedCampaigns = R.sort(userCampaigns, CampaignUtils.sortRecent);
@@ -93,14 +92,14 @@ export default async function Page(props: {
                       placeholder="Campaign name"
                     />
                     <CampaignDescriptionForm />
-                    <Select name="system_id" required>
+                    <Select name="system" required>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a system" />
                       </SelectTrigger>
                       <SelectContent>
-                        {systems.map((system) => (
-                          <SelectItem key={system.id} value={system.id}>
-                            {system.name}
+                        {systemsEnumValues.map((system) => (
+                          <SelectItem key={system} value={system}>
+                            {system}
                           </SelectItem>
                         ))}
                       </SelectContent>

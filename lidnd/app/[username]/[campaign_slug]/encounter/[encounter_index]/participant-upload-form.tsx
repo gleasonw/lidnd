@@ -126,7 +126,10 @@ export const ExistingMonster = observer(function ExistingMonster({
     name,
     is_player: false,
     campaignId: filterInCampaign ? encounter.campaign_id : undefined,
-    maxCR: uiStore.filterExistingCreaturesByCrBudget ? crBudget : undefined,
+    maxCR:
+      uiStore.filterExistingCreaturesByCrBudget && crBudget !== "no-players"
+        ? crBudget
+        : undefined,
   });
 
   return (

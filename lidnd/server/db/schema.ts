@@ -93,15 +93,16 @@ export const systems = pgTable("systems", {
 
 // previously we had a systems table, but really, we're not going to support dynamic system adds like that.
 // just hardcoded systems.
-export const systemEnum = pgEnum("system_enum", ["dnd5e", "drawsteel"]);
+export const systemsEnumValues = ["dnd5e", "drawsteel"] as const;
+export const systemEnum = pgEnum("system_enum", systemsEnumValues);
 
 export const campaigns = pgTable(
   "campaigns",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    system_id: uuid("system_id")
-      .notNull()
-      .references(() => systems.id, { onDelete: "cascade" }),
+    system_id: uuid("system_id").references(() => systems.id, {
+      onDelete: "cascade",
+    }),
     system: systemEnum("system").notNull().default("dnd5e"),
     name: varchar("name", { length: 256 }).notNull(),
     slug: varchar("slug", { length: 256 }).notNull().default(""),
