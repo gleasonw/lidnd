@@ -34,7 +34,7 @@ export const localCreatureUploadSchema = creatureUploadSchema.extend({
   iconImage: z.instanceof(File).optional(),
 });
 
-function useParticipantForm(role: "ally" | "opponent") {
+export function useParticipantForm(role: "ally" | "opponent") {
   const form = useCreatureForm();
   const [encounter] = useEncounter();
 

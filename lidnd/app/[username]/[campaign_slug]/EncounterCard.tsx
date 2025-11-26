@@ -2,8 +2,6 @@
 
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { QuickAddParticipantsButton } from "@/app/[username]/[campaign_slug]/game-session-quick-add";
-import { removeEncounter } from "@/app/[username]/actions";
-import { Button } from "@/components/ui/button";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import {
@@ -30,7 +28,7 @@ function EncounterDetails() {
   const { encounter: encounterLink } = useEncounterLinks();
   const monsters = EncounterUtils.monsters(encounterData);
   return (
-    <li className="flex flex-col gap-4 rounded-lg border bg-background p-4">
+    <li className="flex flex-col gap-4 rounded-lg border bg-background p-4 shadow-md">
       <Link href={encounterLink}>
         <div className="flex items-start justify-between gap-3 hover:bg-gray-10">
           <div className="space-y-1">
@@ -75,19 +73,6 @@ function EncounterDetails() {
           />
         </div>
       </div>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="text-destructive hover:text-destructive ml-auto"
-        onClick={() =>
-          removeEncounter({
-            encounterId: encounterData.id,
-            campaignId: campaignData.id,
-          })
-        }
-      >
-        Delete
-      </Button>
     </li>
   );
 }

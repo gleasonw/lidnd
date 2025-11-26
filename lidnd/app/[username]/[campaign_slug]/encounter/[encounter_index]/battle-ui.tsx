@@ -47,6 +47,7 @@ import {
   Home,
   ListOrdered,
   MoreHorizontal,
+  PlayIcon,
   Plus,
 } from "lucide-react";
 import Link from "next/link";
@@ -69,6 +70,7 @@ import { useEncounterLinks } from "@/encounters/link-hooks";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 import { Input } from "@/components/ui/input";
+import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -92,23 +94,18 @@ export const EncounterBattleUI = observer(function BattleUI() {
   switch (encounter.status) {
     case "prep":
       return (
-        <div className="flex flex-col max-h-full overflow-auto h-full">
-          <div className="flex flex-col w-full">
-            <div className="flex gap-2 justify-evenly items-center p-8 flex-wrap">
-              <div className="flex items-center gap-1">
-                {EncounterUtils.allies(encounter).map((a) => (
-                  <CreatureIcon key={a.id} creature={a.creature} size="small" />
-                ))}
-                <Link href={appRoutes.party({ campaign, user })}>
-                  <Button variant="outline">Edit party</Button>
-                </Link>
-              </div>
-
-              <ReminderInput />
-
+        <div className="flex flex-col gap-3 max-h-full overflow-auto h-full">
+          <div className="flex gap-1">
+            {EncounterUtils.allies(encounter).map((a) => (
+              <CreatureIcon key={a.id} creature={a.creature} size="small" />
+            ))}
+            <Link href={appRoutes.party({ campaign, user })}>
+              <Button variant="outline">Edit party</Button>
+            </Link>
+            <div className="ml-auto">
               {campaign.system.initiative_type === "linear" ? (
                 <Link href={rollEncounter}>
-                  <Button>Start</Button>
+                  <Button>Start encounter</Button>
                 </Link>
               ) : (
                 <Button
@@ -116,26 +113,26 @@ export const EncounterBattleUI = observer(function BattleUI() {
                     startEncounter(encounter.id);
                   }}
                 >
-                  Start
+                  <PlayIcon />
+                  Start encounter
                 </Button>
               )}
             </div>
           </div>
-          <div className="flex max-w-full max-h-full flex-col sm:flex-row">
-            <div className="max-w-[700px] flex mx-auto justify-center flex-col gap-5">
-              <div className="">
-                <Card className="shadow-lg  h-[850px] p-3 flex flex-col gap-5">
-                  <section className="items-center flex gap-3 flex-col">
-                    <EncounterDifficulty />
-                  </section>
-                  <OpponentParticipantForm />
-                </Card>
-              </div>
+          <div className="flex flex-col gap-3 max-w-[800px] mx-auto">
+            <div className="flex flex-wrap gap-3">
+              <Card className="flex flex-col p-2 gap-2">
+                <EncounterDifficulty />
+              </Card>
+              <ReminderInput />
             </div>
+            <Card className="shadow-lg p-3 flex flex-col gap-5">
+              <EditModeOpponentForm />
+            </Card>
+          </div>
 
-            <div className="w-full flex gap-3 h-full p-5">
-              <EncounterBattlePreview />
-            </div>
+          <div className="w-full flex gap-3 h-full">
+            <EncounterBattlePreview />
           </div>
         </div>
       );

@@ -19,6 +19,7 @@ import { Card } from "@/components/ui/card";
 import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
 import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
 import { SessionCreateForm } from "@/app/[username]/[campaign_slug]/CreateSessionForm";
+import { ButtonWithTooltip } from "@/components/ui/tip";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -126,8 +127,7 @@ export default async function CampaignPage(props: {
             </div>
 
             <div className="flex flex-col items-end text-right text-sm text-muted-foreground">
-              {createdAtLabel ? <span>Created {createdAtLabel}</span> : null}
-              <span>{sessionsInCampaign.length} sessions</span>
+              {createdAtLabel ? <span>{createdAtLabel}</span> : null}
             </div>
           </div>
         </header>
@@ -151,16 +151,6 @@ export default async function CampaignPage(props: {
             <div className="space-y-4">
               {sortedSessions.map((session) => {
                 const encounterCount = session.encounters?.length ?? 0;
-                const createdLabel = session.created_at
-                  ? new Intl.DateTimeFormat(undefined, {
-                      dateStyle: "medium",
-                    }).format(
-                      session.created_at instanceof Date
-                        ? session.created_at
-                        : new Date(session.created_at)
-                    )
-                  : null;
-
                 return (
                   <Card
                     key={session.id}
@@ -169,12 +159,6 @@ export default async function CampaignPage(props: {
                     <div className="flex flex-col gap-6 p-6">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            <Calendar className="h-3.5 w-3.5" />
-                            {createdLabel
-                              ? `Created ${createdLabel}`
-                              : "Session"}
-                          </div>
                           <h3 className="text-xl font-semibold tracking-tight">
                             {session.name}
                           </h3>
@@ -191,14 +175,14 @@ export default async function CampaignPage(props: {
                               name="session_id"
                               value={session.id}
                             />
-                            <Button
+                            <ButtonWithTooltip
+                              text="Delete session"
                               variant="ghost"
                               size="sm"
-                              className="gap-2 text-destructive hover:text-destructive"
+                              className="gap-2 text-gray-400"
                             >
                               <Trash2 className="h-4 w-4" />
-                              Delete session
-                            </Button>
+                            </ButtonWithTooltip>
                           </form>
                         </div>
                       </div>
