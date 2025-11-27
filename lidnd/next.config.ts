@@ -16,6 +16,7 @@ const nextConfig = {
         port: "",
       },
     ],
+    minimumCacheTTL: 2678400,
   },
   reactCompiler: true,
 } satisfies NextConfig;
