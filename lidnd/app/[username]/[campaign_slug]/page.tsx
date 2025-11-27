@@ -6,7 +6,7 @@ import { ServerCampaign } from "@/server/sdk/campaigns";
 import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
-import { Calendar, MoveLeft, Trash2 } from "lucide-react";
+import { MoveLeft, Trash2 } from "lucide-react";
 import { db } from "@/server/db";
 import * as R from "remeda";
 import {
@@ -17,7 +17,6 @@ import {
 } from "@/server/db/schema";
 import { revalidatePath } from "next/cache";
 import { and, eq, exists } from "drizzle-orm";
-import { Card } from "@/components/ui/card";
 import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
 import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
 import { SessionCreateForm } from "@/app/[username]/[campaign_slug]/CreateSessionForm";
@@ -98,7 +97,7 @@ export default async function CampaignPage(props: {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-6 max-h-full overflow-auto">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6 max-h-full overflow-auto">
       <header className="flex flex-col gap-6 border-b pb-6">
         <div className="flex items-center justify-between gap-4">
           <Link href={appRoutes.dashboard(user)}>
@@ -113,18 +112,16 @@ export default async function CampaignPage(props: {
           <CampaignParty campaign={campaignData} />
         </div>
 
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end gap-4">
           <div className="space-y-2">
-            <h1 className="text-3xl font-semibold tracking-tight">
-              {campaignData.name}
-            </h1>
+            <h1 className="text-2xl tracking-tight">{campaignData.name}</h1>
             {campaignData.description ? (
               <p className="text-muted-foreground max-w-2xl text-sm">
                 {campaignData.description}
               </p>
             ) : null}
           </div>
-          <div className="flex">
+          <div className="flex ml-auto">
             <Link
               href={appRoutes.sessionsForCampaign({
                 campaign: campaignData,
@@ -156,20 +153,17 @@ export default async function CampaignPage(props: {
           </div>
         </div>
       </header>
+      {/*TODO: wacky bug that makes the next dialog disappear if this one isn't present. moving fast for now */}
+      <div className="mx-auto">
+        <SessionCreateForm campaignData={campaignData} />
+      </div>
+
       {searchParams?.tab === "creatures" ? (
         <section>
           <CampaignCreatures campaign={campaignData} />
         </section>
       ) : (
         <section className="flex flex-col gap-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-muted-foreground" />
-              <h2 className="text-xl font-semibold">Sessions</h2>
-            </div>
-            {/*TODO: wacky bug that makes the next dialog disappear if this one isn't present. moving fast for now */}
-            <SessionCreateForm campaignData={campaignData} />
-          </div>
           {sortedSessions.length === 0 ? (
             <div className="flex flex-col gap-4">
               <p className="font-medium text-base text-foreground">
@@ -177,69 +171,64 @@ export default async function CampaignPage(props: {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               {sortedSessions.map((session) => {
                 const encounterCount = session.encounters?.length ?? 0;
                 return (
-                  <Card
-                    key={session.id}
-                    className="border border-border/60 bg-card shadow-sm"
-                  >
-                    <div className="flex flex-col gap-6 p-6">
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div className="space-y-2">
-                          <h3 className="text-xl font-semibold tracking-tight">
-                            {session.name}
-                          </h3>
-                          {session.description ? (
-                            <p className="max-w-2xl text-sm text-muted-foreground">
-                              {session.description}
-                            </p>
-                          ) : null}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <form action={deleteSession} className="ml-auto">
-                            <input
-                              type="hidden"
-                              name="session_id"
-                              value={session.id}
-                            />
-                            <ButtonWithTooltip
-                              text="Delete session"
-                              variant="ghost"
-                              size="sm"
-                              className="gap-2 text-gray-400"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </ButtonWithTooltip>
-                          </form>
-                        </div>
+                  <div key={session.id} className="flex flex-col gap-4 p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-semibold tracking-tight">
+                          {session.name}
+                        </h3>
+                        {session.description ? (
+                          <p className="max-w-2xl text-sm text-muted-foreground">
+                            {session.description}
+                          </p>
+                        ) : null}
                       </div>
-
-                      {encounterCount === 0 ? (
-                        <CreateEncounterForm gameSessionId={session.id} />
-                      ) : (
-                        <>
-                          <ul className="grid gap-4 md:grid-cols-2">
-                            {session.encounters
-                              ?.slice()
-                              .sort(
-                                (a, b) =>
-                                  (a.created_at?.getTime() ?? 0) -
-                                  (b.created_at?.getTime() ?? 0)
-                              )
-                              .map((encounter) => (
-                                <EncounterCard
-                                  key={encounter.id}
-                                  encounter={encounter}
-                                />
-                              ))}
-                          </ul>
-                          <CreateEncounterButton gameSessionId={session.id} />
-                        </>
-                      )}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <form action={deleteSession} className="ml-auto">
+                          <input
+                            type="hidden"
+                            name="session_id"
+                            value={session.id}
+                          />
+                          <ButtonWithTooltip
+                            text="Delete session"
+                            variant="ghost"
+                            size="sm"
+                            className="gap-2 text-gray-400"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </ButtonWithTooltip>
+                        </form>
+                      </div>
                     </div>
-                  </Card>
+
+                    {encounterCount === 0 ? (
+                      <CreateEncounterForm gameSessionId={session.id} />
+                    ) : (
+                      <>
+                        <ul className="grid gap-4 md:grid-cols-2">
+                          {session.encounters
+                            ?.slice()
+                            .sort(
+                              (a, b) =>
+                                (a.created_at?.getTime() ?? 0) -
+                                (b.created_at?.getTime() ?? 0)
+                            )
+                            .map((encounter) => (
+                              <EncounterCard
+                                key={encounter.id}
+                                encounter={encounter}
+                              />
+                            ))}
+                        </ul>
+                        <CreateEncounterButton gameSessionId={session.id} />
+                      </>
+                    )}
+                  </div>
                 );
               })}
             </div>

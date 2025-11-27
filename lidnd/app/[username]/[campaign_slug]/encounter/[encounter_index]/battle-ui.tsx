@@ -73,6 +73,7 @@ import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 import { Input } from "@/components/ui/input";
 import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -127,11 +128,17 @@ export const EncounterBattleUI = observer(function BattleUI() {
             </div>
           </div>
           <div className="flex flex-col gap-3 max-w-[800px] mx-auto">
+            <EncounterNameInput />
             <div className="flex flex-wrap gap-3">
               <Card className="flex flex-col gap-2 p-2">
                 <EncounterDifficulty />
               </Card>
-              <ReminderInput />
+              <Card className="flex sm:flex-1 p-3 w-[530px] overflow-hidden">
+                <DescriptionTextArea />
+              </Card>
+              <div className="w-full">
+                <ReminderInput />
+              </div>
             </div>
             <div className="flex flex-wrap">
               <Card className="shadow-lg p-3 flex flex-col gap-5 w-full">
@@ -203,6 +210,31 @@ export const EncounterBattleUI = observer(function BattleUI() {
     }
   }
 });
+
+function EncounterNameInput() {
+  const [encounter] = useEncounter();
+  const { mutate: updateEncounter } = useUpdateEncounter();
+  const debounceUpdateName = useDebouncedCallback((name: string) => {
+    updateEncounter({
+      ...encounter,
+      name,
+    });
+  }, 500);
+  const [localName, setLocalName] = useState(encounter.name);
+
+  return (
+    <LidndTextInput
+      value={localName}
+      className="text-3xl bold bg-transparent"
+      variant="ghost"
+      placeholder="Encounter name"
+      onChange={(e) => {
+        setLocalName(e.target.value);
+        debounceUpdateName(e.target.value);
+      }}
+    />
+  );
+}
 
 function EncounterBudgetSlider() {
   const [campaign] = useCampaign();

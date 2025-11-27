@@ -54,7 +54,7 @@ export function ReminderInput() {
             reminder: newReminder.reminder ?? "",
             ...newReminder,
           },
-          old,
+          old
         );
       });
       return previousEncounter;
@@ -107,7 +107,7 @@ export function ReminderInput() {
 
         <label>
           <div className="flex gap-2 items-center opacity-60">
-            on round (0 = all)
+            top of round (0 = all)
           </div>
           <LidndTextInput
             type="number"
@@ -132,7 +132,7 @@ export function ReminderInput() {
         .map((reminder) => (
           <div className="flex gap-1 items-center p-3" key={reminder.id}>
             <span className="flex-grow">{reminder.reminder}</span>
-            <span>after round {reminder.alert_after_round}</span>
+            <span>top of round {reminder.alert_after_round}</span>
             <ButtonWithTooltip
               text="Remove reminder"
               variant="ghost"

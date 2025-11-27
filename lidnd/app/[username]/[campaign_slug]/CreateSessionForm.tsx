@@ -25,9 +25,9 @@ export function SessionCreateForm({
   return (
     <Dialog open={dialogIsOpen} onOpenChange={setDialogIsOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button className="gap-2" variant="secondary">
           <Plus className="h-4 w-4" />
-          Add session
+          New session
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-screen overflow-auto sm:max-w-[1000px]">

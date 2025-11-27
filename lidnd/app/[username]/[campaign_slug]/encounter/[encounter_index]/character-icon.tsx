@@ -1,10 +1,10 @@
 "use client";
 
 import { useUIStore } from "@/app/UIStore";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreatureUtils } from "@/utils/creatures";
 import { ParticipantUtils } from "@/utils/participants";
 import { observer } from "mobx-react-lite";
+import Image from "next/image";
 import React from "react";
 
 type IconSize = "v-small" | "small" | "small2" | "medium" | "large";
@@ -59,29 +59,33 @@ export const CreatureIcon = observer(function CreatureIcon({
   const fallbackColor = creature.is_player ? "#2563eb" : "#b91c1c";
 
   const icon = (
-    <Avatar>
-      <AvatarImage
-        src={CreatureUtils.awsURL(creature, "icon")}
-        alt={creature.name}
-        width={dimensions.width}
-        height={dimensions.height}
-        fetchPriority="high"
-        onError={(e) => {
-          if (retryCount < 3) {
-            console.log("retrying");
-            setTimeout(() => setRetryCount(retryCount + 1), 500);
-          } else {
-            console.error(e);
-          }
-        }}
-      />
-      <AvatarFallback
-        className="text-lg font-semibold uppercase tracking-wide text-white"
-        style={{ backgroundColor: fallbackColor }}
-      >
-        {fallbackText}
-      </AvatarFallback>
-    </Avatar>
+    <div>
+      {retryCount >= 1 ? (
+        <div
+          className="text-lg font-semibold uppercase tracking-wide text-white w-10 h-10 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: fallbackColor }}
+        >
+          {fallbackText}
+        </div>
+      ) : (
+        <Image
+          src={CreatureUtils.awsURL(creature, "icon")}
+          alt={creature.name}
+          width={dimensions.width}
+          height={dimensions.height}
+          className="w-10 h-10 rounded-full"
+          fetchPriority="high"
+          onError={(e) => {
+            if (retryCount < 3) {
+              console.log("retrying");
+              setTimeout(() => setRetryCount(retryCount + 1), 500);
+            } else {
+              console.error(e);
+            }
+          }}
+        />
+      )}
+    </div>
   );
 
   if (creature.id === "pending") {

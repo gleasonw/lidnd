@@ -190,7 +190,7 @@ async function CampaignCard(props: CampaignCardProps) {
 
   return (
     <Link href={campaignRoute}>
-      <Card className="flex h-full flex-col border-muted shadow-sm">
+      <Card className="flex h-full flex-col border-muted shadow-md">
         <CardHeader className="gap-4 pb-0">
           <div className="space-y-2">
             <CardTitle className="text-xl">{campaignName}</CardTitle>
@@ -223,11 +223,7 @@ async function CampaignCard(props: CampaignCardProps) {
                 ? `${campaignDescription.slice(0, 200)}…`
                 : campaignDescription}
             </p>
-          ) : (
-            <p className="text-sm italic text-muted-foreground">
-              No description provided.
-            </p>
-          )}
+          ) : null}
         </CardContent>
       </Card>
     </Link>

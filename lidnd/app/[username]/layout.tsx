@@ -44,7 +44,7 @@ export default async function CampaignsLayout({
     <TRPCReactProvider cookies={(await cookies()).toString()}>
       <UserProvider value={user}>
         <ClientOverlays>
-          <div className="flex flex-col max-h-full overflow-hidden h-full bg-gray-200">
+          <div className="flex flex-col max-h-full overflow-hidden h-full ">
             {children}
           </div>
         </ClientOverlays>
