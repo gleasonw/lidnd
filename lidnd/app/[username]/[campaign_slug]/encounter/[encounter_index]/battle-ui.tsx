@@ -127,43 +127,41 @@ export const EncounterBattleUI = observer(function BattleUI() {
               )}
             </div>
           </div>
-          <div className="flex flex-col gap-3 max-w-[800px] mx-auto">
+          <div className="flex flex-col gap-5 max-w-[800px] mx-auto">
             <EncounterNameInput />
             <div className="flex flex-wrap gap-3">
-              <Card className="flex flex-col gap-2 p-2">
+              <div className="flex flex-col gap-4 p-2">
                 <EncounterDifficulty />
-              </Card>
+              </div>
               <Card className="flex sm:flex-1 p-3 w-[530px] overflow-hidden">
                 <DescriptionTextArea />
               </Card>
-              <div className="w-full">
-                <ReminderInput />
-              </div>
             </div>
-            <div className="flex flex-wrap">
-              <Card className="shadow-lg p-3 flex flex-col gap-5 w-full">
-                <EditModeOpponentForm
-                  leftContent={
-                    <div className={`flex p-2 gap-7 rounded-md items-center`}>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-gray-400">Current</span>
-                        <span className="text-2xl font-bold">{difficulty}</span>
-                      </div>
-
-                      <div className="flex flex-col items-baseline">
-                        <span className="text-sm whitespace-nowrap text-gray-400">
-                          Total {campaign.system === "dnd5e" ? "CR" : "EV"}
-                        </span>
-                        <span className="text-2xl font-bold">
-                          {EncounterUtils.totalCr(encounter)}
-                        </span>
-                      </div>
-                      <EncounterBudgetSlider />
+            <Card className=" p-3 flex flex-col gap-5 w-full">
+              <EditModeOpponentForm
+                leftContent={
+                  <div className={`flex p-2 gap-7 rounded-md items-center`}>
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-400">Current</span>
+                      <span className="text-2xl font-bold">{difficulty}</span>
                     </div>
-                  }
-                />
-              </Card>
-            </div>
+
+                    <div className="flex flex-col items-baseline">
+                      <span className="text-sm whitespace-nowrap text-gray-400">
+                        Total {campaign.system === "dnd5e" ? "CR" : "EV"}
+                      </span>
+                      <span className="text-2xl font-bold">
+                        {EncounterUtils.totalCr(encounter)}
+                      </span>
+                    </div>
+                    <EncounterBudgetSlider />
+                  </div>
+                }
+              />
+            </Card>
+            <Card className="w-full">
+              <ReminderInput />
+            </Card>
           </div>
 
           <div className="w-full flex gap-3 h-full">
