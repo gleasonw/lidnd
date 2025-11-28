@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
+import * as R from "remeda";
 import { useState } from "react";
 import { motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
@@ -28,7 +28,7 @@ import {
   useRemoveParticipantFromEncounter,
   useRemoveStatusEffect,
   useStartEncounter,
-  useUpdateParticipantHasPlayed,
+  useUpdateGroupTurn,
   useUpdateEncounterParticipant,
   useEncounterHotkey,
   useUpdateEncounter,
@@ -53,6 +53,7 @@ import {
   Pen,
   PlayIcon,
   Plus,
+  Trash,
 } from "lucide-react";
 import Link from "next/link";
 import { imageStyle, InitiativeTracker } from "./battle-bar";
@@ -67,7 +68,11 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
 import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
-import { EncounterUtils } from "@/utils/encounters";
+import {
+  EncounterUtils,
+  participantsByTurnGroup,
+  targetSinglePlayerStrength,
+} from "@/utils/encounters";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import { useEncounterLinks } from "@/encounters/link-hooks";
@@ -77,6 +82,16 @@ import { Input } from "@/components/ui/input";
 import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+} from "@/components/ui/select";
+import { SelectItem } from "@radix-ui/react-select";
+import { crLabel } from "@/utils/campaigns";
+import type { TurnGroup } from "@/server/db/schema";
+import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index]/encounter-prep";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -192,6 +207,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                       }
                     />
                   </Card>
+                  {campaign.system === "drawsteel" ? <TurnGroupSetup /> : null}
                   <Card className="w-full">
                     <ReminderInput />
                   </Card>
@@ -475,6 +491,7 @@ export const ParticipantBattleData = observer(function BattleCard({
   indexInGroup,
   ...props
 }: BattleCardProps) {
+  const [encounter] = useEncounter();
   const encounterUiStore = useEncounterUIStore();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
 
@@ -496,8 +513,7 @@ export const ParticipantBattleData = observer(function BattleCard({
     },
   });
 
-  const { mutate: updateCreatureHasPlayedThisRound } =
-    useUpdateParticipantHasPlayed();
+  const { mutate: updateCreatureHasPlayedThisRound } = useUpdateGroupTurn();
 
   return (
     <div
@@ -535,7 +551,10 @@ export const ParticipantBattleData = observer(function BattleCard({
                             })
                           }
                         >
-                          {participant.has_played_this_round ? (
+                          {EncounterUtils.participantHasPlayed(
+                            encounter,
+                            participant
+                          ) ? (
                             <Check />
                           ) : (
                             "Ready"
@@ -695,32 +714,30 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
       </div>
 
       <div className="flex gap-1 flex-wrap  p-1">
-        {EncounterUtils.monsters(encounter)
-          // TODO: janky hack to allow malice and other things the dm needs to track to sit inside the
-          // column layout. really we should have some "encounter element" system that lets us add things
-          // to the column layout without those things becoming participants.
-          .filter((m) => !m.inanimate)
-          .map((m) => (
-            <GroupParticipantDoneToggle
-              participant={m}
-              key={m.id}
-              buttonExtra={
-                <div
-                  className="w-3 h-3"
-                  style={{
-                    backgroundColor: ParticipantUtils.iconHexColor(m),
-                  }}
-                />
-              }
-            />
-          ))}
+        {EncounterUtils.monstersWithoutTurnGroup(encounter).map((m) => (
+          <GroupParticipantDoneToggle
+            participant={m}
+            key={m.id}
+            buttonExtra={
+              <div
+                className="w-3 h-3"
+                style={{
+                  backgroundColor: ParticipantUtils.iconHexColor(m),
+                }}
+              />
+            }
+          />
+        ))}
+        {encounter.turn_groups.map((tg) => (
+          <TurnGroupDoneToggle turnGroup={tg} key={tg.id} />
+        ))}
         <LidndDialog
           title={"Add monster"}
           content={<OpponentParticipantForm />}
           trigger={
             <ButtonWithTooltip
               variant="outline"
-              className="flex p-2"
+              className="flex p-2 bg-red-200"
               text="Add monster"
             >
               <Plus />
@@ -741,6 +758,45 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
   );
 });
 
+function TurnGroupDoneToggle({ turnGroup }: { turnGroup: TurnGroup }) {
+  const { mutate: updateTurnGroup } = useUpdateGroupTurn();
+  const [encounter] = useEncounter();
+  const turnGroupedParticipants =
+    participantsByTurnGroup(encounter)[turnGroup.id] ?? [];
+
+  if (turnGroupedParticipants.length === 0) {
+    return null;
+  }
+  return (
+    <Button
+      variant={turnGroup.has_played_this_round ? "ghost" : "outline"}
+      className={clsx("flex gap-2 h-20 ", {
+        "opacity-50": turnGroup.has_played_this_round,
+        "bg-red-200": !turnGroup.has_played_this_round,
+      })}
+      onClick={() =>
+        // this is kinda wonky, why not just send up the first turn group id? need to think this through more
+        updateTurnGroup({
+          encounter_id: encounter.id,
+          participant_id: turnGroupedParticipants.at(0)?.id!,
+          has_played_this_round: !turnGroup.has_played_this_round,
+        })
+      }
+    >
+      <div className="flex flex-col">
+        <span>{turnGroup.name}</span>
+        <div className="flex gap-1">
+          {turnGroupedParticipants.map((p) => (
+            <span key={p.id} className="flex gap-1 rounded-md">
+              <CreatureIcon creature={p.creature} size="small" />
+            </span>
+          ))}
+        </div>
+      </div>
+    </Button>
+  );
+}
+
 function GroupParticipantDoneToggle({
   participant,
   buttonExtra,
@@ -749,8 +805,7 @@ function GroupParticipantDoneToggle({
   buttonExtra?: React.ReactNode;
 }) {
   const id = useEncounterId();
-  const { mutate: updateCreatureHasPlayedThisRound } =
-    useUpdateParticipantHasPlayed();
+  const { mutate: updateCreatureHasPlayedThisRound } = useUpdateGroupTurn();
   return (
     <Button
       variant={participant.has_played_this_round ? "ghost" : "outline"}
@@ -856,24 +911,24 @@ export function BattleCardStatusEffects({
     </span>
   );
 }
+const pastelLabels = ["#7eb2bc", "#e39ca0", "#edab33", "#94ae7f"];
+const solidColors = [
+  "#8abd11",
+  "#0063c3",
+  "#ff1353",
+  "#fe9c1c",
+  "#632469",
+  "#fff91e",
+  "#57b3bd",
+  "#1f105b",
+  "#ff1a13",
+];
+export const labelColors = [...pastelLabels, ...solidColors];
 
 export const BattleCardCreatureName = observer(function BattleCardCreatureName({
   participant,
 }: BattleCardParticipantProps) {
-  const pastelLabels = ["#7eb2bc", "#e39ca0", "#edab33", "#94ae7f"];
-  const solidColors = [
-    "#8abd11",
-    "#0063c3",
-    "#ff1353",
-    "#fe9c1c",
-    "#632469",
-    "#fff91e",
-    "#57b3bd",
-    "#1f105b",
-    "#ff1a13",
-  ];
   const [campaign] = useCampaign();
-  const labelColors = [...pastelLabels, ...solidColors];
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   return (
     <span className="flex flex-col gap-1">
@@ -1006,3 +1061,197 @@ export const AnimationListItem = ({
     </motion.div>
   );
 };
+
+function TurnGroupSetup() {
+  const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
+  const monstersWihoutGroup = EncounterUtils.monstersInCrOrder(
+    encounter
+  ).filter((m) => !m.turn_group_id);
+  return (
+    <div className="flex flex-col">
+      <div
+        className={clsx("flex flex-col", {
+          "sm:grid sm:grid-cols-2": monstersWihoutGroup.length > 0,
+        })}
+      >
+        {monstersWihoutGroup.length > 0 ? (
+          <div>
+            <table className="table-auto border-spacing-4">
+              <thead>
+                <tr>
+                  <th className="p-2"></th>
+                  <th className="p-2"></th>
+                  <th className="p-2"></th>
+                  <th className="p-2">{crLabel(campaign)}</th>
+                  <th className="p-2">Turn group</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monstersWihoutGroup.map((p) => (
+                  <tr key={p.id}>
+                    <td>
+                      <RemoveCreatureFromEncounterButton participant={p} />
+                    </td>
+                    <td className="p-2">
+                      <CreatureIcon creature={p.creature} size="small" />
+                    </td>
+                    <td className="p-2">{ParticipantUtils.name(p)}</td>
+                    <td className="p-2">
+                      {ParticipantUtils.challengeRating(p)}
+                    </td>
+                    <td className="p-2">
+                      <TurnGroupSelect participant={p} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+        <CreateTurnGroupForm />
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div>
+          Target player strength:{" "}
+          {targetSinglePlayerStrength({ encounter, campaign })}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {encounter.turn_groups.map((tg) => (
+            <TurnGroupDisplay tg={tg} key={tg.id} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
+  const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
+  // maybe this is wasteful to compute every render, but I think it's fine
+  const turnGroupedParticipants = participantsByTurnGroup(encounter);
+  const participantsInGroup = turnGroupedParticipants[tg.id] || [];
+  const { mutate: deleteTurnGroup } = api.deleteTurnGroup.useMutation();
+  const totalCr = R.sumBy(participantsInGroup, (p) =>
+    ParticipantUtils.challengeRating(p)
+  );
+  return (
+    <div key={tg.id} className="flex flex-col gap-2">
+      <div className="flex gap-3">
+        <span>{tg.name}</span>
+        <span className="flex gap-1">
+          <span>{crLabel(campaign)}</span>
+          <span>{totalCr}</span>
+        </span>
+        <Button
+          variant="ghost"
+          className="text-gray-200 p-2 w-3 h-3"
+          onClick={() =>
+            deleteTurnGroup({
+              id: tg.id,
+              encounter_id: encounter.id,
+            })
+          }
+        >
+          <Trash />
+        </Button>
+      </div>
+      <div className="pl-3 flex flex-col gap-1">
+        {participantsInGroup.map((p) => (
+          <div className="flex gap-2" key={p.id}>
+            <RemoveCreatureFromEncounterButton participant={p} />
+            <CreatureIcon creature={p.creature} size="small" />
+            <span className="ml-2">{ParticipantUtils.name(p)}</span>
+            <TurnGroupSelect participant={p} />
+          </div>
+        )) || <span>No participants assigned</span>}
+      </div>
+    </div>
+  );
+}
+
+function TurnGroupSelect({
+  participant: p,
+}: {
+  participant: ParticipantWithData;
+}) {
+  const [encounter] = useEncounter();
+  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
+  const turnGroupsById = R.indexBy(encounter.turn_groups, (tg) => tg.id);
+
+  return (
+    <div className="w-28">
+      <Select
+        value={p.turn_group_id ?? undefined}
+        onValueChange={(val) =>
+          updateParticipant({
+            ...p,
+            turn_group_id: val === "no-group" ? null : val,
+          })
+        }
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Assign group">
+            {p.turn_group_id ? turnGroupsById[p.turn_group_id]?.name : null}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {encounter.turn_groups.map((tg) => (
+            <SelectItem key={tg.id} value={tg.id}>
+              {tg.name}
+            </SelectItem>
+          ))}
+          <SelectItem value={"no-group"}>No group</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+function CreateTurnGroupForm() {
+  const [encounter] = useEncounter();
+  const { mutate: createTurnGroup } = api.createTurnGroup.useMutation();
+  const [name, setName] = useState("");
+  const [hexColor, setHexColor] = useState("#ff0000");
+  return (
+    <Card className="p-4">
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          createTurnGroup({
+            encounter_id: encounter.id,
+            name,
+            hex_color: hexColor,
+          });
+        }}
+      >
+        <LidndTextInput
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Turn group name"
+        />
+        <div className="flex flex-wrap gap-3">
+          {labelColors.map((color) => (
+            <Button
+              className={clsx("w-3 h-3", {
+                "opacity-25": color !== hexColor,
+              })}
+              key={color}
+              onClick={(e) => {
+                e.preventDefault();
+                setHexColor(color);
+              }}
+              style={{ backgroundColor: color }}
+            />
+          ))}
+        </div>
+        <Button variant="secondary" type="submit">
+          Create turn group
+        </Button>
+      </form>
+    </Card>
+  );
+}

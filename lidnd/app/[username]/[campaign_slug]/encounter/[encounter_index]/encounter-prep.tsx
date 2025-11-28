@@ -37,7 +37,7 @@ const useEncounterPrepStore = () => {
   const store = useContext(EncounterPrepContext);
   if (!store) {
     throw new Error(
-      "useEncounterPrepStore must be used within a EncounterPrepProvider",
+      "useEncounterPrepStore must be used within a EncounterPrepProvider"
     );
   }
   return store;
@@ -59,12 +59,12 @@ export function EncounterNameInput() {
       history.replaceState(
         {},
         "",
-        appRoutes.encounter({ campaign, encounter: newEncounter, user }),
+        appRoutes.encounter({ campaign, encounter: newEncounter, user })
       ),
   });
 
   const [encounterName, setEncounterName] = React.useState(
-    encounter?.name ?? "",
+    encounter?.name ?? ""
   );
 
   const debouncedNameUpdate = useDebouncedCallback((name: string) => {
@@ -101,7 +101,7 @@ export interface RemoveCreatureFromEncounterButtonProps {
 }
 
 export function RemoveCreatureFromEncounterButton(
-  props: RemoveCreatureFromEncounterButtonProps,
+  props: RemoveCreatureFromEncounterButtonProps
 ) {
   const { participant } = props;
 
@@ -113,6 +113,7 @@ export function RemoveCreatureFromEncounterButton(
     <ButtonWithTooltip
       text="Remove creature"
       variant="ghost"
+      className="p-2 text-gray-400"
       onClick={() =>
         removeCreatureFromEncounter({
           encounter_id: encounter.id,
@@ -134,7 +135,7 @@ export function MonsterParticipantActions(props: ParticipantCreatureProps) {
 
   const [status, setStatus] = useState<"idle" | "input">("idle");
   const [minionCount, setMinionCount] = useState<number | null>(
-    participant.minion_count,
+    participant.minion_count
   );
 
   if (status === "input") {

@@ -118,7 +118,8 @@ export function useSelectedCreature() {
   return selectedCreature;
 }
 
-export function useUpdateParticipantHasPlayed() {
+/**only applicable for drawsteel */
+export function useUpdateGroupTurn() {
   const id = useEncounterId();
   const uiStore = useEncounterUIStore();
   const { encounterById } = api.useUtils();
@@ -135,21 +136,16 @@ export function useUpdateParticipantHasPlayed() {
           return;
         }
 
-        const { updatedParticipants, updatedRoundNumber } =
-          EncounterUtils.updateGroupTurn(
-            participant_id,
-            has_played_this_round,
-            old
-          );
-        if (old.current_round !== updatedRoundNumber) {
+        const { updatedEncounter } = EncounterUtils.updateGroupTurn(
+          participant_id,
+          has_played_this_round,
+          old
+        );
+        if (old.current_round !== updatedEncounter.current_round) {
           uiStore.resetViewedState();
         }
 
-        return {
-          ...old,
-          participants: updatedParticipants,
-          current_round: updatedRoundNumber,
-        };
+        return updatedEncounter;
       });
       return { previousEncounterData };
     },

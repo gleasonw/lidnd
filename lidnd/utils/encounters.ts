@@ -1,6 +1,9 @@
 import type { Campaign, Reminder } from "@/app/[username]/types";
 import { appRoutes } from "@/app/routes";
-import type { UpdateTurnOrderReturn } from "@/app/[username]/[campaign_slug]/encounter/utils";
+import type {
+  CyclableEncounter,
+  UpdateTurnOrderReturn,
+} from "@/app/[username]/[campaign_slug]/encounter/utils";
 import type {
   Creature,
   Encounter,
@@ -13,6 +16,7 @@ import { ParticipantUtils } from "@/utils/participants";
 import type { LidndUser } from "@/app/authentication";
 import _ from "lodash";
 import { CreatureUtils } from "@/utils/creatures";
+import type { TurnGroup } from "@/server/db/schema";
 
 export const ESTIMATED_TURN_SECONDS = 180;
 export const ESTIMATED_ROUNDS = 2;
@@ -32,10 +36,39 @@ export type EncounterWithParticipantDifficulty = {
   average_victories: Encounter["average_victories"];
 };
 
-type Cyclable = {
-  participants: ParticipantWithData[];
-  current_round: number;
+type DifficultyArgs = {
+  encounter: EncounterWithParticipantDifficulty;
+  campaign: Pick<Campaign, "system" | "party_level">;
 };
+
+function participantHasPlayed(
+  e: {
+    turn_groups: Array<Pick<TurnGroup, "id" | "has_played_this_round">>;
+  },
+  participant: Pick<Participant, "turn_group_id" | "has_played_this_round">
+) {
+  const groupsById = R.indexBy(e.turn_groups, (tg) => tg.id);
+  const groupForParticipant = groupsById[participant.turn_group_id ?? ""];
+  if (groupForParticipant) {
+    return groupForParticipant.has_played_this_round;
+  } else {
+    return participant.has_played_this_round;
+  }
+}
+
+export function targetSinglePlayerStrength(args: DifficultyArgs) {
+  const tiers = EncounterUtils.findCRBudget(args);
+  if (tiers === "no-players") {
+    return "no-players";
+  }
+  return tiers.oneHeroStrength ?? null;
+}
+
+export function participantsByTurnGroup<
+  P extends { turn_group_id: string | null }
+>(e: { participants: Array<P> }) {
+  return R.groupBy(e.participants, (p) => p.turn_group_id ?? "no-group");
+}
 
 export function monstersWithNoColumn<
   E extends {
@@ -175,6 +208,7 @@ function participantsForColumn(
 }
 
 export const EncounterUtils = {
+  participantHasPlayed,
   participantsByColumn,
   participantsForColumn,
   inactiveEncounters,
@@ -298,7 +332,13 @@ export const EncounterUtils = {
     encounter: EncounterWithParticipantDifficulty;
     campaign: Pick<Campaign, "system" | "party_level">;
   }):
-    | { easyTier: number; standardTier: number; hardTier: number }
+    | {
+        easyTier: number;
+        standardTier: number;
+        hardTier: number;
+        /**this is only applicable in the draw steel case, I think, when making encounter groups... can clean up types later */
+        oneHeroStrength?: number;
+      }
     | "no-players" {
     const playerCount = this.playerCount(args.encounter);
     if (playerCount === 0) {
@@ -349,13 +389,6 @@ export const EncounterUtils = {
         const partyEncounterStrength = heroLevelEVBudget[budgetIndex];
         const oneHeroStrength = heroLevelEVBudget[0];
         const threeHeroStrength = heroLevelEVBudget[2];
-        console.log({
-          budgetIndex,
-          partyEncounterStrength,
-          oneHeroStrength,
-          threeHeroStrength,
-          adjustedHeroCount,
-        });
         if (partyEncounterStrength === undefined) {
           throw new Error(
             `No EV budget found for this number of heroes: ${adjustedHeroCount}`
@@ -365,6 +398,7 @@ export const EncounterUtils = {
           easyTier: partyEncounterStrength,
           standardTier: partyEncounterStrength + oneHeroStrength,
           hardTier: partyEncounterStrength + threeHeroStrength,
+          oneHeroStrength,
         };
       }
       default: {
@@ -406,28 +440,18 @@ export const EncounterUtils = {
     return estimateEncounterSeconds;
   },
 
-  optimisticParticipants(
+  optimisticParticipants<E extends CyclableEncounter>(
     status: "loadingNext" | "loadingPrevious" | "idle",
-    encounter: EncounterWithParticipants
-  ): EncounterWithParticipants {
+    encounter: E
+  ): E {
     if (status === "loadingNext") {
-      const { updatedParticipants, updatedRoundNumber } =
-        EncounterUtils.cycleNextTurn(encounter);
-      return {
-        ...encounter,
-        participants: updatedParticipants,
-        current_round: updatedRoundNumber,
-      };
+      const { updatedEncounter } = EncounterUtils.cycleNextTurn(encounter);
+      return updatedEncounter;
     }
 
     if (status === "loadingPrevious") {
-      const { updatedParticipants, updatedRoundNumber } =
-        EncounterUtils.cyclePreviousTurn(encounter);
-      return {
-        ...encounter,
-        participants: updatedParticipants,
-        current_round: updatedRoundNumber,
-      };
+      const { updatedEncounter } = EncounterUtils.cyclePreviousTurn(encounter);
+      return updatedEncounter;
     }
 
     return encounter;
@@ -499,9 +523,9 @@ export const EncounterUtils = {
     }
   },
 
-  participantsInInitiativeOrder<T extends Participant>(
-    encounter: EncounterWithParticipants<T>
-  ) {
+  participantsInInitiativeOrder<T extends Participant>(encounter: {
+    participants: T[];
+  }) {
     return R.sort(encounter.participants, ParticipantUtils.sortLinearly);
   },
 
@@ -530,6 +554,28 @@ export const EncounterUtils = {
     return this.participantsByName(encounter)
       .filter((p) => !ParticipantUtils.isFriendly(p))
       .sort(ParticipantUtils.sortLinearly);
+  },
+
+  monstersWithoutTurnGroup(
+    encounter: EncounterWithParticipants<ParticipantWithData>
+  ) {
+    return this.participantsByName(encounter).filter(
+      // TODO: inanimate is a janky hack to allow malice and other things the dm needs to track to sit inside the
+      // column layout. really we should have some "encounter element" system that lets us add things
+      // to the column layout without those things becoming participants.
+
+      (p) => !ParticipantUtils.isFriendly(p) && !p.turn_group_id && !p.inanimate
+    );
+  },
+
+  monstersInCrOrder(encounter: EncounterWithParticipants<ParticipantWithData>) {
+    return this.participantsByName(encounter)
+      .filter((p) => !ParticipantUtils.isFriendly(p))
+      .sort(
+        (a, b) =>
+          ParticipantUtils.challengeRating(b) -
+          ParticipantUtils.challengeRating(a)
+      );
   },
 
   allies(encounter: EncounterWithParticipants<ParticipantWithData>) {
@@ -609,22 +655,12 @@ export const EncounterUtils = {
     };
   },
 
-  hasSurpriseRound(encounter: EncounterWithParticipants) {
-    return this.participantsInInitiativeOrder(encounter).some(
-      (p) => p.has_surprise
-    );
-  },
-
   firstActiveAndRoundNumber(
     encounter: EncounterWithParticipants
   ): [Participant, number] {
     const participants = this.participantsInInitiativeOrder(encounter);
 
-    const surprise = this.hasSurpriseRound(encounter);
-
-    const firstActive = surprise
-      ? participants.find((p) => p.has_surprise)
-      : participants.at(0);
+    const firstActive = participants.at(0);
 
     if (!firstActive) {
       throw new Error(
@@ -632,7 +668,7 @@ export const EncounterUtils = {
       );
     }
 
-    return [firstActive, surprise ? 0 : 1];
+    return [firstActive, 1];
   },
 
   postRoundReminders({
@@ -711,11 +747,12 @@ export const EncounterUtils = {
     };
   },
 
-  updateGroupTurn(
+  updateGroupTurn<E extends CyclableEncounter>(
     participant_id: string,
     participant_has_played_this_round: boolean,
-    encounter: EncounterWithData
-  ): UpdateTurnOrderReturn {
+    encounter: E
+  ): UpdateTurnOrderReturn<E> {
+    const turnGroupsById = R.indexBy(encounter.turn_groups, (tg) => tg.id);
     const participants = this.participantsInInitiativeOrder(encounter);
     const participantWhoPlayed = participants.find(
       (p) => p.id === participant_id
@@ -723,6 +760,41 @@ export const EncounterUtils = {
     if (!participantWhoPlayed) {
       throw new Error("Participant not found");
     }
+
+    const groupForParticipant =
+      turnGroupsById[participantWhoPlayed.turn_group_id ?? ""];
+    if (groupForParticipant) {
+      console.log({ groupForParticipant });
+      const encounterWithUpdate = {
+        ...encounter,
+        turn_groups: encounter.turn_groups.map((tg) => {
+          if (tg.id === groupForParticipant.id) {
+            return {
+              ...tg,
+              has_played_this_round: participant_has_played_this_round,
+            };
+          } else {
+            return tg;
+          }
+        }),
+      };
+      // this could be expensive... probably should just have turn group select participant ids?
+      const allHavePlayed = participants.every((p) =>
+        this.participantHasPlayed(encounterWithUpdate, p)
+      );
+
+      if (allHavePlayed) {
+        return {
+          updatedEncounter: this.moveToNextGroupTurnRound(encounter),
+          newlyActiveParticipant: participantWhoPlayed,
+        };
+      }
+      return {
+        updatedEncounter: encounterWithUpdate,
+        newlyActiveParticipant: participantWhoPlayed,
+      };
+    }
+
     const updatedParticipants = participants.map((p) => {
       if (p.id === participant_id) {
         return {
@@ -734,26 +806,41 @@ export const EncounterUtils = {
       }
     });
     const allHavePlayed = updatedParticipants.every(
-      (p) => p.has_played_this_round || p.inanimate
+      (p) => this.participantHasPlayed(encounter, p) || p.inanimate
     );
     if (allHavePlayed) {
       return {
-        updatedParticipants: participants.map((p) => ({
-          ...p,
-          has_played_this_round: false,
-        })),
-        updatedRoundNumber: encounter.current_round + 1,
+        updatedEncounter: this.moveToNextGroupTurnRound(encounter),
         newlyActiveParticipant: participantWhoPlayed,
       };
     }
     return {
-      updatedParticipants,
-      updatedRoundNumber: encounter.current_round,
+      updatedEncounter: {
+        ...encounter,
+        participants: updatedParticipants,
+      },
       newlyActiveParticipant: participantWhoPlayed,
     };
   },
 
-  cycleNextTurn(encounter: Cyclable): UpdateTurnOrderReturn {
+  moveToNextGroupTurnRound<E extends CyclableEncounter>(encounter: E): E {
+    return {
+      ...encounter,
+      participants: encounter.participants.map((p) => ({
+        ...p,
+        has_played_this_round: false,
+      })),
+      current_round: encounter.current_round + 1,
+      turn_groups: encounter.turn_groups.map((tg) => ({
+        ...tg,
+        has_played_this_round: false,
+      })),
+    };
+  },
+
+  cycleNextTurn<E extends CyclableEncounter>(
+    encounter: E
+  ): UpdateTurnOrderReturn<E> {
     return this.cycleTurn({
       updateActiveAndRoundNumber: (participants) => {
         const prev = participants.findIndex((p) => p.is_active);
@@ -765,8 +852,11 @@ export const EncounterUtils = {
           }
 
           return {
+            updatedEncounter: {
+              ...encounter,
+              current_round: encounter.current_round + 1,
+            },
             newlyActiveParticipant,
-            updatedRoundNumber: encounter.current_round + 1,
           };
         }
 
@@ -777,30 +867,20 @@ export const EncounterUtils = {
         }
 
         return {
+          updatedEncounter: encounter,
           newlyActiveParticipant,
-          updatedRoundNumber: encounter.current_round,
         };
       },
       encounter,
     });
   },
 
-  cyclePreviousTurn(encounter: Cyclable): UpdateTurnOrderReturn {
+  cyclePreviousTurn<E extends CyclableEncounter>(
+    encounter: E
+  ): UpdateTurnOrderReturn<E> {
     return this.cycleTurn({
       updateActiveAndRoundNumber: (participants) => {
         const prev = participants.findIndex((p) => p.is_active);
-        if (prev === 0 && encounter.current_round === 0) {
-          // don't allow negative round numbers, just noop
-          const newlyActiveParticipant = participants[prev];
-          if (!newlyActiveParticipant) {
-            throw new Error("cyclePrevious: newlyActiveParticipant not found");
-          }
-          return {
-            newlyActiveParticipant,
-            updatedRoundNumber: 0,
-          };
-        }
-
         if (prev === 0) {
           const newlyActiveParticipant = participants[participants.length - 1];
 
@@ -809,8 +889,11 @@ export const EncounterUtils = {
           }
 
           return {
+            updatedEncounter: {
+              ...encounter,
+              current_round: Math.max(encounter.current_round - 1, 0),
+            },
             newlyActiveParticipant,
-            updatedRoundNumber: encounter.current_round - 1,
           };
         }
 
@@ -821,15 +904,18 @@ export const EncounterUtils = {
         }
 
         return {
+          updatedEncounter: encounter,
           newlyActiveParticipant,
-          updatedRoundNumber: encounter.current_round,
         };
       },
       encounter,
     });
   },
 
-  cycleTurn({ updateActiveAndRoundNumber, encounter }: CycleTurnArgs) {
+  cycleTurn<E extends CyclableEncounter>({
+    updateActiveAndRoundNumber,
+    encounter,
+  }: CycleTurnArgs<E>): UpdateTurnOrderReturn<E> {
     const participants = encounter.participants;
     const sortedParticipants = R.sort(
       participants,
@@ -846,21 +932,11 @@ export const EncounterUtils = {
       sortedParticipants[0].is_active = true;
     }
 
-    if (participants.some((p) => p.has_surprise)) {
-      return this.cycleTurnWithSurpriseRound({
-        updateActiveAndRoundNumber,
-        encounter: {
-          ...encounter,
-          participants: sortedParticipants,
-        },
-      });
-    }
-
     const candidates = sortedParticipants.filter(
       ParticipantUtils.isActivatable
     );
 
-    const { updatedRoundNumber, newlyActiveParticipant } =
+    const { updatedEncounter, newlyActiveParticipant } =
       updateActiveAndRoundNumber(candidates);
 
     const updatedParticipants = sortedParticipants.map((p) => {
@@ -872,82 +948,21 @@ export const EncounterUtils = {
     });
 
     return {
-      updatedParticipants,
-      updatedRoundNumber,
-      newlyActiveParticipant,
-    };
-  },
-
-  cycleTurnWithSurpriseRound({
-    updateActiveAndRoundNumber,
-    encounter,
-  }: CycleTurnArgs) {
-    const participants = encounter.participants;
-    const isSurpriseRound = encounter?.current_round === 0;
-
-    const activeParticipants = isSurpriseRound
-      ? participants.filter((p) => p.has_surprise)
-      : participants.filter(ParticipantUtils.isActivatable);
-
-    const { updatedRoundNumber, newlyActiveParticipant } =
-      updateActiveAndRoundNumber(activeParticipants);
-
-    if (updatedRoundNumber === 0 && encounter.current_round === 1) {
-      // when cycling back to surprise round, set the first active participant to the last surprise participant
-
-      const lastSurpriseParticipant = participants
-        .filter((p) => p.has_surprise)
-        .pop();
-      if (!lastSurpriseParticipant) {
-        throw new Error(
-          "cycleTurnWithSurprise: lastSurpriseParticipant not found"
-        );
-      }
-
-      return {
-        updatedParticipants: participants.map((p) => ({
-          ...p,
-          is_active: p.id === lastSurpriseParticipant?.id,
-        })),
-        updatedRoundNumber,
-        newlyActiveParticipant: lastSurpriseParticipant,
-      };
-    }
-
-    if (updatedRoundNumber === 1 && encounter.current_round === 0) {
-      // set first active as just the first active participant when cycling from surprise round
-
-      const firstActive = participants.at(0);
-      if (!firstActive) {
-        throw new Error("Participants empty?");
-      }
-
-      return {
-        updatedParticipants: participants.map((p) => ({
-          ...p,
-          is_active: p.id === firstActive.id,
-        })),
-        updatedRoundNumber,
-        newlyActiveParticipant: firstActive,
-      };
-    }
-
-    return {
-      updatedParticipants: participants.map((p) => ({
-        ...p,
-        is_active: p.id === newlyActiveParticipant.id,
-      })),
-      updatedRoundNumber,
+      updatedEncounter: {
+        ...encounter,
+        participants: updatedParticipants,
+        current_round: updatedEncounter.current_round,
+      },
       newlyActiveParticipant,
     };
   },
 };
 
-type CycleTurnArgs = {
+type CycleTurnArgs<E extends CyclableEncounter> = {
   updateActiveAndRoundNumber: (
-    participants: Cyclable["participants"]
-  ) => Omit<UpdateTurnOrderReturn, "updatedParticipants">;
-  encounter: Cyclable;
+    participants: E["participants"]
+  ) => Omit<UpdateTurnOrderReturn<E>, "updatedParticipants">;
+  encounter: E;
 };
 
 export const encounterCRPerCharacter = [

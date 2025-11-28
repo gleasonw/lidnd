@@ -11,7 +11,6 @@ type MockParticipant = {
   initiative: number;
   created_at: Date;
   is_player: boolean;
-  has_surprise: boolean;
   minion_count: number;
   max_hp: number;
 };
@@ -21,7 +20,6 @@ function createParticipant({
   is_active = true,
   initiative = 1,
   is_player = true,
-  has_surprise = false,
   hp = 10,
   minion_count = 0,
   max_hp = 10,
@@ -32,7 +30,6 @@ function createParticipant({
       encounter_id: "testing",
       is_active,
       initiative,
-      has_surprise,
       hp,
       creature_id: "testing",
       minion_count: minion_count ?? 0,
@@ -43,7 +40,7 @@ function createParticipant({
       name: "testing",
       user_id: "testing",
       max_hp,
-    },
+    }
   );
 }
 
@@ -56,9 +53,10 @@ describe("Participant turn order tests", () => {
     const result = EncounterUtils.cycleNextTurn({
       current_round: 1,
       participants,
+      turn_groups: [],
     });
     expect(result.newlyActiveParticipant.id).toBe("2");
-    expect(result.updatedRoundNumber).toBe(2);
+    expect(result.updatedEncounter.current_round).toBe(2);
   });
 
   test("updates turn order to previous participant", () => {
@@ -70,29 +68,10 @@ describe("Participant turn order tests", () => {
     const result = EncounterUtils.cyclePreviousTurn({
       current_round: 1,
       participants,
+      turn_groups: [],
     });
     expect(result.newlyActiveParticipant.id).toBe("1");
-    expect(result.updatedRoundNumber).toBe(0);
-  });
-
-  test("updates turn order to last surprise participant when wrapping back from first participant", () => {
-    const participants = [
-      createParticipant({ id: "1", is_active: false }),
-      createParticipant({
-        id: "2",
-        is_active: false,
-        initiative: 2,
-        has_surprise: true,
-      }),
-      createParticipant({ id: "3", is_active: true, initiative: 3 }),
-    ];
-
-    const result = EncounterUtils.cyclePreviousTurn({
-      current_round: 1,
-      participants,
-    });
-    expect(result.newlyActiveParticipant.id).toBe("2");
-    expect(result.updatedRoundNumber).toBe(0);
+    expect(result.updatedEncounter.current_round).toBe(0);
   });
 
   test("updates turn order to last participant when wrapping back from first participant", () => {
@@ -105,9 +84,10 @@ describe("Participant turn order tests", () => {
     const result = EncounterUtils.cyclePreviousTurn({
       current_round: 1,
       participants,
+      turn_groups: [],
     });
     expect(result.newlyActiveParticipant.id).toBe("1");
-    expect(result.updatedRoundNumber).toBe(0);
+    expect(result.updatedEncounter.current_round).toBe(0);
   });
 
   test("updates turn order to first participant when wrapping back from last participant", () => {
@@ -120,12 +100,13 @@ describe("Participant turn order tests", () => {
     const result = EncounterUtils.cycleNextTurn({
       current_round: 1,
       participants,
+      turn_groups: [],
     });
     expect(result.newlyActiveParticipant.id).toBe("3");
-    expect(result.updatedRoundNumber).toBe(2);
+    expect(result.updatedEncounter.current_round).toBe(2);
   });
 
-  test("does nothing if user tries to cycle previous from last participant on round 0", () => {
+  test("cyles back around without changing round number if user tries to cycle previous from last participant on round 0", () => {
     const participants = [
       createParticipant({ id: "1", is_active: false }),
       createParticipant({ id: "2", is_active: false, initiative: 2 }),
@@ -135,75 +116,11 @@ describe("Participant turn order tests", () => {
     const result = EncounterUtils.cyclePreviousTurn({
       current_round: 0,
       participants,
+      turn_groups: [],
     });
-    expect(result.newlyActiveParticipant.id).toBe("3");
-    expect(result.updatedRoundNumber).toBe(0);
+    expect(result.newlyActiveParticipant.id).toBe("1");
+    expect(result.updatedEncounter.current_round).toBe(0);
   });
-});
-
-test("skip non-surprise participants when cycling next on surprise round", () => {
-  const participants = [
-    createParticipant({ id: "1", is_active: false, initiative: 4 }),
-    createParticipant({
-      id: "2",
-      is_active: true,
-      has_surprise: true,
-      initiative: 3,
-    }),
-    createParticipant({ id: "3", is_active: false, initiative: 2 }),
-    createParticipant({
-      id: "4",
-      is_active: false,
-      has_surprise: true,
-      initiative: 1,
-    }),
-    createParticipant({
-      id: "5",
-      is_active: false,
-      has_surprise: true,
-      initiative: 0,
-    }),
-  ];
-
-  const result = EncounterUtils.cycleNextTurn({
-    current_round: 0,
-    participants,
-  });
-
-  expect(result.updatedRoundNumber).toBe(0);
-  expect(result.newlyActiveParticipant.id).toBe("4");
-  const result2 = EncounterUtils.cyclePreviousTurn({
-    current_round: 0,
-    participants,
-  });
-
-  expect(result2.updatedRoundNumber).toBe(0);
-  expect(result2.newlyActiveParticipant.id).toBe("2");
-});
-
-test("when cycling from surprise round end, correctly set non-surprise but first active participant", () => {
-  const participants = [
-    createParticipant({
-      id: "2",
-      is_active: true,
-      has_surprise: true,
-      initiative: 3,
-    }),
-    createParticipant({ id: "1", is_active: false, initiative: 4 }),
-    createParticipant({
-      id: "3",
-      is_active: false,
-      initiative: 2,
-    }),
-  ];
-
-  const result = EncounterUtils.cycleNextTurn({
-    current_round: 0,
-    participants,
-  });
-
-  expect(result.updatedRoundNumber).toBe(1);
-  expect(result.newlyActiveParticipant.id).toBe("1");
 });
 
 describe("Overkill minions", () => {

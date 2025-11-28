@@ -1,7 +1,12 @@
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db";
-import { participant_status_effects, participants } from "../db/schema";
+import {
+  participant_status_effects,
+  participants,
+  turn_groups,
+  turnGroupInsertSchema,
+} from "../db/schema";
 import { protectedProcedure } from "./base-trpc";
 import { participantSchema } from "../db/schema";
 import { getEncounterCreature } from "./utils";
@@ -11,6 +16,7 @@ import { ServerEncounter } from "../sdk/encounters";
 import { participantCreateSchema } from "../db/schema";
 import { ServerCreature } from "../sdk/creatures";
 import { revalidatePath } from "next/cache";
+import * as ServerTurnGroup from "@/server/sdk/turnGroups";
 
 export const participantsRouter = {
   uploadParticipant: protectedProcedure
@@ -101,6 +107,56 @@ export const participantsRouter = {
         return updatedParticipant[0];
       });
       return result;
+    }),
+
+  createTurnGroup: protectedProcedure
+    .input(turnGroupInsertSchema)
+    .mutation(async (opts) => {
+      await ServerEncounter.encounterByIdThrows(
+        opts.ctx,
+        opts.input.encounter_id
+      );
+      return await db.insert(turn_groups).values(opts.input).returning();
+    }),
+
+  updateTurnGroup: protectedProcedure
+    .input(
+      turnGroupInsertSchema.extend({
+        id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      await ServerEncounter.encounterByIdThrows(
+        opts.ctx,
+        opts.input.encounter_id
+      );
+      const [updated] = await ServerTurnGroup.updateTurnGroup(opts.input, db);
+      return updated;
+    }),
+
+  deleteTurnGroup: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        encounter_id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      await ServerEncounter.encounterByIdThrows(
+        opts.ctx,
+        opts.input.encounter_id
+      );
+      const result = await db
+        .delete(turn_groups)
+        .where(eq(turn_groups.id, opts.input.id))
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete turn group",
+        });
+      }
+      return result[0];
     }),
 
   updateEncounterParticipant: protectedProcedure

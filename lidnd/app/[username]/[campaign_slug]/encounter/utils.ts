@@ -1,8 +1,13 @@
 import type { Participant, ParticipantWithData } from "@/server/api/router";
+import type { EncounterWithData } from "@/server/sdk/encounters";
 
-export type UpdateTurnOrderReturn = {
-  updatedParticipants: ParticipantWithData[];
-  updatedRoundNumber: number;
+export type CyclableEncounter = Pick<
+  EncounterWithData,
+  "participants" | "current_round" | "turn_groups"
+>;
+
+export type UpdateTurnOrderReturn<E extends CyclableEncounter> = {
+  updatedEncounter: E;
   newlyActiveParticipant: ParticipantWithData;
 };
 
@@ -22,7 +27,6 @@ export function defaultParticipant(
 ): Participant {
   return {
     is_active: p.is_active ?? false,
-    has_surprise: p.has_surprise ?? false,
     minion_count: p.minion_count ?? 0,
     has_played_this_round: false,
     is_ally: p.is_ally ?? false,
@@ -36,6 +40,7 @@ export function defaultParticipant(
     max_hp_override: p.max_hp_override ?? null,
     column_id: p.column_id ?? null,
     inanimate: p.inanimate ?? false,
+    turn_group_id: p.turn_group_id ?? null,
     ...p,
   };
 }

@@ -1,6 +1,10 @@
 import { booleanSchema } from "@/app/[username]/utils";
 import { z } from "zod";
-import { type InferInsertModel, relations } from "drizzle-orm";
+import {
+  type InferInsertModel,
+  type InferSelectModel,
+  relations,
+} from "drizzle-orm";
 import {
   bigint,
   boolean,
@@ -249,6 +253,7 @@ export const encountersRelations = relations(encounters, ({ many, one }) => ({
     references: [campaigns.id],
   }),
   columns: many(stat_columns),
+  turn_groups: many(turn_groups),
 }));
 
 //todo: there are system-specific fields in here...
@@ -268,8 +273,10 @@ export const participants = pgTable(
     initiative: integer("initiative").default(0).notNull(),
     hp: integer("hp").default(1).notNull(),
     max_hp_override: integer("max_hp_override"),
+    /**todo: probably this should be on the encounter state. we don't want there to be two participants, both declaring is_active, and this
+     * model allows for that
+     */
     is_active: boolean("is_active").default(false).notNull(),
-    has_surprise: boolean("has_surprise").default(false).notNull(),
     // TODO: inanimate is a hack flag to allow malice and other things the dm needs to track to sit inside the
     // column layout. really we should have some "encounter element" system that lets us add things
     // to the column layout without those things becoming participants.
@@ -280,6 +287,9 @@ export const participants = pgTable(
     notes: text("notes"),
     temporary_hp: integer("temporary_hp").default(0).notNull(),
     column_id: uuid("stat_column_id").references(() => stat_columns.id, {
+      onDelete: "set null",
+    }),
+    turn_group_id: uuid("turn_group_id").references(() => turn_groups.id, {
       onDelete: "set null",
     }),
     has_played_this_round: boolean("has_played_this_round")
@@ -325,6 +335,10 @@ export const participantRelations = relations(
     column: one(stat_columns, {
       fields: [participants.column_id],
       references: [stat_columns.id],
+    }),
+    turn_group: one(turn_groups, {
+      fields: [participants.turn_group_id],
+      references: [turn_groups.id],
     }),
   })
 );
@@ -388,6 +402,39 @@ export const status_effects = pgTable("status_effects", {
 
 export const statusEffectRelations = relations(status_effects, ({ many }) => ({
   participantEffects: many(participant_status_effects),
+}));
+
+export const turn_groups = pgTable(
+  "turn_groups",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    encounter_id: uuid("encounter_id")
+      .references(() => encounters.id, { onDelete: "cascade" })
+      .notNull(),
+    name: varchar("name", { length: 256 }),
+    is_active: boolean("is_active").default(false).notNull(),
+    has_played_this_round: boolean("has_played_this_round")
+      .default(false)
+      .notNull(),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+    hex_color: text("hex_color"),
+  },
+  (t) => {
+    return {
+      encounterIndex: index("turn_group_encounter_index").on(t.encounter_id),
+    };
+  }
+);
+export const turnGroupInsertSchema = createInsertSchema(turn_groups);
+export type TurnGroup = InferSelectModel<typeof turn_groups>;
+export type TurnGroupInsert = InferInsertModel<typeof turn_groups>;
+
+export const turn_group_relations = relations(turn_groups, ({ one, many }) => ({
+  encounter: one(encounters, {
+    fields: [turn_groups.encounter_id],
+    references: [encounters.id],
+  }),
+  participants: many(participants),
 }));
 
 export const participant_status_effects = pgTable(

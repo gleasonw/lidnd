@@ -19,6 +19,7 @@ import {
   encounters,
   campaignCreatureLink,
 } from "@/server/db/schema";
+import * as ServerTurnGroup from "@/server/sdk/turnGroups";
 import { eq, and, ilike, lte, exists } from "drizzle-orm";
 import { db } from "@/server/db";
 import { z } from "zod";
@@ -232,16 +233,16 @@ export const appRouter = t.router({
           opts.input.encounter_id
         );
 
-        const { newlyActiveParticipant, updatedRoundNumber } =
+        const { newlyActiveParticipant, updatedEncounter } =
           EncounterUtils.cycleNextTurn(encounter);
 
         await ServerEncounter.updateTurnData(
           opts.input.encounter_id,
-          updatedRoundNumber,
+          updatedEncounter.current_round,
           newlyActiveParticipant.id,
           tx
         );
-        return encounter;
+        return updatedEncounter;
       });
       return result;
     }),
@@ -259,16 +260,16 @@ export const appRouter = t.router({
           opts.input.encounter_id
         );
 
-        const { newlyActiveParticipant, updatedRoundNumber } =
+        const { updatedEncounter, newlyActiveParticipant } =
           EncounterUtils.cyclePreviousTurn(encounter);
 
         await ServerEncounter.updateTurnData(
           opts.input.encounter_id,
-          updatedRoundNumber,
+          updatedEncounter.current_round,
           newlyActiveParticipant.id,
           tx
         );
-        return encounter;
+        return updatedEncounter;
       });
       return result;
     }),
@@ -289,21 +290,23 @@ export const appRouter = t.router({
           tx
         );
 
-        const { updatedParticipants, updatedRoundNumber } =
-          EncounterUtils.updateGroupTurn(
-            opts.input.participant_id,
-            opts.input.has_played_this_round,
-            encounter
-          );
+        const { updatedEncounter } = EncounterUtils.updateGroupTurn(
+          opts.input.participant_id,
+          opts.input.has_played_this_round,
+          encounter
+        );
 
         await Promise.all([
-          ...updatedParticipants.map((p) =>
+          ...updatedEncounter.participants.map((p) =>
             ServerEncounter.updateParticipantHasPlayed(p, tx)
+          ),
+          ...updatedEncounter.turn_groups.map((tg) =>
+            ServerTurnGroup.updateTurnGroup(tg, tx)
           ),
           tx
             .update(encounters)
             .set({
-              current_round: updatedRoundNumber,
+              current_round: updatedEncounter.current_round,
             })
             .where(eq(encounters.id, opts.input.encounter_id)),
         ]);

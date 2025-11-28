@@ -301,6 +301,7 @@ export const ServerEncounter = {
             },
           },
         },
+        turn_groups: true,
       },
     });
   },

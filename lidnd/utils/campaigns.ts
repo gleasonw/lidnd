@@ -19,3 +19,15 @@ export function encounterFromUrl(
   }
   return campaign.encounters.find((e) => e.index_in_campaign === indexToFind);
 }
+
+export function crLabel(campaign: Pick<Campaign, "system">) {
+  switch (campaign.system) {
+    case "dnd5e":
+      return "CR";
+    case "drawsteel":
+      return "EV";
+    default:
+      const _exhaustiveCheck: never = campaign.system;
+      throw new Error(`Unhandled campaign system: ${_exhaustiveCheck}`);
+  }
+}
