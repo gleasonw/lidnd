@@ -13,7 +13,6 @@ import { ButtonWithTooltip } from "@/components/ui/tip";
 import { AddColumn } from "@/app/public/images/icons/AddColumn";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import type { StatColumn } from "@/server/api/columns-router";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import clsx from "clsx";
 import { EncounterUtils } from "@/utils/encounters";
 import type React from "react";
@@ -59,11 +58,13 @@ export const LinearBattleUI = observer(function LinearBattleUI() {
 
   return (
     <div
-      className="flex relative w-full h-full max-h-full overflow-auto"
+      className="flex relative w-full h-full max-h-full overflow-hidden"
       ref={containerRef}
     >
       <ParentWidthContext.Provider value={parentWidth}>
-        <StatColumns />
+        <div className="overflow-auto w-full h-full flex">
+          <StatColumns />
+        </div>
       </ParentWidthContext.Provider>
     </div>
   );
@@ -81,42 +82,40 @@ export function StatColumns() {
 
   return columns?.map((c, index) => (
     <StatColumnComponent column={c} index={index} key={c.id}>
-      <ScrollArea className="flex flex-col gap-5 border-t-0 w-full max-h-screen h-full overflow-hidden ">
-        <div className="flex flex-col divide-solid divide-y-2 gap-2">
-          {participantsByColumn[c.id]
-            ?.slice()
-            .sort(
-              (groupA, groupB) =>
-                groupA
-                  .at(0)
-                  ?.creature.name.localeCompare(
-                    groupB.at(0)?.creature.name ?? ""
-                  ) || 0
-            )
-            .map((p) => (
-              <div className="flex flex-col" key={p.map((p) => p.id).join("-")}>
-                {p
-                  .slice()
-                  .sort(ParticipantUtils.sortLinearly)
-                  .map((p, i) => (
-                    <ParticipantBattleData
-                      participant={p}
-                      ref={(ref) => registerBattleCardRef(p.id, ref)}
-                      data-is-active={p.is_active}
-                      data-participant-id={p.id}
-                      key={p.id}
-                      indexInGroup={i}
-                    />
-                  ))}
-                {p[0]?.creature ? (
-                  <CreatureStatBlock creature={p[0]?.creature} />
-                ) : (
-                  <div>no creature... probably a bug</div>
-                )}
-              </div>
-            ))}
-        </div>
-      </ScrollArea>
+      <div className="flex flex-col divide-solid divide-y-2 gap-2">
+        {participantsByColumn[c.id]
+          ?.slice()
+          .sort(
+            (groupA, groupB) =>
+              groupA
+                .at(0)
+                ?.creature.name.localeCompare(
+                  groupB.at(0)?.creature.name ?? ""
+                ) || 0
+          )
+          .map((p) => (
+            <div className="flex flex-col" key={p.map((p) => p.id).join("-")}>
+              {p
+                .slice()
+                .sort(ParticipantUtils.sortLinearly)
+                .map((p, i) => (
+                  <ParticipantBattleData
+                    participant={p}
+                    ref={(ref) => registerBattleCardRef(p.id, ref)}
+                    data-is-active={p.is_active}
+                    data-participant-id={p.id}
+                    key={p.id}
+                    indexInGroup={i}
+                  />
+                ))}
+              {p[0]?.creature ? (
+                <CreatureStatBlock creature={p[0]?.creature} />
+              ) : (
+                <div>no creature... probably a bug</div>
+              )}
+            </div>
+          ))}
+      </div>
     </StatColumnComponent>
   ));
 }
@@ -216,7 +215,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
     <>
       <div
         className={clsx(
-          `flex flex-col h-full max-h-full overflow-hidden items-start relative`,
+          `flex flex-col h-full max-h-full items-start relative`,
           {
             "outline outline-blue-500": acceptDrop,
             "bg-gray-100 opacity-50": columnHasNoParticipants,
@@ -279,7 +278,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         ) : null}
 
         {toolbarExtra}
-        <div className="flex flex-col gap-5 border border-t-0 w-full max-h-full overflow-hidden h-full bg-white">
+        <div className="flex flex-col gap-5 w-full max-h-full h-full bg-white">
           {children}
         </div>
       </div>

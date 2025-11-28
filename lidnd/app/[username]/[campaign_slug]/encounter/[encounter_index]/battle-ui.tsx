@@ -45,10 +45,12 @@ import {
 import {
   Check,
   Edit,
+  Grid2X2,
   Grip,
   Home,
   ListOrdered,
   MoreHorizontal,
+  Pen,
   PlayIcon,
   Plus,
 } from "lucide-react";
@@ -74,6 +76,7 @@ import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundI
 import { Input } from "@/components/ui/input";
 import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
+import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -127,46 +130,80 @@ export const EncounterBattleUI = observer(function BattleUI() {
               )}
             </div>
           </div>
-          <div className="flex flex-col gap-5 max-w-[800px] mx-auto">
-            <EncounterNameInput />
-            <div className="flex flex-wrap gap-3">
-              <div className="flex flex-col gap-4 p-2">
-                <EncounterDifficulty />
+
+          <Tabs defaultValue="prep">
+            <div className="flex flex-col gap-5 items-center justify-center">
+              <div className="max-w-[800px] w-full flex flex-col gap-2">
+                <EncounterNameInput />
+                <div>
+                  <TabsList>
+                    <TabsTrigger
+                      value="prep"
+                      className="flex gap-2 items-center"
+                    >
+                      <span>Prep</span>
+                      <Pen className="mr-2 h-4 w-4" />
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="preview"
+                      className="flex gap-2 items-center"
+                    >
+                      <span>Layout</span>
+                      <Grid2X2 className="mr-2 h-4 w-4" />
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
               </div>
-              <Card className="flex sm:flex-1 p-3 w-[530px] overflow-hidden">
-                <DescriptionTextArea />
-              </Card>
-            </div>
-            <Card className=" p-3 flex flex-col gap-5 w-full">
-              <EditModeOpponentForm
-                leftContent={
-                  <div className={`flex p-2 gap-7 rounded-md items-center`}>
-                    <div className="flex flex-col">
-                      <span className="text-sm text-gray-400">Current</span>
-                      <span className="text-2xl font-bold">{difficulty}</span>
+              <TabsContent value="prep">
+                <div className="flex flex-col gap-7 max-w-[800px] w-full">
+                  <div className="flex flex-wrap gap-5">
+                    <div className="flex flex-col gap-4 p-2">
+                      <EncounterDifficulty />
                     </div>
-
-                    <div className="flex flex-col items-baseline">
-                      <span className="text-sm whitespace-nowrap text-gray-400">
-                        Total {campaign.system === "dnd5e" ? "CR" : "EV"}
-                      </span>
-                      <span className="text-2xl font-bold">
-                        {EncounterUtils.totalCr(encounter)}
-                      </span>
-                    </div>
-                    <EncounterBudgetSlider />
+                    <Card className="flex sm:flex-1 p-3 sm:w-[530px] overflow-hidden">
+                      <DescriptionTextArea />
+                    </Card>
                   </div>
-                }
-              />
-            </Card>
-            <Card className="w-full">
-              <ReminderInput />
-            </Card>
-          </div>
+                  <Card className=" p-3 flex flex-col gap-5 w-full">
+                    <EditModeOpponentForm
+                      leftContent={
+                        <div
+                          className={`flex p-2 gap-7 rounded-md items-center`}
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm text-gray-400">
+                              Current
+                            </span>
+                            <span className="text-2xl font-bold">
+                              {difficulty}
+                            </span>
+                          </div>
 
-          <div className="w-full flex gap-3 h-full">
-            <EncounterBattlePreview />
-          </div>
+                          <div className="flex flex-col items-baseline">
+                            <span className="text-sm whitespace-nowrap text-gray-400">
+                              Total {campaign.system === "dnd5e" ? "CR" : "EV"}
+                            </span>
+                            <span className="text-2xl font-bold">
+                              {EncounterUtils.totalCr(encounter)}
+                            </span>
+                          </div>
+                          <EncounterBudgetSlider />
+                        </div>
+                      }
+                    />
+                  </Card>
+                  <Card className="w-full">
+                    <ReminderInput />
+                  </Card>
+                </div>
+              </TabsContent>
+              <TabsContent value="preview">
+                <div className="w-full flex gap-3 h-full">
+                  <EncounterBattlePreview />
+                </div>
+              </TabsContent>
+            </div>
+          </Tabs>
         </div>
       );
     case "run":
@@ -182,7 +219,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
           <div className="flex gap-4 flex-col w-full max-h-full h-full overflow-hidden">
             {/**create space for the overlaid initiative tracker */}
             {encounter.description ? (
-              <div className="bg-white p-5">
+              <div className="bg-white pt-2 px-2">
                 <DescriptionTextArea />
               </div>
             ) : null}
@@ -469,7 +506,7 @@ export const ParticipantBattleData = observer(function BattleCard({
       {...props}
     >
       <BattleCardLayout key={participant.id} participant={participant}>
-        <div className="flex flex-col gap-3 w-full p-3">
+        <div className="flex flex-col gap-3 w-full py-2">
           {participant.inanimate ? (
             <LidndTextArea editor={editor} />
           ) : (
@@ -754,7 +791,7 @@ export const BattleCardLayout = observer(function BattleCardLayout({
   return (
     <div
       className={clsx(
-        "bg-white h-full max-h-full overflow-hidden  shadow-sm w-full flex flex-col transition-all group",
+        "bg-white h-full max-h-full overflow-hidden w-full flex flex-col transition-all group",
         {
           "shadow-lg shadow-red-800":
             !ParticipantUtils.isFriendly(participant) && participant.is_active,

@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { LidndPopover } from "@/encounters/base-popover";
 import { api } from "@/trpc/react";
 import type { Creature } from "@/server/api/router";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, PlusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAddExistingCreatureAsParticipant } from "@/encounters/[encounter_index]/hooks";
 
@@ -26,12 +25,14 @@ export function QuickAddParticipantsButton({
   innerText,
 }: QuickAddParticipantsButtonProps) {
   const [search, setSearch] = useState("");
+  const [inCampaign, setInCampaign] = useState(true);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [addAsAlly, setAddAsAlly] = useState(false);
 
   const creaturesQuery = api.getUserCreatures.useQuery({
     name: search,
     is_player: addAsAlly ? true : false,
+    campaignId: inCampaign ? campaignId : undefined,
   });
 
   const addMonster = useAddExistingCreatureAsParticipant({
@@ -75,9 +76,15 @@ export function QuickAddParticipantsButton({
     >
       <div className="flex flex-col gap-3 p-3">
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Quick add creature
-          </span>
+          <label className="flex items-center gap-2 text-sm">
+            In campaign
+            <Input
+              className="w-5 h-5"
+              type="checkbox"
+              checked={inCampaign}
+              onChange={(e) => setInCampaign(e.target.checked)}
+            />
+          </label>
           <label className="flex items-center gap-2 text-xs font-medium">
             <Switch
               id={`quick-add-${encounterId}`}
@@ -95,7 +102,6 @@ export function QuickAddParticipantsButton({
           placeholder={`Search ${addAsAlly ? "allies" : "monsters"}`}
           className="h-9 text-sm"
         />
-
         <div className="max-h-64 space-y-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
@@ -120,9 +126,7 @@ export function QuickAddParticipantsButton({
                     CR {creature.challenge_rating ?? "?"}
                   </span>
                 </div>
-                <Badge variant="secondary" className="text-xs">
-                  {addAsAlly ? "Ally" : "Foe"}
-                </Badge>
+                <PlusIcon />
               </button>
             ))
           )}

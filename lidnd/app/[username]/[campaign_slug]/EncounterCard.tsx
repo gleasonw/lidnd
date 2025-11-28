@@ -28,7 +28,7 @@ function EncounterDetails() {
   const { encounter: encounterLink } = useEncounterLinks();
   const monsters = EncounterUtils.monsters(encounterData);
   return (
-    <li className="flex flex-col gap-4 rounded-lg border bg-background p-4 shadow-md">
+    <li className="flex flex-col gap-4 rounded-lg border bg-background p-4 shadow-sm">
       <Link href={encounterLink}>
         <div className="flex items-start justify-between gap-3 hover:bg-gray-10">
           <div className="space-y-1">
