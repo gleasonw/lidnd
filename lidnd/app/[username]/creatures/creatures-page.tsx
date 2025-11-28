@@ -4,14 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { Plus, Trash } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/trpc/react";
 import type { Creature } from "@/server/api/router";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
-import { DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
+import { DialogTitle } from "@radix-ui/react-dialog";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
-import { Card } from "@/components/ui/card";
 import { groupBy } from "remeda";
 
 export default function CreaturesPage() {
@@ -55,7 +53,7 @@ export default function CreaturesPage() {
   );
 
   return (
-    <div className="flex w-full">
+    <div className="flex w-full p-3">
       <div className="flex flex-col gap-3 w-full">
         <div className={"flex gap-5 relative"}>
           <Input
@@ -65,35 +63,17 @@ export default function CreaturesPage() {
             onChange={(e) => setName(e.target.value)}
             value={name}
           />
-          <div className="md:hidden">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-[900px] w-full overflow-auto">
-                <DialogTitle>Add creature</DialogTitle>
-              </DialogContent>
-            </Dialog>
-          </div>
         </div>
         <div className="flex flex-col w-full gap-10">
           <div>
             <h1>DM creatures</h1>
-            <div className="flex w-full gap-2 flex-wrap">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {groupedCreatures?.npc?.map((creature) => (
-                <Card key={creature.id} className="flex gap-2 p-3 items-center">
-                  <CreatureIcon creature={creature} size="medium" />
-                  <span className="text-lg">{creature.name}</span>
-                  <Button
-                    variant="ghost"
-                    className="text-red-300"
-                    onClick={() => deleteCreature(creature.id)}
-                  >
-                    <Trash />
-                  </Button>
-                </Card>
+                <CreatureCard
+                  key={creature.id}
+                  creature={creature}
+                  setSelectedCreatureId={setSelectedCreatureId}
+                />
               ))}
             </div>
           </div>
@@ -101,17 +81,11 @@ export default function CreaturesPage() {
             <h1>Player creatures</h1>
             <div className="flex w-full gap-2 flex-wrap">
               {groupedCreatures?.player?.map((creature) => (
-                <Card key={creature.id} className="flex gap-2 p-3 items-center">
-                  <CreatureIcon creature={creature} size="medium" />
-                  <span className="text-lg">{creature.name}</span>
-                  <Button
-                    variant="ghost"
-                    className="text-red-300"
-                    onClick={() => deleteCreature(creature.id)}
-                  >
-                    <Trash />
-                  </Button>
-                </Card>
+                <CreatureCard
+                  key={creature.id}
+                  creature={creature}
+                  setSelectedCreatureId={setSelectedCreatureId}
+                />
               ))}
             </div>
           </div>
@@ -135,6 +109,26 @@ export default function CreaturesPage() {
   );
 }
 
+function CreatureCard({
+  creature,
+  setSelectedCreatureId,
+}: {
+  creature: Creature;
+  setSelectedCreatureId: (id: string | null) => void;
+}) {
+  return (
+    <div key={creature.id} className="flex gap-2 p-3 items-center">
+      <Button
+        variant="ghost"
+        onClick={() => setSelectedCreatureId(creature.id)}
+      >
+        <CreatureIcon creature={creature} size="medium" />
+        <span>{creature.name}</span>
+      </Button>
+    </div>
+  );
+}
+
 function CreatureUpdateDialog({
   creature,
   deleteCreature,
@@ -149,7 +143,11 @@ function CreatureUpdateDialog({
       </DialogHeader>
       <CreatureIcon creature={creature} size="medium" />
       <CreatureUpdateForm creature={creature} key={creature.id} />
-      <Button variant="destructive" onClick={() => deleteCreature(creature.id)}>
+      <Button
+        variant="ghost"
+        className="text-destructive"
+        onClick={() => deleteCreature(creature.id)}
+      >
         Delete
       </Button>
     </DialogContent>
