@@ -494,6 +494,10 @@ export const ParticipantBattleData = observer(function BattleCard({
   const [encounter] = useEncounter();
   const encounterUiStore = useEncounterUIStore();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
+  const turnGroups = R.indexBy(encounter.turn_groups, (tg) => tg.id);
+  const tgForParticipant = participant.turn_group_id
+    ? turnGroups[participant.turn_group_id]
+    : null;
 
   const debouncedUpdate = useDebouncedCallback((participant: Participant) => {
     updateParticipant(participant);
@@ -536,18 +540,30 @@ export const ParticipantBattleData = observer(function BattleCard({
                 ) : null}
                 <div className="flex flex-col gap-2 w-full">
                   <div className="flex gap-3 w-full">
-                    <div className="flex flex-col gap-2 w-full">
+                    <div className="flex flex-col w-full">
                       <div className="flex gap-2 items-center relative w-full justify-between">
                         <BattleCardCreatureName participant={participant} />
                         <LidndTextArea editor={editor} />
                         <Button
-                          variant="secondary"
+                          variant="outline"
+                          style={{
+                            borderColor:
+                              tgForParticipant?.hex_color ?? undefined,
+                          }}
+                          className={clsx("p-2", {
+                            "border-2": tgForParticipant,
+                            "opacity-50": EncounterUtils.participantHasPlayed(
+                              encounter,
+                              participant
+                            ),
+                          })}
                           onClick={() =>
                             updateCreatureHasPlayedThisRound({
                               encounter_id: participant.encounter_id,
                               participant_id: participant.id,
-                              has_played_this_round:
-                                !participant.has_played_this_round,
+                              has_played_this_round: tgForParticipant
+                                ? !tgForParticipant.has_played_this_round
+                                : !participant.has_played_this_round,
                             })
                           }
                         >
@@ -556,6 +572,8 @@ export const ParticipantBattleData = observer(function BattleCard({
                             participant
                           ) ? (
                             <Check />
+                          ) : tgForParticipant ? (
+                            tgForParticipant.name
                           ) : (
                             "Ready"
                           )}
@@ -737,7 +755,7 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
           trigger={
             <ButtonWithTooltip
               variant="outline"
-              className="flex p-2 bg-red-200"
+              className="flex p-2 "
               text="Add monster"
             >
               <Plus />
@@ -770,10 +788,10 @@ function TurnGroupDoneToggle({ turnGroup }: { turnGroup: TurnGroup }) {
   return (
     <Button
       variant={turnGroup.has_played_this_round ? "ghost" : "outline"}
-      className={clsx("flex gap-2 h-20 ", {
+      className={clsx("flex gap-2 h-20 border-2", {
         "opacity-50": turnGroup.has_played_this_round,
-        "bg-red-200": !turnGroup.has_played_this_round,
       })}
+      style={{ borderColor: turnGroup.hex_color ?? undefined }}
       onClick={() =>
         // this is kinda wonky, why not just send up the first turn group id? need to think this through more
         updateTurnGroup({
@@ -818,12 +836,6 @@ function GroupParticipantDoneToggle({
       }
       className={clsx("flex gap-1 rounded-md", {
         "opacity-50": participant.has_played_this_round,
-        "bg-blue-200":
-          ParticipantUtils.isFriendly(participant) &&
-          !participant.has_played_this_round,
-        "bg-red-200":
-          !ParticipantUtils.isFriendly(participant) &&
-          !participant.has_played_this_round,
       })}
     >
       {participant.creature.name}
@@ -928,7 +940,7 @@ export const labelColors = [...pastelLabels, ...solidColors];
 export const BattleCardCreatureName = observer(function BattleCardCreatureName({
   participant,
 }: BattleCardParticipantProps) {
-  const [campaign] = useCampaign();
+  const [encounter] = useEncounter();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   return (
     <span className="flex flex-col gap-1">
@@ -936,8 +948,8 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
         trigger={
           <Button
             variant="ghost"
-            className={`flex flex-col gap-0 h-auto px-0 ${
-              ParticipantUtils.outOfTurn(participant, campaign)
+            className={`flex flex-col gap-0 h-auto px-0 py-0 ${
+              EncounterUtils.participantHasPlayed(encounter, participant)
                 ? "opacity-50"
                 : null
             }`}
