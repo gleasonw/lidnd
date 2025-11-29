@@ -5,6 +5,14 @@ export function isStringMeaningful(str: string | null) {
   return str !== null && str !== undefined && str !== "";
 }
 
+export function isLocalDebug() {
+  //check window
+  if (typeof window === "undefined") {
+    return false;
+  }
+  return process.env.NODE_ENV === "development";
+}
+
 export const rerouteUrl =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
@@ -24,8 +32,8 @@ export type DragTypeData = {
   [key in keyof typeof dragTypes]: key extends "encounter"
     ? Encounter
     : key extends "participant"
-      ? Participant
-      : never;
+    ? Participant
+    : never;
 };
 
 type DragKey = keyof typeof dragTypes;
@@ -34,7 +42,7 @@ export const typedDrag = {
   set<K extends DragKey>(
     dt: DataTransfer,
     key: K,
-    data: DragTypeData[K],
+    data: DragTypeData[K]
   ): DataTransfer {
     dt.setData(dragTypes[key], JSON.stringify(data));
     return dt;
@@ -48,9 +56,9 @@ export const typedDrag = {
 };
 
 export const removeUndefinedFields = <T extends Record<string, any>>(
-  obj: T,
+  obj: T
 ) => {
   return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => value !== undefined),
+    Object.entries(obj).filter(([, value]) => value !== undefined)
   ) as Required<T>;
 };

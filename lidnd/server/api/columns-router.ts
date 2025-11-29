@@ -4,7 +4,7 @@ import { participants, stat_columns } from "@/server/db/schema";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { TRPCError } from "@trpc/server";
-import { and, eq, inArray, SQL, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, SQL, sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import * as R from "remeda";
@@ -22,6 +22,7 @@ export const columnsRouter = {
         with: {
           participants: true,
         },
+        orderBy: (columns, { asc }) => [desc(columns.is_home_column)],
       }),
       ServerEncounter.encounterByIdThrows(opts.ctx, opts.input),
     ]);

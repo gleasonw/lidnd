@@ -60,16 +60,25 @@ async function create(
       });
     }
     // add two columns
-    await tx.insert(stat_columns).values([
-      {
-        encounter_id: encounterResult.id,
-        percent_width: 50,
-      },
-      {
-        encounter_id: encounterResult.id,
-        percent_width: 50,
-      },
-    ]);
+    const third = (1 / 3) * 100;
+    await tx
+      .insert(stat_columns)
+      .values([
+        {
+          encounter_id: encounterResult.id,
+          percent_width: third,
+          is_home_column: true,
+        },
+        {
+          encounter_id: encounterResult.id,
+          percent_width: third,
+        },
+        {
+          encounter_id: encounterResult.id,
+          percent_width: third,
+        },
+      ])
+      .returning();
 
     if (campaignToPlayers && campaignToPlayers.length > 0) {
       await Promise.all(

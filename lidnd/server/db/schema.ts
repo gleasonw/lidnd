@@ -304,13 +304,26 @@ export const participants = pgTable(
   }
 );
 
-export const stat_columns = pgTable("stat_columns", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  percent_width: doublePrecision("percent_width").notNull(),
-  encounter_id: uuid("encounter_id")
-    .references(() => encounters.id, { onDelete: "cascade" })
-    .notNull(),
-});
+export const stat_columns = pgTable(
+  "stat_columns",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    percent_width: doublePrecision("percent_width").notNull(),
+    /** the column where encounter description, roster goes... can't be deleted, should only be one */
+    is_home_column: boolean("is_home_column").default(false).notNull(),
+    encounter_id: uuid("encounter_id")
+      .references(() => encounters.id, { onDelete: "cascade" })
+      .notNull(),
+  },
+  (table) => {
+    return {
+      encounterIndex: index("stat_column_encounter_index").on(
+        table.encounter_id
+      ),
+    };
+  }
+);
+export type StatColumnInsert = InferInsertModel<typeof stat_columns>;
 
 export const statColumnRelations = relations(stat_columns, ({ one, many }) => ({
   encounter: one(encounters, {

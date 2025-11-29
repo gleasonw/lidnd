@@ -11,11 +11,11 @@ import type { Participant, ParticipantWithData } from "@/server/api/router";
 import { LidndPopover } from "@/encounters/base-popover";
 import { EffectIcon } from "./status-input";
 import {
-  LinearBattleUI,
+  RunEncounter,
   ParentWidthContext,
   StatColumnComponent,
   useParentResizeObserver,
-} from "./linear-battle-ui";
+} from "./encounter-run-ui";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { observer } from "mobx-react-lite";
 import { ParticipantUtils } from "@/utils/participants";
@@ -52,13 +52,11 @@ import {
   MoreHorizontal,
   Pen,
   PlayIcon,
-  Plus,
   Trash,
 } from "lucide-react";
 import Link from "next/link";
 import { imageStyle, InitiativeTracker } from "./battle-bar";
 import { EncounterDifficulty } from "./encounter-difficulty";
-import { OpponentParticipantForm } from "./participant-upload-form";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { api } from "@/trpc/react";
@@ -68,15 +66,10 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
 import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
-import {
-  EncounterUtils,
-  participantsByTurnGroup,
-  targetSinglePlayerStrength,
-} from "@/utils/encounters";
+import { EncounterUtils, targetSinglePlayerStrength } from "@/utils/encounters";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import { useEncounterLinks } from "@/encounters/link-hooks";
-import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 import { Input } from "@/components/ui/input";
 import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
@@ -225,20 +218,11 @@ export const EncounterBattleUI = observer(function BattleUI() {
     case "run":
       return (
         <section className="flex flex-col max-h-full min-h-0 h-full">
-          {campaign.system === "dnd5e" ? (
-            <InitiativeTracker />
-          ) : (
-            <GroupBattleUITools />
-          )}
+          {campaign.system === "dnd5e" ? <InitiativeTracker /> : null}
 
           <Reminders />
           <div className="flex gap-4 flex-col w-full max-h-full h-full overflow-hidden">
             {/**create space for the overlaid initiative tracker */}
-            {encounter.description ? (
-              <div className="bg-white pt-2 px-2">
-                <DescriptionTextArea />
-              </div>
-            ) : null}
             {monsters.length > 0 ? (
               <div className="flex w-full flex-wrap">
                 {monsters.map((p) => (
@@ -250,7 +234,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
               </div>
             ) : null}
 
-            <LinearBattleUI />
+            <RunEncounter />
           </div>
         </section>
       );
@@ -355,8 +339,16 @@ function EncounterBattlePreview() {
   );
 }
 
-function ColumnDragButton({ participant }: { participant: Participant }) {
+export const ColumnDragButton = observer(function ColumnDragButton({
+  participant,
+}: {
+  participant: Participant;
+}) {
   const uiStore = useEncounterUIStore();
+
+  if (!uiStore.isEditingInitiative) {
+    return null;
+  }
 
   return (
     <Button
@@ -371,7 +363,7 @@ function ColumnDragButton({ participant }: { participant: Participant }) {
       <Grip />
     </Button>
   );
-}
+});
 
 function BattleCardTools({ participant }: { participant: Participant }) {
   const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
@@ -532,52 +524,47 @@ export const ParticipantBattleData = observer(function BattleCard({
           ) : (
             <div className="flex gap-2 items-center justify-between">
               <div className="flex gap-2 items-center w-full relative">
-                {ParticipantUtils.hasIcon(participant) ? (
-                  <BattleCardCreatureIcon
-                    participant={participant}
-                    className="flex-shrink-0 flex-grow-0"
-                  />
-                ) : null}
                 <div className="flex flex-col gap-2 w-full">
                   <div className="flex gap-3 w-full">
                     <div className="flex flex-col w-full">
                       <div className="flex gap-2 items-center relative w-full justify-between">
+                        {ParticipantUtils.hasIcon(participant) ? (
+                          <BattleCardCreatureIcon
+                            participant={participant}
+                            className="flex-shrink-0 flex-grow-0 w-10 h-10"
+                          />
+                        ) : null}
                         <BattleCardCreatureName participant={participant} />
                         <LidndTextArea editor={editor} />
-                        <Button
-                          variant="outline"
-                          style={{
-                            borderColor:
-                              tgForParticipant?.hex_color ?? undefined,
-                          }}
-                          className={clsx("p-2", {
-                            "border-2": tgForParticipant,
-                            "opacity-50": EncounterUtils.participantHasPlayed(
+                        {tgForParticipant ? null : (
+                          <Button
+                            variant="outline"
+                            className={clsx("p-2", {
+                              "border-2": tgForParticipant,
+                              "opacity-50": EncounterUtils.participantHasPlayed(
+                                encounter,
+                                participant
+                              ),
+                            })}
+                            onClick={() =>
+                              updateCreatureHasPlayedThisRound({
+                                encounter_id: participant.encounter_id,
+                                participant_id: participant.id,
+                                has_played_this_round:
+                                  !participant.has_played_this_round,
+                              })
+                            }
+                          >
+                            {EncounterUtils.participantHasPlayed(
                               encounter,
                               participant
-                            ),
-                          })}
-                          onClick={() =>
-                            updateCreatureHasPlayedThisRound({
-                              encounter_id: participant.encounter_id,
-                              participant_id: participant.id,
-                              has_played_this_round: tgForParticipant
-                                ? !tgForParticipant.has_played_this_round
-                                : !participant.has_played_this_round,
-                            })
-                          }
-                        >
-                          {EncounterUtils.participantHasPlayed(
-                            encounter,
-                            participant
-                          ) ? (
-                            <Check />
-                          ) : tgForParticipant ? (
-                            tgForParticipant.name
-                          ) : (
-                            "Ready"
-                          )}
-                        </Button>
+                            ) ? (
+                              <Check />
+                            ) : (
+                              "Ready"
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -691,15 +678,15 @@ const GroupParticipantHPOverride = observer(
   }
 );
 
-const GroupBattleUITools = observer(function GroupBattleUITools() {
+export const GroupBattleUITools = observer(function GroupBattleUITools() {
   const { toggleParticipantEdit: toggleEditingInitiative } =
     useEncounterUIStore();
   const { campaignLink } = useEncounterLinks();
   const [encounter] = useEncounter();
   const { mutate: updateEncounter } = useUpdateEncounter();
   return (
-    <div className="flex gap-3 flex-col sm:flex-row">
-      <div className="flex gap-3 items-center">
+    <div className="flex gap-3 flex-col">
+      <div className="flex flex-wrap gap-3 items-center">
         <Link href={campaignLink} className="flex gap-3">
           <Button variant="ghost" className="opacity-60">
             <Home />
@@ -730,120 +717,9 @@ const GroupBattleUITools = observer(function GroupBattleUITools() {
           <Edit />
         </ButtonWithTooltip>
       </div>
-
-      <div className="flex gap-1 flex-wrap  p-1">
-        {EncounterUtils.monstersWithoutTurnGroup(encounter).map((m) => (
-          <GroupParticipantDoneToggle
-            participant={m}
-            key={m.id}
-            buttonExtra={
-              <div
-                className="w-3 h-3"
-                style={{
-                  backgroundColor: ParticipantUtils.iconHexColor(m),
-                }}
-              />
-            }
-          />
-        ))}
-        {encounter.turn_groups.map((tg) => (
-          <TurnGroupDoneToggle turnGroup={tg} key={tg.id} />
-        ))}
-        <LidndDialog
-          title={"Add monster"}
-          content={<OpponentParticipantForm />}
-          trigger={
-            <ButtonWithTooltip
-              variant="outline"
-              className="flex p-2 "
-              text="Add monster"
-            >
-              <Plus />
-            </ButtonWithTooltip>
-          }
-        />
-      </div>
-
-      <div className="flex gap-1 flex-wrap  p-1">
-        {EncounterUtils.players(encounter)
-          .slice()
-          .sort((a, b) => a.creature.name.localeCompare(b.creature.name))
-          .map((p) => (
-            <GroupParticipantDoneToggle participant={p} key={p.id} />
-          ))}
-      </div>
     </div>
   );
 });
-
-function TurnGroupDoneToggle({ turnGroup }: { turnGroup: TurnGroup }) {
-  const { mutate: updateTurnGroup } = useUpdateGroupTurn();
-  const [encounter] = useEncounter();
-  const turnGroupedParticipants =
-    participantsByTurnGroup(encounter)[turnGroup.id] ?? [];
-
-  if (turnGroupedParticipants.length === 0) {
-    return null;
-  }
-  return (
-    <Button
-      variant={turnGroup.has_played_this_round ? "ghost" : "outline"}
-      className={clsx("flex gap-2 h-20 border-2", {
-        "opacity-50": turnGroup.has_played_this_round,
-      })}
-      style={{ borderColor: turnGroup.hex_color ?? undefined }}
-      onClick={() =>
-        // this is kinda wonky, why not just send up the first turn group id? need to think this through more
-        updateTurnGroup({
-          encounter_id: encounter.id,
-          participant_id: turnGroupedParticipants.at(0)?.id!,
-          has_played_this_round: !turnGroup.has_played_this_round,
-        })
-      }
-    >
-      <div className="flex flex-col">
-        <span>{turnGroup.name}</span>
-        <div className="flex gap-1">
-          {turnGroupedParticipants.map((p) => (
-            <span key={p.id} className="flex gap-1 rounded-md">
-              <CreatureIcon creature={p.creature} size="small" />
-            </span>
-          ))}
-        </div>
-      </div>
-    </Button>
-  );
-}
-
-function GroupParticipantDoneToggle({
-  participant,
-  buttonExtra,
-}: {
-  participant: ParticipantWithData;
-  buttonExtra?: React.ReactNode;
-}) {
-  const id = useEncounterId();
-  const { mutate: updateCreatureHasPlayedThisRound } = useUpdateGroupTurn();
-  return (
-    <Button
-      variant={participant.has_played_this_round ? "ghost" : "outline"}
-      onClick={() =>
-        updateCreatureHasPlayedThisRound({
-          encounter_id: id,
-          participant_id: participant.id,
-          has_played_this_round: !participant.has_played_this_round,
-        })
-      }
-      className={clsx("flex gap-1 rounded-md", {
-        "opacity-50": participant.has_played_this_round,
-      })}
-    >
-      {participant.creature.name}
-      {participant.has_played_this_round ? <Check /> : ""}
-      {buttonExtra}
-    </Button>
-  );
-}
 
 export const BattleCardLayout = observer(function BattleCardLayout({
   className,
@@ -954,7 +830,7 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
                 : null
             }`}
           >
-            <span className="text-xl truncate max-w-full">
+            <span className="text-lg truncate max-w-full">
               {ParticipantUtils.name(participant)}
             </span>
             <div
@@ -1007,7 +883,7 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
       <div
         className={clsx(
           { "border-4": participant.hex_color },
-          "relative h-20 w-20"
+          "relative h-10 w-10"
         )}
         style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
       >
@@ -1143,7 +1019,8 @@ function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
   // maybe this is wasteful to compute every render, but I think it's fine
-  const turnGroupedParticipants = participantsByTurnGroup(encounter);
+  const turnGroupedParticipants =
+    EncounterUtils.participantsByTurnGroup(encounter);
   const participantsInGroup = turnGroupedParticipants[tg.id] || [];
   const { mutate: deleteTurnGroup } = api.deleteTurnGroup.useMutation();
   const totalCr = R.sumBy(participantsInGroup, (p) =>

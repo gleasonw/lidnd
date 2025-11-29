@@ -64,7 +64,7 @@ export function targetSinglePlayerStrength(args: DifficultyArgs) {
   return tiers.oneHeroStrength ?? null;
 }
 
-export function participantsByTurnGroup<
+function participantsByTurnGroup<
   P extends { turn_group_id: string | null }
 >(e: { participants: Array<P> }) {
   return R.groupBy(e.participants, (p) => p.turn_group_id ?? "no-group");
@@ -208,6 +208,7 @@ function participantsForColumn(
 }
 
 export const EncounterUtils = {
+  participantsByTurnGroup,
   participantHasPlayed,
   participantsByColumn,
   participantsForColumn,
@@ -711,7 +712,10 @@ export const EncounterUtils = {
       return participantOfSameCreature.column_id;
     }
     return (
-      R.firstBy(encounter.columns, (col) => col.participants.length)?.id || null
+      R.firstBy(
+        encounter.columns.filter((col) => !col.is_home_column),
+        (col) => col.participants.length
+      )?.id || null
     );
   },
 

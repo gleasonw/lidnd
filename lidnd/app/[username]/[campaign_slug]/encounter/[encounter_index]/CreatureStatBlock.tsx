@@ -2,51 +2,46 @@
 import { useUIStore } from "@/app/UIStore";
 import type { Creature } from "@/server/api/router";
 import { CreatureUtils } from "@/utils/creatures";
-import { trace } from "mobx";
 import { observer } from "mobx-react-lite";
 import Image from "next/image";
 import type React from "react";
 import { useMemo } from "react";
 
-export const CreatureStatBlock = observer(
-  function CreatureStatBlock({
-    creature,
-    ref,
-  }: {
-    creature: Creature;
-    ref: React.ForwardedRef<HTMLImageElement>;
-  }) {
-    trace();
-    const uiStore = useUIStore();
-    const status = uiStore.getStatBlockUploadStatus(creature);
+export const CreatureStatBlock = observer(function CreatureStatBlock({
+  creature,
+  ref,
+}: {
+  creature: Creature;
+  ref?: React.ForwardedRef<HTMLImageElement>;
+}) {
+  const uiStore = useUIStore();
+  const status = uiStore.getStatBlockUploadStatus(creature);
 
-    switch (status) {
-      case "idle":
-        return <CreatureStatBlockImage creature={creature} ref={ref} />;
-      case "pending":
-        return <div>pending</div>;
-      case "success":
-        return <CreatureStatBlockImage creature={creature} ref={ref} />;
-      case "error":
-        return <div>error</div>;
-      case undefined:
-        return <CreatureStatBlockImage creature={creature} ref={ref} />;
-      default: {
-        //@ts-expect-error - exhaustive check
-        const _: never = status;
-        throw new Error(`Unhandled case: ${status}`);
-      }
+  switch (status) {
+    case "idle":
+      return <CreatureStatBlockImage creature={creature} ref={ref} />;
+    case "pending":
+      return <div>pending</div>;
+    case "success":
+      return <CreatureStatBlockImage creature={creature} ref={ref} />;
+    case "error":
+      return <div>error</div>;
+    case undefined:
+      return <CreatureStatBlockImage creature={creature} ref={ref} />;
+    default: {
+      //@ts-expect-error - exhaustive check
+      const _: never = status;
+      throw new Error(`Unhandled case: ${status}`);
     }
-  },
-  { forwardRef: true }
-);
+  }
+});
 
 function CreatureStatBlockImage({
   creature,
   ref,
 }: {
   creature: Creature;
-  ref: React.ForwardedRef<HTMLImageElement>;
+  ref?: React.ForwardedRef<HTMLImageElement>;
 }) {
   const style = useMemo(
     () =>

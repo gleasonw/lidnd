@@ -5,68 +5,14 @@ import {
   encounters,
   participants,
   stat_columns,
+  type StatColumnInsert,
 } from "@/server/db/schema";
-import { CreatureUtils } from "@/utils/creatures";
-import { eq, isNull } from "drizzle-orm";
+import { eq, isNull, sql } from "drizzle-orm";
 import _ from "lodash";
-import sharp from "sharp";
 import * as R from "remeda";
 import type { Participant } from "@/server/api/router";
 import type { StatColumn } from "@/server/api/columns-router";
-
-// @ts-expect-error - unused unused
-async function addImageDimensions() {
-  const allCreatures = await db.query.creatures.findMany();
-
-  for (const creature of allCreatures) {
-    console.log(`Adding dimensions to ${creature.name}`);
-    const iconUrl = CreatureUtils.awsURL(creature, "icon");
-    const iconResponse = await fetch(iconUrl);
-
-    if (!iconResponse.ok) {
-      console.log(iconUrl);
-      console.error("Failed to fetch icon");
-      continue;
-    }
-
-    const statBlockResponse = await fetch(
-      CreatureUtils.awsURL(creature, "statBlock")
-    );
-
-    if (!statBlockResponse.ok) {
-      console.error("Failed to fetch stat block");
-      continue;
-    }
-
-    const [iconBuffer, statBlockBuffer] = await Promise.all([
-      iconResponse.arrayBuffer(),
-      statBlockResponse.arrayBuffer(),
-    ]);
-
-    const [iconDimensions, statBlockDimensions] = await Promise.all([
-      sharp(iconBuffer).metadata(),
-      sharp(statBlockBuffer).metadata(),
-    ]);
-
-    console.log(
-      `fetched dimensions for ${creature.name}: ${iconDimensions.height}x${iconDimensions.width}, ${statBlockDimensions.height}x${statBlockDimensions.width}`
-    );
-
-    await db
-      .update(creatures)
-      .set({
-        icon_height: iconDimensions.height,
-        icon_width: iconDimensions.width,
-        stat_block_height: statBlockDimensions.height,
-        stat_block_width: statBlockDimensions.width,
-      })
-      .where(eq(creatures.id, creature.id));
-
-    console.log(`updated dimensions for ${creature.name}`);
-  }
-
-  return process.exit(0);
-}
+import { StatColumnUtils } from "@/utils/stat-columns";
 
 //@ts-expect-error - unused unused
 async function setPlayerHpTo1() {
@@ -133,6 +79,7 @@ async function add_campaign_slug() {
   return process.exit(0);
 }
 
+//@ts-expect-error - unused unused
 async function assign_columns() {
   const encounters = await db.query.encounters.findMany({
     with: {
@@ -189,4 +136,34 @@ async function assign_participants_to_column(
     });
 }
 
-assign_columns();
+async function add_home_columns() {
+  const encounters = await db.query.encounters.findMany({
+    with: {
+      columns: true,
+    },
+  });
+  const columnsToPush: StatColumnInsert[] = [];
+  encounters.forEach(async (encounter) => {
+    if (encounter.columns.find((c) => c.is_home_column)) {
+      return;
+    }
+    const updatedColumns = StatColumnUtils.add(encounter.columns, {
+      encounter_id: encounter.id,
+      is_home_column: true,
+      percent_width: 0,
+    });
+    columnsToPush.push(...updatedColumns);
+  });
+  await db
+    .insert(stat_columns)
+    .values(columnsToPush)
+    .onConflictDoUpdate({
+      target: stat_columns.id,
+      set: {
+        percent_width: sql.raw(`excluded.percent_width`),
+      },
+    });
+  return process.exit(0);
+}
+
+add_home_columns();

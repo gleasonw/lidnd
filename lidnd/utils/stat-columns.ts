@@ -1,10 +1,14 @@
 import type { StatColumn } from "@/server/api/columns-router";
 import type { ParticipantWithData } from "@/server/api/router";
+import type { StatColumnInsert } from "@/server/db/schema";
 export type ColumnWithParticipants = StatColumn & {
   participants: ParticipantWithData[];
 };
 
-function add<C extends StatColumn>(columns: C[], newColumn: C): C[] {
+function add<
+  NewC extends StatColumnInsert,
+  BaseC extends StatColumnInsert & { id: string }
+>(columns: BaseC[], newColumn: NewC) {
   const numColumns = columns.length;
   if (numColumns === 0) {
     // first added column, take up the whole space
@@ -16,7 +20,11 @@ function add<C extends StatColumn>(columns: C[], newColumn: C): C[] {
     ...c,
     percent_width: c.percent_width - amountToSubtractFromOthers,
   }));
-  return [...updatedColumns, { ...newColumn, percent_width: newPercentWidth }];
+  const ret = [
+    ...updatedColumns,
+    { ...newColumn, percent_width: newPercentWidth },
+  ];
+  return ret;
 }
 
 function remove<C extends StatColumn>(columns: C[], columnId: string): C[] {

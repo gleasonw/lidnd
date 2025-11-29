@@ -1,11 +1,18 @@
 "use client";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
-import { ParticipantBattleData } from "./battle-ui";
+import {
+  ColumnDragButton,
+  GroupBattleUITools,
+  ParticipantBattleData,
+} from "./battle-ui";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
-import { useEncounter } from "@/encounters/[encounter_index]/hooks";
+import {
+  useEncounter,
+  useUpdateGroupTurn,
+} from "@/encounters/[encounter_index]/hooks";
 import { observer } from "mobx-react-lite";
-import { X } from "lucide-react";
+import { Check, Eye, X } from "lucide-react";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { ParticipantUtils } from "@/utils/participants";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
@@ -17,6 +24,12 @@ import clsx from "clsx";
 import { EncounterUtils } from "@/utils/encounters";
 import type React from "react";
 import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
+import { DescriptionTextArea } from "@/encounters/[encounter_index]/description-text-area";
+import type { TurnGroup } from "@/server/db/schema";
+import type { Creature, ParticipantWithData } from "@/server/api/router";
+import { Button } from "@/components/ui/button";
+import * as R from "remeda";
+import { QuickAddParticipantsButton } from "@/app/[username]/[campaign_slug]/game-session-quick-add";
 
 //todo: custom margin when in editing layout mode
 
@@ -53,7 +66,7 @@ export const useParentResizeObserver = () => {
   return { parentWidth, containerRef };
 };
 
-export const LinearBattleUI = observer(function LinearBattleUI() {
+export const RunEncounter = observer(function LinearBattleUI() {
   const { parentWidth, containerRef } = useParentResizeObserver();
 
   return (
@@ -76,48 +89,217 @@ export function StatColumns() {
   //TODO: some weirdness here, looks like we still have participants on the column...
   // do we actually assign participants to columns?
   const { data: columns } = api.getColumns.useQuery(encounterId);
-  const { registerBattleCardRef } = useEncounterUIStore();
-
   const participantsByColumn = EncounterUtils.participantsByColumn(encounter);
 
-  return columns?.map((c, index) => (
-    <StatColumnComponent column={c} index={index} key={c.id}>
-      <div className="flex flex-col divide-solid divide-y-2 gap-2">
-        {participantsByColumn[c.id]
-          ?.slice()
-          .sort(
-            (groupA, groupB) =>
-              groupA
-                .at(0)
-                ?.creature.name.localeCompare(
-                  groupB.at(0)?.creature.name ?? ""
-                ) || 0
-          )
-          .map((p) => (
+  return columns?.map((c, index) =>
+    c.is_home_column ? (
+      <StatColumnComponent key={c.id} column={c} index={index}>
+        <GroupBattleUITools />
+        <div className="bg-white pt-2 px-2">
+          <DescriptionTextArea />
+        </div>
+        <EncounterRoster />
+      </StatColumnComponent>
+    ) : (
+      <StatColumnComponent column={c} index={index} key={c.id}>
+        <div className="flex flex-col divide-solid divide-y-2 gap-2">
+          {participantsByColumn[c.id]?.map((p) => (
             <div className="flex flex-col" key={p.map((p) => p.id).join("-")}>
-              {p
-                .slice()
-                .sort(ParticipantUtils.sortLinearly)
-                .map((p, i) => (
-                  <ParticipantBattleData
-                    participant={p}
-                    ref={(ref) => registerBattleCardRef(p.id, ref)}
-                    data-is-active={p.is_active}
-                    data-participant-id={p.id}
-                    key={p.id}
-                    indexInGroup={i}
-                  />
-                ))}
               {p[0]?.creature ? (
-                <CreatureStatBlock creature={p[0]?.creature} />
+                <>
+                  <ColumnDragButton participant={p[0]} />
+                  <RunCreatureStatBlock creature={p[0].creature} />
+                </>
               ) : (
                 <div>no creature... probably a bug</div>
               )}
             </div>
           ))}
+        </div>
+      </StatColumnComponent>
+    )
+  );
+}
+
+const RunCreatureStatBlock = observer(function RunCreatureStatBlock({
+  creature,
+}: {
+  creature: Creature;
+}) {
+  const uiStore = useEncounterUIStore();
+
+  return (
+    <div
+      className={clsx("transition-opacity", {
+        "opacity-50":
+          uiStore.isHighlightingStatBlocks &&
+          !uiStore.highlightingThisStatBlock(creature.id),
+      })}
+    >
+      <CreatureStatBlock
+        creature={creature}
+        ref={(el) => uiStore.registerStatBlockRef(creature.id, el)}
+      />
+    </div>
+  );
+});
+
+function EncounterRoster() {
+  const [encounter] = useEncounter();
+  const uiStore = useEncounterUIStore();
+  const turnGroups = R.indexBy(encounter.turn_groups, (tg) => tg.id);
+  const participantsByTurnGroup =
+    EncounterUtils.participantsByTurnGroup(encounter);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-1 flex-wrap  p-1">
+        {EncounterUtils.players(encounter)
+          .slice()
+          .sort((a, b) => a.creature.name.localeCompare(b.creature.name))
+          .map((p) => (
+            <GroupParticipantDoneToggle participant={p} key={p.id} />
+          ))}
       </div>
-    </StatColumnComponent>
-  ));
+      <QuickAddParticipantsButton
+        campaignId={encounter.campaign_id}
+        encounterId={encounter.id}
+      />
+      {EncounterUtils.monstersWithoutTurnGroup(encounter).map((m, index) => (
+        <ParticipantBattleData
+          participant={m}
+          key={m.id}
+          ref={(el) => uiStore.registerBattleCardRef(m.id, el)}
+          indexInGroup={index}
+        />
+      ))}
+      {Object.entries(participantsByTurnGroup)
+        .sort(([tgAId], [tgBId]) => {
+          const tgA = turnGroups[tgAId];
+          const tgB = turnGroups[tgBId];
+          if (!tgA || !tgB) {
+            return 0;
+          }
+          if (tgA.name && tgB.name) {
+            return tgA.name.localeCompare(tgB.name);
+          }
+          if (tgA.name) {
+            return -1;
+          }
+          if (tgB.name) {
+            return 1;
+          }
+          return tgA.id.localeCompare(tgB.id);
+        })
+        .map(([tgId, participants]) => {
+          const turnGroup = turnGroups[tgId];
+          if (!turnGroup) {
+            return null;
+          }
+          return (
+            <RunTurnGroup
+              tg={turnGroup}
+              participants={participants}
+              key={tgId}
+            />
+          );
+        })}
+    </div>
+  );
+}
+
+function RunTurnGroup({
+  tg,
+  participants,
+}: {
+  tg: TurnGroup;
+  participants: Array<ParticipantWithData>;
+}) {
+  const uiStore = useEncounterUIStore();
+  const creatureIdsForGroup = participants.map((p) => p.creature.id);
+  return (
+    <div className="flex flex-col">
+      <div className="flex w-full">
+        <TurnGroupDoneToggle turnGroup={tg} />
+        <Button
+          variant="ghost"
+          onClick={() => uiStore.highlightTheseStatBlocks(creatureIdsForGroup)}
+        >
+          <Eye />
+        </Button>
+      </div>
+      <div className="flex flex-col pl-4">
+        {participants.map((p, index) => (
+          <ParticipantBattleData
+            participant={p}
+            key={p.id}
+            ref={(el) => uiStore.registerBattleCardRef(p.id, el)}
+            indexInGroup={index}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TurnGroupDoneToggle({ turnGroup }: { turnGroup: TurnGroup }) {
+  const { mutate: updateTurnGroup } = useUpdateGroupTurn();
+  const [encounter] = useEncounter();
+  const turnGroupedParticipants =
+    EncounterUtils.participantsByTurnGroup(encounter)[turnGroup.id] ?? [];
+
+  if (turnGroupedParticipants.length === 0) {
+    return null;
+  }
+  return (
+    <Button
+      variant={turnGroup.has_played_this_round ? "ghost" : "outline"}
+      className={clsx("flex gap-2", {
+        "opacity-50": turnGroup.has_played_this_round,
+      })}
+      style={{ borderColor: turnGroup.hex_color ?? undefined }}
+      onClick={() =>
+        // this is kinda wonky, why not just send up the first turn group id? need to think this through more
+        updateTurnGroup({
+          encounter_id: encounter.id,
+          participant_id: turnGroupedParticipants.at(0)?.id!,
+          has_played_this_round: !turnGroup.has_played_this_round,
+        })
+      }
+    >
+      {turnGroup.name}
+    </Button>
+  );
+}
+
+function GroupParticipantDoneToggle({
+  participant,
+  buttonExtra,
+}: {
+  participant: ParticipantWithData;
+  buttonExtra?: React.ReactNode;
+}) {
+  const id = useEncounterId();
+  const { mutate: updateCreatureHasPlayedThisRound } = useUpdateGroupTurn();
+  return (
+    <Button
+      variant={participant.has_played_this_round ? "ghost" : "outline"}
+      onClick={() =>
+        updateCreatureHasPlayedThisRound({
+          encounter_id: id,
+          participant_id: participant.id,
+          has_played_this_round: !participant.has_played_this_round,
+        })
+      }
+      className={clsx("flex gap-1 rounded-md", {
+        "opacity-50": participant.has_played_this_round,
+      })}
+    >
+      {participant.creature.name}
+      {participant.has_played_this_round ? <Check /> : ""}
+      {buttonExtra}
+    </Button>
+  );
 }
 
 export function CreateNewColumnButton() {
@@ -137,6 +319,7 @@ export function CreateNewColumnButton() {
           ...newColumn,
           participants: [],
           id: Math.random.toString(),
+          is_home_column: false,
         });
       });
       return { previousColumns: previousEncounter };
@@ -208,9 +391,6 @@ export const StatColumnComponent = observer(function StatColumnComponent({
     },
   });
   const isLastColumn = columns && index === columns.length - 1;
-  const columnHasNoParticipants = encounter.participants.every(
-    (ep) => ep.column_id !== column.id
-  );
   return (
     <>
       <div
@@ -218,7 +398,6 @@ export const StatColumnComponent = observer(function StatColumnComponent({
           `flex flex-col h-full max-h-full items-start relative`,
           {
             "outline outline-blue-500": acceptDrop,
-            "bg-gray-100 opacity-50": columnHasNoParticipants,
           }
         )}
         style={{ width: `${column.percent_width}%` }}

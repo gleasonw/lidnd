@@ -1,16 +1,18 @@
 "use client";
 
+import { isLocalDebug } from "@/app/[username]/utils";
 import type { Creature } from "@/server/api/router";
 import { makeAutoObservable } from "mobx";
 import { createContext, useContext, useEffect, useMemo } from "react";
 
 type ImageUploadStatus = "idle" | "pending" | "success" | "error";
-
+type CreatureId = string;
 /**
  * Manages ui state that is not persisted in db
  */
 class EncounterUIStore {
   selectedParticipantId: string | null = null;
+  highlightCreatureStatBlocks: Set<CreatureId> = new Set();
 
   /** TODO: this is sort of the "this ui is only sometimes important for inputs, so only show it when we toggle this flag" bit of state. should probably find a better way to tuck away secondary inputs/ui */
   isEditingInitiative = false;
@@ -21,6 +23,7 @@ class EncounterUIStore {
    * participantId -> ref
    *  */
   battleCardRefs: Map<string, HTMLDivElement> = new Map();
+  statBlockRefs: Map<CreatureId, HTMLDivElement> = new Map();
 
   private imageUploadStatusForCreatureId: Map<
     string,
@@ -45,6 +48,9 @@ class EncounterUIStore {
 
   constructor() {
     makeAutoObservable(this);
+    if (isLocalDebug()) {
+      (window as any).encounterUiStore = this;
+    }
   }
 
   toggleParticipantEdit = () => {
@@ -56,6 +62,33 @@ class EncounterUIStore {
     return () => {
       this.battleCardRefs.delete(participantId);
     };
+  };
+
+  highlightTheseStatBlocks = (creatureIds: CreatureId[]) => {
+    if (creatureIds.every((id) => this.highlightingThisStatBlock(id))) {
+      this.highlightCreatureStatBlocks.clear();
+      return;
+    }
+    this.highlightCreatureStatBlocks = new Set(creatureIds);
+  };
+
+  highlightingThisStatBlock = (creatureId: CreatureId) => {
+    return this.highlightCreatureStatBlocks.has(creatureId);
+  };
+
+  get isHighlightingStatBlocks() {
+    return this.highlightCreatureStatBlocks.size > 0;
+  }
+
+  registerStatBlockRef = (
+    creatureId: CreatureId,
+    ref: HTMLImageElement | null
+  ) => {
+    if (!ref) {
+      this.statBlockRefs.delete(creatureId);
+      return;
+    }
+    this.statBlockRefs.set(creatureId, ref);
   };
 
   scrollToParticipant = (id: string) => {
