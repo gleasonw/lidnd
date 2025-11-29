@@ -457,7 +457,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         ) : null}
 
         {toolbarExtra}
-        <div className="flex flex-col gap-5 w-full max-h-full h-full bg-white">
+        <div className="flex flex-col gap-3 w-full max-h-full h-full bg-white">
           {children}
         </div>
       </div>
