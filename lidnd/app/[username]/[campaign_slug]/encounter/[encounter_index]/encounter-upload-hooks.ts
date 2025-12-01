@@ -72,14 +72,18 @@ export function useUploadParticipant({
     },
     onSettled: async (data) => {
       if (data?.creature) {
-        uiStore.setUploadStatusForCreature(data.creature, {
-          type: "icon",
-          status: "pending",
-        });
-        uiStore.setUploadStatusForCreature(data.creature, {
-          type: "statBlock",
-          status: "pending",
-        });
+        if (ParticipantUtils.hasIcon(data)) {
+          uiStore.setUploadStatusForCreature(data.creature, {
+            type: "icon",
+            status: "pending",
+          });
+        }
+        if (ParticipantUtils.hasStatBlock(data)) {
+          uiStore.setUploadStatusForCreature(data.creature, {
+            type: "statBlock",
+            status: "pending",
+          });
+        }
       }
 
       return await invalidateAll(encounter);

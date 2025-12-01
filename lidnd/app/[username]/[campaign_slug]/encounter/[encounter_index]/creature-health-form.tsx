@@ -71,7 +71,7 @@ export function ParticipantHealthForm({
       {extraInputs}
       <ButtonWithTooltip
         text="Damage"
-        variant="outline"
+        variant="ghost"
         className={"bg-red-100 text-red-700 gap-3 p-2 flex items-center"}
         onClick={(e) => {
           e.stopPropagation();
@@ -99,7 +99,7 @@ export function ParticipantHealthForm({
       />
       <ButtonWithTooltip
         text="Heal"
-        variant="outline"
+        variant="ghost"
         className={"bg-green-100 text-green-700 p-2 gap-3 flex items-center"}
         onClick={(e) => {
           e.stopPropagation();

@@ -527,19 +527,19 @@ export const ParticipantBattleData = observer(function BattleCard({
                 <div className="flex flex-col gap-2 w-full">
                   <div className="flex gap-3 w-full">
                     <div className="flex flex-col w-full">
-                      <div className="flex gap-2 items-center relative w-full justify-between">
+                      <div className="flex gap-2 items-center relative w-full">
                         {ParticipantUtils.hasIcon(participant) ? (
-                          <BattleCardCreatureIcon
-                            participant={participant}
-                            className="flex-shrink-0 flex-grow-0 w-10 h-10"
-                          />
+                          <BattleCardCreatureIcon participant={participant} />
                         ) : null}
-                        <BattleCardCreatureName participant={participant} />
-                        <LidndTextArea editor={editor} />
+                        <div className="flex flex-col">
+                          <BattleCardCreatureName participant={participant} />
+                          <LidndTextArea editor={editor} />
+                        </div>
+
                         {tgForParticipant ? null : (
                           <Button
                             variant="outline"
-                            className={clsx("p-2", {
+                            className={clsx("p-2 ml-auto", {
                               "border-2": tgForParticipant,
                               "opacity-50": EncounterUtils.participantHasPlayed(
                                 encounter,
@@ -568,16 +568,15 @@ export const ParticipantBattleData = observer(function BattleCard({
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2 w-full">
-                    <ParticipantHealthForm participant={participant} />
+                  <div className="flex flex-col gap-2 w-full">
                     <div className="flex gap-2 w-full items-center">
-                      <div className="w-full border h-6 relative bg-red-400 flex items-center justify-center">
+                      <div className="w-full h-6 relative bg-red-400 flex items-center justify-center">
                         <span className="whitespace-nowrap text-white absolute z-10">
                           {participant.hp} /{" "}
                           {ParticipantUtils.maxHp(participant)}
                         </span>
                         <div
-                          className="absolute bg-green-400 h-full left-0"
+                          className="absolute bg-emerald-400 h-full left-0"
                           style={{
                             width: `${ParticipantUtils.healthPercent(
                               participant
@@ -586,6 +585,7 @@ export const ParticipantBattleData = observer(function BattleCard({
                         />
                       </div>
                     </div>
+                    <ParticipantHealthForm participant={participant} />
                   </div>
                 </div>
               </div>
@@ -833,12 +833,6 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
             <span className="text-lg truncate max-w-full">
               {ParticipantUtils.name(participant)}
             </span>
-            <div
-              className="w-full h-1"
-              style={{
-                background: ParticipantUtils.iconHexColor(participant),
-              }}
-            />
           </Button>
         }
       >
@@ -864,10 +858,7 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
 
 export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   participant,
-  className,
-}: BattleCardParticipantProps & {
-  className?: string;
-}) {
+}: BattleCardParticipantProps) {
   const [error, setError] = useState<boolean>(false);
 
   if (error) {
@@ -883,7 +874,7 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
       <div
         className={clsx(
           { "border-4": participant.hex_color },
-          "relative h-10 w-10"
+          "relative h-12 w-12"
         )}
         style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
       >

@@ -38,7 +38,7 @@ export default async function CampaignLayout(props: {
   return (
     <CampaignId value={campaign.id}>
       <div
-        className={`mx-2 flex flex-col overflow-hidden max-h-full h-full gap-5 relative `}
+        className={`flex flex-col overflow-hidden max-h-full h-full gap-5 relative `}
       >
         {children}
       </div>

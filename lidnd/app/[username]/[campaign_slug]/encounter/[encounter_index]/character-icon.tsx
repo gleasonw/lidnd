@@ -3,6 +3,7 @@
 import { useUIStore } from "@/app/UIStore";
 import { CreatureUtils } from "@/utils/creatures";
 import { ParticipantUtils } from "@/utils/participants";
+import clsx from "clsx";
 import { observer } from "mobx-react-lite";
 import Image from "next/image";
 import React from "react";
@@ -49,50 +50,86 @@ export const CreatureIcon = observer(function CreatureIcon({
   };
   size?: IconSize;
 }) {
-  const uiStore = useUIStore();
-  const status = uiStore.getIconUploadStatus(creature);
   const dimensions = iconDimensions(creature, size);
-  const [retryCount, setRetryCount] = React.useState(0);
+  // unrelated to upload status for now... although maybe should merge.... purely image loading
+  const [imageStatus, setImageStatus] = React.useState<
+    "loading" | "loaded" | "error"
+  >("loading");
 
   const initials = ParticipantUtils.initials({ creature });
   const fallbackText = initials ? initials.slice(0, 2) : "?";
   const fallbackColor = creature.is_player ? "#2563eb" : "#b91c1c";
-
-  const icon = (
-    <div>
-      {retryCount >= 1 ? (
-        <div
-          className="text-lg font-semibold uppercase tracking-wide text-white w-10 h-10 rounded-full flex items-center justify-center"
-          style={{ backgroundColor: fallbackColor }}
-        >
-          {fallbackText}
-        </div>
-      ) : (
-        <Image
-          src={CreatureUtils.awsURL(creature, "icon")}
-          alt={creature.name}
-          width={dimensions.width}
-          height={dimensions.height}
-          className="w-10 h-10 rounded-full"
-          fetchPriority="high"
-          onError={(e) => {
-            if (retryCount < 3) {
-              console.log("retrying");
-              setTimeout(() => setRetryCount(retryCount + 1), 500);
-            } else {
-              console.error(e);
-            }
-          }}
-        />
-      )}
-    </div>
-  );
-
   if (creature.id === "pending") {
     // catch the case where we'v just uploaded but not yet set the
     // image upload status in the ui store...
     return <div>pending</div>;
   }
+  if (!ParticipantUtils.hasIcon({ creature })) {
+    return (
+      <div
+        className={clsx(
+          "text-lg absolute font-semibold transition-opacity uppercase tracking-wide text-white w-10 h-10 rounded-full flex items-center justify-center"
+        )}
+        style={{ backgroundColor: fallbackColor }}
+      >
+        {fallbackText}
+      </div>
+    );
+  }
+  return (
+    <ImageUploadStatus creature={creature}>
+      <div
+        className={clsx("relative", {
+          "w-10 h-10": size === undefined || size === "small",
+          "w-7 h-7": size === "v-small",
+        })}
+      >
+        <div
+          className={clsx(
+            "text-lg absolute font-semibold transition-opacity uppercase tracking-wide text-white w-10 h-10 rounded-full flex items-center justify-center",
+            {
+              "opacity-0": imageStatus !== "error",
+              "opacity-100": imageStatus === "error",
+            }
+          )}
+          style={{ backgroundColor: fallbackColor }}
+        >
+          {fallbackText}
+        </div>
+        <Image
+          src={CreatureUtils.awsURL(creature, "icon")}
+          alt={creature.name}
+          width={dimensions.width}
+          height={dimensions.height}
+          onLoad={() => setImageStatus("loaded")}
+          className={clsx(
+            "absolute top-0 left-0 rounded-full transition-opacity",
+            {
+              "opacity-0": imageStatus !== "loaded",
+              "opacity-100": imageStatus === "loaded",
+              "h-10 w-10": size === undefined || size === "small",
+              "h-7 w-7": size === "v-small",
+            }
+          )}
+          fetchPriority="high"
+          onError={(e) => {
+            setImageStatus("error");
+          }}
+        />
+      </div>
+    </ImageUploadStatus>
+  );
+});
+
+const ImageUploadStatus = observer(function ImageUploadStatus({
+  children,
+  creature,
+}: {
+  children: React.ReactNode;
+  creature: { id: string; icon_width: number; icon_height: number };
+}) {
+  const uiStore = useUIStore();
+  const status = uiStore.getIconUploadStatus(creature);
 
   switch (status) {
     case "pending":
@@ -100,11 +137,11 @@ export const CreatureIcon = observer(function CreatureIcon({
     case "error":
       return <div>error</div>;
     case "idle":
-      return icon;
+      return <div>{children}</div>;
     case "success":
-      return icon;
+      return <div>{children}</div>;
     case undefined:
-      return icon;
+      return <div>{children}</div>;
     default: {
       //@ts-expect-error - exhaustive check
       const _: never = status;

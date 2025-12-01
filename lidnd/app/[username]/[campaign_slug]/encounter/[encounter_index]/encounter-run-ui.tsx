@@ -12,7 +12,7 @@ import {
   useUpdateGroupTurn,
 } from "@/encounters/[encounter_index]/hooks";
 import { observer } from "mobx-react-lite";
-import { Check, Eye, X } from "lucide-react";
+import { AngryIcon, Check, Eye, X } from "lucide-react";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { ParticipantUtils } from "@/utils/participants";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
@@ -29,7 +29,9 @@ import type { TurnGroup } from "@/server/db/schema";
 import type { Creature, ParticipantWithData } from "@/server/api/router";
 import { Button } from "@/components/ui/button";
 import * as R from "remeda";
-import { QuickAddParticipantsButton } from "@/app/[username]/[campaign_slug]/game-session-quick-add";
+import { LidndDialog } from "@/components/ui/lidnd_dialog";
+import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
+import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 
 //todo: custom margin when in editing layout mode
 
@@ -94,15 +96,36 @@ export function StatColumns() {
   return columns?.map((c, index) =>
     c.is_home_column ? (
       <StatColumnComponent key={c.id} column={c} index={index}>
-        <GroupBattleUITools />
-        <div className="bg-white pt-2 px-2">
-          <DescriptionTextArea />
+        <div className="flex flex-col px-2 gap-5">
+          <GroupBattleUITools />
+          <div className="bg-white">
+            <DescriptionTextArea />
+          </div>
+          <div className="flex gap-1 flex-wrap">
+            {EncounterUtils.players(encounter)
+              .slice()
+              .sort((a, b) => a.creature.name.localeCompare(b.creature.name))
+              .map((p) => (
+                <GroupParticipantDoneToggle
+                  participant={p}
+                  key={p.id}
+                  buttonExtra={
+                    <CreatureIcon size="v-small" creature={p.creature} />
+                  }
+                />
+              ))}
+          </div>
+          <div className="w-full flex gap-3 items-center">
+            <div className="h-[1px] w-full bg-black rounded-s-sm" />
+            <div className="">vs</div>
+            <div className="h-[1px] w-full bg-black rounded-e-sm" />
+          </div>
+          <EncounterMonsterRoster />
         </div>
-        <EncounterRoster />
       </StatColumnComponent>
     ) : (
       <StatColumnComponent column={c} index={index} key={c.id}>
-        <div className="flex flex-col divide-solid divide-y-2 gap-2">
+        <div className="flex flex-col gap-1">
           {participantsByColumn[c.id]?.map((p) => (
             <div className="flex flex-col" key={p.map((p) => p.id).join("-")}>
               {p[0]?.creature ? (
@@ -144,7 +167,7 @@ const RunCreatureStatBlock = observer(function RunCreatureStatBlock({
   );
 });
 
-function EncounterRoster() {
+function EncounterMonsterRoster() {
   const [encounter] = useEncounter();
   const uiStore = useEncounterUIStore();
   const turnGroups = R.indexBy(encounter.turn_groups, (tg) => tg.id);
@@ -152,58 +175,64 @@ function EncounterRoster() {
     EncounterUtils.participantsByTurnGroup(encounter);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex gap-1 flex-wrap  p-1">
-        {EncounterUtils.players(encounter)
-          .slice()
-          .sort((a, b) => a.creature.name.localeCompare(b.creature.name))
-          .map((p) => (
-            <GroupParticipantDoneToggle participant={p} key={p.id} />
-          ))}
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <LidndDialog
+            content={<EditModeOpponentForm />}
+            title="Add Opponent"
+            trigger={
+              <Button variant="outline" className="w-fit">
+                <AngryIcon />
+                Add Opponent
+              </Button>
+            }
+          />
+        </div>
+        <div className="flex flex-col gap-5">
+          {EncounterUtils.monstersWithoutTurnGroup(encounter).map(
+            (m, index) => (
+              <ParticipantBattleData
+                participant={m}
+                key={m.id}
+                ref={(el) => uiStore.registerBattleCardRef(m.id, el)}
+                indexInGroup={index}
+              />
+            )
+          )}
+          {Object.entries(participantsByTurnGroup)
+            .sort(([tgAId], [tgBId]) => {
+              const tgA = turnGroups[tgAId];
+              const tgB = turnGroups[tgBId];
+              if (!tgA || !tgB) {
+                return 0;
+              }
+              if (tgA.name && tgB.name) {
+                return tgA.name.localeCompare(tgB.name);
+              }
+              if (tgA.name) {
+                return -1;
+              }
+              if (tgB.name) {
+                return 1;
+              }
+              return tgA.id.localeCompare(tgB.id);
+            })
+            .map(([tgId, participants]) => {
+              const turnGroup = turnGroups[tgId];
+              if (!turnGroup) {
+                return null;
+              }
+              return (
+                <RunTurnGroup
+                  tg={turnGroup}
+                  participants={participants}
+                  key={tgId}
+                />
+              );
+            })}
+        </div>
       </div>
-      <QuickAddParticipantsButton
-        campaignId={encounter.campaign_id}
-        encounterId={encounter.id}
-      />
-      {EncounterUtils.monstersWithoutTurnGroup(encounter).map((m, index) => (
-        <ParticipantBattleData
-          participant={m}
-          key={m.id}
-          ref={(el) => uiStore.registerBattleCardRef(m.id, el)}
-          indexInGroup={index}
-        />
-      ))}
-      {Object.entries(participantsByTurnGroup)
-        .sort(([tgAId], [tgBId]) => {
-          const tgA = turnGroups[tgAId];
-          const tgB = turnGroups[tgBId];
-          if (!tgA || !tgB) {
-            return 0;
-          }
-          if (tgA.name && tgB.name) {
-            return tgA.name.localeCompare(tgB.name);
-          }
-          if (tgA.name) {
-            return -1;
-          }
-          if (tgB.name) {
-            return 1;
-          }
-          return tgA.id.localeCompare(tgB.id);
-        })
-        .map(([tgId, participants]) => {
-          const turnGroup = turnGroups[tgId];
-          if (!turnGroup) {
-            return null;
-          }
-          return (
-            <RunTurnGroup
-              tg={turnGroup}
-              participants={participants}
-              key={tgId}
-            />
-          );
-        })}
     </div>
   );
 }
@@ -219,16 +248,25 @@ function RunTurnGroup({
   const creatureIdsForGroup = participants.map((p) => p.creature.id);
   return (
     <div className="flex flex-col">
-      <div className="flex w-full">
-        <TurnGroupDoneToggle turnGroup={tg} />
-        <Button
+      <div className="flex items-center gap-3 w-full">
+        <div
+          className="w-4 h-4"
+          style={{ backgroundColor: tg.hex_color ?? undefined }}
+        />
+        <span>{tg.name}</span>
+        <ButtonWithTooltip
+          text="Highlight stat blocks"
           variant="ghost"
+          className="text-gray-400"
           onClick={() => uiStore.highlightTheseStatBlocks(creatureIdsForGroup)}
         >
           <Eye />
-        </Button>
+        </ButtonWithTooltip>
+        <div className="ml-auto">
+          <TurnGroupDoneToggle turnGroup={tg} />
+        </div>
       </div>
-      <div className="flex flex-col pl-4">
+      <div className="flex flex-col pl-5 gap-2">
         {participants.map((p, index) => (
           <ParticipantBattleData
             participant={p}
@@ -254,10 +292,9 @@ function TurnGroupDoneToggle({ turnGroup }: { turnGroup: TurnGroup }) {
   return (
     <Button
       variant={turnGroup.has_played_this_round ? "ghost" : "outline"}
-      className={clsx("flex gap-2", {
+      className={clsx("flex gap-2 p-2", {
         "opacity-50": turnGroup.has_played_this_round,
       })}
-      style={{ borderColor: turnGroup.hex_color ?? undefined }}
       onClick={() =>
         // this is kinda wonky, why not just send up the first turn group id? need to think this through more
         updateTurnGroup({
@@ -267,7 +304,7 @@ function TurnGroupDoneToggle({ turnGroup }: { turnGroup: TurnGroup }) {
         })
       }
     >
-      {turnGroup.name}
+      {turnGroup.has_played_this_round ? <Check /> : "Ready"}
     </Button>
   );
 }
@@ -295,9 +332,9 @@ function GroupParticipantDoneToggle({
         "opacity-50": participant.has_played_this_round,
       })}
     >
+      {buttonExtra}
       {participant.creature.name}
       {participant.has_played_this_round ? <Check /> : ""}
-      {buttonExtra}
     </Button>
   );
 }
@@ -555,7 +592,7 @@ function StatColumnSplitter({
   return (
     <div
       onMouseDown={handleMouseDown}
-      className="w-2 hover:bg-gray-500 right-0 z-10 last:hidden"
+      className="w-2 hover:bg-gray-500 right-0 z-10 last:hidden bg-gray-200"
       style={{ cursor: "ew-resize" }}
     />
   );

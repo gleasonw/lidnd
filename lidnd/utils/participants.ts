@@ -44,6 +44,15 @@ function hasIcon(participant: {
   );
 }
 
+function hasStatBlock(participant: {
+  creature: { stat_block_width: number; stat_block_height: number };
+}) {
+  return (
+    participant.creature.stat_block_width !== 250 &&
+    participant.creature.stat_block_height !== 250
+  );
+}
+
 /** I'm starting to realize that really encounter utils is all we want, since state from
  * some objects impacts others, and the encounter has all that state...
  */
@@ -258,5 +267,6 @@ export const ParticipantUtils = {
   tempHpPercent,
   assignColumn,
   hasIcon,
+  hasStatBlock,
   outOfTurn: participantOutOfTurn,
 };

@@ -8,9 +8,9 @@ import {
   type ObserveEncounter,
 } from "@/server/sdk/encounters";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
-import { GroupBattleLayout } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/group-battle-ui";
 import { PageRefresher } from "@/app/observe/[id]/page-refresher";
 import { LinearObserve } from "@/app/observe/[id]/linear-observe-client";
+import { GroupBattleLayout } from "@/encounters/[encounter_index]/group-battle-ui";
 
 export default async function ObservePage(props: {
   params: Promise<{ id: string }>;
