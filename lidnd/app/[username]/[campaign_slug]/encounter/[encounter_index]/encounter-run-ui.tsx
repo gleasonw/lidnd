@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
+import * as css from "./encounter-run-ui.module.css";
 import {
   ColumnDragButton,
   GroupBattleUITools,
@@ -234,7 +235,8 @@ function RunTurnGroup({
   const uiStore = useEncounterUIStore();
   const creatureIdsForGroup = participants.map((p) => p.creature.id);
   return (
-    <div className="flex flex-col">
+    /**@ts-expect-error css modules */
+    <div className={`flex flex-col ${css.parentContainer}`}>
       <div className="flex items-center gap-3 w-full">
         <div
           className="w-4 h-4"
@@ -253,7 +255,12 @@ function RunTurnGroup({
           <TurnGroupDoneToggle turnGroup={tg} />
         </div>
       </div>
-      <div className="flex flex-col pl-5 gap-2">
+      <div
+        className={clsx("flex flex-col pl-5 gap-2", {
+          /**@ts-expect-error css modules */
+          [css.runGroupConditional]: participants.length >= 2,
+        })}
+      >
         {participants.map((p, index) => (
           <ParticipantBattleData
             participant={p}
