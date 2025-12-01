@@ -98,9 +98,6 @@ export function StatColumns() {
       <StatColumnComponent key={c.id} column={c} index={index}>
         <div className="flex flex-col px-2 gap-5">
           <GroupBattleUITools />
-          <div className="bg-white">
-            <DescriptionTextArea />
-          </div>
           <div className="flex gap-1 flex-wrap">
             {EncounterUtils.players(encounter)
               .slice()
@@ -125,6 +122,12 @@ export function StatColumns() {
       </StatColumnComponent>
     ) : (
       <StatColumnComponent column={c} index={index} key={c.id}>
+        {index === 1 ? (
+          /** this is just a hacky way to get the description out of the way... */
+          <div className="bg-white p-3">
+            <DescriptionTextArea />
+          </div>
+        ) : null}
         <div className="flex flex-col gap-1">
           {participantsByColumn[c.id]?.slice().map((p) => (
             <div className="flex flex-col" key={p.map((p) => p.id).join("-")}>
