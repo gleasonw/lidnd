@@ -126,7 +126,7 @@ export function StatColumns() {
     ) : (
       <StatColumnComponent column={c} index={index} key={c.id}>
         <div className="flex flex-col gap-1">
-          {participantsByColumn[c.id]?.map((p) => (
+          {participantsByColumn[c.id]?.slice().map((p) => (
             <div className="flex flex-col" key={p.map((p) => p.id).join("-")}>
               {p[0]?.creature ? (
                 <>
@@ -200,25 +200,8 @@ function EncounterMonsterRoster() {
               />
             )
           )}
-          {Object.entries(participantsByTurnGroup)
-            .sort(([tgAId], [tgBId]) => {
-              const tgA = turnGroups[tgAId];
-              const tgB = turnGroups[tgBId];
-              if (!tgA || !tgB) {
-                return 0;
-              }
-              if (tgA.name && tgB.name) {
-                return tgA.name.localeCompare(tgB.name);
-              }
-              if (tgA.name) {
-                return -1;
-              }
-              if (tgB.name) {
-                return 1;
-              }
-              return tgA.id.localeCompare(tgB.id);
-            })
-            .map(([tgId, participants]) => {
+          {Object.entries(participantsByTurnGroup).map(
+            ([tgId, participants]) => {
               const turnGroup = turnGroups[tgId];
               if (!turnGroup) {
                 return null;
@@ -230,7 +213,8 @@ function EncounterMonsterRoster() {
                   key={tgId}
                 />
               );
-            })}
+            }
+          )}
         </div>
       </div>
     </div>
@@ -470,7 +454,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
       >
         {encounterUiStore.isEditingInitiative || encounter.status === "prep" ? (
           <div className="flex w-full bg-gray-200">
-            {columns && columns?.length > 1 ? (
+            {columns && columns?.length > 1 && !column.is_home_column ? (
               <div className="border border-b-0">
                 <ButtonWithTooltip
                   text="Delete column"
@@ -498,11 +482,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
           {children}
         </div>
       </div>
-      <StatColumnSplitter
-        rightColumnId={columns?.[index + 1]?.id}
-        leftColumnId={column.id}
-        key={index}
-      />
+      <StatColumnSplitter leftColumnIndex={index} key={index} />
     </>
   );
 });
@@ -510,18 +490,19 @@ export const StatColumnComponent = observer(function StatColumnComponent({
 //todo: instead of updating a width which causes a full re-render of the stat column component,
 // set a css var on the parent ref. keep react out of the loop
 //like-wise for parent width?
-function StatColumnSplitter({
-  rightColumnId,
-  leftColumnId,
-}: {
-  rightColumnId?: string;
-  leftColumnId: string;
-}) {
+function StatColumnSplitter({ leftColumnIndex }: { leftColumnIndex: number }) {
   const parentWidth = useContext(ParentWidthContext);
   const { getColumns } = api.useUtils();
   const encounterId = useEncounterId();
   const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
   const { data: columns } = api.getColumns.useQuery(encounterId);
+  const leftColumn = columns?.[leftColumnIndex];
+  const rightColumn = columns?.[leftColumnIndex + 1];
+  if (!leftColumn || !rightColumn) {
+    return null;
+  }
+  const leftColumnId = leftColumn.id;
+  const rightColumnId = rightColumn.id;
   const handleMouseDown = (e: React.MouseEvent) => {
     const startX = e.clientX;
     const currentColumns = getColumns.getData(encounterId);
@@ -592,7 +573,7 @@ function StatColumnSplitter({
   return (
     <div
       onMouseDown={handleMouseDown}
-      className="w-2 hover:bg-gray-500 right-0 z-10 last:hidden bg-gray-200"
+      className="w-1 hover:bg-gray-500 right-0 z-10 last:hidden bg-gray-200"
       style={{ cursor: "ew-resize" }}
     />
   );

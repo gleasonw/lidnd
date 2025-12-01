@@ -27,7 +27,7 @@ export function EncounterDetails() {
       const elapsedMs = now - startTime.getTime();
       const minutes = Math.floor(elapsedMs / 1000 / 60);
       return (
-        <div className="flex flex-col gap-1 text-xl font-semibold">
+        <div className="flex items-baseline gap-3">
           <span className="whitespace-nowrap">
             Round {encounter.current_round}
           </span>

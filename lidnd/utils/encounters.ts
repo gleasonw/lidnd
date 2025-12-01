@@ -65,9 +65,17 @@ export function targetSinglePlayerStrength(args: DifficultyArgs) {
 }
 
 function participantsByTurnGroup<
-  P extends { turn_group_id: string | null }
+  // have to include initiative in the pick to satisfy sortLinearly... but that's sort of silly
+  P extends Pick<
+    Participant,
+    "turn_group_id" | "id" | "initiative" | "created_at"
+  >
 >(e: { participants: Array<P> }) {
-  return R.groupBy(e.participants, (p) => p.turn_group_id ?? "no-group");
+  const sortedParticipants = R.sort(
+    e.participants,
+    ParticipantUtils.sortLinearly
+  );
+  return R.groupBy(sortedParticipants, (p) => p.turn_group_id ?? "no-group");
 }
 
 export function monstersWithNoColumn<
@@ -184,7 +192,7 @@ function participantsByColumn<CP extends ColumnableParticipant>(e: {
   participants: Array<CP>;
 }) {
   const byCreature = R.groupBy(e.participants, (p) => p.creature_id);
-  return Object.values(byCreature)?.reduce((acc, curr) => {
+  const res = Object.values(byCreature)?.reduce((acc, curr) => {
     const columnFor = curr
       .slice()
       .sort(ParticipantUtils.sortLinearly)
@@ -198,6 +206,20 @@ function participantsByColumn<CP extends ColumnableParticipant>(e: {
     acc[columnFor] = [curr];
     return acc;
   }, {} as Record<string, CP[][]>);
+  // sort each column's participants
+  Object.keys(res).forEach((colId) => {
+    //TODO: why are we grouping participants anymore? should make this much simpler... participants
+    // no longer go in stat block columns...
+    const sortedParticipantGroups =
+      res[colId]
+        ?.slice()
+        .sort((pAs, pBs) => ParticipantUtils.sortLinearly(pAs[0]!, pBs[0]!)) ||
+      [];
+    res[colId] = sortedParticipantGroups.map((pGroup) =>
+      pGroup.slice().sort(ParticipantUtils.sortLinearly)
+    );
+  });
+  return res;
 }
 
 function participantsForColumn(

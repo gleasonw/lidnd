@@ -50,4 +50,12 @@ function remove<C extends StatColumn>(columns: C[], columnId: string): C[] {
 export const StatColumnUtils = {
   add,
   remove,
+  equalize<C extends StatColumn>(columns: C[]): C[] {
+    const numColumns = columns.length;
+    if (numColumns === 0) {
+      return columns;
+    }
+    const equalWidth = 100 / numColumns;
+    return columns.map((c) => ({ ...c, percent_width: equalWidth }));
+  },
 };

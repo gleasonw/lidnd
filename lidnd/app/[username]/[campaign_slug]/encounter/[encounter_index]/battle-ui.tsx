@@ -44,6 +44,7 @@ import {
 } from "@/encounters/[encounter_index]/reminders";
 import {
   Check,
+  Columns,
   Edit,
   Grid2X2,
   Grip,
@@ -85,6 +86,7 @@ import { SelectItem } from "@radix-ui/react-select";
 import { crLabel } from "@/utils/campaigns";
 import type { TurnGroup } from "@/server/db/schema";
 import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index]/encounter-prep";
+import { StatColumnUtils } from "@/utils/stat-columns";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -246,7 +248,11 @@ export const EncounterBattleUI = observer(function BattleUI() {
   }
 });
 
-function EncounterNameInput() {
+function EncounterNameInput({
+  textSize = "large",
+}: {
+  textSize?: "small" | "large";
+}) {
   const [encounter] = useEncounter();
   const { mutate: updateEncounter } = useUpdateEncounter();
   const debounceUpdateName = useDebouncedCallback((name: string) => {
@@ -260,7 +266,10 @@ function EncounterNameInput() {
   return (
     <LidndTextInput
       value={localName}
-      className="text-3xl bold bg-transparent"
+      className={clsx("font-bold bg-transparent", {
+        "text-3xl": textSize === "large",
+        "text-lg h-7": textSize === "small",
+      })}
       variant="ghost"
       placeholder="Encounter name"
       onChange={(e) => {
@@ -685,22 +694,13 @@ export const GroupBattleUITools = observer(function GroupBattleUITools() {
   const [encounter] = useEncounter();
   const { mutate: updateEncounter } = useUpdateEncounter();
   return (
-    <div className="flex gap-3 flex-col">
-      <div className="flex flex-wrap gap-3 items-center">
+    <div className="flex flex-col">
+      <div className="flex items-center gap-2">
         <Link href={campaignLink} className="flex gap-3">
-          <Button variant="ghost" className="opacity-60">
+          <Button variant="ghost" className="text-gray-400">
             <Home />
           </Button>
         </Link>
-        <EncounterDetails />
-        <ButtonWithTooltip
-          variant="ghost"
-          className="self-stretch h-full flex p-2"
-          text="Edit initiative and columns"
-          onClick={() => toggleEditingInitiative()}
-        >
-          <ListOrdered />
-        </ButtonWithTooltip>
         <ButtonWithTooltip
           text="Switch to prep mode"
           variant="ghost"
@@ -716,10 +716,55 @@ export const GroupBattleUITools = observer(function GroupBattleUITools() {
         >
           <Edit />
         </ButtonWithTooltip>
+        <EncounterNameInput textSize="small" />
+      </div>
+      <div className="flex gap-1 items-center flex-wrap">
+        <EncounterDetails />
+        <ButtonWithTooltip
+          variant="ghost"
+          className="flex text-gray-400"
+          text="Edit initiative and columns"
+          onClick={() => toggleEditingInitiative()}
+        >
+          <ListOrdered />
+        </ButtonWithTooltip>
+        <EqualizeColumnsButton />
       </div>
     </div>
   );
 });
+
+function EqualizeColumnsButton() {
+  const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
+  const [encounter] = useEncounter();
+
+  const sumColumnPercents = Math.round(
+    R.sumBy(encounter.columns, (c) => c.percent_width)
+  );
+  const aNegativeWidthColumn = encounter.columns.find(
+    (c) => c.percent_width < 0
+  );
+  return (
+    <ButtonWithTooltip
+      text="Equalize columns"
+      variant="ghost"
+      className="flex text-gray-400"
+      onClick={() => {
+        const cols = encounter.columns;
+        const newCols = StatColumnUtils.equalize(cols);
+        updateColumnBatch({ encounter_id: encounter.id, columns: newCols });
+      }}
+    >
+      <Columns />
+      {sumColumnPercents !== 100
+        ? `sum: ${sumColumnPercents}? Something's off with column widths, click me`
+        : null}
+      {aNegativeWidthColumn
+        ? `column ${aNegativeWidthColumn.participants[0]?.creature.name} has negative width, click me`
+        : null}
+    </ButtonWithTooltip>
+  );
+}
 
 export const BattleCardLayout = observer(function BattleCardLayout({
   className,
