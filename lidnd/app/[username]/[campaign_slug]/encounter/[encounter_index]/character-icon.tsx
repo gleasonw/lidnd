@@ -68,7 +68,7 @@ export const CreatureIcon = observer(function CreatureIcon({
     return (
       <div
         className={clsx(
-          "text-lg absolute font-semibold transition-opacity uppercase tracking-wide text-white w-10 h-10 rounded-full flex items-center justify-center"
+          "text-lg font-semibold transition-opacity uppercase tracking-wide text-white w-10 h-10 rounded-full flex items-center justify-center"
         )}
         style={{ backgroundColor: fallbackColor }}
       >

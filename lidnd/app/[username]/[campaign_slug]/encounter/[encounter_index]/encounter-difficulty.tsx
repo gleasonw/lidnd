@@ -13,7 +13,6 @@ import {
   useEncounter,
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
-import { EncounterUtils } from "@/utils/encounters";
 
 export function EncounterDifficulty() {
   const [campaign] = useCampaign();
@@ -25,23 +24,6 @@ export function EncounterDifficulty() {
 
   return (
     <>
-      {campaign.system === "drawsteel" && (
-        <label>
-          <span>Average victories</span>
-          <LidndTextInput
-            type="number"
-            placeholder="0"
-            value={encounter.average_victories ?? ""}
-            onChange={(e) => {
-              const value = parseFloat(e.target.value);
-              mutate({
-                ...encounter,
-                average_victories: isNaN(value) ? null : value,
-              });
-            }}
-          />
-        </label>
-      )}
       <label className="">
         <span className="whitespace-nowrap">Goal difficulty</span>
         <Select
@@ -61,14 +43,24 @@ export function EncounterDifficulty() {
           </SelectContent>
         </Select>
       </label>
-      <div className="flex flex-col items-baseline">
-        <span className="text-sm whitespace-nowrap text-gray-400">
-          Remaining {campaign.system === "dnd5e" ? "CR" : "EV"}
-        </span>
-        <span className="text-2xl font-bold">
-          {EncounterUtils.remainingCr(encounter, campaign)}
-        </span>
-      </div>
+      {campaign.system === "drawsteel" && (
+        <label>
+          <span>Average victories</span>
+          <LidndTextInput
+            type="number"
+            placeholder="0"
+            className="w-28"
+            value={encounter.average_victories ?? ""}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value);
+              mutate({
+                ...encounter,
+                average_victories: isNaN(value) ? null : value,
+              });
+            }}
+          />
+        </label>
+      )}
     </>
   );
 }

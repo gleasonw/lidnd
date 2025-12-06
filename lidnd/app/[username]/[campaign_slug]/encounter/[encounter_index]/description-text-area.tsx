@@ -1,13 +1,15 @@
 "use client";
 
-import { updateEncounterDescription } from "@/app/[username]/actions";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import React from "react";
 import { useDebouncedCallback } from "use-debounce";
-import { useEncounter } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
+import {
+  useEncounter,
+  useUpdateEncounter,
+} from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 
 export function DescriptionTextArea({
   tiptapReadyGate,
@@ -16,14 +18,13 @@ export function DescriptionTextArea({
 }) {
   const [encounter] = useEncounter();
   const [isTipTapReady, setIsTipTapReady] = React.useState(false);
+  const { mutate } = useUpdateEncounter();
 
   const debouncedUpdate = useDebouncedCallback(async (description: string) => {
     if (!encounter) {
       return;
     }
-    const formData = new FormData();
-    formData.append("description", description);
-    await updateEncounterDescription(encounter.id, formData);
+    mutate({ ...encounter, description });
   }, 500);
 
   const configuredPlaceholder = Placeholder.configure({

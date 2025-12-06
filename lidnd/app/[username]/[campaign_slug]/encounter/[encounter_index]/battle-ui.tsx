@@ -115,7 +115,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
   switch (encounter.status) {
     case "prep":
       return (
-        <div className="flex flex-col gap-3 max-h-full overflow-auto h-full">
+        <div className="flex flex-col gap-5 max-h-full overflow-auto h-full">
           <div className="flex gap-1">
             {EncounterUtils.allies(encounter).map((a) => (
               <CreatureIcon key={a.id} creature={a.creature} size="small" />
@@ -141,9 +141,9 @@ export const EncounterBattleUI = observer(function BattleUI() {
             </div>
           </div>
 
-          <Tabs defaultValue="prep">
-            <div className="flex flex-col gap-5 items-center justify-center">
-              <div className="max-w-[800px] w-full flex flex-col gap-2">
+          <Tabs defaultValue="prep" className="flex justify-center w-full">
+            <div className="flex flex-col gap-5 w-[800px] px-4">
+              <div className="w-full flex flex-col gap-2">
                 <EncounterNameInput />
                 <div>
                   <TabsList>
@@ -164,43 +164,44 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   </TabsList>
                 </div>
               </div>
-              <TabsContent value="prep">
-                <div className="flex flex-col gap-7 max-w-[800px] w-full">
-                  <div className="flex flex-wrap gap-5">
-                    <div className="flex flex-col gap-4 p-2">
-                      <EncounterDifficulty />
-                    </div>
-                    <Card className="flex sm:flex-1 p-3 sm:w-[530px] overflow-hidden">
-                      <DescriptionTextArea />
-                    </Card>
+              <TabsContent value="prep" className="w-full">
+                <div className="flex flex-col gap-5 w-full">
+                  <Card className="flex sm:flex-1 p-3 min-h-[150px] overflow-hidden">
+                    <DescriptionTextArea />
+                  </Card>
+                  <div className="flex gap-10">
+                    <EncounterDifficulty />
                   </div>
                   <Card className=" p-3 flex flex-col gap-5 w-full">
-                    <EditModeOpponentForm
-                      leftContent={
-                        <div
-                          className={`flex p-2 gap-7 rounded-md items-center`}
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-sm text-gray-400">
-                              Current
-                            </span>
-                            <span className="text-2xl font-bold">
-                              {difficulty}
-                            </span>
-                          </div>
+                    <div
+                      className={`flex flex-wrap gap-10 sm:flex-nowrap p-2 sm:gap-7 rounded-md items-center`}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-sm text-gray-400">Current</span>
+                        <span className="text-2xl font-bold">{difficulty}</span>
+                      </div>
 
-                          <div className="flex flex-col items-baseline">
-                            <span className="text-sm whitespace-nowrap text-gray-400">
-                              Total {campaign.system === "dnd5e" ? "CR" : "EV"}
-                            </span>
-                            <span className="text-2xl font-bold">
-                              {EncounterUtils.totalCr(encounter)}
-                            </span>
-                          </div>
-                          <EncounterBudgetSlider />
-                        </div>
-                      }
-                    />
+                      <div className="flex flex-col items-baseline">
+                        <span className="text-sm whitespace-nowrap text-gray-400">
+                          Total {campaign.system === "dnd5e" ? "CR" : "EV"}
+                        </span>
+                        <span className="text-2xl font-bold">
+                          {EncounterUtils.totalCr(encounter)}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-baseline">
+                        <span className="text-sm whitespace-nowrap text-gray-400">
+                          Remaining {campaign.system === "dnd5e" ? "CR" : "EV"}
+                        </span>
+                        <span className="text-2xl font-bold">
+                          {EncounterUtils.remainingCr(encounter, campaign)}
+                        </span>
+                      </div>
+                      <div className="w-full pb-3 sm:pb-0">
+                        <EncounterBudgetSlider />
+                      </div>
+                    </div>
+                    <EditModeOpponentForm />
                   </Card>
                   {campaign.system === "drawsteel" ? <TurnGroupSetup /> : null}
                   <Card className="w-full">
@@ -208,7 +209,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   </Card>
                 </div>
               </TabsContent>
-              <TabsContent value="preview">
+              <TabsContent value="preview" className="w-full">
                 <div className="w-full flex gap-3 h-full">
                   <EncounterBattlePreview />
                 </div>
@@ -330,15 +331,17 @@ function EncounterBudgetSlider() {
 function EncounterBattlePreview() {
   const { data: columns } = api.getColumns.useQuery(useEncounterId());
   const { parentWidth, containerRef } = useParentResizeObserver();
+  const statColumns = columns?.filter((c) => !c.is_home_column);
   return (
-    <div className="flex flex-col gap-8 max-h-full overflow-hidden w-full h-full">
+    <div className="flex flex-col gap-8 max-h-full min-h-[300px] overflow-hidden w-full h-full">
       <div
         className="flex relative h-full max-h-full overflow-hidden"
         ref={containerRef}
       >
         <ParentWidthContext.Provider value={parentWidth}>
-          {columns?.map((c, i) => (
-            <StatColumnComponent column={c} index={i} key={c.id}>
+          {statColumns?.map((c, i) => (
+            <StatColumnComponent column={c} index={i + 1} key={c.id}>
+              {i === 0 ? <DescriptionTextArea /> : null}
               <PreviewCardsForColumn column={c} />
             </StatColumnComponent>
           ))}
@@ -993,12 +996,8 @@ function TurnGroupSetup() {
     encounter
   ).filter((m) => !m.turn_group_id);
   return (
-    <div className="flex flex-col">
-      <div
-        className={clsx("flex flex-col", {
-          "sm:grid sm:grid-cols-2": monstersWihoutGroup.length > 0,
-        })}
-      >
+    <div className="flex flex-col gap-3">
+      <div className={clsx("flex flex-col gap-5")}>
         {monstersWihoutGroup.length > 0 ? (
           <div>
             <table className="table-auto border-spacing-4">
@@ -1006,9 +1005,11 @@ function TurnGroupSetup() {
                 <tr>
                   <th className="p-2"></th>
                   <th className="p-2"></th>
-                  <th className="p-2"></th>
+                  <th className="p-2">Opponent</th>
                   <th className="p-2">{crLabel(campaign)}</th>
-                  <th className="p-2">Turn group</th>
+                  {encounter.turn_groups.length === 0 ? null : (
+                    <th className="p-2">Turn group</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -1024,28 +1025,31 @@ function TurnGroupSetup() {
                     <td className="p-2">
                       {ParticipantUtils.challengeRating(p)}
                     </td>
-                    <td className="p-2">
-                      <TurnGroupSelect participant={p} />
-                    </td>
+                    {encounter.turn_groups.length === 0 ? null : (
+                      <td className="p-2">
+                        <TurnGroupSelect participant={p} />
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : null}
-        <CreateTurnGroupForm />
-      </div>
-
-      <div className="flex flex-col gap-4">
-        <div>
-          Target player strength:{" "}
-          {targetSinglePlayerStrength({ encounter, campaign })}
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {encounter.turn_groups.map((tg) => (
-            <TurnGroupDisplay tg={tg} key={tg.id} />
-          ))}
-        </div>
+        <Card className="flex flex-col gap-2 p-4">
+          <CreateTurnGroupForm />
+          <div className="flex flex-col gap-4">
+            <div>
+              Target player strength:{" "}
+              {targetSinglePlayerStrength({ encounter, campaign })}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {encounter.turn_groups.map((tg) => (
+                <TurnGroupDisplay tg={tg} key={tg.id} />
+              ))}
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );
@@ -1141,42 +1145,40 @@ function CreateTurnGroupForm() {
   const [name, setName] = useState("");
   const [hexColor, setHexColor] = useState("#ff0000");
   return (
-    <Card className="p-4">
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          createTurnGroup({
-            encounter_id: encounter.id,
-            name,
-            hex_color: hexColor,
-          });
-        }}
-      >
-        <LidndTextInput
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Turn group name"
-        />
-        <div className="flex flex-wrap gap-3">
-          {labelColors.map((color) => (
-            <Button
-              className={clsx("w-3 h-3", {
-                "opacity-25": color !== hexColor,
-              })}
-              key={color}
-              onClick={(e) => {
-                e.preventDefault();
-                setHexColor(color);
-              }}
-              style={{ backgroundColor: color }}
-            />
-          ))}
-        </div>
-        <Button variant="secondary" type="submit">
-          Create turn group
-        </Button>
-      </form>
-    </Card>
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        createTurnGroup({
+          encounter_id: encounter.id,
+          name,
+          hex_color: hexColor,
+        });
+      }}
+    >
+      <LidndTextInput
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Turn group name"
+      />
+      <div className="flex flex-wrap gap-3">
+        {labelColors.map((color) => (
+          <Button
+            className={clsx("w-3 h-3", {
+              "opacity-25": color !== hexColor,
+            })}
+            key={color}
+            onClick={(e) => {
+              e.preventDefault();
+              setHexColor(color);
+            }}
+            style={{ backgroundColor: color }}
+          />
+        ))}
+      </div>
+      <Button variant="secondary" type="submit">
+        Create turn group
+      </Button>
+    </form>
   );
 }
