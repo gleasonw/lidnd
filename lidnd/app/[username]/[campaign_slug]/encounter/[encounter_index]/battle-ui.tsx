@@ -172,7 +172,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   <div className="flex gap-10">
                     <EncounterDifficulty />
                   </div>
-                  <Card className=" p-3 flex flex-col gap-5 w-full">
+                  <Card className=" p-3 flex flex-col gap-8 w-full h-[600px]">
                     <div
                       className={`flex flex-wrap gap-10 sm:flex-nowrap p-2 sm:gap-7 rounded-md items-center`}
                     >
@@ -331,20 +331,30 @@ function EncounterBudgetSlider() {
 function EncounterBattlePreview() {
   const { data: columns } = api.getColumns.useQuery(useEncounterId());
   const { parentWidth, containerRef } = useParentResizeObserver();
-  const statColumns = columns?.filter((c) => !c.is_home_column);
   return (
-    <div className="flex flex-col gap-8 max-h-full min-h-[300px] overflow-hidden w-full h-full">
+    <div className="flex flex-col">
+      <div>
+        <EqualizeColumnsButton />
+      </div>
       <div
-        className="flex relative h-full max-h-full overflow-hidden"
+        className="flex min-h-[450px] overflow-hidden w-full h-full border shadow-md"
         ref={containerRef}
       >
         <ParentWidthContext.Provider value={parentWidth}>
-          {statColumns?.map((c, i) => (
-            <StatColumnComponent column={c} index={i + 1} key={c.id}>
-              {i === 0 ? <DescriptionTextArea /> : null}
-              <PreviewCardsForColumn column={c} />
-            </StatColumnComponent>
-          ))}
+          {columns?.map((c, i) =>
+            c.is_home_column ? (
+              <StatColumnComponent column={c} index={i} key={c.id}>
+                <div className="w-full h-full flex items-center justify-center text-center">
+                  This column will hold encounter info, participant health, etc
+                </div>
+              </StatColumnComponent>
+            ) : (
+              <StatColumnComponent column={c} index={i} key={c.id}>
+                {i === 0 ? <DescriptionTextArea /> : null}
+                <PreviewCardsForColumn column={c} />
+              </StatColumnComponent>
+            )
+          )}
         </ParentWidthContext.Provider>
       </div>
     </div>
@@ -412,7 +422,7 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
     encounter,
     column
   );
-  const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
+  const uiStore = useEncounterUIStore();
 
   return (
     <div className="flex flex-col max-h-full overflow-hidden h-full">
@@ -421,52 +431,25 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
       ) : null}
       {participantsInColumn.map((p) => (
         <div
-          className="max-h-full h-full flex flex-col overflow-hidden"
+          className="flex flex-col overflow-hidden"
           key={p
             .sort(ParticipantUtils.sortLinearly)
             .map((p) => p.id)
             .join("-")}
         >
-          {p.map((p, i) => (
-            <div className="w-full flex gap-2 p-4" key={p.id}>
-              <CreatureIcon creature={p.creature} size="small" />
-              <BattleCardCreatureName participant={p} />
-              {i === 0 ? (
-                <>
-                  <BattleCardTools participant={p} />
-                  <ColumnDragButton participant={p} />
-                </>
-              ) : (
-                <LidndPopover
-                  trigger={
-                    <ButtonWithTooltip
-                      text="More"
-                      variant="ghost"
-                      className="ml-auto"
-                    >
-                      <MoreHorizontal />
-                    </ButtonWithTooltip>
-                  }
-                  className="ml-auto flex"
-                >
-                  <Button
-                    onClick={() =>
-                      removeParticipant({
-                        encounter_id: p.encounter_id,
-                        participant_id: p.id,
-                      })
-                    }
-                    variant="destructive"
-                  >
-                    Remove participant
-                  </Button>
-                </LidndPopover>
-              )}
-            </div>
-          ))}
-
           {p[0]?.creature ? (
             <div className="w-full h-full max-h-full overflow-hidden">
+              <Button
+                variant="ghost"
+                className="z-10  cursor-grab"
+                onDragStart={(e) => {
+                  typedDrag.set(e.dataTransfer, dragTypes.participant, p[0]!);
+                  uiStore.startDraggingBattleCard();
+                }}
+                draggable
+              >
+                <Grip />
+              </Button>
               <CreatureStatBlock creature={p[0]?.creature} />
             </div>
           ) : (

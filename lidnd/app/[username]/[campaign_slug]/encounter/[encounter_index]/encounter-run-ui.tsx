@@ -380,7 +380,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
   children: React.ReactNode;
   toolbarExtra?: React.ReactNode;
 }) {
-  const [acceptDrop, setAcceptDrop] = useState(false);
+  const [acceptDrop, setAcceptDrop] = useState(0);
   const { encounterById, getColumns } = api.useUtils();
   const encounterId = useEncounterId();
   const [encounter] = useEncounter();
@@ -425,12 +425,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
   return (
     <>
       <div
-        className={clsx(
-          `flex flex-col h-full max-h-full items-start relative`,
-          {
-            "outline outline-blue-500": acceptDrop,
-          }
-        )}
+        className={clsx(`flex flex-col h-full max-h-full items-start relative`)}
         style={{ width: `${column.percent_width}%` }}
         onDrop={(e) => {
           const droppedParticipant = typedDrag.get(
@@ -446,21 +441,30 @@ export const StatColumnComponent = observer(function StatColumnComponent({
             column_id: column.id,
             encounter_id: encounterId,
           });
-          setAcceptDrop(false);
+          setAcceptDrop(0);
         }}
         onDragEnter={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          if (
+            !typedDrag.includes(e.dataTransfer, dragTypes.participant) ||
+            column.is_home_column
+          ) {
+            return;
+          }
+          setAcceptDrop((count) => count + 1);
         }}
         onDragOver={(e) => {
-          if (!typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
+          if (
+            !typedDrag.includes(e.dataTransfer, dragTypes.participant) ||
+            column.is_home_column
+          ) {
             return;
           }
           e.preventDefault();
           e.stopPropagation();
-          setAcceptDrop(true);
         }}
-        onDragLeave={() => setAcceptDrop(false)}
+        onDragLeave={() => setAcceptDrop((count) => count - 1)}
       >
         {encounterUiStore.isEditingInitiative || encounter.status === "prep" ? (
           <div className="flex w-full bg-gray-200">
@@ -488,7 +492,14 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         ) : null}
 
         {toolbarExtra}
-        <div className="flex flex-col gap-3 w-full max-h-full h-full bg-white">
+        <div
+          className={clsx(
+            "flex flex-col gap-3 w-full max-h-full h-full bg-white",
+            {
+              "bg-blue-500": acceptDrop > 0,
+            }
+          )}
+        >
           {children}
         </div>
       </div>
