@@ -1045,10 +1045,17 @@ function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
   const turnGroupedParticipants =
     EncounterUtils.participantsByTurnGroup(encounter);
   const participantsInGroup = turnGroupedParticipants[tg.id] || [];
+  const { mutate: updateTurnGroup } = api.updateTurnGroup.useMutation();
   const { mutate: deleteTurnGroup } = api.deleteTurnGroup.useMutation();
   const totalCr = R.sumBy(participantsInGroup, (p) =>
     ParticipantUtils.challengeRating(p)
   );
+  const setTurnGroupColor = (hexColor: string | null) =>
+    updateTurnGroup({
+      ...tg,
+      encounter_id: encounter.id,
+      hex_color: hexColor,
+    });
   return (
     <div key={tg.id} className="flex flex-col gap-2">
       <div className="flex gap-3">
@@ -1057,6 +1064,13 @@ function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
           <span>{crLabel(campaign)}</span>
           <span>{totalCr}</span>
         </span>
+        <div className="flex items-center gap-2 text-sm text-gray-300">
+          <span>Color</span>
+          <div
+            className="h-4 w-4 rounded border border-slate-500"
+            style={{ backgroundColor: tg.hex_color ?? undefined }}
+          />
+        </div>
         <Button
           variant="ghost"
           className="text-gray-200 p-2 w-3 h-3"
@@ -1069,6 +1083,21 @@ function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
         >
           <Trash />
         </Button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 pl-3">
+        {labelColors.map((color) => (
+          <Button
+            key={color}
+            variant="ghost"
+            className={clsx("h-5 w-5 border", {
+              "ring-2 ring-white": tg.hex_color === color,
+            })}
+            style={{ backgroundColor: color }}
+            onClick={() =>
+              setTurnGroupColor(tg.hex_color === color ? null : color)
+            }
+          />
+        ))}
       </div>
       <div className="pl-3 flex flex-col gap-1">
         {participantsInGroup.map((p) => (
