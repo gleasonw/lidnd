@@ -329,10 +329,7 @@ export function useUpdateCampaignEncounter() {
   });
 
   const updateEncounter = (
-    encounter: Omit<
-      UpsertEncounter,
-      "user_id" | "campaign_id" | "index_in_campaign" | "session_id"
-    > & {
+    encounter: Omit<UpsertEncounter, "user_id" | "campaign_id" | "index_in_campaign"> & {
       id: string;
     }
   ) => {

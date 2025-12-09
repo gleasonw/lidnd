@@ -87,6 +87,7 @@ import { crLabel } from "@/utils/campaigns";
 import type { TurnGroup } from "@/server/db/schema";
 import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index]/encounter-prep";
 import { StatColumnUtils } from "@/utils/stat-columns";
+import { format } from "date-fns";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -145,6 +146,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
             <div className="flex flex-col gap-5 w-[800px] px-4">
               <div className="w-full flex flex-col gap-2">
                 <EncounterNameInput />
+                <EncounterSessionSelector />
                 <div>
                   <TabsList>
                     <TabsTrigger
@@ -278,6 +280,45 @@ function EncounterNameInput({
         debounceUpdateName(e.target.value);
       }}
     />
+  );
+}
+
+const NO_SESSION = "NO_SESSION";
+
+function EncounterSessionSelector() {
+  const [campaign] = useCampaign();
+  const [encounter] = useEncounter();
+  const { mutate: updateEncounter } = useUpdateEncounter();
+  const { data: sessions } = api.sessionsForCampaign.useQuery(campaign.id);
+
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-sm text-muted-foreground">Session</span>
+      <Select
+        value={encounter.session_id ?? NO_SESSION}
+        onValueChange={(sessionId) => {
+          updateEncounter({
+            ...encounter,
+            session_id: sessionId === NO_SESSION ? null : sessionId,
+          });
+        }}
+      >
+        <SelectTrigger className="w-60">
+          <SelectValue placeholder="Unassigned" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={NO_SESSION}>Unassigned</SelectItem>
+          {sessions?.map((session) => (
+            <SelectItem key={session.id} value={session.id}>
+              {session.name}
+              {session.created_at
+                ? ` (${format(new Date(session.created_at), "MMM d, yyyy")})`
+                : ""}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 
