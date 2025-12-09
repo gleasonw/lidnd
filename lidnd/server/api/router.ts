@@ -458,6 +458,12 @@ export const appRouter = t.router({
     return await ServerCampaign.campaignByIdThrows(opts.ctx, opts.input);
   }),
 
+  sessionsForCampaign: protectedProcedure
+    .input(z.string())
+    .query(async (opts) => {
+      return await ServerCampaign.sessionsForCampaign(opts.ctx, opts.input);
+    }),
+
   updateCampaign: protectedProcedure
     .input(updateCampaignSchema.merge(z.object({ id: z.string() })))
     .mutation(async (opts) => {
