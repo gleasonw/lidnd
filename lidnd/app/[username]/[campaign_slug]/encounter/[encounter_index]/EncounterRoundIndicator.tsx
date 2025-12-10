@@ -28,10 +28,10 @@ export function EncounterDetails() {
       const minutes = Math.floor(elapsedMs / 1000 / 60);
       return (
         <div className="flex items-baseline gap-3">
-          <span className="whitespace-nowrap">
+          <span className="whitespace-nowrap font-bold text-lg">
             Round {encounter.current_round}
           </span>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500 whitespace-nowrap">
             {minutes === 0 ? "now" : `${minutes} minutes`}
           </span>
         </div>

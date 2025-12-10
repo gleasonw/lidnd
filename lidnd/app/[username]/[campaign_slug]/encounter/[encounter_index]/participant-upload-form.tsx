@@ -34,7 +34,10 @@ export const localCreatureUploadSchema = creatureUploadSchema.extend({
   iconImage: z.instanceof(File).optional(),
 });
 
-export function useParticipantForm(role: "ally" | "opponent") {
+export function useParticipantForm(participantArgs: {
+  role: "ally" | "opponent";
+  overrideHp?: number;
+}) {
   const form = useCreatureForm();
   const [encounter] = useEncounter();
 
@@ -45,8 +48,9 @@ export function useParticipantForm(role: "ally" | "opponent") {
       participant: {
         encounter_id: encounter.id,
         //TODO: just use role at some point
-        is_ally: role === "ally",
-        hp: creatureValues.max_hp,
+        is_ally: participantArgs.role === "ally",
+        hp: participantArgs.overrideHp ?? values.max_hp,
+        max_hp_override: participantArgs.overrideHp,
       },
       hasStatBlock: values.statBlockImage !== undefined,
       hasIcon: values.iconImage !== undefined,
@@ -70,7 +74,7 @@ export function useParticipantForm(role: "ally" | "opponent") {
 }
 
 export function AllyParticipantForm() {
-  const { form, onSubmit, isPending } = useParticipantForm("ally");
+  const { form, onSubmit, isPending } = useParticipantForm({ role: "ally" });
 
   return (
     <AllyCreatureUploadForm
@@ -82,7 +86,9 @@ export function AllyParticipantForm() {
 }
 
 export function OpponentParticipantForm() {
-  const { form, onSubmit, isPending } = useParticipantForm("opponent");
+  const { form, onSubmit, isPending } = useParticipantForm({
+    role: "opponent",
+  });
 
   return (
     <Tabs defaultValue="new" className="overflow-auto">

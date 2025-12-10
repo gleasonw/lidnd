@@ -64,22 +64,6 @@ class EncounterUIStore {
     };
   };
 
-  highlightTheseStatBlocks = (creatureIds: CreatureId[]) => {
-    if (creatureIds.every((id) => this.highlightingThisStatBlock(id))) {
-      this.highlightCreatureStatBlocks.clear();
-      return;
-    }
-    this.highlightCreatureStatBlocks = new Set(creatureIds);
-  };
-
-  highlightingThisStatBlock = (creatureId: CreatureId) => {
-    return this.highlightCreatureStatBlocks.has(creatureId);
-  };
-
-  get isHighlightingStatBlocks() {
-    return this.highlightCreatureStatBlocks.size > 0;
-  }
-
   registerStatBlockRef = (
     creatureId: CreatureId,
     ref: HTMLImageElement | null

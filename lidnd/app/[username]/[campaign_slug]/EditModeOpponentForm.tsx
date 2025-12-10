@@ -12,10 +12,15 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Angry, FileText, Plus, PlusIcon, User } from "lucide-react";
 import { FormProvider } from "react-hook-form";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
+import { useState } from "react";
 
 /**like the other form, but more flat.  */
 export function EditModeOpponentForm() {
-  const { form, onSubmit, isPending } = useParticipantForm("opponent");
+  const [overrideHp, setOverrideHp] = useState<number | undefined>(undefined);
+  const { form, onSubmit, isPending } = useParticipantForm({
+    role: "opponent",
+    overrideHp,
+  });
   const [campaign] = useCampaign();
 
   return (
@@ -57,14 +62,14 @@ export function EditModeOpponentForm() {
                   }}
                 />
               </div>
-              <div className="flex flex-col">
+              <div className="grid grid-cols-2 grid-rows-3 gap-2">
                 <FormField
                   control={form.control}
                   name={"name"}
                   render={({ field }) => {
                     return (
                       <LidndTextInput
-                        variant="ghost"
+                        className="col-start-1"
                         required
                         placeholder="Name"
                         {...field}
@@ -78,20 +83,28 @@ export function EditModeOpponentForm() {
                   render={({ field }) => (
                     <LidndTextInput
                       type="number"
-                      variant="ghost"
                       required
-                      placeholder="HP"
+                      placeholder="Base HP"
+                      className="col-start-1"
                       {...field}
                       value={field.value ?? ""}
                     />
                   )}
+                />
+
+                <LidndTextInput
+                  type="number"
+                  placeholder="Override HP for encounter"
+                  className="col-start-2 row-start-2"
+                  value={overrideHp ?? ""}
+                  onChange={(e) => setOverrideHp(Number(e.target.value))}
                 />
                 <FormField
                   control={form.control}
                   name={"challenge_rating"}
                   render={({ field }) => (
                     <LidndTextInput
-                      variant="ghost"
+                      className="col-start-1"
                       type="number"
                       placeholder={campaign.system === "dnd5e" ? "CR" : "EV"}
                       {...field}
@@ -114,7 +127,7 @@ export function EditModeOpponentForm() {
                     }}
                     dropText="Drop a Statblock"
                     dropIcon={<FileText />}
-                    previewSize={800}
+                    previewSize={500}
                     image={field.value}
                     clearImage={() => field.onChange(undefined)}
                     fileInputProps={{ name: "stat_block_image" }}

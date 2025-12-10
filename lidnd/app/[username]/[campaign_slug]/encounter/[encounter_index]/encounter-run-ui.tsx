@@ -13,7 +13,7 @@ import {
   useUpdateGroupTurn,
 } from "@/encounters/[encounter_index]/hooks";
 import { observer } from "mobx-react-lite";
-import { AngryIcon, Check, Eye, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { ParticipantUtils } from "@/utils/participants";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
@@ -30,8 +30,6 @@ import type { TurnGroup } from "@/server/db/schema";
 import type { Creature, ParticipantWithData } from "@/server/api/router";
 import { Button } from "@/components/ui/button";
 import * as R from "remeda";
-import { LidndDialog } from "@/components/ui/lidnd_dialog";
-import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 
 //todo: custom margin when in editing layout mode
@@ -97,7 +95,7 @@ export function StatColumns() {
   return columns?.map((c, index) =>
     c.is_home_column ? (
       <StatColumnComponent key={c.id} column={c} index={index}>
-        <div className="flex flex-col px-2 gap-5">
+        <div className="flex flex-col px-2 gap-3">
           <GroupBattleUITools />
           <div className="flex gap-1 flex-wrap">
             {EncounterUtils.players(encounter)
@@ -156,13 +154,7 @@ const RunCreatureStatBlock = observer(function RunCreatureStatBlock({
   const uiStore = useEncounterUIStore();
 
   return (
-    <div
-      className={clsx("transition-opacity", {
-        "opacity-50":
-          uiStore.isHighlightingStatBlocks &&
-          !uiStore.highlightingThisStatBlock(creature.id),
-      })}
-    >
+    <div>
       <CreatureStatBlock
         creature={creature}
         ref={(el) => uiStore.registerStatBlockRef(creature.id, el)}
@@ -179,47 +171,29 @@ function EncounterMonsterRoster() {
     EncounterUtils.participantsByTurnGroup(encounter);
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2">
-        <div className="flex gap-2 flex-wrap">
-          <LidndDialog
-            content={<EditModeOpponentForm />}
-            title="Add Opponent"
-            trigger={
-              <Button variant="outline" className="w-fit">
-                <AngryIcon />
-                Add Opponent
-              </Button>
-            }
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-5">
+        {EncounterUtils.monstersWithoutTurnGroup(encounter).map((m, index) => (
+          <ParticipantBattleData
+            participant={m}
+            key={m.id}
+            ref={(el) => uiStore.registerBattleCardRef(m.id, el)}
+            indexInGroup={index}
           />
-        </div>
-        <div className="flex flex-col gap-5">
-          {EncounterUtils.monstersWithoutTurnGroup(encounter).map(
-            (m, index) => (
-              <ParticipantBattleData
-                participant={m}
-                key={m.id}
-                ref={(el) => uiStore.registerBattleCardRef(m.id, el)}
-                indexInGroup={index}
-              />
-            )
-          )}
-          {Object.entries(participantsByTurnGroup).map(
-            ([tgId, participants]) => {
-              const turnGroup = turnGroups[tgId];
-              if (!turnGroup) {
-                return null;
-              }
-              return (
-                <RunTurnGroup
-                  tg={turnGroup}
-                  participants={participants}
-                  key={tgId}
-                />
-              );
-            }
-          )}
-        </div>
+        ))}
+        {Object.entries(participantsByTurnGroup).map(([tgId, participants]) => {
+          const turnGroup = turnGroups[tgId];
+          if (!turnGroup) {
+            return null;
+          }
+          return (
+            <RunTurnGroup
+              tg={turnGroup}
+              participants={participants}
+              key={tgId}
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -233,7 +207,6 @@ function RunTurnGroup({
   participants: Array<ParticipantWithData>;
 }) {
   const uiStore = useEncounterUIStore();
-  const creatureIdsForGroup = participants.map((p) => p.creature.id);
   return (
     /**@ts-expect-error css modules */
     <div className={`flex flex-col ${css.parentContainer}`}>
@@ -243,20 +216,12 @@ function RunTurnGroup({
           style={{ backgroundColor: tg.hex_color ?? undefined }}
         />
         <span>{tg.name}</span>
-        <ButtonWithTooltip
-          text="Highlight stat blocks"
-          variant="ghost"
-          className="text-gray-400"
-          onClick={() => uiStore.highlightTheseStatBlocks(creatureIdsForGroup)}
-        >
-          <Eye />
-        </ButtonWithTooltip>
         <div className="ml-auto">
           <TurnGroupDoneToggle turnGroup={tg} />
         </div>
       </div>
       <div
-        className={clsx("flex flex-col pl-5 gap-2", {
+        className={clsx("flex flex-col pl-8 gap-3", {
           /**@ts-expect-error css modules */
           [css.runGroupConditional]: participants.length >= 2,
         })}
@@ -285,7 +250,7 @@ function TurnGroupDoneToggle({ turnGroup }: { turnGroup: TurnGroup }) {
   }
   return (
     <Button
-      variant={turnGroup.has_played_this_round ? "ghost" : "outline"}
+      variant={turnGroup.has_played_this_round ? "ghost" : "secondary"}
       className={clsx("flex gap-2 p-2", {
         "opacity-50": turnGroup.has_played_this_round,
       })}
@@ -314,7 +279,7 @@ function GroupParticipantDoneToggle({
   const { mutate: updateCreatureHasPlayedThisRound } = useUpdateGroupTurn();
   return (
     <Button
-      variant={participant.has_played_this_round ? "ghost" : "outline"}
+      variant={participant.has_played_this_round ? "ghost" : "secondary"}
       onClick={() =>
         updateCreatureHasPlayedThisRound({
           encounter_id: id,

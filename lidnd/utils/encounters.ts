@@ -557,9 +557,15 @@ export const EncounterUtils = {
   },
 
   participantsByName(encounter: EncounterWithParticipants) {
-    return R.sort(encounter.participants, (a, b) =>
-      ParticipantUtils.name(a).localeCompare(ParticipantUtils.name(b))
-    );
+    return R.sort(encounter.participants, (a, b) => {
+      const res = ParticipantUtils.name(a).localeCompare(
+        ParticipantUtils.name(b)
+      );
+      if (res === 0) {
+        return ParticipantUtils.sortLinearly(a, b);
+      }
+      return res;
+    });
   },
 
   latest(encounters: { created_at: Encounter["created_at"] }[]) {

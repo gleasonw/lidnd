@@ -43,6 +43,7 @@ export function ParticipantHealthForm({
     const hpDiff = participant.hp - updatedHp;
 
     if (participant.temporary_hp === 0 || hpDiff <= 0) {
+      setHpDiff("");
       return edit({
         ...participant,
         hp: updatedHp,
@@ -51,6 +52,7 @@ export function ParticipantHealthForm({
 
     if (hpDiff >= participant.temporary_hp) {
       setTempHp(0);
+      setHpDiff("");
       return edit({
         ...participant,
         hp: participant.hp - (hpDiff - participant.temporary_hp),
@@ -60,6 +62,7 @@ export function ParticipantHealthForm({
 
     // the damage is less than the temporary hp
     setTempHp(participant.temporary_hp - hpDiff);
+    setHpDiff("");
     edit({
       ...participant,
       temporary_hp: participant.temporary_hp - hpDiff,
@@ -89,6 +92,16 @@ export function ParticipantHealthForm({
         type="number"
         className="w-16"
         value={hpDiff}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.stopPropagation();
+            handleHPChange(
+              typeof hpDiff === "number"
+                ? participant.hp - hpDiff
+                : participant.hp
+            );
+          }
+        }}
         onChange={(e) => {
           if (!isNaN(parseInt(e.target.value))) {
             setHpDiff(parseInt(e.target.value));
@@ -100,7 +113,7 @@ export function ParticipantHealthForm({
       <ButtonWithTooltip
         text="Heal"
         variant="ghost"
-        className={"bg-green-100 text-green-700 p-2 gap-3 flex items-center"}
+        className={" text-emerald-500 p-2 gap-3 flex items-center"}
         onClick={(e) => {
           e.stopPropagation();
           handleHPChange(

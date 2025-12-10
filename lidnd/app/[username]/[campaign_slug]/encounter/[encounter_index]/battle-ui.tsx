@@ -43,9 +43,11 @@ import {
   Reminders,
 } from "@/encounters/[encounter_index]/reminders";
 import {
+  AngryIcon,
   Check,
   Columns,
   Edit,
+  File,
   Grid2X2,
   Grip,
   Home,
@@ -87,7 +89,7 @@ import { crLabel } from "@/utils/campaigns";
 import type { TurnGroup } from "@/server/db/schema";
 import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index]/encounter-prep";
 import { StatColumnUtils } from "@/utils/stat-columns";
-import { format } from "date-fns";
+import { LidndDialog } from "@/components/ui/lidnd_dialog";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -146,7 +148,6 @@ export const EncounterBattleUI = observer(function BattleUI() {
             <div className="flex flex-col gap-5 w-[800px] px-4">
               <div className="w-full flex flex-col gap-2">
                 <EncounterNameInput />
-                <EncounterSessionSelector />
                 <div>
                   <TabsList>
                     <TabsTrigger
@@ -174,7 +175,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   <div className="flex gap-10">
                     <EncounterDifficulty />
                   </div>
-                  <Card className=" p-3 flex flex-col gap-8 w-full h-[600px]">
+                  <Card className=" p-3 flex flex-col gap-8 w-full h-[700px]">
                     <div
                       className={`flex flex-wrap gap-10 sm:flex-nowrap p-2 sm:gap-7 rounded-md items-center`}
                     >
@@ -269,8 +270,8 @@ function EncounterNameInput({
   return (
     <LidndTextInput
       value={localName}
-      className={clsx("font-bold bg-transparent", {
-        "text-3xl": textSize === "large",
+      className={clsx("bg-transparent", {
+        "text-3xl font-bold": textSize === "large",
         "text-lg h-7": textSize === "small",
       })}
       variant="ghost"
@@ -280,45 +281,6 @@ function EncounterNameInput({
         debounceUpdateName(e.target.value);
       }}
     />
-  );
-}
-
-const NO_SESSION = "NO_SESSION";
-
-function EncounterSessionSelector() {
-  const [campaign] = useCampaign();
-  const [encounter] = useEncounter();
-  const { mutate: updateEncounter } = useUpdateEncounter();
-  const { data: sessions } = api.sessionsForCampaign.useQuery(campaign.id);
-
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm text-muted-foreground">Session</span>
-      <Select
-        value={encounter.session_id ?? NO_SESSION}
-        onValueChange={(sessionId) => {
-          updateEncounter({
-            ...encounter,
-            session_id: sessionId === NO_SESSION ? null : sessionId,
-          });
-        }}
-      >
-        <SelectTrigger className="w-60">
-          <SelectValue placeholder="Unassigned" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={NO_SESSION}>Unassigned</SelectItem>
-          {sessions?.map((session) => (
-            <SelectItem key={session.id} value={session.id}>
-              {session.name}
-              {session.created_at
-                ? ` (${format(new Date(session.created_at), "MMM d, yyyy")})`
-                : ""}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
   );
 }
 
@@ -521,29 +483,10 @@ export const ParticipantBattleData = observer(function BattleCard({
 }: BattleCardProps) {
   const [encounter] = useEncounter();
   const encounterUiStore = useEncounterUIStore();
-  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   const turnGroups = R.indexBy(encounter.turn_groups, (tg) => tg.id);
   const tgForParticipant = participant.turn_group_id
     ? turnGroups[participant.turn_group_id]
     : null;
-
-  const debouncedUpdate = useDebouncedCallback((participant: Participant) => {
-    updateParticipant(participant);
-  }, 500);
-
-  const configuredPlaceholder = Placeholder.configure({
-    placeholder: "notes",
-  });
-
-  const editor = useEditor({
-    extensions: [StarterKit, configuredPlaceholder],
-    content: participant.notes,
-    immediatelyRender: false,
-    onUpdate: ({ editor }) => {
-      const content = editor.getHTML();
-      debouncedUpdate({ ...participant, notes: content });
-    },
-  });
 
   const { mutate: updateCreatureHasPlayedThisRound } = useUpdateGroupTurn();
 
@@ -554,9 +497,9 @@ export const ParticipantBattleData = observer(function BattleCard({
       {...props}
     >
       <BattleCardLayout key={participant.id} participant={participant}>
-        <div className="flex flex-col gap-3 w-full py-2">
+        <div className="flex flex-col gap-3 w-full">
           {participant.inanimate ? (
-            <LidndTextArea editor={editor} />
+            <ParticipantNotes participant={participant} />
           ) : (
             <div className="flex gap-2 items-center justify-between">
               <div className="flex gap-2 items-center w-full relative">
@@ -567,14 +510,14 @@ export const ParticipantBattleData = observer(function BattleCard({
                         {ParticipantUtils.hasIcon(participant) ? (
                           <BattleCardCreatureIcon participant={participant} />
                         ) : null}
-                        <div className="flex flex-col">
-                          <BattleCardCreatureName participant={participant} />
-                          <LidndTextArea editor={editor} />
-                        </div>
+                        <ParticipantNameAndMaybeNotes
+                          participant={participant}
+                        />
 
                         {tgForParticipant ? null : (
+                          //todo: standardize with other "has played" buttons
                           <Button
-                            variant="outline"
+                            variant="secondary"
                             className={clsx("p-2 ml-auto", {
                               "border-2": tgForParticipant,
                               "opacity-50": EncounterUtils.participantHasPlayed(
@@ -621,7 +564,9 @@ export const ParticipantBattleData = observer(function BattleCard({
                         />
                       </div>
                     </div>
-                    <ParticipantHealthForm participant={participant} />
+                    <div className="flex justify-between">
+                      <ParticipantHealthForm participant={participant} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -645,6 +590,74 @@ export const ParticipantBattleData = observer(function BattleCard({
     </div>
   );
 });
+
+function ParticipantNotes({
+  participant,
+}: {
+  participant: ParticipantWithData;
+}) {
+  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
+
+  const debouncedUpdate = useDebouncedCallback((participant: Participant) => {
+    updateParticipant(participant);
+  }, 500);
+
+  const configuredPlaceholder = Placeholder.configure({
+    placeholder: "notes",
+  });
+  const editor = useEditor({
+    extensions: [StarterKit, configuredPlaceholder],
+    content: participant.notes,
+    immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      const content = editor.getHTML();
+      debouncedUpdate({ ...participant, notes: content });
+    },
+  });
+
+  return <LidndTextArea editor={editor} />;
+}
+
+function isEmptyParagraph(html: string | null) {
+  if (!html) {
+    return true;
+  }
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const p = doc.querySelector("p");
+  console.log(p);
+  if (!p) return false;
+  return p.textContent?.trim() === "" && p.children.length === 0;
+}
+
+function ParticipantNameAndMaybeNotes({
+  participant,
+}: {
+  participant: ParticipantWithData;
+}) {
+  const [showNotes, setShowNotes] = useState(
+    isEmptyParagraph(participant.notes) ? false : true
+  );
+  console.log("participant notes:", participant.notes);
+  return (
+    <div className="flex flex-col w-full">
+      <div className="flex gap-2 items-center justify-between w-full">
+        <BattleCardCreatureName participant={participant} />
+
+        {!showNotes ? (
+          <ButtonWithTooltip
+            variant="ghost"
+            className=" text-gray-300 p-2"
+            text="Show notes"
+            onClick={() => setShowNotes(true)}
+          >
+            <File className="w-5 h-5" />
+          </ButtonWithTooltip>
+        ) : null}
+      </div>
+      {showNotes && <ParticipantNotes participant={participant} />}
+    </div>
+  );
+}
 
 // TODO: inanimate is a hack flag to allow malice and other things the dm needs to track to sit inside the
 // column layout. really we should have some "encounter element" system that lets us add things
@@ -721,17 +734,17 @@ export const GroupBattleUITools = observer(function GroupBattleUITools() {
   const [encounter] = useEncounter();
   const { mutate: updateEncounter } = useUpdateEncounter();
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center">
+      <div className="flex items-center gap-1">
         <Link href={campaignLink} className="flex gap-3">
-          <Button variant="ghost" className="text-gray-400">
+          <Button variant="ghost" className="text-gray-400 p-2">
             <Home />
           </Button>
         </Link>
         <ButtonWithTooltip
           text="Switch to prep mode"
           variant="ghost"
-          className="flex text-gray-400"
+          className="flex text-gray-400 p-2"
           onClick={() =>
             updateEncounter({
               status: "prep",
@@ -743,19 +756,34 @@ export const GroupBattleUITools = observer(function GroupBattleUITools() {
         >
           <Edit />
         </ButtonWithTooltip>
-        <EncounterNameInput textSize="small" />
       </div>
-      <div className="flex gap-1 items-center flex-wrap">
+      <div className="px-2">
         <EncounterDetails />
+      </div>
+
+      <div className="flex gap-2">
         <ButtonWithTooltip
           variant="ghost"
-          className="flex text-gray-400"
+          className="flex text-gray-400 p-2"
           text="Edit initiative and columns"
           onClick={() => toggleEditingInitiative()}
         >
           <ListOrdered />
         </ButtonWithTooltip>
         <EqualizeColumnsButton />
+        <LidndDialog
+          trigger={
+            <ButtonWithTooltip
+              className="p-2 text-gray-400"
+              text="Add Opponent"
+              variant="ghost"
+            >
+              <AngryIcon />
+            </ButtonWithTooltip>
+          }
+          content={<EditModeOpponentForm />}
+          title="Add Opponent"
+        />
       </div>
     </div>
   );
@@ -775,7 +803,7 @@ function EqualizeColumnsButton() {
     <ButtonWithTooltip
       text="Equalize columns"
       variant="ghost"
-      className="flex text-gray-400"
+      className="flex text-gray-400 p-2"
       onClick={() => {
         const cols = encounter.columns;
         const newCols = StatColumnUtils.equalize(cols);
@@ -942,23 +970,21 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   return participant.creature_id === "pending" ? (
     <span>Loading</span>
   ) : (
-    <div className="flex">
-      <div
-        className={clsx(
-          { "border-4": participant.hex_color },
-          "relative h-12 w-12"
-        )}
-        style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
-      >
-        <Image
-          src={CreatureUtils.awsURL(participant.creature, "icon")}
-          alt={participant.creature.name}
-          style={imageStyle}
-          width={participant.creature.icon_width}
-          height={participant.creature.icon_height}
-          onError={() => setError(true)}
-        />
-      </div>
+    <div
+      className={clsx(
+        { "border-4": participant.hex_color },
+        "relative flex flex-shrink-0 h-10 w-10"
+      )}
+      style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
+    >
+      <Image
+        src={CreatureUtils.awsURL(participant.creature, "icon")}
+        alt={participant.creature.name}
+        style={imageStyle}
+        width={participant.creature.icon_width}
+        height={participant.creature.icon_height}
+        onError={() => setError(true)}
+      />
     </div>
   );
 });
