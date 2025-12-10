@@ -16,10 +16,14 @@ import { useState } from "react";
 
 /**like the other form, but more flat.  */
 export function EditModeOpponentForm() {
-  const [overrideHp, setOverrideHp] = useState<number | undefined>(undefined);
+  const [overrideHp, setOverrideHp] = useState<string | undefined>(undefined);
+
+  const hpAsNumber = Number(overrideHp);
+  const overrideHpValue =
+    !isNaN(hpAsNumber) && hpAsNumber > 0 ? hpAsNumber : undefined;
   const { form, onSubmit, isPending } = useParticipantForm({
     role: "opponent",
-    overrideHp,
+    overrideHp: overrideHpValue,
   });
   const [campaign] = useCampaign();
 
@@ -95,9 +99,10 @@ export function EditModeOpponentForm() {
                 <LidndTextInput
                   type="number"
                   placeholder="Override HP for encounter"
+                  tabIndex={-1}
                   className="col-start-2 row-start-2"
                   value={overrideHp ?? ""}
-                  onChange={(e) => setOverrideHp(Number(e.target.value))}
+                  onChange={(e) => setOverrideHp(e.target.value)}
                 />
                 <FormField
                   control={form.control}
