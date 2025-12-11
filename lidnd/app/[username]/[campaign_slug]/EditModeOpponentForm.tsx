@@ -39,7 +39,7 @@ export function EditModeOpponentForm() {
         <FormProvider {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-8 w-full p-3"
+            className="flex flex-col gap-8 w-full"
           >
             <div className="flex gap-5">
               <div className="w-[200px]">
