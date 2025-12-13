@@ -163,7 +163,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
             defaultValue="prep"
             className="flex justify-center w-full xl:max-h-full xl:overflow-hidden"
           >
-            <div className="flex flex-col gap-5 w-[800px] xl:w-full px-4 xl:px-8 xl:max-h-full xl:overflow-hidden">
+            <div className="flex flex-col gap-5 w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full xl:overflow-hidden">
               <div className="w-full flex flex-col gap-2">
                 <EncounterNameInput />
                 <div>
@@ -1055,10 +1055,10 @@ function PrepParticipant({
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
   return (
-    <div key={p.id} className="flex gap-2 items-center">
+    <div key={p.id} className="flex gap-2 items-center max-w-[400px]">
       <RemoveCreatureFromEncounterButton participant={p} />
       <CreatureIcon creature={p.creature} size="small" />
-      <div className="flex flex-col">
+      <div className="flex flex-col max-w-full">
         <span className="truncate">{ParticipantUtils.name(p)}</span>
         <LidndLabel label={crLabel(campaign)}>
           <span className="text-base ml-1">
@@ -1101,7 +1101,7 @@ function TurnGroupSetup() {
                 {targetSinglePlayerStrength({ encounter, campaign })}
               </span>
             </LidndLabel>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {encounter.turn_groups.map((tg) => (
                 <TurnGroupDisplay tg={tg} key={tg.id} />
               ))}
@@ -1182,7 +1182,7 @@ function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
           </div>
         </LidndPopover>
       </div>
-      <div className="pl-3 flex flex-col gap-1">
+      <div className="pl-6 flex flex-col gap-1">
         {participantsInGroup.map((p) => (
           <PrepParticipant participant={p} key={p.id} />
         )) || <span>No participants assigned</span>}
