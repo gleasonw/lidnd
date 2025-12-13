@@ -14,6 +14,60 @@ import {
 import { useContext } from "react";
 
 import { useEffect } from "react";
+import { useCreatureForm } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
+import { z } from "zod";
+import { creatureUploadSchema } from "@/server/db/schema";
+import { omit } from "remeda";
+import { useUploadParticipant } from "@/encounters/[encounter_index]/encounter-upload-hooks";
+
+/**
+ * We don't actually upload these, but we want to make sure the user has
+ * a stat block image ready before triggering the full upload.
+ */
+export const localCreatureUploadSchema = creatureUploadSchema.extend({
+  statBlockImage: z.instanceof(File),
+  iconImage: z.instanceof(File).optional(),
+});
+
+export function useParticipantForm(participantArgs: {
+  role: "ally" | "opponent";
+  overrideHp?: number;
+  afterSubmit?: () => void;
+}) {
+  const form = useCreatureForm();
+  const [encounter] = useEncounter();
+
+  function onSubmit(values: Zod.infer<typeof localCreatureUploadSchema>) {
+    const creatureValues = omit(values, ["iconImage", "statBlockImage"]);
+    uploadParticipant({
+      creature: { ...creatureValues, is_player: false },
+      participant: {
+        encounter_id: encounter.id,
+        //TODO: just use role at some point
+        is_ally: participantArgs.role === "ally",
+        hp: participantArgs.overrideHp ?? values.max_hp,
+        max_hp_override: participantArgs.overrideHp,
+      },
+      hasStatBlock: values.statBlockImage !== undefined,
+      hasIcon: values.iconImage !== undefined,
+    });
+    participantArgs.afterSubmit?.();
+  }
+
+  const { mutate: uploadParticipant, isPending } = useUploadParticipant({
+    form,
+    onSuccess: () => {
+      console.log("upload participant success, reseting form");
+      form.reset();
+    },
+  });
+
+  useEffect(() => {
+    console.log(form.formState.errors);
+  }, [form.formState.errors]);
+
+  return { form, onSubmit, uploadParticipant, isPending };
+}
 
 export function useEncounterHotkey(
   key: string,
@@ -329,7 +383,10 @@ export function useUpdateCampaignEncounter() {
   });
 
   const updateEncounter = (
-    encounter: Omit<UpsertEncounter, "user_id" | "campaign_id" | "index_in_campaign"> & {
+    encounter: Omit<
+      UpsertEncounter,
+      "user_id" | "campaign_id" | "index_in_campaign"
+    > & {
       id: string;
     }
   ) => {

@@ -90,6 +90,7 @@ import type { TurnGroup } from "@/server/db/schema";
 import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index]/encounter-prep";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
+import * as CampaignUtils from "@/utils/campaigns";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -186,7 +187,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
 
                       <div className="flex flex-col items-baseline">
                         <span className="text-sm whitespace-nowrap text-gray-400">
-                          Total {campaign.system === "dnd5e" ? "CR" : "EV"}
+                          Total {CampaignUtils.crLabel(campaign)}
                         </span>
                         <span className="text-2xl font-bold">
                           {EncounterUtils.totalCr(encounter)}
@@ -194,7 +195,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                       </div>
                       <div className="flex flex-col items-baseline">
                         <span className="text-sm whitespace-nowrap text-gray-400">
-                          Remaining {campaign.system === "dnd5e" ? "CR" : "EV"}
+                          Remaining {CampaignUtils.crLabel(campaign)}
                         </span>
                         <span className="text-2xl font-bold">
                           {EncounterUtils.remainingCr(encounter, campaign)}

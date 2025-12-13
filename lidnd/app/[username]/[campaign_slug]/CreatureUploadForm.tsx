@@ -1,4 +1,3 @@
-import { localCreatureUploadSchema } from "@/encounters/[encounter_index]/participant-upload-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type UseFormReturn, FormProvider } from "react-hook-form";
 import { FormField } from "@/components/ui/form";
@@ -13,6 +12,7 @@ import type { Creature } from "@/server/api/router";
 import { api } from "@/trpc/react";
 import { UIStore, useUIStore } from "@/app/UIStore";
 import { CreatureUtils } from "@/utils/creatures";
+import { localCreatureUploadSchema } from "@/encounters/[encounter_index]/hooks";
 
 export type CreatureUpload = Zod.infer<typeof localCreatureUploadSchema>;
 

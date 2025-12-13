@@ -1,7 +1,7 @@
 "use client";
 import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
-import { ButtonWithTooltip, Tip } from "@/components/ui/tip";
+import { ButtonWithTooltip, LidndTooltip } from "@/components/ui/tip";
 import { Toggle } from "@/components/ui/toggle";
 import { HealthMeterOverlay } from "@/encounters/[encounter_index]/battle-ui";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
@@ -45,13 +45,13 @@ export function ToggleEditingMode() {
       }
     >
       {encounter?.is_editing_columns ? (
-        <Tip text={"Read-only"}>
+        <LidndTooltip text={"Read-only"}>
           <BookOpen />
-        </Tip>
+        </LidndTooltip>
       ) : (
-        <Tip text={"Edit columns/add creatures"}>
+        <LidndTooltip text={"Edit columns/add creatures"}>
           <Pen />
-        </Tip>
+        </LidndTooltip>
       )}
     </Toggle>
   );

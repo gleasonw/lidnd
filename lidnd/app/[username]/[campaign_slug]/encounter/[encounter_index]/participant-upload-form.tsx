@@ -1,79 +1,29 @@
-import { Angry, Plus } from "lucide-react";
+import { Angry, Plus, PlusIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Suspense, useEffect, useState } from "react";
-import * as UploadHooks from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-upload-hooks";
-import { creatureUploadSchema } from "@/server/db/schema";
+import { Suspense, useState } from "react";
 import type { Creature, Encounter } from "@/server/api/router";
 import { api } from "@/trpc/react";
-import { Heart, Skull } from "lucide-react";
+import { Heart } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import {
   useAddExistingCreatureAsParticipant,
   useEncounter,
+  useParticipantForm,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
-import { AddCreatureButton } from "@/encounters/add-creature-button";
-import { z } from "zod";
-import { omit } from "remeda";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AllyCreatureUploadForm,
   OppponentCreatureUploadForm,
-  useCreatureForm,
 } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 import { Toggle } from "@/components/ui/toggle";
 import { EncounterUtils } from "@/utils/encounters";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
-
-/**
- * We don't actually upload these, but we want to make sure the user has
- * a stat block image ready before triggering the full upload.
- */
-export const localCreatureUploadSchema = creatureUploadSchema.extend({
-  statBlockImage: z.instanceof(File),
-  iconImage: z.instanceof(File).optional(),
-});
-
-export function useParticipantForm(participantArgs: {
-  role: "ally" | "opponent";
-  overrideHp?: number;
-  afterSubmit?: () => void;
-}) {
-  const form = useCreatureForm();
-  const [encounter] = useEncounter();
-
-  function onSubmit(values: Zod.infer<typeof localCreatureUploadSchema>) {
-    const creatureValues = omit(values, ["iconImage", "statBlockImage"]);
-    uploadParticipant({
-      creature: { ...creatureValues, is_player: false },
-      participant: {
-        encounter_id: encounter.id,
-        //TODO: just use role at some point
-        is_ally: participantArgs.role === "ally",
-        hp: participantArgs.overrideHp ?? values.max_hp,
-        max_hp_override: participantArgs.overrideHp,
-      },
-      hasStatBlock: values.statBlockImage !== undefined,
-      hasIcon: values.iconImage !== undefined,
-    });
-    participantArgs.afterSubmit?.();
-  }
-
-  const { mutate: uploadParticipant, isPending } =
-    UploadHooks.useUploadParticipant({
-      form,
-      onSuccess: () => {
-        console.log("upload participant success, reseting form");
-        form.reset();
-      },
-    });
-
-  useEffect(() => {
-    console.log(form.formState.errors);
-  }, [form.formState.errors]);
-
-  return { form, onSubmit, uploadParticipant, isPending };
-}
+import { crLabel } from "@/utils/campaigns";
+import { Button } from "@/components/ui/button";
+import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
+import { LidndLabel } from "@/components/ui/LidndLabel";
 
 export function AllyParticipantForm() {
   const { form, onSubmit, isPending } = useParticipantForm({ role: "ally" });
@@ -149,8 +99,9 @@ export const ExistingMonster = observer(function ExistingMonster({
         value={name}
       />
       <span>Cr budget: {crBudget}</span>
-      <div className="flex">
+      <div className="flex gap-2">
         <Toggle
+          variant="outline"
           onPressedChange={uiStore.toggleFilterCreaturesByCrBudget}
           pressed={uiStore.filterExistingCreaturesByCrBudget}
           className="data-[state=on]:bg-gray-200"
@@ -158,6 +109,7 @@ export const ExistingMonster = observer(function ExistingMonster({
           In CR budget
         </Toggle>
         <Toggle
+          variant="outline"
           onPressedChange={() => setFilterInCampaign(!filterInCampaign)}
           pressed={filterInCampaign}
           className="data-[state=on]:bg-gray-200"
@@ -166,7 +118,7 @@ export const ExistingMonster = observer(function ExistingMonster({
         </Toggle>
       </div>
       <Suspense key={name} fallback={<div>Loading creatures</div>}>
-        <div className={"flex flex-col overflow-auto gap-3 py-3"}>
+        <div className={"grid sm:grid-cols-2 overflow-auto gap-6"}>
           {creatures?.map((creature) => (
             <ListedCreature
               key={creature.id}
@@ -194,37 +146,69 @@ export const ListedCreature = observer<ListedCreatureProps>(
     // todo figure out a better way
     const isAlly = false;
     const id = encounter.id;
+    const [campaign] = useCampaign();
+    const [overrideMaxHp, setOverrideMaxHp] = useState<string | undefined>(
+      undefined
+    );
 
     return (
-      <div className="flex h-full flex-col">
-        <AddCreatureButton
-          creature={creature}
+      <div className="flex gap-2">
+        <Button
           key={creature.id}
           onClick={(e) => {
             e.stopPropagation();
             if (onSelect) {
               return onSelect(creature);
             }
+            const maxHpAsNumber =
+              overrideMaxHp && !isNaN(Number(overrideMaxHp))
+                ? Number(overrideMaxHp)
+                : undefined;
             addCreatureToEncounter({
               creature_id: creature.id,
               encounter_id: id,
               is_ally: isAlly ?? false,
+              max_hp_override: maxHpAsNumber,
+              hp: maxHpAsNumber || creature.max_hp,
             });
           }}
+          variant="secondary"
+          className="p-2"
         >
-          {creature.challenge_rating ? (
-            <span className="grid grid-cols-2 text-gray-500">
-              <span className="flex gap-2">
-                <Skull />
-                {creature.challenge_rating}
+          <PlusIcon />
+        </Button>
+        <div className="flex items-start justify-start gap-3">
+          <CreatureIcon creature={creature} size="small" />
+          <div className="flex flex-col w-36">
+            <span className="truncate ">{creature.name}</span>
+            {creature.challenge_rating ? (
+              <span className="flex text-gray-500 gap-4 items-center">
+                <span className="flex gap-2">
+                  <span>{crLabel(campaign)}</span>
+                  <span>{creature.challenge_rating}</span>
+                </span>
+                <span className="flex gap-2">
+                  <Heart className="inline-block h-5 w-5" />
+                  <span>{creature.max_hp}</span>
+                </span>
               </span>
-              <span className="flex gap-2">
-                <Heart />
-                {creature.max_hp}
-              </span>
-            </span>
-          ) : null}
-        </AddCreatureButton>
+            ) : null}
+          </div>
+          <div className="ml-auto">
+            <LidndLabel label="Encounter override">
+              <LidndTextInput
+                placeholder="HP"
+                type="number"
+                variant="ghost"
+                className="w-16 h-6"
+                value={overrideMaxHp ?? ""}
+                onChange={(e) => {
+                  setOverrideMaxHp(e.target.value);
+                }}
+              />
+            </LidndLabel>
+          </div>
+        </div>
       </div>
     );
   }

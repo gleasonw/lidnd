@@ -3,16 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
-import {
-  ExistingMonster,
-  useParticipantForm,
-} from "@/encounters/[encounter_index]/participant-upload-form";
+import { ExistingMonster } from "@/encounters/[encounter_index]/participant-upload-form";
 import { ImageUpload } from "@/encounters/image-upload";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Angry, FileText, Plus, PlusIcon, User } from "lucide-react";
 import { FormProvider } from "react-hook-form";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { useState } from "react";
+import { useParticipantForm } from "@/encounters/[encounter_index]/hooks";
 
 /**like the other form, but more flat.  */
 export function EditModeOpponentForm() {

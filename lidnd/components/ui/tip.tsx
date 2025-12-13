@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/tooltip";
 import React from "react";
 
-export function Tip({
+export function LidndTooltip({
   children,
   text,
 }: {
@@ -34,10 +34,10 @@ export const ButtonWithTooltip = React.forwardRef<
   ButtonProps & { text: string }
 >(({ children, text, className, ...props }, ref) => {
   return (
-    <Tip text={text}>
+    <LidndTooltip text={text}>
       <Button className={className} aria-label={text} {...props} ref={ref}>
         {children}
       </Button>
-    </Tip>
+    </LidndTooltip>
   );
 });
