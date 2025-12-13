@@ -1,0 +1,5 @@
+.root {
+  [contenteditable] {
+    padding-top: 10px;
+  }
+}

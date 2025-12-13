@@ -123,7 +123,7 @@ export function StatColumns() {
       <StatColumnComponent column={c} index={index} key={c.id}>
         {index === 1 ? (
           /** this is just a hacky way to get the description out of the way... */
-          <div className="bg-white p-3">
+          <div className="bg-white px-3">
             <DescriptionTextArea />
           </div>
         ) : null}

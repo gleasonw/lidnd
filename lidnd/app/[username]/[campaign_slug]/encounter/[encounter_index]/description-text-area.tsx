@@ -6,10 +6,12 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import React from "react";
 import { useDebouncedCallback } from "use-debounce";
+import styles from "./description-text-area.module.css";
 import {
   useEncounter,
   useUpdateEncounter,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
+import clsx from "clsx";
 
 export function DescriptionTextArea({
   tiptapReadyGate,
@@ -43,12 +45,12 @@ export function DescriptionTextArea({
   });
 
   return (
-    <>
+    <div className={clsx("w-full h-full flex min-h-[80px]", styles.root)}>
       <LidndTextArea
         editor={editor}
         placeholder="Objectives, monster tactics, etc..."
       />
       {isTipTapReady && tiptapReadyGate}
-    </>
+    </div>
   );
 }

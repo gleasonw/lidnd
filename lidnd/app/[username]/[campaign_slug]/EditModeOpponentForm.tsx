@@ -29,7 +29,7 @@ export function EditModeOpponentForm() {
   return (
     <Tabs
       defaultValue="new"
-      className="max-h-full flex flex-col gap-5 h-full overflow-hidden"
+      className="max-h-full flex flex-col gap-2 h-full overflow-hidden"
     >
       <span>
         <TabsList>
@@ -45,7 +45,7 @@ export function EditModeOpponentForm() {
         <FormProvider {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-8 w-full h-full max-h-full overflow-hidden"
+            className="flex flex-col gap-5 w-full h-full max-h-full overflow-hidden"
           >
             <div className="flex gap-5">
               <div className="w-[200px]">
@@ -68,7 +68,7 @@ export function EditModeOpponentForm() {
                   }}
                 />
               </div>
-              <div className="grid grid-cols-2 grid-rows-3 gap-2">
+              <div className="grid grid-cols-2 grid-rows-3">
                 <FormField
                   control={form.control}
                   name={"name"}
@@ -76,6 +76,7 @@ export function EditModeOpponentForm() {
                     return (
                       <LidndTextInput
                         className="col-start-1"
+                        variant="ghost"
                         required
                         placeholder="Name"
                         {...field}
@@ -90,6 +91,7 @@ export function EditModeOpponentForm() {
                     <LidndTextInput
                       type="number"
                       required
+                      variant="ghost"
                       placeholder="Base HP"
                       className="col-start-1"
                       {...field}
@@ -100,6 +102,7 @@ export function EditModeOpponentForm() {
 
                 <LidndTextInput
                   type="number"
+                  variant="ghost"
                   placeholder="Override HP for encounter"
                   tabIndex={-1}
                   className="col-start-2 row-start-2"
@@ -112,6 +115,7 @@ export function EditModeOpponentForm() {
                   render={({ field }) => (
                     <LidndTextInput
                       className="col-start-1"
+                      variant="ghost"
                       type="number"
                       placeholder={campaign.system === "dnd5e" ? "CR" : "EV"}
                       {...field}
