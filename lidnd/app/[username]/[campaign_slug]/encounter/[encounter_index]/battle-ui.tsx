@@ -122,7 +122,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
   switch (encounter.status) {
     case "prep":
       return (
-        <div className="flex flex-col gap-5 max-h-full overflow-auto h-full">
+        <div className="flex flex-col max-h-full overflow-auto h-full">
           {/** TODO: figure out a way to make this a consistent header */}
           <div className="flex gap-1 p-3">
             <Link
