@@ -51,6 +51,7 @@ import {
   Grid2X2,
   Grip,
   Home,
+  HomeIcon,
   ListOrdered,
   MoreHorizontal,
   Pen,
@@ -83,14 +84,16 @@ import {
   SelectTrigger,
   SelectContent,
   SelectValue,
+  SelectItem,
 } from "@/components/ui/select";
-import { SelectItem } from "@radix-ui/react-select";
 import { crLabel } from "@/utils/campaigns";
 import type { TurnGroup } from "@/server/db/schema";
 import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index]/encounter-prep";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import * as CampaignUtils from "@/utils/campaigns";
+import { isEmptyParagraph, labelColors } from "@/lib/utils";
+import { LidndLabel } from "@/components/ui/LidndLabel";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -120,14 +123,17 @@ export const EncounterBattleUI = observer(function BattleUI() {
     case "prep":
       return (
         <div className="flex flex-col gap-5 max-h-full overflow-auto h-full">
-          <div className="flex gap-1">
-            {EncounterUtils.allies(encounter).map((a) => (
-              <CreatureIcon key={a.id} creature={a.creature} size="small" />
-            ))}
-            <Link href={appRoutes.party({ campaign, user })}>
-              <Button variant="outline">Edit party</Button>
+          {/** TODO: figure out a way to make this a consistent header */}
+          <div className="flex gap-1 p-3">
+            <Link
+              href={appRoutes.campaign({ campaign, user })}
+              className="text-gray-400"
+            >
+              <Button variant="ghost">
+                <HomeIcon /> Campaign
+              </Button>
             </Link>
-            <div className="ml-auto">
+            <div className="flex gap-8 ml-auto">
               {campaign.system === "dnd5e" ? (
                 <Link href={rollEncounter}>
                   <Button>Start encounter</Button>
@@ -142,11 +148,19 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   Start encounter
                 </Button>
               )}
+              <div className="flex gap-1">
+                {EncounterUtils.allies(encounter).map((a) => (
+                  <CreatureIcon key={a.id} creature={a.creature} size="small" />
+                ))}
+                <Link href={appRoutes.party({ campaign, user })}>
+                  <Button variant="outline">Edit party</Button>
+                </Link>
+              </div>
             </div>
           </div>
 
           <Tabs defaultValue="prep" className="flex justify-center w-full">
-            <div className="flex flex-col gap-5 w-[800px] px-4">
+            <div className="flex flex-col gap-5 w-[800px] xl:w-full px-4 xl:px-8">
               <div className="w-full flex flex-col gap-2">
                 <EncounterNameInput />
                 <div>
@@ -169,48 +183,57 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 </div>
               </div>
               <TabsContent value="prep" className="w-full">
-                <div className="flex flex-col gap-5 w-full">
-                  <Card className="flex sm:flex-1 p-3 min-h-[150px] overflow-hidden">
-                    <DescriptionTextArea />
-                  </Card>
-                  <div className="flex gap-10">
-                    <EncounterDifficulty />
-                  </div>
-                  <Card className=" p-3 flex flex-col gap-8 w-full h-[700px]">
-                    <div
-                      className={`flex flex-wrap gap-10 sm:flex-nowrap p-2 sm:gap-7 rounded-md items-center`}
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-sm text-gray-400">Current</span>
-                        <span className="text-2xl font-bold">{difficulty}</span>
-                      </div>
-
-                      <div className="flex flex-col items-baseline">
-                        <span className="text-sm whitespace-nowrap text-gray-400">
-                          Total {CampaignUtils.crLabel(campaign)}
-                        </span>
-                        <span className="text-2xl font-bold">
-                          {EncounterUtils.totalCr(encounter)}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-baseline">
-                        <span className="text-sm whitespace-nowrap text-gray-400">
-                          Remaining {CampaignUtils.crLabel(campaign)}
-                        </span>
-                        <span className="text-2xl font-bold">
-                          {EncounterUtils.remainingCr(encounter, campaign)}
-                        </span>
-                      </div>
-                      <div className="w-full pb-3 sm:pb-0">
-                        <EncounterBudgetSlider />
-                      </div>
+                <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6">
+                  <div className="flex flex-col gap-5">
+                    <Card className="flex sm:flex-1 p-3 min-h-[150px] overflow-hidden">
+                      <DescriptionTextArea />
+                    </Card>
+                    <div className="flex gap-10">
+                      <EncounterDifficulty />
                     </div>
-                    <EditModeOpponentForm />
-                  </Card>
-                  {campaign.system === "drawsteel" ? <TurnGroupSetup /> : null}
-                  <Card className="w-full">
-                    <ReminderInput />
-                  </Card>
+                    <Card className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
+                      <div
+                        className={`flex flex-wrap gap-10 sm:flex-nowrap p-2 sm:gap-7 rounded-md items-center`}
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-400">Current</span>
+                          <span className="text-2xl font-bold">
+                            {difficulty}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col items-baseline">
+                          <span className="text-sm whitespace-nowrap text-gray-400">
+                            Total {CampaignUtils.crLabel(campaign)}
+                          </span>
+                          <span className="text-2xl font-bold">
+                            {EncounterUtils.totalCr(encounter)}
+                          </span>
+                        </div>
+                        <div className="flex flex-col items-baseline">
+                          <span className="text-sm whitespace-nowrap text-gray-400">
+                            Remaining {CampaignUtils.crLabel(campaign)}
+                          </span>
+                          <span className="text-2xl font-bold">
+                            {EncounterUtils.remainingCr(encounter, campaign)}
+                          </span>
+                        </div>
+                        <div className="w-full pb-3 sm:pb-0">
+                          <EncounterBudgetSlider />
+                        </div>
+                      </div>
+                      <EditModeOpponentForm />
+                    </Card>
+                  </div>
+
+                  <div className="flex flex-col gap-5">
+                    {campaign.system === "drawsteel" ? (
+                      <TurnGroupSetup />
+                    ) : null}
+                    <Card className="w-full">
+                      <ReminderInput />
+                    </Card>
+                  </div>
                 </div>
               </TabsContent>
               <TabsContent value="preview" className="w-full">
@@ -621,17 +644,6 @@ function ParticipantNotes({
   return <LidndTextArea editor={editor} />;
 }
 
-function isEmptyParagraph(html: string | null) {
-  if (!html) {
-    return true;
-  }
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  const p = doc.querySelector("p");
-  console.log(p);
-  if (!p) return false;
-  return p.textContent?.trim() === "" && p.children.length === 0;
-}
-
 function ParticipantNameAndMaybeNotes({
   participant,
 }: {
@@ -869,7 +881,7 @@ export function BattleCardContent({
   );
 }
 
-type BattleCardParticipantProps = {
+export type BattleCardParticipantProps = {
   participant: ParticipantWithData;
 };
 
@@ -902,19 +914,6 @@ export function BattleCardStatusEffects({
     </span>
   );
 }
-const pastelLabels = ["#7eb2bc", "#e39ca0", "#edab33", "#94ae7f"];
-const solidColors = [
-  "#8abd11",
-  "#0063c3",
-  "#ff1353",
-  "#fe9c1c",
-  "#632469",
-  "#fff91e",
-  "#57b3bd",
-  "#1f105b",
-  "#ff1a13",
-];
-export const labelColors = [...pastelLabels, ...solidColors];
 
 export const BattleCardCreatureName = observer(function BattleCardCreatureName({
   participant,
@@ -1052,44 +1051,31 @@ function TurnGroupSetup() {
     <div className="flex flex-col gap-3">
       <div className={clsx("flex flex-col gap-5")}>
         {monstersWihoutGroup.length > 0 ? (
-          <div>
-            <table className="table-auto border-spacing-4">
-              <thead>
-                <tr>
-                  <th className="p-2"></th>
-                  <th className="p-2"></th>
-                  <th className="p-2">Opponent</th>
-                  <th className="p-2">{crLabel(campaign)}</th>
-                  {encounter.turn_groups.length === 0 ? null : (
-                    <th className="p-2">Turn group</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {monstersWihoutGroup.map((p) => (
-                  <tr key={p.id}>
-                    <td>
-                      <RemoveCreatureFromEncounterButton participant={p} />
-                    </td>
-                    <td className="p-2">
-                      <CreatureIcon creature={p.creature} size="small" />
-                    </td>
-                    <td className="p-2">{ParticipantUtils.name(p)}</td>
-                    <td className="p-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {monstersWihoutGroup.map((p) => (
+              <div key={p.id} className="flex gap-2 items-center">
+                <RemoveCreatureFromEncounterButton participant={p} />
+                <CreatureIcon creature={p.creature} size="small" />
+                <div className="flex flex-col">
+                  <span className="truncate">{ParticipantUtils.name(p)}</span>
+                  <LidndLabel label={crLabel(campaign)}>
+                    <span className="text-base ml-1">
                       {ParticipantUtils.challengeRating(p)}
-                    </td>
-                    {encounter.turn_groups.length === 0 ? null : (
-                      <td className="p-2">
-                        <TurnGroupSelect participant={p} />
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </span>
+                  </LidndLabel>
+                </div>
+                {encounter.turn_groups.length > 0 ? (
+                  <div className="ml-auto">
+                    <LidndLabel label="Group">
+                      <TurnGroupSelect participant={p} />
+                    </LidndLabel>
+                  </div>
+                ) : null}
+              </div>
+            ))}
           </div>
         ) : null}
-        <Card className="flex flex-col gap-2 p-4">
+        <div className="flex flex-col gap-6">
           <CreateTurnGroupForm />
           <div className="flex flex-col gap-4">
             <div>
@@ -1102,7 +1088,7 @@ function TurnGroupSetup() {
               ))}
             </div>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );
@@ -1193,7 +1179,7 @@ function TurnGroupSelect({
   const turnGroupsById = R.indexBy(encounter.turn_groups, (tg) => tg.id);
 
   return (
-    <div className="w-28">
+    <div className="h-10 gap-2">
       <Select
         value={p.turn_group_id ?? undefined}
         onValueChange={(val) =>
@@ -1203,8 +1189,8 @@ function TurnGroupSelect({
           })
         }
       >
-        <SelectTrigger>
-          <SelectValue placeholder="Assign group">
+        <SelectTrigger className="border-0 p-0 gap-0 justify-start">
+          <SelectValue placeholder="Assign">
             {p.turn_group_id ? turnGroupsById[p.turn_group_id]?.name : null}
           </SelectValue>
         </SelectTrigger>

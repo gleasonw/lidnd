@@ -27,7 +27,10 @@ export function EditModeOpponentForm() {
   const [campaign] = useCampaign();
 
   return (
-    <Tabs defaultValue="new" className="overflow-auto">
+    <Tabs
+      defaultValue="new"
+      className="max-h-full flex flex-col gap-5 h-full overflow-hidden"
+    >
       <span>
         <TabsList>
           <TabsTrigger value="new">
@@ -38,11 +41,14 @@ export function EditModeOpponentForm() {
           </TabsTrigger>
         </TabsList>
       </span>
-      <TabsContent value="new">
+      <TabsContent
+        value="new"
+        className="h-full flex max-h-full overflow-hidden"
+      >
         <FormProvider {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-8 w-full"
+            className="flex flex-col gap-8 w-full h-full"
           >
             <div className="flex gap-5">
               <div className="w-[200px]">
@@ -119,13 +125,13 @@ export function EditModeOpponentForm() {
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 h-full max-h-full overflow-auto">
               <FormField
                 control={form.control}
                 name="statBlockImage"
                 render={({ field }) => (
                   <ImageUpload
-                    dropContainerClassName="h-30 p-5"
+                    dropContainerClassName="p-5"
                     onUpload={(image) => {
                       field.onChange(image);
                     }}

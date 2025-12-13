@@ -31,3 +31,28 @@ export function formatSeconds(seconds: number) {
 
   return `${Math.floor(seconds % 60)} minutes`;
 }
+
+export function isEmptyParagraph(html: string | null) {
+  if (!html) {
+    return true;
+  }
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const p = doc.querySelector("p");
+  console.log(p);
+  if (!p) return false;
+  return p.textContent?.trim() === "" && p.children.length === 0;
+}
+const pastelLabels = ["#7eb2bc", "#e39ca0", "#edab33", "#94ae7f"];
+const solidColors = [
+  "#8abd11",
+  "#0063c3",
+  "#ff1353",
+  "#fe9c1c",
+  "#632469",
+  "#fff91e",
+  "#57b3bd",
+  "#1f105b",
+  "#ff1a13",
+];
+
+export const labelColors = [...pastelLabels, ...solidColors];
