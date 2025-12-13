@@ -163,7 +163,7 @@ const RunCreatureStatBlock = observer(function RunCreatureStatBlock({
   );
 });
 
-function EncounterMonsterRoster() {
+const EncounterMonsterRoster = observer(function EncounterMonsterRoster() {
   const [encounter] = useEncounter();
   const uiStore = useEncounterUIStore();
   const turnGroups = R.indexBy(encounter.turn_groups, (tg) => tg.id);
@@ -173,6 +173,11 @@ function EncounterMonsterRoster() {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-5">
+        {uiStore.isEditingInitiative
+          ? EncounterUtils.inanimateMonsters(encounter).map((m) => (
+              <ParticipantBattleData participant={m} key={m.id} />
+            ))
+          : null}
         {EncounterUtils.monstersWithoutTurnGroup(encounter).map((m, index) => (
           <ParticipantBattleData
             participant={m}
@@ -197,7 +202,7 @@ function EncounterMonsterRoster() {
       </div>
     </div>
   );
-}
+});
 
 function RunTurnGroup({
   tg,

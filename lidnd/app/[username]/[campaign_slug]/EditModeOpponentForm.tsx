@@ -24,6 +24,7 @@ export function EditModeOpponentForm() {
   const { form, onSubmit, isPending } = useParticipantForm({
     role: "opponent",
     overrideHp: overrideHpValue,
+    afterSubmit: () => setOverrideHp(undefined),
   });
   const [campaign] = useCampaign();
 

@@ -64,6 +64,12 @@ export function targetSinglePlayerStrength(args: DifficultyArgs) {
   return tiers.oneHeroStrength ?? null;
 }
 
+function inanimateMonsters<P extends { inanimate: boolean }>(e: {
+  participants: Array<P>;
+}) {
+  return e.participants.filter((p) => p.inanimate);
+}
+
 function participantsByTurnGroup<
   // have to include initiative in the pick to satisfy sortLinearly... but that's sort of silly
   P extends Pick<
@@ -235,6 +241,7 @@ export const EncounterUtils = {
   participantsByColumn,
   participantsForColumn,
   inactiveEncounters,
+  inanimateMonsters,
   start,
   difficultyCssClasses,
   difficultyClassForCR,

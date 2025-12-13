@@ -470,8 +470,8 @@ export type BattleCardProps = {
   className?: string;
   isSelected?: boolean;
   extraHeaderButtons?: React.ReactNode;
-  ref: (ref: HTMLDivElement) => void;
-  indexInGroup: number;
+  ref?: (ref: HTMLDivElement) => void;
+  indexInGroup?: number;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export const ParticipantBattleData = observer(function BattleCard({
@@ -499,7 +499,9 @@ export const ParticipantBattleData = observer(function BattleCard({
       <BattleCardLayout key={participant.id} participant={participant}>
         <div className="flex flex-col gap-3 w-full">
           {participant.inanimate ? (
-            <ParticipantNotes participant={participant} />
+            <>
+              <BattleCardCreatureName participant={participant} />
+            </>
           ) : (
             <div className="flex gap-2 items-center justify-between">
               <div className="flex gap-2 items-center w-full relative">

@@ -37,6 +37,7 @@ export const localCreatureUploadSchema = creatureUploadSchema.extend({
 export function useParticipantForm(participantArgs: {
   role: "ally" | "opponent";
   overrideHp?: number;
+  afterSubmit?: () => void;
 }) {
   const form = useCreatureForm();
   const [encounter] = useEncounter();
@@ -55,6 +56,7 @@ export function useParticipantForm(participantArgs: {
       hasStatBlock: values.statBlockImage !== undefined,
       hasIcon: values.iconImage !== undefined,
     });
+    participantArgs.afterSubmit?.();
   }
 
   const { mutate: uploadParticipant, isPending } =
