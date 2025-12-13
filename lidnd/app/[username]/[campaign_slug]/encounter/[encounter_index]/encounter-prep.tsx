@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { X, Users2, Check, FileText } from "lucide-react";
+import { Users2, Check, FileText, TrashIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import React, { createContext, useContext, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
@@ -113,7 +113,7 @@ export function RemoveCreatureFromEncounterButton(
     <ButtonWithTooltip
       text="Remove creature"
       variant="ghost"
-      className="p-2 text-gray-400"
+      className="p-2 text-gray-300"
       onClick={() =>
         removeCreatureFromEncounter({
           encounter_id: encounter.id,
@@ -121,7 +121,7 @@ export function RemoveCreatureFromEncounterButton(
         })
       }
     >
-      <X />
+      <TrashIcon className="text-gray-200" />
     </ButtonWithTooltip>
   );
 }
