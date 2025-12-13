@@ -1060,11 +1060,19 @@ function PrepParticipant({
       <CreatureIcon creature={p.creature} size="small" />
       <div className="flex flex-col max-w-full">
         <span className="truncate">{ParticipantUtils.name(p)}</span>
-        <LidndLabel label={crLabel(campaign)}>
-          <span className="text-base ml-1">
-            {ParticipantUtils.challengeRating(p)}
-          </span>
-        </LidndLabel>
+        <span className="flex gap-4">
+          <LidndLabel label={crLabel(campaign)}>
+            <span className="text-base ml-1">
+              {ParticipantUtils.challengeRating(p)}
+            </span>
+          </LidndLabel>
+          <LidndLabel label={"HP"}>
+            <span className="text-base ml-1">{ParticipantUtils.maxHp(p)}</span>
+            {p.max_hp_override ? (
+              <span className="text-gray-300 pl-2">({p.creature.max_hp})</span>
+            ) : null}
+          </LidndLabel>
+        </span>
       </div>
       {encounter.turn_groups.length > 0 ? (
         <div className="ml-auto">
