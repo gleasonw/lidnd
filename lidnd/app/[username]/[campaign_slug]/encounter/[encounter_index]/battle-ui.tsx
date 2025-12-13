@@ -191,7 +191,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
               >
                 <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full xl:overflow-hidden">
                   <div className="flex flex-col gap-5 xl:max-h-full xl:overflow-auto">
-                    <Card className="flex sm:flex-2 p-3 min-h-[150px] overflow-auto max-h-[400px]">
+                    <Card className="flex sm:flex-2 p-3 min-h-[150px] overflow-auto max-h-[300px]">
                       <DescriptionTextArea />
                     </Card>
                     <div className="flex gap-10">

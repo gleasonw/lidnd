@@ -41,14 +41,11 @@ export function EditModeOpponentForm() {
           </TabsTrigger>
         </TabsList>
       </span>
-      <TabsContent
-        value="new"
-        className="h-full flex max-h-full overflow-hidden"
-      >
+      <TabsContent value="new" className="max-h-full overflow-hidden h-full">
         <FormProvider {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-8 w-full h-full"
+            className="flex flex-col gap-8 w-full h-full max-h-full overflow-hidden"
           >
             <div className="flex gap-5">
               <div className="w-[200px]">
@@ -130,18 +127,20 @@ export function EditModeOpponentForm() {
                 control={form.control}
                 name="statBlockImage"
                 render={({ field }) => (
-                  <ImageUpload
-                    dropContainerClassName="p-5"
-                    onUpload={(image) => {
-                      field.onChange(image);
-                    }}
-                    dropText="Drop a Statblock"
-                    dropIcon={<FileText />}
-                    previewSize={500}
-                    image={field.value}
-                    clearImage={() => field.onChange(undefined)}
-                    fileInputProps={{ name: "stat_block_image" }}
-                  />
+                  <div className="w-full h-full min-h-[150px]">
+                    <ImageUpload
+                      dropContainerClassName="p-5 h-full"
+                      onUpload={(image) => {
+                        field.onChange(image);
+                      }}
+                      dropText="Drop a Statblock"
+                      dropIcon={<FileText />}
+                      previewSize={500}
+                      image={field.value}
+                      clearImage={() => field.onChange(undefined)}
+                      fileInputProps={{ name: "stat_block_image" }}
+                    />
+                  </div>
                 )}
               />
             </div>
