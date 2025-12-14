@@ -1097,7 +1097,6 @@ function PrepParticipant({
   const [campaign] = useCampaign();
   return (
     <div key={p.id} className="flex gap-2 items-center max-w-[400px]">
-      <RemoveCreatureFromEncounterButton participant={p} />
       <CreatureIcon creature={p.creature} size="small" />
       <div className="flex flex-col max-w-full">
         <span className="truncate">{ParticipantUtils.name(p)}</span>
@@ -1115,13 +1114,25 @@ function PrepParticipant({
           </LidndLabel>
         </span>
       </div>
-      {encounter.turn_groups.length > 0 ? (
-        <div className="ml-auto">
-          <LidndLabel label="Group">
-            <TurnGroupSelect participant={p} />
-          </LidndLabel>
-        </div>
-      ) : null}
+      <LidndPopover
+        trigger={
+          <Button variant="ghost" className="text-gray-300 p-2">
+            <MoreHorizontal />
+          </Button>
+        }
+      >
+        <RemoveCreatureFromEncounterButton
+          participant={p}
+          moreText={"Remove from encounter"}
+        />
+        {encounter.turn_groups.length > 0 ? (
+          <div className="ml-auto">
+            <LidndLabel label="Group">
+              <TurnGroupSelect participant={p} />
+            </LidndLabel>
+          </div>
+        ) : null}
+      </LidndPopover>
     </div>
   );
 }

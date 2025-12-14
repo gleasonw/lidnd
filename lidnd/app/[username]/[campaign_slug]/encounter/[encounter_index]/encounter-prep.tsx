@@ -98,6 +98,7 @@ export interface ParticipantCreatureProps {
 
 export interface RemoveCreatureFromEncounterButtonProps {
   participant: ParticipantWithData;
+  moreText?: string;
 }
 
 export function RemoveCreatureFromEncounterButton(
@@ -121,6 +122,7 @@ export function RemoveCreatureFromEncounterButton(
         })
       }
     >
+      {props.moreText}
       <TrashIcon className="text-gray-200" />
     </ButtonWithTooltip>
   );
