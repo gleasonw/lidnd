@@ -1145,6 +1145,21 @@ function TurnGroupSetup() {
   ).filter((m) => !m.turn_group_id);
   return (
     <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap gap-10 items-center">
+        <LidndLabel label="Player count" className="flex gap-2 items-center">
+          <span className="text-lg">
+            {EncounterUtils.playerCount(encounter)}
+          </span>
+        </LidndLabel>
+        <LidndLabel
+          label="Single player strength"
+          className="gap-2 flex items-center"
+        >
+          <span className="text-lg">
+            {targetSinglePlayerStrength({ encounter, campaign })}
+          </span>
+        </LidndLabel>
+      </div>
       <div className={clsx("flex flex-col gap-5")}>
         {monstersWihoutGroup.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 gap-x-12">
@@ -1153,20 +1168,11 @@ function TurnGroupSetup() {
             ))}
           </div>
         ) : null}
-        <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {encounter.turn_groups.map((tg) => (
+            <TurnGroupDisplay tg={tg} key={tg.id} />
+          ))}
           <CreateTurnGroupForm />
-          <div className="flex flex-col gap-4">
-            <LidndLabel label="Player strength">
-              <span className="text-lg">
-                {targetSinglePlayerStrength({ encounter, campaign })}
-              </span>
-            </LidndLabel>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {encounter.turn_groups.map((tg) => (
-                <TurnGroupDisplay tg={tg} key={tg.id} />
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -1192,7 +1198,7 @@ function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
       hex_color: hexColor,
     });
   return (
-    <div key={tg.id} className="flex flex-col gap-2">
+    <div key={tg.id} className="flex flex-col gap-2 border-2 border-dashed p-3">
       <div className="flex gap-3 items-center">
         <Button
           variant="ghost"
@@ -1242,7 +1248,7 @@ function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
           </div>
         </LidndPopover>
       </div>
-      <div className="pl-6 flex flex-col gap-1">
+      <div className="flex flex-col gap-1">
         {participantsInGroup.map((p) => (
           <PrepParticipant participant={p} key={p.id} />
         )) || <span>No participants assigned</span>}
