@@ -154,3 +154,157 @@ describe("Overkill minions", () => {
     expect(ParticipantUtils.updateMinionCount(p2, 0, 1)).toBe(9);
   });
 });
+
+describe("Group turn toggle and round increment tests", () => {
+  test("round number increments when last participant plays and there's an inanimate participant", () => {
+    const participants = [
+      createParticipant({ id: "1" }),
+      createParticipant({ id: "2" }),
+      createParticipant({ id: "3" }),
+    ];
+
+    // Manually add inanimate participant and has_played_this_round
+    const inanimateParticipant = {
+      ...participants[0]!,
+      inanimate: true,
+      has_played_this_round: false,
+    };
+    const encounterWithInanimate = {
+      current_round: 1,
+      participants: [
+        inanimateParticipant,
+        { ...participants[1]!, has_played_this_round: true },
+        { ...participants[2]!, has_played_this_round: false },
+      ],
+      turn_groups: [],
+    };
+
+    const result = EncounterUtils.toggleGroupTurn("3", encounterWithInanimate);
+
+    // Even with an inanimate participant, if all non-inanimate have played, round should increment
+    expect(result.updatedEncounter.current_round).toBe(2);
+  });
+
+  test("round number increments when last participant without turn group plays", () => {
+    const participants = [
+      createParticipant({ id: "1" }),
+      createParticipant({ id: "2" }),
+      createParticipant({ id: "3" }),
+    ];
+
+    // Manually set has_played_this_round
+    const participantsWithPlayState = [
+      { ...participants[0]!, has_played_this_round: false },
+      { ...participants[1]!, has_played_this_round: true },
+      { ...participants[2]!, has_played_this_round: true },
+    ];
+
+    const encounter = {
+      current_round: 1,
+      participants: participantsWithPlayState,
+      turn_groups: [],
+    };
+
+    const result = EncounterUtils.toggleGroupTurn("1", encounter);
+
+    // Last participant played, round should increment
+    expect(result.updatedEncounter.current_round).toBe(2);
+    expect(
+      result.updatedEncounter.participants.every(
+        (p) => !p.has_played_this_round
+      )
+    ).toBe(true);
+  });
+
+  test("toggleGroupTurn works correctly for participant in a turn group", () => {
+    const participants = [
+      createParticipant({ id: "1" }),
+      createParticipant({ id: "2" }),
+      createParticipant({ id: "3" }),
+    ];
+
+    // Manually add turn_group_id and has_played_this_round
+    const participantsWithGroup = [
+      {
+        ...participants[0]!,
+        turn_group_id: "group1",
+        has_played_this_round: false,
+      },
+      {
+        ...participants[1]!,
+        turn_group_id: "group1",
+        has_played_this_round: false,
+      },
+      { ...participants[2]!, has_played_this_round: false },
+    ];
+
+    const encounter = {
+      current_round: 1,
+      participants: participantsWithGroup,
+      turn_groups: [{ id: "group1", has_played_this_round: false }],
+    };
+
+    const result = EncounterUtils.toggleGroupTurn("1", encounter);
+
+    // The whole group should be marked as played
+    const updatedGroup = result.updatedEncounter.turn_groups.find(
+      (tg) => tg.id === "group1"
+    );
+    expect(updatedGroup?.has_played_this_round).toBe(true);
+
+    // Round should not increment yet since participant 3 hasn't played
+    expect(result.updatedEncounter.current_round).toBe(1);
+
+    const result2 = EncounterUtils.toggleGroupTurn(
+      "3",
+      result.updatedEncounter
+    );
+
+    // Now all participants have played, round should increment
+    expect(result2.updatedEncounter.current_round).toBe(2);
+  });
+
+  test("toggleGroupTurn works correctly for participant not in a turn group", () => {
+    const participants = [
+      createParticipant({ id: "1" }),
+      createParticipant({ id: "2" }),
+    ];
+
+    // Manually add turn_group_id and has_played_this_round
+    const participantsWithGroup = [
+      {
+        ...participants[0]!,
+        turn_group_id: "group1",
+        has_played_this_round: false,
+      },
+      {
+        ...participants[1]!,
+        turn_group_id: null,
+        has_played_this_round: false,
+      },
+    ];
+
+    const encounter = {
+      current_round: 1,
+      participants: participantsWithGroup,
+      turn_groups: [{ id: "group1", has_played_this_round: false }],
+    };
+
+    const result = EncounterUtils.toggleGroupTurn("2", encounter);
+
+    // Only participant 2 should be marked as played, not the group
+    const participant2 = result.updatedEncounter.participants.find(
+      (p) => p.id === "2"
+    );
+    expect(participant2?.has_played_this_round).toBe(true);
+
+    // The group should still be unmarked
+    const group = result.updatedEncounter.turn_groups.find(
+      (tg) => tg.id === "group1"
+    );
+    expect(group?.has_played_this_round).toBe(false);
+
+    // Round should not increment yet
+    expect(result.updatedEncounter.current_round).toBe(1);
+  });
+});

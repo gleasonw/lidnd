@@ -1,10 +1,11 @@
 import type { Participant, ParticipantWithData } from "@/server/api/router";
+import type { TurnGroup } from "@/server/db/schema";
 import type { EncounterWithData } from "@/server/sdk/encounters";
 
 export type CyclableEncounter = Pick<
   EncounterWithData,
-  "participants" | "current_round" | "turn_groups"
->;
+  "participants" | "current_round"
+> & { turn_groups: Pick<TurnGroup, "has_played_this_round" | "id">[] };
 
 export type UpdateTurnOrderReturn<E extends CyclableEncounter> = {
   updatedEncounter: E;

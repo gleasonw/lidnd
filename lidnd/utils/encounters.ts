@@ -45,8 +45,14 @@ function participantHasPlayed(
   e: {
     turn_groups: Array<Pick<TurnGroup, "id" | "has_played_this_round">>;
   },
-  participant: Pick<Participant, "turn_group_id" | "has_played_this_round">
+  participant: Pick<
+    Participant,
+    "turn_group_id" | "has_played_this_round" | "inanimate"
+  >
 ) {
+  if (participant.inanimate) {
+    return true;
+  }
   const groupsById = R.indexBy(e.turn_groups, (tg) => tg.id);
   const groupForParticipant = groupsById[participant.turn_group_id ?? ""];
   if (groupForParticipant) {
@@ -811,8 +817,9 @@ export const EncounterUtils = {
 
     const groupForParticipant =
       turnGroupsById[participantWhoPlayed.turn_group_id ?? ""];
+    let encounterWithUpdate: E;
     if (groupForParticipant) {
-      const encounterWithUpdate = {
+      encounterWithUpdate = {
         ...encounter,
         turn_groups: encounter.turn_groups.map((tg) => {
           if (tg.id === groupForParticipant.id) {
@@ -825,35 +832,25 @@ export const EncounterUtils = {
           }
         }),
       };
-      // this could be expensive... probably should just have turn group select participant ids?
-      const allHavePlayed = participants.every((p) =>
-        this.participantHasPlayed(encounterWithUpdate, p)
-      );
-
-      if (allHavePlayed) {
-        return {
-          updatedEncounter: this.moveToNextGroupTurnRound(encounter),
-          newlyActiveParticipant: participantWhoPlayed,
-        };
-      }
-      return {
-        updatedEncounter: encounterWithUpdate,
-        newlyActiveParticipant: participantWhoPlayed,
+    } else {
+      const updatedParticipants = participants.map((p) => {
+        if (p.id === participant_id) {
+          return {
+            ...p,
+            has_played_this_round: !p.has_played_this_round,
+          };
+        } else {
+          return p;
+        }
+      });
+      encounterWithUpdate = {
+        ...encounter,
+        participants: updatedParticipants,
       };
     }
 
-    const updatedParticipants = participants.map((p) => {
-      if (p.id === participant_id) {
-        return {
-          ...p,
-          has_played_this_round: !p.has_played_this_round,
-        };
-      } else {
-        return p;
-      }
-    });
-    const allHavePlayed = updatedParticipants.every(
-      (p) => this.participantHasPlayed(encounter, p) || p.inanimate
+    const allHavePlayed = encounterWithUpdate.participants.every((p) =>
+      this.participantHasPlayed(encounter, p)
     );
     if (allHavePlayed) {
       return {
@@ -862,10 +859,7 @@ export const EncounterUtils = {
       };
     }
     return {
-      updatedEncounter: {
-        ...encounter,
-        participants: updatedParticipants,
-      },
+      updatedEncounter: encounterWithUpdate,
       newlyActiveParticipant: participantWhoPlayed,
     };
   },
