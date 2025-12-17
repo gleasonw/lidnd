@@ -103,11 +103,21 @@ export const EncounterBattleUI = observer(function BattleUI() {
   const uiStore = useEncounterUIStore();
   const { rollEncounter } = useEncounterLinks();
   const user = useUser();
+  const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
 
   useEncounterHotkey("k", (e) => {
     if (e.metaKey || e.ctrlKey) {
       e.preventDefault();
       uiStore.toggleParticipantEdit();
+    }
+  });
+
+  useEncounterHotkey("e", (e) => {
+    if (e.metaKey || e.ctrlKey) {
+      e.preventDefault();
+      const cols = encounter.columns;
+      const newCols = StatColumnUtils.equalize(cols);
+      updateColumnBatch({ encounter_id: encounter.id, columns: newCols });
     }
   });
 

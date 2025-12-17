@@ -51,11 +51,15 @@ export const StatColumnUtils = {
   add,
   remove,
   equalize<C extends StatColumn>(columns: C[]): C[] {
-    const numColumns = columns.length;
-    if (numColumns === 0) {
-      return columns;
-    }
-    const equalWidth = 100 / numColumns;
-    return columns.map((c) => ({ ...c, percent_width: equalWidth }));
+    const homeColumn = columns.find((c) => c.is_home_column);
+    const numColumnsNotHome = columns.filter((c) => !c.is_home_column).length;
+    const toAllocate = 100 - (homeColumn ? homeColumn.percent_width : 0);
+    const updatedWidth = toAllocate / numColumnsNotHome;
+    return columns.map((c) => {
+      if (c.is_home_column) {
+        return c;
+      }
+      return { ...c, percent_width: updatedWidth };
+    });
   },
 };
