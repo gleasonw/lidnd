@@ -975,6 +975,7 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   participant,
 }: BattleCardParticipantProps) {
   const [error, setError] = useState<boolean>(false);
+  const [encounter] = useEncounter();
 
   if (error) {
     // TODO: maybe revisit, just figure that no icon is better than just a random user icon or whatever.
@@ -987,7 +988,14 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   ) : (
     <div
       className={clsx(
-        { "border-4": participant.hex_color },
+        {
+          "border-4": participant.hex_color,
+
+          "opacity-50": EncounterUtils.participantHasPlayed(
+            encounter,
+            participant
+          ),
+        },
         "relative flex flex-shrink-0 h-10 w-10"
       )}
       style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}

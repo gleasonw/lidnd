@@ -183,32 +183,42 @@ export const appRouter = t.router({
           opts.ctx,
           opts.input
         );
-
-        const [activeParticipant, firstRoundNumber] =
-          EncounterUtils.firstActiveAndRoundNumber(encounter);
-
-        await Promise.all([
+        const campaign = await ServerCampaign.campaignByIdThrows(
+          opts.ctx,
+          encounter.campaign_id!,
           tx
-            .update(participants)
-            .set({
-              is_active: true,
-            })
-            .where(
-              and(
-                eq(participants.encounter_id, opts.input),
-                eq(participants.id, activeParticipant.id)
+        );
+
+        const updatedEncounter = EncounterUtils.start(encounter, campaign);
+        const maybeActiveParticipant = updatedEncounter.participants.find(
+          (p) => p.is_active
+        );
+
+        const updates = [];
+        if (maybeActiveParticipant) {
+          updates.push(
+            tx
+              .update(participants)
+              .set({
+                is_active: true,
+              })
+              .where(
+                and(
+                  eq(participants.encounter_id, opts.input),
+                  eq(participants.id, maybeActiveParticipant.id)
+                )
               )
-            ),
+          );
+        }
+        updates.push(
           tx
             .update(encounters)
             .set({
-              started_at: new Date(),
-              current_round: firstRoundNumber,
-              status: "run",
-              is_editing_columns: false,
+              ...updatedEncounter,
             })
-            .where(eq(encounters.id, opts.input)),
-        ]);
+            .where(eq(encounters.id, opts.input))
+        );
+        await Promise.all(updates);
         return encounter;
       });
       if (!result) {
