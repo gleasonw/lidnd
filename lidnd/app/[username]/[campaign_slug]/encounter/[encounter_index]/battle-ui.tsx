@@ -1418,13 +1418,12 @@ export function StatColumns() {
           {participantsByColumn[c.id]?.slice().map((p) => (
             <div
               key={p.map((p) => p.id).join("-")}
-              className="flex flex-col gap-3"
+              className="flex flex-col gap-2"
             >
               <div
-                className={clsx(
-                  "flex flex-col gap-4 px-2",
-                  battleStyles.participantBattleData
-                )}
+                className={clsx("flex flex-col gap-2 px-2", {
+                  [battleStyles.participantBattleData ?? ""]: p.length > 1,
+                })}
               >
                 {p
                   .slice()
