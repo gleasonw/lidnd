@@ -426,7 +426,7 @@ function EncounterBattlePreview() {
             c.is_home_column ? (
               <StatColumnComponent column={c} index={i} key={c.id}>
                 <div className="w-full h-full flex items-center justify-center text-center">
-                  This column will hold encounter info, participant health, etc
+                  This column will hold the encounter description.
                 </div>
               </StatColumnComponent>
             ) : (
@@ -589,26 +589,8 @@ export const ParticipantBattleData = observer(function BattleCard({
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2 w-full">
-                    <div className="flex gap-2 w-full items-center">
-                      <div className="w-full h-6 relative bg-red-400 flex items-center justify-center">
-                        <span className="whitespace-nowrap text-white absolute z-10">
-                          {participant.hp} /{" "}
-                          {ParticipantUtils.maxHp(participant)}
-                        </span>
-                        <div
-                          className="absolute bg-emerald-400 h-full left-0"
-                          style={{
-                            width: `${ParticipantUtils.healthPercent(
-                              participant
-                            )}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-between">
-                      <ParticipantHealthForm participant={participant} />
-                    </div>
+                  <div className="flex justify-between">
+                    <ParticipantHealthForm participant={participant} />
                   </div>
                 </div>
               </div>
@@ -699,7 +681,7 @@ function InanimateParticipantButton(props: {
   );
 }
 
-const GroupParticipantHPOverride = observer(
+export const GroupParticipantHPOverride = observer(
   function GroupParticipantHPOverride({
     participant,
   }: {
@@ -1418,62 +1400,58 @@ export function StatColumns() {
   const participantsByColumn = EncounterUtils.participantsByColumn(encounter);
   const { registerBattleCardRef } = useEncounterUIStore();
 
-  return columns?.map((c, index) =>
-    c.is_home_column ? (
-      <StatColumnComponent key={c.id} column={c} index={index}>
+  return columns?.map((c, index) => (
+    <StatColumnComponent column={c} index={index} key={c.id}>
+      {c.is_home_column ? (
         <div className="bg-white px-3">
           <DescriptionTextArea />
         </div>
-      </StatColumnComponent>
-    ) : (
-      <StatColumnComponent column={c} index={index} key={c.id}>
-        <div
-          className={clsx(
-            "flex flex-col gap-5 h-full",
-            battleStyles.parentContainer
-          )}
-        >
-          {participantsByColumn[c.id]?.slice().map((p) => (
+      ) : null}
+      <div
+        className={clsx(
+          "flex flex-col gap-4 h-full",
+          battleStyles.parentContainer
+        )}
+      >
+        {participantsByColumn[c.id]?.slice().map((p) => (
+          <div
+            key={p.map((p) => p.id).join("-")}
+            className="flex flex-col gap-2"
+          >
             <div
-              key={p.map((p) => p.id).join("-")}
-              className="flex flex-col gap-2"
+              className={clsx("flex flex-col px-2", {
+                [battleStyles.participantBattleData ?? ""]: p.length > 1,
+              })}
             >
-              <div
-                className={clsx("flex flex-col gap-2 px-2", {
-                  [battleStyles.participantBattleData ?? ""]: p.length > 1,
-                })}
-              >
-                {p
-                  .slice()
-                  .sort(ParticipantUtils.sortLinearly)
-                  .map((p, i) => (
-                    <div className="p-2" key={p.id}>
-                      {" "}
-                      <ParticipantBattleData
-                        participant={p}
-                        ref={(ref) => registerBattleCardRef(p.id, ref)}
-                        data-is-active={p.is_active}
-                        data-participant-id={p.id}
-                        key={p.id}
-                        indexInGroup={i}
-                      />
-                    </div>
-                  ))}
-              </div>
-              {p[0]?.creature ? (
-                <>
-                  <ColumnDragButton participant={p[0]} />
-                  <RunCreatureStatBlock creature={p[0].creature} />
-                </>
-              ) : (
-                <div>no creature... probably a bug</div>
-              )}
+              {p
+                .slice()
+                .sort(ParticipantUtils.sortLinearly)
+                .map((p, i) => (
+                  <div className="p-2" key={p.id}>
+                    {" "}
+                    <ParticipantBattleData
+                      participant={p}
+                      ref={(ref) => registerBattleCardRef(p.id, ref)}
+                      data-is-active={p.is_active}
+                      data-participant-id={p.id}
+                      key={p.id}
+                      indexInGroup={i}
+                    />
+                  </div>
+                ))}
             </div>
-          ))}
-        </div>
-      </StatColumnComponent>
-    )
-  );
+            {p[0]?.creature ? (
+              <>
+                <RunCreatureStatBlock creature={p[0].creature} />
+              </>
+            ) : (
+              <div>no creature... probably a bug</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </StatColumnComponent>
+  ));
 }
 
 const RunCreatureStatBlock = observer(function RunCreatureStatBlock({
@@ -1662,10 +1640,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
           setAcceptDrop((count) => count + 1);
         }}
         onDragOver={(e) => {
-          if (
-            !typedDrag.includes(e.dataTransfer, dragTypes.participant) ||
-            column.is_home_column
-          ) {
+          if (!typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
             return;
           }
           e.preventDefault();

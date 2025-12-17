@@ -10,8 +10,10 @@ import {
   useUpdateEncounterMinionParticipant,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { useDebouncedCallback } from "use-debounce";
-import { Heart, Sword } from "lucide-react";
+import { Sword } from "lucide-react";
 import { ButtonWithTooltip } from "@/components/ui/tip";
+import { ParticipantUtils } from "@/utils/participants";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 
 export function ParticipantHealthForm({
   participant,
@@ -70,8 +72,19 @@ export function ParticipantHealthForm({
   }
 
   return (
-    <div className="flex gap-2 text-lg">
+    <div className="flex gap-2 text-lg w-full">
       {extraInputs}
+      <div className="w-full relative bg-red-400 flex h-full items-center justify-center">
+        <span className="whitespace-nowrap text-white absolute z-10">
+          {participant.hp} / {ParticipantUtils.maxHp(participant)}
+        </span>
+        <div
+          className="absolute bg-emerald-400 h-full left-0"
+          style={{
+            width: `${ParticipantUtils.healthPercent(participant)}%`,
+          }}
+        />
+      </div>
       <ButtonWithTooltip
         text="Damage"
         variant="ghost"
@@ -87,10 +100,11 @@ export function ParticipantHealthForm({
       >
         <Sword />
       </ButtonWithTooltip>
-      <Input
+      <LidndTextInput
         placeholder="HP"
         type="number"
-        className="w-16"
+        variant="ghost"
+        className="w-10"
         value={hpDiff}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
@@ -110,21 +124,6 @@ export function ParticipantHealthForm({
           }
         }}
       />
-      <ButtonWithTooltip
-        text="Heal"
-        variant="ghost"
-        className={" text-emerald-500 p-2 gap-3 flex items-center"}
-        onClick={(e) => {
-          e.stopPropagation();
-          handleHPChange(
-            typeof hpDiff === "number"
-              ? participant.hp + hpDiff
-              : participant.hp
-          );
-        }}
-      >
-        <Heart />
-      </ButtonWithTooltip>
     </div>
   );
 }
