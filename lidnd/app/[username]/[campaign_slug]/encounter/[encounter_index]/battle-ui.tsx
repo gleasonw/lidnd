@@ -1357,7 +1357,7 @@ export const RunEncounter = observer(function LinearBattleUI() {
       </div>
 
       <div
-        className="flex relative w-full h-full max-h-full"
+        className="flex relative w-full h-full max-h-full overflow-hidden pb-2"
         ref={containerRef}
       >
         <ParentWidthContext.Provider value={parentWidth}>
@@ -1429,7 +1429,7 @@ export function StatColumns() {
       <StatColumnComponent column={c} index={index} key={c.id}>
         <div
           className={clsx(
-            "flex flex-col gap-7 h-full",
+            "flex flex-col gap-5 h-full",
             battleStyles.parentContainer
           )}
         >
@@ -1525,6 +1525,9 @@ function GroupParticipantDoneToggle({
           encounter,
           participant
         ),
+        "bg-blue-100":
+          ParticipantUtils.isFriendly(participant) &&
+          !EncounterUtils.participantHasPlayed(encounter, participant),
       })}
     >
       {buttonExtra}
