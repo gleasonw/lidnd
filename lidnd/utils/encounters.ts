@@ -160,14 +160,20 @@ function cssClassForDifficulty(d: Difficulty) {
   return difficultyClasses[d];
 }
 
-function start(e: EncounterWithData): EncounterWithData {
+function start(
+  e: EncounterWithData,
+  campaign: Pick<Campaign, "system">
+): EncounterWithData {
   const [firstActive, firstRoundNumber] =
     EncounterUtils.firstActiveAndRoundNumber(e);
 
-  const activatedEncounter = EncounterUtils.updateParticipant(
-    { ...firstActive, is_active: true },
-    { ...e, current_round: firstRoundNumber }
-  );
+  const activatedEncounter =
+    campaign.system === "dnd5e"
+      ? EncounterUtils.updateParticipant(
+          { ...firstActive, is_active: true },
+          { ...e, current_round: firstRoundNumber }
+        )
+      : { ...e, current_round: firstRoundNumber };
 
   return {
     ...activatedEncounter,

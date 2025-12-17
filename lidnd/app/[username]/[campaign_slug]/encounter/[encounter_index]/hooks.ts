@@ -104,6 +104,7 @@ export function useEncounter() {
 //TODO: this should really be done in the backend, we shouldn't have to chain the call ourselves on the front
 export function useCycleNextTurn() {
   const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
   const { encounterById } = api.useUtils();
   // nullable uiStore since we sometimes call this outside the encounter run ui, and optional
   // is an easy way to just not do encounter ui stuff, versus throwing an error since no provider
@@ -114,6 +115,9 @@ export function useCycleNextTurn() {
       return await encounterById.invalidate(encounter.id);
     },
     onMutate: async ({ encounter_id }) => {
+      if (campaign.system !== "dnd5e") {
+        return;
+      }
       await encounterById.cancel(encounter_id);
       const previousEncounter = encounterById.getData(encounter_id);
       encounterById.setData(encounter_id, (old) => {
@@ -139,6 +143,7 @@ export function useCycleNextTurn() {
 
 export function useCyclePreviousTurn() {
   const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
   const { encounterById } = api.useUtils();
   const uiStore = useEncounterUIStore();
 
@@ -147,6 +152,9 @@ export function useCyclePreviousTurn() {
       return await encounterById.invalidate(encounter.id);
     },
     onMutate: async ({ encounter_id }) => {
+      if (campaign.system !== "dnd5e") {
+        return;
+      }
       await encounterById.cancel(encounter_id);
       const previousEncounter = encounterById.getData(encounter_id);
       encounterById.setData(encounter_id, (old) => {
@@ -252,6 +260,7 @@ export function useRemoveParticipantFromEncounter() {
 }
 
 export function useUpdateEncounterParticipant() {
+  const [campaign] = useCampaign();
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
   const { mutate: cycleNext } = useCycleNextTurn();
@@ -268,9 +277,11 @@ export function useUpdateEncounterParticipant() {
         }
 
         if (newParticipant.hp <= 0) {
+          // this should be a message to the system, draw steel/ dnd5e, because it depends
+
           // TODO: make sure that the next participant in the column gets
           // assigned the column id of this fallen monster, to avoid a weird switch
-          if (newParticipant.is_active) {
+          if (newParticipant.is_active && campaign.system === "dnd5e") {
             cycleNext({ encounter_id: id });
           }
 
@@ -547,6 +558,7 @@ export function useUpdateCreature() {
 export function useStartEncounter() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
+  const [campaign] = useCampaign();
 
   return api.startEncounter.useMutation({
     onSettled: async () => {
@@ -557,7 +569,7 @@ export function useStartEncounter() {
       const previousEncounter = encounterById.getData(id);
       encounterById.setData(id, (old) => {
         if (!old) return old;
-        return EncounterUtils.start(old);
+        return EncounterUtils.start(old, campaign);
       });
       return { previousEncounter };
     },

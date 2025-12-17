@@ -975,6 +975,7 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   participant,
 }: BattleCardParticipantProps) {
   const [error, setError] = useState<boolean>(false);
+  const [encounter] = useEncounter();
 
   if (error) {
     // TODO: maybe revisit, just figure that no icon is better than just a random user icon or whatever.
@@ -987,7 +988,14 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   ) : (
     <div
       className={clsx(
-        { "border-4": participant.hex_color },
+        {
+          "border-4": participant.hex_color,
+
+          "opacity-50": EncounterUtils.participantHasPlayed(
+            encounter,
+            participant
+          ),
+        },
         "relative flex flex-shrink-0 h-10 w-10"
       )}
       style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
@@ -1349,7 +1357,7 @@ export const RunEncounter = observer(function LinearBattleUI() {
       </div>
 
       <div
-        className="flex relative w-full h-full max-h-full"
+        className="flex relative w-full h-full max-h-full overflow-hidden pb-2"
         ref={containerRef}
       >
         <ParentWidthContext.Provider value={parentWidth}>
@@ -1421,7 +1429,7 @@ export function StatColumns() {
       <StatColumnComponent column={c} index={index} key={c.id}>
         <div
           className={clsx(
-            "flex flex-col gap-7 h-full",
+            "flex flex-col gap-5 h-full",
             battleStyles.parentContainer
           )}
         >
@@ -1517,6 +1525,9 @@ function GroupParticipantDoneToggle({
           encounter,
           participant
         ),
+        "bg-blue-100":
+          ParticipantUtils.isFriendly(participant) &&
+          !EncounterUtils.participantHasPlayed(encounter, participant),
       })}
     >
       {buttonExtra}
