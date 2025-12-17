@@ -849,8 +849,10 @@ export const EncounterUtils = {
       };
     }
 
+    console.log(encounterWithUpdate);
+
     const allHavePlayed = encounterWithUpdate.participants.every((p) =>
-      this.participantHasPlayed(encounter, p)
+      this.participantHasPlayed(encounterWithUpdate, p)
     );
     if (allHavePlayed) {
       return {

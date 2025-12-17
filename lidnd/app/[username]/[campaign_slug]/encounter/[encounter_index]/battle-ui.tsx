@@ -1430,7 +1430,7 @@ export function StatColumns() {
                   .slice()
                   .sort(ParticipantUtils.sortLinearly)
                   .map((p, i) => (
-                    <div className="p-2">
+                    <div className="p-2" key={p.id}>
                       {" "}
                       <ParticipantBattleData
                         participant={p}

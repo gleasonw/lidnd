@@ -262,6 +262,26 @@ describe("Group turn toggle and round increment tests", () => {
 
     // Now all participants have played, round should increment
     expect(result2.updatedEncounter.current_round).toBe(2);
+
+    const result3 = EncounterUtils.toggleGroupTurn(
+      "3",
+      result2.updatedEncounter
+    );
+
+    // After toggling again, round should remain the same since not all have played
+    expect(result3.updatedEncounter.current_round).toBe(2);
+    expect(
+      result3.updatedEncounter.turn_groups.find((tg) => tg.id === "group1")
+        ?.has_played_this_round
+    ).toBe(false);
+
+    const result4 = EncounterUtils.toggleGroupTurn(
+      "1",
+      result3.updatedEncounter
+    );
+
+    // Toggling group1 again should not increment round yet
+    expect(result4.updatedEncounter.current_round).toBe(3);
   });
 
   test("toggleGroupTurn works correctly for participant not in a turn group", () => {
