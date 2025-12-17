@@ -279,7 +279,6 @@ export const appRouter = t.router({
       z.object({
         encounter_id: z.string(),
         participant_id: z.string(),
-        has_played_this_round: z.boolean(),
       })
     )
     .mutation(async (opts) => {
@@ -290,9 +289,8 @@ export const appRouter = t.router({
           tx
         );
 
-        const { updatedEncounter } = EncounterUtils.updateGroupTurn(
+        const { updatedEncounter } = EncounterUtils.toggleGroupTurn(
           opts.input.participant_id,
-          opts.input.has_played_this_round,
           encounter
         );
 

@@ -4,19 +4,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import * as R from "remeda";
-import { useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
-import style from "./battle-ui.module.css";
-import type { Participant, ParticipantWithData } from "@/server/api/router";
+import battleStyles from "./battle-ui.module.css";
+import type {
+  Creature,
+  Participant,
+  ParticipantWithData,
+} from "@/server/api/router";
 import { LidndPopover } from "@/encounters/base-popover";
 import { EffectIcon } from "./status-input";
-import {
-  RunEncounter,
-  ParentWidthContext,
-  StatColumnComponent,
-  useParentResizeObserver,
-} from "./encounter-run-ui";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { observer } from "mobx-react-lite";
 import { ParticipantUtils } from "@/utils/participants";
@@ -29,7 +27,7 @@ import {
   useRemoveParticipantFromEncounter,
   useRemoveStatusEffect,
   useStartEncounter,
-  useUpdateGroupTurn,
+  useToggleGroupTurn,
   useUpdateEncounterParticipant,
   useEncounterHotkey,
   useUpdateEncounter,
@@ -45,10 +43,8 @@ import {
 } from "@/encounters/[encounter_index]/reminders";
 import {
   AngryIcon,
-  Check,
   Columns,
   Edit,
-  File,
   Grid2X2,
   Grip,
   Home,
@@ -58,6 +54,7 @@ import {
   Pen,
   PlayIcon,
   Trash,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { imageStyle, InitiativeTracker } from "./battle-bar";
@@ -92,8 +89,9 @@ import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import * as CampaignUtils from "@/utils/campaigns";
-import { isEmptyParagraph, labelColors } from "@/lib/utils";
+import { labelColors } from "@/lib/utils";
 import { LidndLabel } from "@/components/ui/LidndLabel";
+import { AddColumn } from "@/app/public/images/icons/AddColumn";
 
 // TODO: existing creatures for ally/player upload?
 
@@ -164,7 +162,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
             defaultValue="prep"
             className={clsx(
               "flex justify-center w-full xl:max-h-full",
-              style.root
+              battleStyles.root
             )}
           >
             <div className="flex flex-col w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full">
@@ -298,8 +296,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
           {campaign.system === "dnd5e" ? <InitiativeTracker /> : null}
 
           <Reminders />
-          <div className="flex gap-4 flex-col w-full max-h-full h-full overflow-hidden">
-            {/**create space for the overlaid initiative tracker */}
+          <div className="flex gap-4 flex-col w-full h-full">
             {monsters.length > 0 ? (
               <div className="flex w-full flex-wrap">
                 {monsters.map((p) => (
@@ -552,14 +549,7 @@ export const ParticipantBattleData = observer(function BattleCard({
   indexInGroup,
   ...props
 }: BattleCardProps) {
-  const [encounter] = useEncounter();
   const encounterUiStore = useEncounterUIStore();
-  const turnGroups = R.indexBy(encounter.turn_groups, (tg) => tg.id);
-  const tgForParticipant = participant.turn_group_id
-    ? turnGroups[participant.turn_group_id]
-    : null;
-
-  const { mutate: updateCreatureHasPlayedThisRound } = useUpdateGroupTurn();
 
   return (
     <div
@@ -586,37 +576,6 @@ export const ParticipantBattleData = observer(function BattleCard({
                         <ParticipantNameAndMaybeNotes
                           participant={participant}
                         />
-
-                        {tgForParticipant ? null : (
-                          //todo: standardize with other "has played" buttons
-                          <Button
-                            variant="secondary"
-                            className={clsx("p-2 ml-auto", {
-                              "border-2": tgForParticipant,
-                              "opacity-50": EncounterUtils.participantHasPlayed(
-                                encounter,
-                                participant
-                              ),
-                            })}
-                            onClick={() =>
-                              updateCreatureHasPlayedThisRound({
-                                encounter_id: participant.encounter_id,
-                                participant_id: participant.id,
-                                has_played_this_round:
-                                  !participant.has_played_this_round,
-                              })
-                            }
-                          >
-                            {EncounterUtils.participantHasPlayed(
-                              encounter,
-                              participant
-                            ) ? (
-                              <Check />
-                            ) : (
-                              "Ready"
-                            )}
-                          </Button>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -696,27 +655,14 @@ function ParticipantNameAndMaybeNotes({
 }: {
   participant: ParticipantWithData;
 }) {
-  const [showNotes, setShowNotes] = useState(
-    isEmptyParagraph(participant.notes) ? false : true
-  );
-  console.log("participant notes:", participant.notes);
   return (
     <div className="flex flex-col w-full">
-      <div className="flex gap-2 items-center justify-between w-full">
+      <div className="flex gap-2 items-center w-full">
         <BattleCardCreatureName participant={participant} />
-
-        {!showNotes ? (
-          <ButtonWithTooltip
-            variant="ghost"
-            className=" text-gray-300 p-2"
-            text="Show notes"
-            onClick={() => setShowNotes(true)}
-          >
-            <File className="w-5 h-5" />
-          </ButtonWithTooltip>
-        ) : null}
       </div>
-      {showNotes && <ParticipantNotes participant={participant} />}
+      <div className="flex gap-2 items-center">
+        <ParticipantNotes participant={participant} />
+      </div>
     </div>
   );
 }
@@ -966,9 +912,19 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
   participant,
 }: BattleCardParticipantProps) {
   const [encounter] = useEncounter();
+  const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
+  const tgForParticipant = participant.turn_group_id
+    ? turnGroupsById[participant.turn_group_id]
+    : undefined;
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   return (
-    <span className="flex flex-col gap-1">
+    <span className="flex gap-1 items-center">
+      {tgForParticipant ? (
+        <div
+          className="h-4 w-8 rounded-sm"
+          style={{ background: tgForParticipant?.hex_color ?? "" }}
+        />
+      ) : null}
       <LidndPopover
         trigger={
           <Button
@@ -1336,5 +1292,497 @@ function CreateTurnGroupForm() {
         Create turn group
       </Button>
     </form>
+  );
+}
+
+const ParentWidthContext = createContext<number | null>(null);
+
+const useParentResizeObserver = () => {
+  const [parentWidth, setParentWidth] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) {
+      return;
+    }
+
+    setParentWidth(containerRef.current.getBoundingClientRect().width);
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry) {
+        throw new Error(`no element to observe in DraggableColumnContainer`);
+      }
+      if (entry.contentRect.width === 0) {
+        console.log(`does entry no longer exist? ${entry}`);
+        return;
+      }
+      setParentWidth(entry.contentRect.width);
+    });
+
+    observer.observe(containerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  return { parentWidth, containerRef };
+};
+
+export const RunEncounter = observer(function LinearBattleUI() {
+  const { parentWidth, containerRef } = useParentResizeObserver();
+
+  return (
+    <div className="flex flex-col gap-2 h-full">
+      <div className="flex gap2">
+        <GroupBattleUITools />
+        <GroupTurnToggles />
+      </div>
+
+      <div
+        className="flex relative w-full h-full max-h-full"
+        ref={containerRef}
+      >
+        <ParentWidthContext.Provider value={parentWidth}>
+          <div className="overflow-auto w-full h-full flex">
+            <StatColumns />
+          </div>
+        </ParentWidthContext.Provider>
+      </div>
+    </div>
+  );
+});
+
+function GroupTurnToggles() {
+  const [encounter] = useEncounter();
+  const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
+  const participantsByTurnGroup =
+    EncounterUtils.participantsByTurnGroup(encounter);
+  const participantsWithoutTurnGroup =
+    EncounterUtils.monstersWithoutTurnGroup(encounter);
+  return (
+    <div className="flex gap-4 items-center p-2 shadow-lg">
+      <div className="flex gap-4 flex-wrap">
+        {EncounterUtils.players(encounter).map((p) => (
+          <GroupParticipantDoneToggle participant={p} key={p.id} />
+        ))}
+      </div>
+      <span>vs</span>
+      <div className="flex gap-4 flex-wrap">
+        {participantsWithoutTurnGroup.map((p) => (
+          <GroupParticipantDoneToggle participant={p} key={p.id} />
+        ))}
+        {Object.entries(participantsByTurnGroup).map(([tgId, participants]) => (
+          <div key={tgId}>
+            <GroupParticipantDoneToggle
+              participant={participants[0]}
+              buttonExtra={
+                <div
+                  className="h-4 w-8 rounded-sm"
+                  style={{
+                    backgroundColor: turnGroupsById[tgId]?.hex_color ?? "",
+                  }}
+                />
+              }
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function StatColumns() {
+  const [encounter] = useEncounter();
+  const encounterId = encounter.id;
+  //TODO: some weirdness here, looks like we still have participants on the column...
+  // do we actually assign participants to columns?
+  const { data: columns } = api.getColumns.useQuery(encounterId);
+  const participantsByColumn = EncounterUtils.participantsByColumn(encounter);
+  const { registerBattleCardRef } = useEncounterUIStore();
+
+  return columns?.map((c, index) =>
+    c.is_home_column ? (
+      <StatColumnComponent key={c.id} column={c} index={index}>
+        <div className="bg-white px-3">
+          <DescriptionTextArea />
+        </div>
+      </StatColumnComponent>
+    ) : (
+      <StatColumnComponent column={c} index={index} key={c.id}>
+        <div
+          className={clsx(
+            "flex flex-col gap-7 h-full",
+            battleStyles.parentContainer
+          )}
+        >
+          {participantsByColumn[c.id]?.slice().map((p) => (
+            <div
+              key={p.map((p) => p.id).join("-")}
+              className="flex flex-col gap-3"
+            >
+              <div
+                className={clsx(
+                  "flex flex-col gap-4 px-2",
+                  battleStyles.participantBattleData
+                )}
+              >
+                {p
+                  .slice()
+                  .sort(ParticipantUtils.sortLinearly)
+                  .map((p, i) => (
+                    <div className="p-2">
+                      {" "}
+                      <ParticipantBattleData
+                        participant={p}
+                        ref={(ref) => registerBattleCardRef(p.id, ref)}
+                        data-is-active={p.is_active}
+                        data-participant-id={p.id}
+                        key={p.id}
+                        indexInGroup={i}
+                      />
+                    </div>
+                  ))}
+              </div>
+              {p[0]?.creature ? (
+                <>
+                  <ColumnDragButton participant={p[0]} />
+                  <RunCreatureStatBlock creature={p[0].creature} />
+                </>
+              ) : (
+                <div>no creature... probably a bug</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </StatColumnComponent>
+    )
+  );
+}
+
+const RunCreatureStatBlock = observer(function RunCreatureStatBlock({
+  creature,
+}: {
+  creature: Creature;
+}) {
+  const uiStore = useEncounterUIStore();
+
+  return (
+    <div>
+      <CreatureStatBlock
+        creature={creature}
+        ref={(el) => uiStore.registerStatBlockRef(creature.id, el)}
+      />
+    </div>
+  );
+});
+
+function GroupParticipantDoneToggle({
+  participant,
+  buttonExtra,
+}: {
+  participant: ParticipantWithData;
+  buttonExtra?: React.ReactNode;
+}) {
+  const id = useEncounterId();
+  const [encounter] = useEncounter();
+  const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
+  const turnGroupForParticipant =
+    turnGroupsById[participant.turn_group_id ?? ""];
+  const { mutate: toggleParticipantHasPlayedThisRound } = useToggleGroupTurn();
+  return (
+    <Button
+      variant="ghost"
+      onClick={() =>
+        toggleParticipantHasPlayedThisRound({
+          encounter_id: id,
+          participant_id: participant.id,
+        })
+      }
+      style={{ outlineColor: "oklch(87.2% 0.01 258.338)" }}
+      className={clsx("flex gap-1 rounded-md", {
+        "opacity-50": EncounterUtils.participantHasPlayed(
+          encounter,
+          participant
+        ),
+        "outline-4 outline": !EncounterUtils.participantHasPlayed(
+          encounter,
+          participant
+        ),
+      })}
+    >
+      {buttonExtra}
+      {turnGroupForParticipant
+        ? turnGroupForParticipant.name
+        : ParticipantUtils.name(participant)}
+    </Button>
+  );
+}
+
+export function CreateNewColumnButton() {
+  const { getColumns } = api.useUtils();
+  const encounterId = useEncounterId();
+  const { data: columns } = api.getColumns.useQuery(encounterId);
+  const { mutate: createColumn } = api.createColumn.useMutation({
+    onSettled: async () => {
+      return await getColumns.invalidate(encounterId);
+    },
+    onMutate: async (newColumn) => {
+      await getColumns.cancel(newColumn.encounter_id);
+      const previousEncounter = getColumns.getData(newColumn.encounter_id);
+      getColumns.setData(newColumn.encounter_id, (old) => {
+        if (!old || !columns) return old;
+        return StatColumnUtils.add(columns, {
+          ...newColumn,
+          participants: [],
+          id: Math.random.toString(),
+          is_home_column: false,
+        });
+      });
+      return { previousColumns: previousEncounter };
+    },
+  });
+  return (
+    <ButtonWithTooltip
+      text={"Create new column"}
+      variant="ghost"
+      onClick={() =>
+        createColumn({ encounter_id: encounterId, percent_width: 50 })
+      }
+    >
+      <AddColumn className="h-6 w-6" />
+    </ButtonWithTooltip>
+  );
+}
+
+export const StatColumnComponent = observer(function StatColumnComponent({
+  column,
+  index,
+  children,
+  toolbarExtra,
+}: {
+  column: StatColumn;
+  index: number;
+  children: React.ReactNode;
+  toolbarExtra?: React.ReactNode;
+}) {
+  const [acceptDrop, setAcceptDrop] = useState(0);
+  const { encounterById, getColumns } = api.useUtils();
+  const encounterId = useEncounterId();
+  const [encounter] = useEncounter();
+  const encounterUiStore = useEncounterUIStore();
+  const { data: columns } = api.getColumns.useQuery(encounterId);
+  const { mutate: assignParticipantToColumn } =
+    api.assignParticipantToColumn.useMutation({
+      onSettled: async () => {
+        return await encounterById.invalidate(encounterId);
+      },
+      onMutate: async (newColumn) => {
+        await encounterById.cancel(encounterId);
+        const previousEncounter = encounterById.getData(encounterId);
+        encounterById.setData(encounterId, (old) => {
+          if (!old) return old;
+          return ParticipantUtils.assignColumn(
+            encounter,
+            newColumn.column_id,
+            newColumn.participant_id
+          );
+        });
+        return { previousEncounter };
+      },
+    });
+  const { mutate: deleteColumn } = api.deleteColumn.useMutation({
+    onSettled: async () => {
+      return await getColumns.invalidate();
+    },
+    onMutate: async (column) => {
+      await getColumns.cancel(column.encounter_id);
+      const previousColumns = getColumns.getData(column.encounter_id);
+      getColumns.setData(column.encounter_id, (old) => {
+        if (!previousColumns) {
+          return old;
+        }
+        return StatColumnUtils.remove(previousColumns, column.id);
+      });
+      return { previousColumns: previousColumns };
+    },
+  });
+  const isLastColumn = columns && index === columns.length - 1;
+  return (
+    <>
+      <div
+        className={clsx(
+          `flex flex-col h-full max-h-full items-start relative flex-grow`
+        )}
+        style={{ width: `${column.percent_width}%` }}
+        onDrop={(e) => {
+          const droppedParticipant = typedDrag.get(
+            e.dataTransfer,
+            dragTypes.participant
+          );
+          if (!droppedParticipant) {
+            console.error("No participant found when dragging");
+            return;
+          }
+          assignParticipantToColumn({
+            participant_id: droppedParticipant.id,
+            column_id: column.id,
+            encounter_id: encounterId,
+          });
+          setAcceptDrop(0);
+        }}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (
+            !typedDrag.includes(e.dataTransfer, dragTypes.participant) ||
+            column.is_home_column
+          ) {
+            return;
+          }
+          setAcceptDrop((count) => count + 1);
+        }}
+        onDragOver={(e) => {
+          if (
+            !typedDrag.includes(e.dataTransfer, dragTypes.participant) ||
+            column.is_home_column
+          ) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onDragLeave={() => setAcceptDrop((count) => count - 1)}
+      >
+        {encounterUiStore.isEditingInitiative || encounter.status === "prep" ? (
+          <div className="flex w-full bg-gray-200">
+            {columns && columns?.length > 1 && !column.is_home_column ? (
+              <div className="border border-b-0">
+                <ButtonWithTooltip
+                  text="Delete column"
+                  className="h-10 bg-white rounded-none"
+                  variant="ghost"
+                  onClick={() => deleteColumn(column)}
+                >
+                  <X />
+                </ButtonWithTooltip>
+              </div>
+            ) : null}
+            <div className="flex w-full border-b" />
+            <div
+              className={` ${
+                isLastColumn ? "flex" : "hidden"
+              } ml-auto border-b`}
+            >
+              <CreateNewColumnButton />
+            </div>
+          </div>
+        ) : null}
+
+        {toolbarExtra}
+        <div
+          className={clsx(
+            "flex flex-col gap-3 w-full max-h-full h-full bg-white",
+            {
+              "bg-blue-500": acceptDrop > 0,
+            }
+          )}
+        >
+          {children}
+        </div>
+      </div>
+      <StatColumnSplitter leftColumnIndex={index} key={index} />
+    </>
+  );
+});
+
+//todo: instead of updating a width which causes a full re-render of the stat column component,
+// set a css var on the parent ref. keep react out of the loop
+//like-wise for parent width?
+function StatColumnSplitter({ leftColumnIndex }: { leftColumnIndex: number }) {
+  const parentWidth = useContext(ParentWidthContext);
+  const { getColumns } = api.useUtils();
+  const encounterId = useEncounterId();
+  const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
+  const { data: columns } = api.getColumns.useQuery(encounterId);
+  const leftColumn = columns?.[leftColumnIndex];
+  const rightColumn = columns?.[leftColumnIndex + 1];
+  if (!leftColumn || !rightColumn) {
+    return null;
+  }
+  const leftColumnId = leftColumn.id;
+  const rightColumnId = rightColumn.id;
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const startX = e.clientX;
+    const currentColumns = getColumns.getData(encounterId);
+    const leftColumnStart = currentColumns?.find((c) => c.id === leftColumnId);
+    const rightColumnStart = currentColumns?.find(
+      (c) => c.id === rightColumnId
+    );
+    if (!leftColumnStart || !rightColumnStart) {
+      throw new Error(
+        "no columns found when attempting to update percent width"
+      );
+    }
+    let isPendingSetStateForFrame: number | null = null;
+
+    document.body.style.userSelect = "none";
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (isPendingSetStateForFrame) {
+        return;
+      }
+      if (parentWidth === null) {
+        throw new Error(`null parent width`);
+      }
+      const deltaX = moveEvent.clientX - startX;
+      const deltaPercent = (deltaX / parentWidth) * 100;
+      isPendingSetStateForFrame = requestAnimationFrame(() => {
+        const newLeftColumn = {
+          ...leftColumnStart,
+          percent_width: leftColumnStart.percent_width + deltaPercent,
+        };
+        const newRightColumn = {
+          ...rightColumnStart,
+          percent_width: rightColumnStart.percent_width - deltaPercent,
+        };
+        getColumns.setData(encounterId, (old) => {
+          if (!old) return old;
+          return columns?.map((c) => {
+            if (c.id === leftColumnId) {
+              return newLeftColumn;
+            }
+            if (c.id === rightColumnId) {
+              return newRightColumn;
+            }
+            return c;
+          });
+        });
+        isPendingSetStateForFrame = null;
+      });
+    };
+
+    const handleMouseUp = () => {
+      document.body.style.userSelect = "auto";
+      const updatedColumns = getColumns.getData(encounterId);
+      if (!updatedColumns) {
+        throw new Error("no columns found when updating");
+      }
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      updateColumnBatch({
+        columns: updatedColumns,
+        encounter_id: encounterId,
+      });
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+  return (
+    <div
+      onMouseDown={handleMouseDown}
+      className="w-1 hover:bg-gray-500 right-0 z-10 last:hidden bg-gray-100"
+      style={{ cursor: "ew-resize" }}
+    />
   );
 }

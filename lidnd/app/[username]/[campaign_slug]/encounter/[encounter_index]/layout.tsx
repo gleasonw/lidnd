@@ -39,9 +39,7 @@ export default async function EncounterLayout(props: {
   return (
     <EncounterUI>
       <EncounterId encounterId={encounter.id}>
-        <div
-          className={`relative ${css.root} flex flex-col overflow-hidden max-h-full`}
-        >
+        <div className={`relative ${css.root} flex flex-col max-h-full h-full`}>
           {/**we don't really have space for this nav on group initiative... might need to rethink slightly */}
           {campaign?.system === "dnd5e" && (
             <div className={` absolute top-0 left-0 z-50`}>

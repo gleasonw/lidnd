@@ -81,7 +81,12 @@ function participantsByTurnGroup<
     e.participants,
     ParticipantUtils.sortLinearly
   );
-  return R.groupBy(sortedParticipants, (p) => p.turn_group_id ?? "no-group");
+  const groups = R.groupBy(
+    sortedParticipants,
+    (p) => p.turn_group_id ?? "no-group"
+  );
+  delete groups["no-group"];
+  return groups;
 }
 
 export function monstersWithNoColumn<
@@ -621,8 +626,9 @@ export const EncounterUtils = {
   },
 
   players(encounter: EncounterWithParticipants<ParticipantWithData>) {
-    return this.participants(encounter).filter((p) =>
-      ParticipantUtils.isPlayer(p)
+    return R.sort(
+      this.participants(encounter).filter((p) => ParticipantUtils.isPlayer(p)),
+      ParticipantUtils.sortLinearly
     );
   },
 
@@ -786,9 +792,12 @@ export const EncounterUtils = {
     };
   },
 
-  updateGroupTurn<E extends CyclableEncounter>(
+  turnGroupsById<TG extends { id: string }>(encounter: { turn_groups: TG[] }) {
+    return R.indexBy(encounter.turn_groups, (tg) => tg.id);
+  },
+
+  toggleGroupTurn<E extends CyclableEncounter>(
     participant_id: string,
-    participant_has_played_this_round: boolean,
     encounter: E
   ): UpdateTurnOrderReturn<E> {
     const turnGroupsById = R.indexBy(encounter.turn_groups, (tg) => tg.id);
@@ -803,14 +812,13 @@ export const EncounterUtils = {
     const groupForParticipant =
       turnGroupsById[participantWhoPlayed.turn_group_id ?? ""];
     if (groupForParticipant) {
-      console.log({ groupForParticipant });
       const encounterWithUpdate = {
         ...encounter,
         turn_groups: encounter.turn_groups.map((tg) => {
           if (tg.id === groupForParticipant.id) {
             return {
               ...tg,
-              has_played_this_round: participant_has_played_this_round,
+              has_played_this_round: !tg.has_played_this_round,
             };
           } else {
             return tg;
@@ -838,7 +846,7 @@ export const EncounterUtils = {
       if (p.id === participant_id) {
         return {
           ...p,
-          has_played_this_round: participant_has_played_this_round,
+          has_played_this_round: !p.has_played_this_round,
         };
       } else {
         return p;

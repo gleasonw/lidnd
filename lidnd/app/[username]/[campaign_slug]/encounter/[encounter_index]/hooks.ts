@@ -173,16 +173,12 @@ export function useSelectedCreature() {
 }
 
 /**only applicable for drawsteel */
-export function useUpdateGroupTurn() {
+export function useToggleGroupTurn() {
   const id = useEncounterId();
   const uiStore = useEncounterUIStore();
   const { encounterById } = api.useUtils();
   return api.updateGroupTurn.useMutation({
-    onMutate: async ({
-      encounter_id,
-      has_played_this_round,
-      participant_id,
-    }) => {
+    onMutate: async ({ encounter_id, participant_id }) => {
       await encounterById.cancel(encounter_id);
       const previousEncounterData = encounterById.getData(encounter_id);
       encounterById.setData(encounter_id, (old) => {
@@ -190,9 +186,8 @@ export function useUpdateGroupTurn() {
           return;
         }
 
-        const { updatedEncounter } = EncounterUtils.updateGroupTurn(
+        const { updatedEncounter } = EncounterUtils.toggleGroupTurn(
           participant_id,
-          has_played_this_round,
           old
         );
         if (old.current_round !== updatedEncounter.current_round) {

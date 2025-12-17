@@ -37,9 +37,7 @@ export default async function CampaignLayout(props: {
   // todo: add basic nav box, that takes up the same amount of space as the initiative bar
   return (
     <CampaignId value={campaign.id}>
-      <div
-        className={`flex flex-col overflow-hidden max-h-full h-full gap-5 relative `}
-      >
+      <div className={`flex flex-col max-h-full h-full gap-5 relative `}>
         {children}
       </div>
     </CampaignId>

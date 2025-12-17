@@ -31,9 +31,7 @@ export default function RootLayout({
       </head>
       <body className={clsx(inter.className)}>
         <GlobalUI>
-          <div className="h-screen max-h-full flex flex-col pb-5">
-            {children}
-          </div>
+          <div className="h-screen max-h-full flex flex-col">{children}</div>
         </GlobalUI>
       </body>
     </html>
