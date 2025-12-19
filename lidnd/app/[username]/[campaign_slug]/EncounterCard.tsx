@@ -20,6 +20,7 @@ export function EncounterCard({ encounter }: { encounter: { id: string } }) {
     </EncounterId>
   );
 }
+const maxMonstersToShow = 10;
 
 function EncounterDetails() {
   const [encounterData] = useEncounter();
@@ -27,6 +28,7 @@ function EncounterDetails() {
   const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
   const { encounter: encounterLink } = useEncounterLinks();
   const monsters = EncounterUtils.monsters(encounterData);
+  const isOverflowing = monsters.length > maxMonstersToShow;
   return (
     <li className="flex flex-col gap-4 rounded-lg border bg-background p-4 shadow-sm">
       <Link href={encounterLink}>
@@ -42,7 +44,7 @@ function EncounterDetails() {
       <div className="flex gap-2 h-12">
         {monsters.length > 0 && (
           <div className="flex -space-x-4 h-16">
-            {monsters?.map((p) => (
+            {monsters?.slice(0, maxMonstersToShow).map((p) => (
               <button
                 className="rounded-full w-12 h-12 flex items-center justify-center overflow-hidden border-2 border-white bg-white"
                 key={p.id}
@@ -56,6 +58,11 @@ function EncounterDetails() {
                 <CreatureIcon creature={p.creature} size="v-small" />
               </button>
             ))}
+            {isOverflowing && (
+              <div className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-white bg-gray-200 text-sm font-medium text-gray-600">
+                +{monsters.length - maxMonstersToShow}
+              </div>
+            )}
           </div>
         )}
 
