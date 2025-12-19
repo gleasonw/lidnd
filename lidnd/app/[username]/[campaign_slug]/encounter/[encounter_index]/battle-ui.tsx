@@ -93,8 +93,6 @@ import { labelColors } from "@/lib/utils";
 import { LidndLabel } from "@/components/ui/LidndLabel";
 import { AddColumn } from "@/app/public/images/icons/AddColumn";
 
-// TODO: existing creatures for ally/player upload?
-
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
   const [encounter] = useEncounter();
@@ -583,31 +581,28 @@ export const ParticipantBattleData = observer(function BattleCard({
 
   return (
     <div
-      className={clsx(`relative flex-col gap-6 w-full flex py-2`)}
+      className={clsx(`relative flex-col gap-6 w-full flex`)}
       ref={ref}
       {...props}
     >
       <BattleCardLayout key={participant.id} participant={participant}>
         <div className="flex flex-col gap-3 w-full">
           {ParticipantUtils.isInanimate(participant) ? null : (
-            <div className="flex gap-2 items-center justify-between">
-              <div className="flex gap-2 items-center w-full relative">
-                <div className="flex flex-col gap-2 w-full">
-                  <div className="flex gap-3 w-full">
+            <div className="flex gap-2 items-center justify-between py-2">
+              <div className="flex flex-col gap-2 w-full">
+                <div className="flex gap-3 w-full">
+                  <div className="flex gap-2 items-center relative w-full">
+                    {ParticipantUtils.hasIcon(participant) ? (
+                      <BattleCardCreatureIcon participant={participant} />
+                    ) : null}
                     <div className="flex flex-col w-full">
-                      <div className="flex gap-2 items-center relative w-full">
-                        {ParticipantUtils.hasIcon(participant) ? (
-                          <BattleCardCreatureIcon participant={participant} />
-                        ) : null}
-                        <ParticipantNameAndMaybeNotes
-                          participant={participant}
-                        />
-                      </div>
+                      <BattleCardCreatureName participant={participant} />
+                      <ParticipantNotes participant={participant} />
                     </div>
                   </div>
-                  <div className="flex justify-between">
-                    <ParticipantHealthForm participant={participant} />
-                  </div>
+                </div>
+                <div className="flex justify-between">
+                  <ParticipantHealthForm participant={participant} />
                 </div>
               </div>
             </div>
@@ -655,23 +650,6 @@ function ParticipantNotes({
   });
 
   return <LidndTextArea editor={editor} />;
-}
-
-function ParticipantNameAndMaybeNotes({
-  participant,
-}: {
-  participant: ParticipantWithData;
-}) {
-  return (
-    <div className="flex flex-col w-full">
-      <div className="flex gap-2 items-center w-full">
-        <BattleCardCreatureName participant={participant} />
-      </div>
-      <div className="flex gap-2 items-center">
-        <ParticipantNotes participant={participant} />
-      </div>
-    </div>
-  );
 }
 
 export const GroupParticipantHPOverride = observer(
@@ -897,6 +875,7 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
   participant,
 }: BattleCardParticipantProps) {
   const [encounter] = useEncounter();
+  const uiStore = useEncounterUIStore();
   const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
   const tgForParticipant = participant.turn_group_id
     ? turnGroupsById[participant.turn_group_id]
@@ -905,7 +884,9 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
   return (
     <span className="flex gap-1 items-center">
       {tgForParticipant ? (
-        <div
+        <Button
+          variant="ghost"
+          onClick={() => uiStore.toggleFocusThisGroup(tgForParticipant.id)}
           className="h-4 w-8 rounded-sm"
           style={{ background: tgForParticipant?.hex_color ?? "" }}
         />
@@ -1384,13 +1365,17 @@ function GroupTurnToggles() {
   );
 }
 
-export function StatColumns() {
+export const StatColumns = observer(function StatColumns() {
   const [encounter] = useEncounter();
   const encounterId = encounter.id;
   //TODO: some weirdness here, looks like we still have participants on the column...
   // do we actually assign participants to columns?
   const { data: columns } = api.getColumns.useQuery(encounterId);
-  const participantsByColumn = EncounterUtils.participantsByColumn(encounter);
+  const uiStore = useEncounterUIStore();
+  const participantsByColumn = EncounterUtils.participantsByColumn(
+    encounter,
+    uiStore
+  );
   const { registerBattleCardRef } = useEncounterUIStore();
 
   return columns?.map((c, index) => (
@@ -1407,10 +1392,7 @@ export function StatColumns() {
         )}
       >
         {participantsByColumn[c.id]?.slice().map((p) => (
-          <div
-            key={p.map((p) => p.id).join("-")}
-            className="flex flex-col gap-2"
-          >
+          <div key={p.map((p) => p.id).join("-")} className="flex flex-col">
             <div
               className={clsx("flex flex-col px-2", {
                 [battleStyles.participantBattleData ?? ""]: p.length > 1,
@@ -1442,7 +1424,7 @@ export function StatColumns() {
       </div>
     </StatColumnComponent>
   ));
-}
+});
 
 const RunCreatureStatBlock = observer(function RunCreatureStatBlock({
   creature,

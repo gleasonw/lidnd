@@ -13,6 +13,7 @@ type CreatureId = string;
 class EncounterUIStore {
   selectedParticipantId: string | null = null;
   highlightCreatureStatBlocks: Set<CreatureId> = new Set();
+  focusGroupId: string | null = null;
 
   /** TODO: this is sort of the "this ui is only sometimes important for inputs, so only show it when we toggle this flag" bit of state. should probably find a better way to tuck away secondary inputs/ui */
   isEditingInitiative = false;
@@ -52,6 +53,14 @@ class EncounterUIStore {
       (window as any).encounterUiStore = this;
     }
   }
+
+  toggleFocusThisGroup = (groupId: string) => {
+    if (this.focusGroupId === groupId) {
+      this.focusGroupId = null;
+    } else {
+      this.focusGroupId = groupId;
+    }
+  };
 
   toggleParticipantEdit = () => {
     this.isEditingInitiative = !this.isEditingInitiative;

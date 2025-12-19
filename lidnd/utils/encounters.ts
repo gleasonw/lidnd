@@ -204,21 +204,41 @@ function remainingCr(
 
 export type ColumnableParticipant = Pick<
   Participant,
-  "creature_id" | "column_id" | "initiative" | "id" | "created_at"
+  | "creature_id"
+  | "column_id"
+  | "initiative"
+  | "id"
+  | "created_at"
+  | "turn_group_id"
 >;
 /** we want to group participants with the same creature into one column, to avoid
  * duplicating stat blocks. we just take the first participant, sorted, as the column_id source of truth
  */
-function participantsByColumn<CP extends ColumnableParticipant>(e: {
-  participants: Array<CP>;
-}) {
-  const byCreature = R.groupBy(e.participants, (p) => p.creature_id);
+function participantsByColumn<CP extends ColumnableParticipant>(
+  e: {
+    participants: Array<CP>;
+  },
+  args?: {
+    focusGroupId?: string | null;
+  }
+) {
+  let baseParticipants;
+  if (args?.focusGroupId) {
+    baseParticipants = e.participants.filter(
+      (p) => p.turn_group_id === args?.focusGroupId
+    );
+  } else {
+    baseParticipants = e.participants;
+  }
+  const byCreature = R.groupBy(baseParticipants, (p) => p.creature_id);
   const res = Object.values(byCreature)?.reduce((acc, curr) => {
     const columnFor = curr
       .slice()
       .sort(ParticipantUtils.sortLinearly)
       .at(0)?.column_id;
-    if (!columnFor) return acc;
+    if (!columnFor) {
+      return acc;
+    }
     const inColumn = acc[columnFor];
     if (inColumn && inColumn.length > 0) {
       acc[columnFor]?.push(curr);

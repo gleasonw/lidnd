@@ -88,7 +88,9 @@ export function ParticipantHealthForm({
       <ButtonWithTooltip
         text="Damage"
         variant="ghost"
-        className={"bg-red-100 text-red-700 gap-3 p-2 flex items-center"}
+        className={
+          "bg-red-100 text-red-700 gap-3 p-2 h-8 w-8 flex items-center"
+        }
         onClick={(e) => {
           e.stopPropagation();
           handleHPChange(
@@ -103,8 +105,8 @@ export function ParticipantHealthForm({
       <LidndTextInput
         placeholder="HP"
         type="number"
+        className="h-8 w-14 pl-2"
         variant="ghost"
-        className="w-10"
         value={hpDiff}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
