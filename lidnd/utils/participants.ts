@@ -246,10 +246,16 @@ function isActivatable(p: {
 
 export const ParticipantUtils = {
   isInanimate: (
-    p: Pick<Participant, "inanimate"> | { creature: { is_inanimate: boolean } }
+    p:
+      | Pick<Participant, "inanimate">
+      | { creature: { is_inanimate: boolean } }
+      | (Pick<Participant, "inanimate"> & {
+          creature: { is_inanimate: boolean };
+        })
   ) => {
-    if ("inanimate" in p) {
-      // legacy field
+    if ("inanimate" in p && "creature" in p) {
+      return p.inanimate || p.creature.is_inanimate;
+    } else if ("inanimate" in p) {
       return p.inanimate;
     } else {
       return p.creature.is_inanimate;

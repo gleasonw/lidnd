@@ -175,7 +175,8 @@ export const EncounterBattleUI = observer(function BattleUI() {
               battleStyles.root
             )}
           >
-            <div className="flex flex-col gap-3 w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full">
+            {/**don't put gap here, it makes the tab contennt bits take up a bunch of vert space */}
+            <div className="flex flex-col w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full">
               <div className="w-full flex flex-col gap-3">
                 <EncounterNameInput />
                 <div className="flex gap-8">
@@ -218,88 +219,91 @@ export const EncounterBattleUI = observer(function BattleUI() {
               </TabsContent>
               <TabsContent
                 value="prep"
-                className="w-full xl:max-h-full xl:flex xl:flex-col xl:overflow-hidden gap-5"
+                className="w-full xl:max-h-full flex flex-col xl:overflow-hidden gap-5"
                 data-value="prep"
               >
-                <div className="flex gap-7 items-center w-full">
-                  <LidndLabel
-                    label="Target difficulty"
-                    className="flex flex-col"
-                  >
-                    <Select
-                      onValueChange={(v) => {
-                        console.log(v);
-                        updateEncounter({
-                          ...encounter,
-                          target_difficulty: v as any,
-                        });
-                      }}
-                      defaultValue={encounter.target_difficulty || undefined}
-                    >
-                      <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Select difficulty" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="easy">Easy</SelectItem>
-                        <SelectItem value="standard">Standard</SelectItem>
-                        <SelectItem value="hard">Hard</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </LidndLabel>
-                  {campaign.system === "drawsteel" && (
-                    <LidndLabel label="Est. Victories">
-                      <LidndTextInput
-                        type="number"
-                        placeholder="0"
-                        className="w-36"
-                        value={encounter.average_victories ?? ""}
-                        onChange={(e) => {
-                          const value = parseFloat(e.target.value);
-                          updateEncounter({
-                            ...encounter,
-                            average_victories: isNaN(value) ? null : value,
-                          });
-                        }}
-                      />
-                    </LidndLabel>
-                  )}
-                  <div
-                    className={`flex w-full ml-10 flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-sm text-gray-400">Current</span>
-                      <span className="text-2xl font-bold">{difficulty}</span>
-                    </div>
-
-                    <div className="flex flex-col items-baseline">
-                      <span className="text-sm whitespace-nowrap text-gray-400">
-                        Total {CampaignUtils.crLabel(campaign)}
-                      </span>
-                      <span className="text-2xl font-bold">
-                        {EncounterUtils.totalCr(encounter)}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-baseline">
-                      <span className="text-sm whitespace-nowrap text-gray-400">
-                        Remaining {CampaignUtils.crLabel(campaign)}
-                      </span>
-                      <span className="text-2xl font-bold">
-                        {EncounterUtils.remainingCr(encounter, campaign)}
-                      </span>
-                    </div>
-                    <div className="w-full pb-3 pt-3 sm:pb-0">
-                      <EncounterBudgetSlider />
-                    </div>
-                  </div>
-                </div>
                 <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full xl:overflow-hidden">
-                  <Card className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
-                    <EditModeOpponentForm />
-                  </Card>
-                  <div className="flex flex-col gap-5 xl:max-h-full xl:overflow-auto">
-                    {campaign.system === "drawsteel" ? (
-                      <TurnGroupSetup />
-                    ) : null}
+                  <div className="flex flex-col gap-5">
+                    <div className="flex gap-3">
+                      <LidndLabel label="Target difficulty">
+                        <Select
+                          onValueChange={(v) => {
+                            console.log(v);
+                            updateEncounter({
+                              ...encounter,
+                              target_difficulty: v as any,
+                            });
+                          }}
+                          defaultValue={
+                            encounter.target_difficulty || undefined
+                          }
+                        >
+                          <SelectTrigger className="w-40">
+                            <SelectValue placeholder="Select difficulty" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="easy">Easy</SelectItem>
+                            <SelectItem value="standard">Standard</SelectItem>
+                            <SelectItem value="hard">Hard</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </LidndLabel>
+                      {campaign.system === "drawsteel" && (
+                        <LidndLabel label="Est. Victories">
+                          <LidndTextInput
+                            type="number"
+                            placeholder="0"
+                            className="w-36"
+                            value={encounter.average_victories ?? ""}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value);
+                              updateEncounter({
+                                ...encounter,
+                                average_victories: isNaN(value) ? null : value,
+                              });
+                            }}
+                          />
+                        </LidndLabel>
+                      )}
+                    </div>
+                    <Card className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
+                      <EditModeOpponentForm />
+                    </Card>
+                  </div>
+                  <div className="flex flex-col gap-5">
+                    <div
+                      className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-sm text-gray-400">Current</span>
+                        <span className="text-2xl font-bold">{difficulty}</span>
+                      </div>
+
+                      <div className="flex flex-col items-baseline">
+                        <span className="text-sm whitespace-nowrap text-gray-400">
+                          Total {CampaignUtils.crLabel(campaign)}
+                        </span>
+                        <span className="text-2xl font-bold">
+                          {EncounterUtils.totalCr(encounter)}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-baseline">
+                        <span className="text-sm whitespace-nowrap text-gray-400">
+                          Remaining {CampaignUtils.crLabel(campaign)}
+                        </span>
+                        <span className="text-2xl font-bold">
+                          {EncounterUtils.remainingCr(encounter, campaign)}
+                        </span>
+                      </div>
+                      <div className="w-full pb-3 pt-3 sm:pb-0">
+                        <EncounterBudgetSlider />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-5 xl:max-h-full xl:overflow-auto">
+                      {campaign.system === "drawsteel" ? (
+                        <TurnGroupSetup />
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </TabsContent>
@@ -579,17 +583,13 @@ export const ParticipantBattleData = observer(function BattleCard({
 
   return (
     <div
-      className={clsx(`relative flex-col gap-6 w-full flex`)}
+      className={clsx(`relative flex-col gap-6 w-full flex py-2`)}
       ref={ref}
       {...props}
     >
       <BattleCardLayout key={participant.id} participant={participant}>
         <div className="flex flex-col gap-3 w-full">
-          {ParticipantUtils.isInanimate(participant) ? (
-            <>
-              <BattleCardCreatureName participant={participant} />
-            </>
-          ) : (
+          {ParticipantUtils.isInanimate(participant) ? null : (
             <div className="flex gap-2 items-center justify-between">
               <div className="flex gap-2 items-center w-full relative">
                 <div className="flex flex-col gap-2 w-full">
@@ -1420,17 +1420,14 @@ export function StatColumns() {
                 .slice()
                 .sort(ParticipantUtils.sortLinearly)
                 .map((p, i) => (
-                  <div className="p-2" key={p.id}>
-                    {" "}
-                    <ParticipantBattleData
-                      participant={p}
-                      ref={(ref) => registerBattleCardRef(p.id, ref)}
-                      data-is-active={p.is_active}
-                      data-participant-id={p.id}
-                      key={p.id}
-                      indexInGroup={i}
-                    />
-                  </div>
+                  <ParticipantBattleData
+                    participant={p}
+                    ref={(ref) => registerBattleCardRef(p.id, ref)}
+                    data-is-active={p.is_active}
+                    data-participant-id={p.id}
+                    key={p.id}
+                    indexInGroup={i}
+                  />
                 ))}
             </div>
             {p[0]?.creature ? (
