@@ -29,9 +29,8 @@ type EncounterWithParticipants<
 
 export type EncounterWithParticipantDifficulty = {
   participants: Array<{
-    creature: { challenge_rating: number; is_player: boolean };
+    creature: Pick<Creature, "is_player" | "is_inanimate" | "challenge_rating">;
     is_ally: boolean;
-    inanimate: boolean;
   }>;
   average_victories: Encounter["average_victories"];
 };
@@ -45,12 +44,11 @@ function participantHasPlayed(
   e: {
     turn_groups: Array<Pick<TurnGroup, "id" | "has_played_this_round">>;
   },
-  participant: Pick<
-    Participant,
-    "turn_group_id" | "has_played_this_round" | "inanimate"
-  >
+  participant: Pick<Participant, "turn_group_id" | "has_played_this_round"> & {
+    creature: { is_inanimate: boolean };
+  }
 ) {
-  if (participant.inanimate) {
+  if (ParticipantUtils.isInanimate(participant)) {
     return true;
   }
   const groupsById = R.indexBy(e.turn_groups, (tg) => tg.id);
@@ -363,7 +361,7 @@ export const EncounterUtils = {
 
   totalCr(encounter: EncounterWithParticipantDifficulty) {
     return _.sumBy(encounter.participants, (p) => {
-      if (p.is_ally || p.inanimate) return 0;
+      if (p.is_ally || ParticipantUtils.isInanimate(p)) return 0;
       return ParticipantUtils.challengeRating(p);
     });
   },
@@ -617,7 +615,10 @@ export const EncounterUtils = {
       // column layout. really we should have some "encounter element" system that lets us add things
       // to the column layout without those things becoming participants.
 
-      (p) => !ParticipantUtils.isFriendly(p) && !p.turn_group_id && !p.inanimate
+      (p) =>
+        !ParticipantUtils.isFriendly(p) &&
+        !p.turn_group_id &&
+        !ParticipantUtils.isInanimate(p)
     );
   },
 

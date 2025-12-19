@@ -24,6 +24,7 @@ export const CreatureUtils = {
       created_at: new Date(),
       challenge_rating: creature.challenge_rating ?? 0,
       is_player: creature.is_player ?? false,
+      is_inanimate: creature.is_inanimate ?? false,
       max_hp: creature.max_hp ?? 0,
       initiative_bonus: creature.initiative_bonus ?? 0,
       stat_block_height: creature.stat_block_height ?? 250,

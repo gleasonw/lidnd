@@ -161,6 +161,7 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
   const [maxHp, setMaxHp] = useState(creature.max_hp);
   const [name, setName] = useState(creature.name);
   const [isPlayer, setIsPlayer] = useState(creature.is_player);
+  const [isInanimate, setIsInanimate] = useState(creature.is_inanimate);
 
   const { mutate: updateCreature, isPending: isLoading } =
     api.updateCreature.useMutation();
@@ -195,13 +196,22 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
         />
       </label>
       <label>
-        Player
         <Checkbox
           checked={isPlayer ?? false}
           onCheckedChange={(checked) =>
             checked !== "indeterminate" && setIsPlayer(checked)
           }
         />
+        Player
+      </label>
+      <label>
+        <Checkbox
+          checked={isInanimate ?? false}
+          onCheckedChange={(checked) =>
+            checked !== "indeterminate" && setIsInanimate(checked)
+          }
+        />
+        Inanimate (show only statblock and name)
       </label>
       <LoadingButton
         onClick={(e) => {
@@ -212,6 +222,7 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
             max_hp: maxHp,
             name,
             is_player: isPlayer,
+            is_inanimate: isInanimate,
           });
         }}
         isLoading={isLoading}

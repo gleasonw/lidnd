@@ -38,9 +38,9 @@ export function defaultParticipant(
     notes: p.notes ?? "",
     temporary_hp: p.temporary_hp ?? 0,
     hex_color: p.hex_color ?? "#1890FF",
+    inanimate: p.inanimate ?? false,
     max_hp_override: p.max_hp_override ?? null,
     column_id: p.column_id ?? null,
-    inanimate: p.inanimate ?? false,
     turn_group_id: p.turn_group_id ?? null,
     ...p,
   };

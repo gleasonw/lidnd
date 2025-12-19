@@ -71,6 +71,7 @@ export function useAddNewToParty({
         const playerWithPlaceholders = CreatureUtils.placeholder({
           ...creature,
           is_player: Boolean(creature.is_player),
+          is_inanimate: Boolean(creature.is_inanimate),
         });
         return {
           ...old,

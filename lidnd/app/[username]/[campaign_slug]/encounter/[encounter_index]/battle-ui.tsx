@@ -51,7 +51,6 @@ import {
   HomeIcon,
   ListOrdered,
   MoreHorizontal,
-  Pen,
   PlayIcon,
   Trash,
   X,
@@ -184,14 +183,14 @@ export const EncounterBattleUI = observer(function BattleUI() {
                       value="prep"
                       className="flex gap-2 items-center"
                     >
-                      <span>Prep</span>
-                      <Pen className="mr-2 h-4 w-4" />
+                      <span>Opponents</span>
+                      <AngryIcon className="mr-2 h-4 w-4" />
                     </TabsTrigger>
                     <TabsTrigger
                       value="preview"
                       className="flex gap-2 items-center"
                     >
-                      <span>Layout</span>
+                      <span>Preview</span>
                       <Grid2X2 className="mr-2 h-4 w-4" />
                     </TabsTrigger>
                   </TabsList>
@@ -569,7 +568,7 @@ export const ParticipantBattleData = observer(function BattleCard({
     >
       <BattleCardLayout key={participant.id} participant={participant}>
         <div className="flex flex-col gap-3 w-full">
-          {participant.inanimate ? (
+          {ParticipantUtils.isInanimate(participant) ? (
             <>
               <BattleCardCreatureName participant={participant} />
             </>
@@ -606,7 +605,6 @@ export const ParticipantBattleData = observer(function BattleCard({
                 ) : null}
                 <BattleCardTools participant={participant} />
               </div>
-              <InanimateParticipantButton participant={participant} />
             </div>
           )}
         </div>
@@ -656,28 +654,6 @@ function ParticipantNameAndMaybeNotes({
         <ParticipantNotes participant={participant} />
       </div>
     </div>
-  );
-}
-
-// TODO: inanimate is a hack flag to allow malice and other things the dm needs to track to sit inside the
-// column layout. really we should have some "encounter element" system that lets us add things
-// to the column layout without those things becoming participants.
-function InanimateParticipantButton(props: {
-  participant: ParticipantWithData;
-}) {
-  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
-  return (
-    <Button
-      variant="ghost"
-      onClick={() =>
-        updateParticipant({
-          ...props.participant,
-          inanimate: !props.participant.inanimate,
-        })
-      }
-    >
-      {props.participant.inanimate ? "Unmark Inanimate" : "Mark Inanimate"}
-    </Button>
   );
 }
 

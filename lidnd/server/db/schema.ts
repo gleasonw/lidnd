@@ -280,6 +280,7 @@ export const participants = pgTable(
     // TODO: inanimate is a hack flag to allow malice and other things the dm needs to track to sit inside the
     // column layout. really we should have some "encounter element" system that lets us add things
     // to the column layout without those things becoming participants.
+    /** @deprecated creatures have inanimate set globally now */
     inanimate: boolean("inanimate").default(false).notNull(),
     minion_count: integer("minion_count"),
     nickname: text("nickname"),
@@ -372,6 +373,8 @@ export const creatures = pgTable(
     initiative_bonus: integer("initiative_bonus").default(0).notNull(),
     challenge_rating: real("challenge_rating").default(0).notNull(),
     is_player: boolean("is_player").default(false).notNull(),
+    /** should we only show the creature as a statblock + a name? primary use case is malice blocks for draw steel */
+    is_inanimate: boolean("is_inanimate").default(false).notNull(),
     user_id: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -552,7 +555,8 @@ export const creatureUploadSchema = insertCreatureSchema
   .extend({
     max_hp: z.coerce.number().gt(0),
     challenge_rating: z.coerce.number(),
-    is_player: booleanSchema,
+    is_player: booleanSchema.optional(),
+    is_inanimate: booleanSchema.optional(),
     column_id: z.string().optional(),
   })
   .omit({ user_id: true });

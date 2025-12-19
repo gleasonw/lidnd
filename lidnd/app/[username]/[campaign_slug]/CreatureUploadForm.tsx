@@ -22,6 +22,7 @@ export function useCreatureForm() {
     defaultValues: {
       name: "",
       is_player: false,
+      is_inanimate: false,
     },
     resetOptions: {
       keepValues: false,

@@ -11,6 +11,8 @@ import { FormProvider } from "react-hook-form";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { useState } from "react";
 import { useParticipantForm } from "@/encounters/[encounter_index]/hooks";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 /**like the other form, but more flat.  */
 export function EditModeOpponentForm() {
@@ -47,8 +49,8 @@ export function EditModeOpponentForm() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex flex-col gap-5 w-full h-full max-h-full overflow-hidden"
           >
-            <div className="flex gap-5">
-              <div className="w-[200px]">
+            <div className="flex gap-5 pt-2">
+              <div className="w-[200px] h-full">
                 <FormField
                   control={form.control}
                   name="iconImage"
@@ -56,6 +58,7 @@ export function EditModeOpponentForm() {
                     return (
                       <ImageUpload
                         image={field.value}
+                        dropContainerClassName="h-full"
                         clearImage={() => field.onChange(undefined)}
                         onUpload={(image) => {
                           field.onChange(image);
@@ -68,7 +71,7 @@ export function EditModeOpponentForm() {
                   }}
                 />
               </div>
-              <div className="grid grid-cols-2 grid-rows-3">
+              <div className="grid grid-cols-2 grid-rows-3 gap-3">
                 <FormField
                   control={form.control}
                   name={"name"}
@@ -76,7 +79,6 @@ export function EditModeOpponentForm() {
                     return (
                       <LidndTextInput
                         className="col-start-1"
-                        variant="ghost"
                         required
                         placeholder="Name"
                         {...field}
@@ -86,12 +88,32 @@ export function EditModeOpponentForm() {
                 />
                 <FormField
                   control={form.control}
+                  name={"is_inanimate"}
+                  render={({ field }) => (
+                    <div className="flex h-full items-center">
+                      <Checkbox
+                        tabIndex={-1}
+                        id="is_inanimate"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="col-start-2"
+                      />
+                      <Label
+                        htmlFor="is_inanimate"
+                        className="ml-2 text-gray-500"
+                      >
+                        Only render name + statblock
+                      </Label>
+                    </div>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name={"max_hp"}
                   render={({ field }) => (
                     <LidndTextInput
                       type="number"
                       required
-                      variant="ghost"
                       placeholder="Base HP"
                       className="col-start-1"
                       {...field}
@@ -102,7 +124,6 @@ export function EditModeOpponentForm() {
 
                 <LidndTextInput
                   type="number"
-                  variant="ghost"
                   placeholder="Override HP for encounter"
                   tabIndex={-1}
                   className="col-start-2 row-start-2"
@@ -115,7 +136,6 @@ export function EditModeOpponentForm() {
                   render={({ field }) => (
                     <LidndTextInput
                       className="col-start-1"
-                      variant="ghost"
                       type="number"
                       placeholder={campaign.system === "dnd5e" ? "CR" : "EV"}
                       {...field}

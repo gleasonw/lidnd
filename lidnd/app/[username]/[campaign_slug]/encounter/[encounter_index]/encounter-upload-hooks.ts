@@ -8,6 +8,7 @@ import {
 } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 import { useUIStore } from "@/app/UIStore";
 import type { UseFormReturn } from "react-hook-form";
+import { CreatureUtils } from "@/utils/creatures";
 
 /**Note: must be called underneath an encounter provider */
 export function useUploadParticipant({
@@ -47,11 +48,12 @@ export function useUploadParticipant({
               encounter_id: id,
               creature_id: "pending",
             },
-            {
+            CreatureUtils.placeholder({
               ...data.creature,
               user_id: "pending",
               is_player: Boolean(data.creature.is_player),
-            }
+              is_inanimate: Boolean(data.creature.is_inanimate),
+            })
           );
         return EncounterUtils.addParticipant(optimisticParticipant, old);
       });
