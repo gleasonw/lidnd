@@ -45,6 +45,7 @@ import {
   AngryIcon,
   Columns,
   Edit,
+  FileTextIcon,
   Grid2X2,
   Grip,
   Home,
@@ -174,11 +175,18 @@ export const EncounterBattleUI = observer(function BattleUI() {
               battleStyles.root
             )}
           >
-            <div className="flex flex-col w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full">
+            <div className="flex flex-col gap-3 w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full">
               <div className="w-full flex flex-col gap-3">
                 <EncounterNameInput />
                 <div className="flex gap-8">
                   <TabsList>
+                    <TabsTrigger
+                      value="Notes"
+                      className="flex gap-2 items-center"
+                    >
+                      <span>Notes</span>
+                      <FileTextIcon className="mr-2 h-4 w-4" />
+                    </TabsTrigger>
                     <TabsTrigger
                       value="prep"
                       className="flex gap-2 items-center"
@@ -194,7 +202,30 @@ export const EncounterBattleUI = observer(function BattleUI() {
                       <Grid2X2 className="mr-2 h-4 w-4" />
                     </TabsTrigger>
                   </TabsList>
-                  <div className="flex gap-2 items-center">
+                </div>
+              </div>
+              <TabsContent
+                value="Notes"
+                className="w-full max-w-[800px] mx-auto"
+                data-value="Notes"
+              >
+                <div>
+                  <DescriptionTextArea />
+                </div>
+                <Card>
+                  <ReminderInput />
+                </Card>
+              </TabsContent>
+              <TabsContent
+                value="prep"
+                className="w-full xl:max-h-full xl:flex xl:flex-col xl:overflow-hidden gap-5"
+                data-value="prep"
+              >
+                <div className="flex gap-7 items-center w-full">
+                  <LidndLabel
+                    label="Target difficulty"
+                    className="flex flex-col"
+                  >
                     <Select
                       onValueChange={(v) => {
                         console.log(v);
@@ -205,7 +236,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                       }}
                       defaultValue={encounter.target_difficulty || undefined}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-40">
                         <SelectValue placeholder="Select difficulty" />
                       </SelectTrigger>
                       <SelectContent>
@@ -214,75 +245,61 @@ export const EncounterBattleUI = observer(function BattleUI() {
                         <SelectItem value="hard">Hard</SelectItem>
                       </SelectContent>
                     </Select>
-                    <span className="text-gray-500">difficulty</span>
-                  </div>
+                  </LidndLabel>
                   {campaign.system === "drawsteel" && (
-                    <LidndTextInput
-                      type="number"
-                      placeholder="Est. Victories"
-                      className="w-36"
-                      value={encounter.average_victories ?? ""}
-                      onChange={(e) => {
-                        const value = parseFloat(e.target.value);
-                        updateEncounter({
-                          ...encounter,
-                          average_victories: isNaN(value) ? null : value,
-                        });
-                      }}
-                    />
+                    <LidndLabel label="Est. Victories">
+                      <LidndTextInput
+                        type="number"
+                        placeholder="0"
+                        className="w-36"
+                        value={encounter.average_victories ?? ""}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          updateEncounter({
+                            ...encounter,
+                            average_victories: isNaN(value) ? null : value,
+                          });
+                        }}
+                      />
+                    </LidndLabel>
                   )}
-                </div>
-              </div>
-              <TabsContent
-                value="prep"
-                className="w-full xl:max-h-full xl:flex xl:flex-col xl:overflow-hidden"
-                data-value="prep"
-              >
-                <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full xl:overflow-hidden">
-                  <div className="flex flex-col gap-2 xl:max-h-full xl:overflow-auto">
-                    <div className="flex sm:flex-2 overflow-auto max-h-[300px]">
-                      <DescriptionTextArea />
+                  <div
+                    className={`flex w-full ml-10 flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-400">Current</span>
+                      <span className="text-2xl font-bold">{difficulty}</span>
                     </div>
-                    <Card className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
-                      <EditModeOpponentForm />
-                    </Card>
+
+                    <div className="flex flex-col items-baseline">
+                      <span className="text-sm whitespace-nowrap text-gray-400">
+                        Total {CampaignUtils.crLabel(campaign)}
+                      </span>
+                      <span className="text-2xl font-bold">
+                        {EncounterUtils.totalCr(encounter)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-baseline">
+                      <span className="text-sm whitespace-nowrap text-gray-400">
+                        Remaining {CampaignUtils.crLabel(campaign)}
+                      </span>
+                      <span className="text-2xl font-bold">
+                        {EncounterUtils.remainingCr(encounter, campaign)}
+                      </span>
+                    </div>
+                    <div className="w-full pb-3 pt-3 sm:pb-0">
+                      <EncounterBudgetSlider />
+                    </div>
                   </div>
-
+                </div>
+                <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full xl:overflow-hidden">
+                  <Card className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
+                    <EditModeOpponentForm />
+                  </Card>
                   <div className="flex flex-col gap-5 xl:max-h-full xl:overflow-auto">
-                    <div
-                      className={`flex flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-sm text-gray-400">Current</span>
-                        <span className="text-2xl font-bold">{difficulty}</span>
-                      </div>
-
-                      <div className="flex flex-col items-baseline">
-                        <span className="text-sm whitespace-nowrap text-gray-400">
-                          Total {CampaignUtils.crLabel(campaign)}
-                        </span>
-                        <span className="text-2xl font-bold">
-                          {EncounterUtils.totalCr(encounter)}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-baseline">
-                        <span className="text-sm whitespace-nowrap text-gray-400">
-                          Remaining {CampaignUtils.crLabel(campaign)}
-                        </span>
-                        <span className="text-2xl font-bold">
-                          {EncounterUtils.remainingCr(encounter, campaign)}
-                        </span>
-                      </div>
-                      <div className="w-full pb-3 pt-3 sm:pb-0">
-                        <EncounterBudgetSlider />
-                      </div>
-                    </div>
                     {campaign.system === "drawsteel" ? (
                       <TurnGroupSetup />
                     ) : null}
-                    <Card className="w-full h-full">
-                      <ReminderInput />
-                    </Card>
                   </div>
                 </div>
               </TabsContent>
@@ -424,8 +441,8 @@ function EncounterBattlePreview() {
           {columns?.map((c, i) =>
             c.is_home_column ? (
               <StatColumnComponent column={c} index={i} key={c.id}>
-                <div className="w-full h-full flex items-center justify-center text-center">
-                  This column will hold the encounter description.
+                <div className="w-full h-full flex">
+                  <DescriptionTextArea />
                 </div>
               </StatColumnComponent>
             ) : (

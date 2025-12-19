@@ -131,7 +131,7 @@ export function ReminderInput() {
         .sort((a, b) => a.alert_after_round - b.alert_after_round)
         .map((reminder) => (
           <div className="flex gap-1 items-center p-3" key={reminder.id}>
-            <span className="flex-grow">{reminder.reminder}</span>
+            <span>{reminder.reminder}</span>
             <span>top of round {reminder.alert_after_round}</span>
             <ButtonWithTooltip
               text="Remove reminder"
