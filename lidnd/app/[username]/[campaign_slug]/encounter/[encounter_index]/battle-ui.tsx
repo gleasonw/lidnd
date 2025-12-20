@@ -221,7 +221,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 data-value="prep"
               >
                 <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full xl:overflow-hidden">
-                  <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-5 overflow-hidden">
                     <div className="flex gap-3">
                       <LidndLabel label="Target difficulty">
                         <Select
@@ -268,7 +268,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                       <EditModeOpponentForm />
                     </Card>
                   </div>
-                  <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-5 min-h-0">
                     <div
                       className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
                     >
