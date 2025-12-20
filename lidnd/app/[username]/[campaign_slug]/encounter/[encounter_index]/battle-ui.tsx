@@ -205,7 +205,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
               </div>
               <TabsContent
                 value="Notes"
-                className="w-full max-w-[800px] mx-auto flex flex-col gap-5"
+                className="w-full max-w-[800px] mx-auto flex flex-col gap-5 overflow-auto"
                 data-value="Notes"
               >
                 <div>
