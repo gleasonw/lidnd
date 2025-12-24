@@ -72,9 +72,54 @@ export function ParticipantHealthForm({
   }
 
   return (
-    <div className="flex gap-2 text-lg w-full">
-      {extraInputs}
-      <div className="w-full relative bg-red-400 flex h-full items-center justify-center">
+    <div className="flex flex-col gap-2 text-lg w-full">
+      <div className="flex flex-wrap w-full gap-4">
+        <div className="flex gap-2">
+          <ButtonWithTooltip
+            text="Damage"
+            variant="ghost"
+            className={
+              "bg-red-100 text-red-700 gap-3 p-2 h-8 w-8 flex items-center"
+            }
+            onClick={(e) => {
+              e.stopPropagation();
+              handleHPChange(
+                typeof hpDiff === "number"
+                  ? participant.hp - hpDiff
+                  : participant.hp
+              );
+            }}
+          >
+            <Sword />
+          </ButtonWithTooltip>
+          <LidndTextInput
+            placeholder="HP"
+            type="number"
+            className="h-8 w-16 pl-2"
+            value={hpDiff}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.stopPropagation();
+                handleHPChange(
+                  typeof hpDiff === "number"
+                    ? participant.hp - hpDiff
+                    : participant.hp
+                );
+              }
+            }}
+            onChange={(e) => {
+              if (!isNaN(parseInt(e.target.value))) {
+                setHpDiff(parseInt(e.target.value));
+              } else {
+                setHpDiff("");
+              }
+            }}
+          />
+        </div>
+        {extraInputs}
+      </div>
+
+      <div className="w-full relative bg-red-400 flex h-6 items-center justify-center">
         <span className="whitespace-nowrap text-white absolute z-10">
           {participant.hp} / {ParticipantUtils.maxHp(participant)}
         </span>
@@ -85,47 +130,6 @@ export function ParticipantHealthForm({
           }}
         />
       </div>
-      <ButtonWithTooltip
-        text="Damage"
-        variant="ghost"
-        className={
-          "bg-red-100 text-red-700 gap-3 p-2 h-8 w-8 flex items-center"
-        }
-        onClick={(e) => {
-          e.stopPropagation();
-          handleHPChange(
-            typeof hpDiff === "number"
-              ? participant.hp - hpDiff
-              : participant.hp
-          );
-        }}
-      >
-        <Sword />
-      </ButtonWithTooltip>
-      <LidndTextInput
-        placeholder="HP"
-        type="number"
-        className="h-8 w-14 pl-2"
-        variant="ghost"
-        value={hpDiff}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.stopPropagation();
-            handleHPChange(
-              typeof hpDiff === "number"
-                ? participant.hp - hpDiff
-                : participant.hp
-            );
-          }
-        }}
-        onChange={(e) => {
-          if (!isNaN(parseInt(e.target.value))) {
-            setHpDiff(parseInt(e.target.value));
-          } else {
-            setHpDiff("");
-          }
-        }}
-      />
     </div>
   );
 }

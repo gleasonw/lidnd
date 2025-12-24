@@ -46,13 +46,10 @@ import {
   CheckCircle,
   Circle,
   Columns,
-  Edit,
   FileTextIcon,
   Grid2X2,
   Grip,
-  Home,
   HomeIcon,
-  ListOrdered,
   MoreHorizontal,
   PlayIcon,
   Trash,
@@ -89,7 +86,6 @@ import { crLabel } from "@/utils/campaigns";
 import type { TurnGroup } from "@/server/db/schema";
 import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index]/encounter-prep";
 import { StatColumnUtils } from "@/utils/stat-columns";
-import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import * as CampaignUtils from "@/utils/campaigns";
 import { labelColors } from "@/lib/utils";
 import { LidndLabel } from "@/components/ui/LidndLabel";
@@ -583,7 +579,7 @@ export const ParticipantBattleData = observer(function BattleCard({
 
   return (
     <div
-      className={clsx(`relative flex-col gap-6 w-full flex`)}
+      className={clsx(`relative flex-col gap-6 w-full flex px-1`)}
       ref={ref}
       {...props}
     >
@@ -599,12 +595,14 @@ export const ParticipantBattleData = observer(function BattleCard({
                     ) : null}
                     <div className="flex flex-col w-full">
                       <BattleCardCreatureName participant={participant} />
-                      <ParticipantNotes participant={participant} />
                     </div>
                   </div>
                 </div>
                 <div className="flex justify-between">
-                  <ParticipantHealthForm participant={participant} />
+                  <ParticipantHealthForm
+                    participant={participant}
+                    extraInputs={<ParticipantNotes participant={participant} />}
+                  />
                 </div>
               </div>
             </div>
@@ -651,7 +649,11 @@ function ParticipantNotes({
     },
   });
 
-  return <LidndTextArea editor={editor} />;
+  return (
+    <div className="w-full flex-1 h-full">
+      <LidndTextArea editor={editor} />
+    </div>
+  );
 }
 
 export const GroupParticipantHPOverride = observer(
@@ -701,68 +703,18 @@ export const GroupParticipantHPOverride = observer(
 );
 
 export const GroupBattleUITools = observer(function GroupBattleUITools() {
-  const { toggleParticipantEdit: toggleEditingInitiative } =
-    useEncounterUIStore();
-  const { campaignLink } = useEncounterLinks();
   const [encounter] = useEncounter();
-  const { mutate: updateEncounter } = useUpdateEncounter();
   return (
     <div className="flex flex-wrap items-center">
-      <div className="flex items-center gap-1">
-        <Link href={campaignLink} className="flex gap-3">
-          <Button variant="ghost" className="text-gray-400 p-2">
-            <Home />
-          </Button>
-        </Link>
-        <ButtonWithTooltip
-          text="Switch to prep mode"
-          variant="ghost"
-          className="flex text-gray-400 p-2"
-          onClick={() =>
-            updateEncounter({
-              status: "prep",
-              id: encounter.id,
-              campaign_id: encounter.campaign_id,
-              started_at: null,
-            })
-          }
-        >
-          <Edit />
-        </ButtonWithTooltip>
-      </div>
+      <div className="flex items-center gap-1"></div>
       <div className="px-2">
         <EncounterDetails key={encounter.started_at?.getTime()} />
-      </div>
-
-      <div className="flex gap-2">
-        <ButtonWithTooltip
-          variant="ghost"
-          className="flex text-gray-400 p-2"
-          text="Edit initiative and columns"
-          onClick={() => toggleEditingInitiative()}
-        >
-          <ListOrdered />
-        </ButtonWithTooltip>
-        <EqualizeColumnsButton />
-        <LidndDialog
-          trigger={
-            <ButtonWithTooltip
-              className="p-2 text-gray-400"
-              text="Add Opponent"
-              variant="ghost"
-            >
-              <AngryIcon />
-            </ButtonWithTooltip>
-          }
-          content={<EditModeOpponentForm />}
-          title="Add Opponent"
-        />
       </div>
     </div>
   );
 });
 
-function EqualizeColumnsButton() {
+export function EqualizeColumnsButton() {
   const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
   const [encounter] = useEncounter();
 
@@ -888,7 +840,7 @@ function TurnGroupLabel({
     <Button
       variant="ghost"
       onClick={() => uiStore.toggleFocusThisGroup(id)}
-      className="h-4 w-8 rounded-sm"
+      className="h-4 w-8 rounded-sm shadow-lg"
       style={{ background: hex_color ?? "" }}
     />
   );
