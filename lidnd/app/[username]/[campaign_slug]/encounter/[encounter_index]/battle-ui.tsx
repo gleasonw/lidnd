@@ -43,6 +43,8 @@ import {
 } from "@/encounters/[encounter_index]/reminders";
 import {
   AngryIcon,
+  CheckCircle,
+  Circle,
   Columns,
   Edit,
   FileTextIcon,
@@ -871,11 +873,31 @@ export function BattleCardStatusEffects({
   );
 }
 
+function TurnGroupLabel({
+  turnGroup,
+}: {
+  turnGroup?: Pick<TurnGroup, "id" | "hex_color">;
+}) {
+  const uiStore = useEncounterUIStore();
+  if (!turnGroup) {
+    return null;
+  }
+  const { id, hex_color } = turnGroup;
+
+  return (
+    <Button
+      variant="ghost"
+      onClick={() => uiStore.toggleFocusThisGroup(id)}
+      className="h-4 w-8 rounded-sm"
+      style={{ background: hex_color ?? "" }}
+    />
+  );
+}
+
 export const BattleCardCreatureName = observer(function BattleCardCreatureName({
   participant,
 }: BattleCardParticipantProps) {
   const [encounter] = useEncounter();
-  const uiStore = useEncounterUIStore();
   const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
   const tgForParticipant = participant.turn_group_id
     ? turnGroupsById[participant.turn_group_id]
@@ -884,12 +906,7 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
   return (
     <span className="flex gap-1 items-center">
       {tgForParticipant ? (
-        <Button
-          variant="ghost"
-          onClick={() => uiStore.toggleFocusThisGroup(tgForParticipant.id)}
-          className="h-4 w-8 rounded-sm"
-          style={{ background: tgForParticipant?.hex_color ?? "" }}
-        />
+        <TurnGroupLabel turnGroup={tgForParticipant} />
       ) : null}
       <LidndPopover
         trigger={
@@ -1307,7 +1324,7 @@ export const RunEncounter = observer(function LinearBattleUI() {
 
   return (
     <div className="flex flex-col gap-2 h-full">
-      <div className="flex gap2">
+      <div className="flex gap-2 shadow-lg">
         <GroupBattleUITools />
         <GroupTurnToggles />
       </div>
@@ -1334,29 +1351,22 @@ function GroupTurnToggles() {
   const participantsWithoutTurnGroup =
     EncounterUtils.monstersWithoutTurnGroup(encounter);
   return (
-    <div className="flex gap-4 items-center p-2 shadow-lg">
+    <div className="flex gap-2 items-center">
       <div className="flex gap-4 flex-wrap">
         {EncounterUtils.players(encounter).map((p) => (
-          <GroupParticipantDoneToggle participant={p} key={p.id} />
+          <TurnTakerQuickView participant={p} key={p.id} />
         ))}
       </div>
-      <span>vs</span>
+      <span className="h-full w-1 border bg-gray-200"></span>
       <div className="flex gap-4 flex-wrap">
         {participantsWithoutTurnGroup.map((p) => (
-          <GroupParticipantDoneToggle participant={p} key={p.id} />
+          <TurnTakerQuickView participant={p} key={p.id} />
         ))}
         {Object.entries(participantsByTurnGroup).map(([tgId, participants]) => (
           <div key={tgId}>
-            <GroupParticipantDoneToggle
+            <TurnTakerQuickView
               participant={participants[0]}
-              buttonExtra={
-                <div
-                  className="h-4 w-8 rounded-sm"
-                  style={{
-                    backgroundColor: turnGroupsById[tgId]?.hex_color ?? "",
-                  }}
-                />
-              }
+              buttonExtra={<TurnGroupLabel turnGroup={turnGroupsById[tgId]} />}
             />
           </div>
         ))}
@@ -1443,7 +1453,7 @@ const RunCreatureStatBlock = observer(function RunCreatureStatBlock({
   );
 });
 
-function GroupParticipantDoneToggle({
+function TurnTakerQuickView({
   participant,
   buttonExtra,
 }: {
@@ -1456,35 +1466,34 @@ function GroupParticipantDoneToggle({
   const turnGroupForParticipant =
     turnGroupsById[participant.turn_group_id ?? ""];
   const { mutate: toggleParticipantHasPlayedThisRound } = useToggleGroupTurn();
+  const hasPlayed = EncounterUtils.participantHasPlayed(encounter, participant);
   return (
-    <Button
-      variant="ghost"
-      onClick={() =>
-        toggleParticipantHasPlayedThisRound({
-          encounter_id: id,
-          participant_id: participant.id,
-        })
-      }
-      style={{ outlineColor: "oklch(87.2% 0.01 258.338)" }}
-      className={clsx("flex gap-1 rounded-md", {
-        "opacity-50": EncounterUtils.participantHasPlayed(
-          encounter,
-          participant
-        ),
-        "outline-4 outline": !EncounterUtils.participantHasPlayed(
-          encounter,
-          participant
-        ),
-        "bg-blue-100":
-          ParticipantUtils.isFriendly(participant) &&
-          !EncounterUtils.participantHasPlayed(encounter, participant),
+    <div
+      className={clsx("flex gap-2 p-1 rounded-md items-center", {
+        "opacity-50": hasPlayed,
       })}
     >
+      <Button
+        variant={hasPlayed ? "ghost" : "outline"}
+        onClick={() =>
+          toggleParticipantHasPlayedThisRound({
+            encounter_id: id,
+            participant_id: participant.id,
+          })
+        }
+        className={clsx("flex p-2 gap-1 rounded-md")}
+      >
+        {hasPlayed ? (
+          <CheckCircle className="h-4 w-4" />
+        ) : (
+          <Circle className="h-4 w-4" />
+        )}
+      </Button>
       {buttonExtra}
       {turnGroupForParticipant
         ? turnGroupForParticipant.name
         : ParticipantUtils.name(participant)}
-    </Button>
+    </div>
   );
 }
 
