@@ -876,8 +876,6 @@ export const EncounterUtils = {
       };
     }
 
-    console.log(encounterWithUpdate);
-
     const allHavePlayed = encounterWithUpdate.participants.every((p) =>
       this.participantHasPlayed(encounterWithUpdate, p)
     );

@@ -12,11 +12,21 @@ import { DialogTitle } from "@radix-ui/react-dialog";
 import { Plus } from "lucide-react";
 import React, { createContext } from "react";
 
-interface LidndDialogProps {
+type LidndDialogPropsBase = {
   trigger: React.ReactNode;
   content: React.ReactNode;
   title: React.ReactNode;
-}
+};
+
+type LidndDialogPropsControlled = LidndDialogPropsBase & {
+  isOpen: boolean;
+  onClose: () => void;
+};
+
+type LidndDialogPropsUncontrolled = LidndDialogPropsBase & {
+  isOpen?: never;
+  onClose?: never;
+};
 
 const DialogContext = createContext<{ close: () => void } | null>(null);
 export const useLidndDialog = () => {
@@ -27,12 +37,22 @@ export const useLidndDialog = () => {
   return context;
 };
 
-export function LidndDialog(props: LidndDialogProps) {
+export function LidndDialog(
+  props: LidndDialogPropsControlled | LidndDialogPropsUncontrolled
+) {
   const { trigger, content } = props;
   const [isOpen, setIsOpen] = React.useState(false);
   return (
     <DialogContext.Provider value={{ close: () => setIsOpen(false) }}>
-      <Dialog open={isOpen} onOpenChange={(isOpen) => setIsOpen(isOpen)}>
+      <Dialog
+        open={props.isOpen ?? isOpen}
+        onOpenChange={(isOpen) => {
+          setIsOpen(isOpen);
+          if (isOpen === false) {
+            props.onClose?.();
+          }
+        }}
+      >
         <DialogTrigger asChild>{trigger}</DialogTrigger>
         <DialogContent className="max-h-screen overflow-auto sm:max-w-[1000px]">
           <DialogTitle>{props.title}</DialogTitle>

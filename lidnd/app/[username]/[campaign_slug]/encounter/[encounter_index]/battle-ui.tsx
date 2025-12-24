@@ -46,12 +46,12 @@ import {
   CheckCircle,
   Circle,
   Columns,
-  FileTextIcon,
   Grid2X2,
   Grip,
   HomeIcon,
   MoreHorizontal,
   PlayIcon,
+  PlusIcon,
   Trash,
   X,
 } from "lucide-react";
@@ -90,6 +90,9 @@ import * as CampaignUtils from "@/utils/campaigns";
 import { labelColors } from "@/lib/utils";
 import { LidndLabel } from "@/components/ui/LidndLabel";
 import { AddColumn } from "@/app/public/images/icons/AddColumn";
+import { LidndDialog } from "@/components/ui/lidnd_dialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { getQueryKey } from "@trpc/react-query";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -178,13 +181,6 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 <div className="flex gap-8">
                   <TabsList>
                     <TabsTrigger
-                      value="Notes"
-                      className="flex gap-2 items-center"
-                    >
-                      <span>Notes</span>
-                      <FileTextIcon className="mr-2 h-4 w-4" />
-                    </TabsTrigger>
-                    <TabsTrigger
                       value="prep"
                       className="flex gap-2 items-center"
                     >
@@ -202,71 +198,66 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 </div>
               </div>
               <TabsContent
-                value="Notes"
-                className="w-full max-w-[800px] mx-auto flex flex-col gap-5 overflow-auto"
-                data-value="Notes"
-              >
-                <div>
-                  <DescriptionTextArea />
-                </div>
-                <Card>
-                  <ReminderInput />
-                </Card>
-              </TabsContent>
-              <TabsContent
                 value="prep"
-                className="w-full xl:max-h-full flex flex-col xl:overflow-hidden gap-5"
+                className="w-full xl:max-h-full flex flex-col gap-5"
                 data-value="prep"
               >
-                <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full xl:overflow-hidden">
-                  <div className="flex flex-col gap-5 overflow-hidden">
-                    <div className="flex gap-3">
-                      <LidndLabel label="Target difficulty">
-                        <Select
-                          onValueChange={(v) => {
-                            console.log(v);
-                            updateEncounter({
-                              ...encounter,
-                              target_difficulty: v as any,
-                            });
-                          }}
-                          defaultValue={
-                            encounter.target_difficulty || undefined
-                          }
-                        >
-                          <SelectTrigger className="w-40">
-                            <SelectValue placeholder="Select difficulty" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="easy">Easy</SelectItem>
-                            <SelectItem value="standard">Standard</SelectItem>
-                            <SelectItem value="hard">Hard</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </LidndLabel>
-                      {campaign.system === "drawsteel" && (
-                        <LidndLabel label="Est. Victories">
-                          <LidndTextInput
-                            type="number"
-                            placeholder="0"
-                            className="w-36"
-                            value={encounter.average_victories ?? ""}
-                            onChange={(e) => {
-                              const value = parseFloat(e.target.value);
+                <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-5">
+                      <div className="flex gap-3">
+                        <LidndLabel label="Target difficulty">
+                          <Select
+                            onValueChange={(v) => {
+                              console.log(v);
                               updateEncounter({
                                 ...encounter,
-                                average_victories: isNaN(value) ? null : value,
+                                target_difficulty: v as any,
                               });
                             }}
-                          />
+                            defaultValue={
+                              encounter.target_difficulty || undefined
+                            }
+                          >
+                            <SelectTrigger className="w-40">
+                              <SelectValue placeholder="Select difficulty" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="easy">Easy</SelectItem>
+                              <SelectItem value="standard">Standard</SelectItem>
+                              <SelectItem value="hard">Hard</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </LidndLabel>
-                      )}
+                        {campaign.system === "drawsteel" && (
+                          <LidndLabel label="Est. Victories">
+                            <LidndTextInput
+                              type="number"
+                              placeholder="0"
+                              className="w-36"
+                              value={encounter.average_victories ?? ""}
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value);
+                                updateEncounter({
+                                  ...encounter,
+                                  average_victories: isNaN(value)
+                                    ? null
+                                    : value,
+                                });
+                              }}
+                            />
+                          </LidndLabel>
+                        )}
+                      </div>
                     </div>
-                    <Card className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
-                      <EditModeOpponentForm />
+                    <div>
+                      <DescriptionTextArea />
+                    </div>
+                    <Card>
+                      <ReminderInput />
                     </Card>
                   </div>
-                  <div className="flex flex-col gap-5 min-h-0">
+                  <div className="flex flex-col gap-8 min-h-0">
                     <div
                       className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
                     >
@@ -996,6 +987,7 @@ function PrepParticipant({
   const [campaign] = useCampaign();
   return (
     <div key={p.id} className="flex gap-2 items-center max-w-[400px]">
+      <RemoveCreatureFromEncounterButton participant={p} />
       <CreatureIcon creature={p.creature} size="small" />
       <div className="flex flex-col max-w-full">
         <span className="truncate">{ParticipantUtils.name(p)}</span>
@@ -1013,25 +1005,13 @@ function PrepParticipant({
           </LidndLabel>
         </span>
       </div>
-      <LidndPopover
-        trigger={
-          <Button variant="ghost" className="text-gray-300 p-2">
-            <MoreHorizontal />
-          </Button>
-        }
-      >
-        <RemoveCreatureFromEncounterButton
-          participant={p}
-          moreText={"Remove from encounter"}
-        />
-        {encounter.turn_groups.length > 0 ? (
-          <div className="ml-auto">
-            <LidndLabel label="Group">
-              <TurnGroupSelect participant={p} />
-            </LidndLabel>
-          </div>
-        ) : null}
-      </LidndPopover>
+      {encounter.turn_groups.length > 0 ? (
+        <div className="ml-auto">
+          <LidndLabel label="Group">
+            <TurnGroupSelect participant={p} />
+          </LidndLabel>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1039,11 +1019,50 @@ function PrepParticipant({
 function TurnGroupSetup() {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
+  const [creatureAddDialogIsOpen, setCreatureAddDialogIsOpen] = useState(false);
   const monstersWihoutGroup = EncounterUtils.monstersInCrOrder(
     encounter
   ).filter((m) => !m.turn_group_id);
+  const keyForExistingCreature = getQueryKey(
+    api.addExistingCreatureAsParticipant
+  );
+  console.log("keyForExistingCreature", keyForExistingCreature);
+  const qc = useQueryClient();
+  // i would have to prop drill a bit to get a callback into existing creature add, so instead
+  // i will do this
+  useEffect(() => {
+    return qc.getMutationCache().subscribe((event) => {
+      const { mutation, type } = event;
+      const key = (
+        mutation?.options?.mutationKey?.[0] as Array<string>
+      )?.[0] as string | undefined;
+      const targetKey = keyForExistingCreature?.[0]?.[0];
+      if (key === targetKey && type === "added") {
+        console.log(`turn group setup detected existing creature added`);
+        setCreatureAddDialogIsOpen(false);
+      }
+    });
+  }, []);
+
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-5">
+      <LidndDialog
+        isOpen={creatureAddDialogIsOpen}
+        onClose={() => setCreatureAddDialogIsOpen(false)}
+        title="Add adversary"
+        content={
+          <Card className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
+            <EditModeOpponentForm
+              onSubmitSuccess={() => setCreatureAddDialogIsOpen(false)}
+            />
+          </Card>
+        }
+        trigger={
+          <Button onClick={() => setCreatureAddDialogIsOpen(true)}>
+            Add adversary <PlusIcon />
+          </Button>
+        }
+      />
       <div className="flex flex-wrap gap-10 items-center">
         <LidndLabel label="Player count" className="flex gap-2 items-center">
           <span className="text-lg">

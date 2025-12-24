@@ -15,7 +15,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
 /**like the other form, but more flat.  */
-export function EditModeOpponentForm() {
+export function EditModeOpponentForm({
+  onSubmitSuccess,
+}: {
+  onSubmitSuccess?: () => void;
+}) {
   const [overrideHp, setOverrideHp] = useState<string | undefined>(undefined);
 
   const hpAsNumber = Number(overrideHp);
@@ -24,7 +28,10 @@ export function EditModeOpponentForm() {
   const { form, onSubmit, isPending } = useParticipantForm({
     role: "opponent",
     overrideHp: overrideHpValue,
-    afterSubmit: () => setOverrideHp(undefined),
+    afterSubmit: () => {
+      setOverrideHp(undefined);
+      onSubmitSuccess?.();
+    },
   });
   const [campaign] = useCampaign();
 

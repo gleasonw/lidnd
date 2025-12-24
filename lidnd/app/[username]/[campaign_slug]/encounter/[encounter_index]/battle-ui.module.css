@@ -2,10 +2,6 @@
   &:has(div[data-state="active"][data-value="preview"]) {
     overflow: auto;
   }
-
-  @media (min-width: 1280px) {
-    overflow: hidden;
-  }
 }
 
 .parentContainer {
