@@ -10,7 +10,7 @@ export function EncounterDetails() {
   useEffect(() => {
     const intervalTimer = setInterval(() => {
       setNow(Date.now());
-    }, 300000);
+    }, 60000);
     return () => clearInterval(intervalTimer);
   });
   switch (encounter.status) {
@@ -23,7 +23,7 @@ export function EncounterDetails() {
     case "run": {
       const startTime = encounter.started_at
         ? new Date(encounter.started_at)
-        : new Date(now);
+        : new Date();
       const elapsedMs = now - startTime.getTime();
       const minutes = Math.floor(elapsedMs / 1000 / 60);
       return (

@@ -731,7 +731,7 @@ export const GroupBattleUITools = observer(function GroupBattleUITools() {
         </ButtonWithTooltip>
       </div>
       <div className="px-2">
-        <EncounterDetails />
+        <EncounterDetails key={encounter.started_at?.getTime()} />
       </div>
 
       <div className="flex gap-2">
