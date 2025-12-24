@@ -17,6 +17,7 @@ import { participantCreateSchema } from "../db/schema";
 import { ServerCreature } from "../sdk/creatures";
 import { revalidatePath } from "next/cache";
 import * as ServerTurnGroup from "@/server/sdk/turnGroups";
+import { ServerParticipants } from "@/server/sdk/participants";
 
 export const participantsRouter = {
   uploadParticipant: protectedProcedure
@@ -162,59 +163,10 @@ export const participantsRouter = {
   updateEncounterParticipant: protectedProcedure
     .input(participantSchema)
     .mutation(async (opts) => {
-      if (opts.input.hp <= 0) {
-        // just remove the participant
-        const result = await db.transaction(async (tx) => {
-          const [update, _] = await Promise.all([
-            await tx
-              .delete(participants)
-              .where(eq(participants.id, opts.input.id))
-              .returning(),
-            ServerEncounter.encounterByIdThrows(
-              opts.ctx,
-              opts.input.encounter_id,
-              tx
-            ),
-          ]);
-          const updatedParticipant = update[0];
-
-          if (!updatedParticipant) {
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: "Failed to update encounter participant",
-            });
-          }
-
-          return updatedParticipant;
-        });
-        return result;
-      }
-
-      const result = await db.transaction(async (tx) => {
-        const [update, _] = await Promise.all([
-          await tx
-            .update(participants)
-            .set(opts.input)
-            .where(eq(participants.id, opts.input.id))
-            .returning(),
-          ServerEncounter.encounterByIdThrows(
-            opts.ctx,
-            opts.input.encounter_id,
-            tx
-          ),
-        ]);
-        const updatedParticipant = update[0];
-
-        if (!updatedParticipant) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to update encounter participant",
-          });
-        }
-
-        return updatedParticipant;
+      return await ServerParticipants.updateParticipant({
+        participant: opts.input,
+        dbObject: db,
       });
-      return result;
     }),
 
   removeStatusEffect: protectedProcedure

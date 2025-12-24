@@ -8,6 +8,7 @@ import { appRoutes } from "@/app/routes";
 import { Home } from "lucide-react";
 import css from "./EncounterLayout.module.css";
 import { Button } from "@/components/ui/button";
+import { NetworkErrorCatcher } from "@/encounters/[encounter_index]/NetworkErrorCatcher";
 
 export default async function EncounterLayout(props: {
   children: React.ReactNode;
@@ -39,30 +40,34 @@ export default async function EncounterLayout(props: {
   return (
     <EncounterUI>
       <EncounterId encounterId={encounter.id}>
-        <div className={`relative ${css.root} flex flex-col max-h-full h-full`}>
-          {/**we don't really have space for this nav on group initiative... might need to rethink slightly */}
-          {campaign?.system === "dnd5e" && (
-            <div className={` absolute top-0 left-0 z-50`}>
-              <div
-                className={`items-center justify-center gap-3 flex flex-col w-full h-full`}
-              >
-                <Link
-                  href={appRoutes.campaign({
-                    campaign: { ...campaign, slug: param.campaign_slug },
-                    user,
-                  })}
-                  className="flex gap-3"
+        <NetworkErrorCatcher>
+          <div
+            className={`relative ${css.root} flex flex-col max-h-full h-full`}
+          >
+            {/**we don't really have space for this nav on group initiative... might need to rethink slightly */}
+            {campaign?.system === "dnd5e" && (
+              <div className={` absolute top-0 left-0 z-50`}>
+                <div
+                  className={`items-center justify-center gap-3 flex flex-col w-full h-full`}
                 >
-                  <Button variant="ghost" className="opacity-60">
-                    <Home />
-                    Campaign
-                  </Button>
-                </Link>
+                  <Link
+                    href={appRoutes.campaign({
+                      campaign: { ...campaign, slug: param.campaign_slug },
+                      user,
+                    })}
+                    className="flex gap-3"
+                  >
+                    <Button variant="ghost" className="opacity-60">
+                      <Home />
+                      Campaign
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            </div>
-          )}
-          {props.children}
-        </div>
+            )}
+            {props.children}
+          </div>
+        </NetworkErrorCatcher>
       </EncounterId>
     </EncounterUI>
   );

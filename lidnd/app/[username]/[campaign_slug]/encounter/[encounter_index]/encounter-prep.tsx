@@ -51,9 +51,6 @@ export function EncounterNameInput() {
   const user = useUser();
 
   const { mutate: updateEncounter } = api.updateEncounter.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(id);
-    },
     onSuccess: (newEncounter) =>
       newEncounter &&
       history.replaceState(

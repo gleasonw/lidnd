@@ -56,16 +56,13 @@ export function StatusForm({
   const { encounterById } = api.useUtils();
   const effects = api.statusEffects.useQuery().data;
   const { mutate: updateStatus } = api.assignStatusEffect.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(participant.encounter_id);
-    },
     onMutate: async (newStatusEffect) => {
       await encounterById.cancel(participant.encounter_id);
       const previousEncounter = encounterById.getData(participant.encounter_id);
       encounterById.setData(participant.encounter_id, (old) => {
         if (!old) return old;
         const effectToAdd = effects?.find(
-          (effect) => effect.id === newStatusEffect.status_effect_id,
+          (effect) => effect.id === newStatusEffect.status_effect_id
         );
 
         if (!previousEncounter) {
@@ -84,7 +81,7 @@ export function StatusForm({
             save_ends_dc: newStatusEffect.save_ends_dc ?? 0,
             effect: effectToAdd,
           }),
-          previousEncounter,
+          previousEncounter
         );
       });
     },
@@ -92,7 +89,7 @@ export function StatusForm({
 
   const [save_ends_dc, setSaveEndsDC] = React.useState<string>("");
   const [selectedStatus, setSelectedStatus] = React.useState<string | null>(
-    null,
+    null
   );
   const [statusDropdownOpen, setStatusDropdownOpen] = React.useState(false);
 
@@ -166,7 +163,9 @@ export function StatusForm({
 export function EffectIcon({ effect }: { effect: StatusEffect }) {
   return (
     <div
-      className={`h-10 w-10 flex justify-center items-center text-${effectColorMap[effect.name as keyof typeof effectIconMap]}-500`}
+      className={`h-10 w-10 flex justify-center items-center text-${
+        effectColorMap[effect.name as keyof typeof effectIconMap]
+      }-500`}
     >
       {effectIconMap[effect.name as keyof typeof effectIconMap]}
     </div>

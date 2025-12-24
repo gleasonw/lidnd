@@ -18,9 +18,6 @@ export function useUpdateCampaign(campaign: { id: string }) {
   const campaignId = campaign.id;
   const { campaignById } = api.useUtils();
   return api.updateCampaign.useMutation({
-    onSettled: async () => {
-      return await campaignById.invalidate(campaignId);
-    },
     onMutate: async (campaign) => {
       await campaignById.cancel(campaignId);
       const previous = campaignById.getData(campaignId);
@@ -46,7 +43,7 @@ export function useAddNewToParty({
   form: UseFormReturn<PlayerUpload>;
 }) {
   const campaignId = campaign.id;
-  const { campaignById, encounterById } = api.useUtils();
+  const { campaignById } = api.useUtils();
   //@ts-expect-error - need to fix the types on the form... the playerupload object and the participant upload object differ slightly
   const uploadToAws = useAwsImageUpload({ form });
   return api.createCreatureAndAddToParty.useMutation({
@@ -56,10 +53,6 @@ export function useAddNewToParty({
         statBlockPresigned: data.statBlockPresigned,
         creature: data.newPartyMember,
       });
-    },
-    onSettled: async () => {
-      encounterById.refetch();
-      return await campaignById.invalidate(campaignId);
     },
     onMutate: async ({ creature }) => {
       await campaignById.cancel(campaignId);
@@ -93,7 +86,7 @@ export function useAddNewToParty({
 
 export function useAddExistingToParty(campaign: { id: string }) {
   const campaignId = campaign.id;
-  const { campaignById, encounterById } = api.useUtils();
+  const { campaignById } = api.useUtils();
 
   return api.addExistingCreatureToParty.useMutation({
     onMutate: async ({ creature }) => {
@@ -122,23 +115,13 @@ export function useAddExistingToParty(campaign: { id: string }) {
       });
       return { previous };
     },
-    onSettled: async () => {
-      encounterById.refetch();
-      return await campaignById.invalidate(campaignId);
-    },
   });
 }
 
 export function useRemoveFromParty(campaign: { id: string }) {
   const campaignId = campaign.id;
-  const { campaignById, encounterById } = api.useUtils();
+  const { campaignById } = api.useUtils();
   const mutation = api.removeFromParty.useMutation({
-    onSettled: async () => {
-      // we can't be sure if the user will navigate back to an encounter,
-      // where the party member may have been a participant. so invalidate all
-      encounterById.refetch();
-      return await campaignById.invalidate(campaignId);
-    },
     onMutate: async ({ player_id }) => {
       await campaignById.cancel(campaignId);
       const previous = campaignById.getData(campaignId);

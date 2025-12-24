@@ -215,6 +215,22 @@ async function deleteEncounter(ctx: LidndContext, encounter: { id: string }) {
 }
 
 export const ServerEncounter = {
+  updateEncounter: async function (args: {
+    encounter: EncounterInsert & { id: string };
+    user_id: string;
+    dbObject: typeof db;
+  }) {
+    return await args.dbObject
+      .update(encounters)
+      .set(args.encounter)
+      .where(
+        and(
+          eq(encounters.id, args.encounter.id),
+          eq(encounters.user_id, args.user_id)
+        )
+      )
+      .returning();
+  },
   deleteEncounter,
   create,
   getEncounters,

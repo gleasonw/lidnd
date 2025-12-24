@@ -1473,9 +1473,6 @@ export function CreateNewColumnButton() {
   const encounterId = useEncounterId();
   const { data: columns } = api.getColumns.useQuery(encounterId);
   const { mutate: createColumn } = api.createColumn.useMutation({
-    onSettled: async () => {
-      return await getColumns.invalidate(encounterId);
-    },
     onMutate: async (newColumn) => {
       await getColumns.cancel(newColumn.encounter_id);
       const previousEncounter = getColumns.getData(newColumn.encounter_id);
@@ -1523,9 +1520,6 @@ export const StatColumnComponent = observer(function StatColumnComponent({
   const { data: columns } = api.getColumns.useQuery(encounterId);
   const { mutate: assignParticipantToColumn } =
     api.assignParticipantToColumn.useMutation({
-      onSettled: async () => {
-        return await encounterById.invalidate(encounterId);
-      },
       onMutate: async (newColumn) => {
         await encounterById.cancel(encounterId);
         const previousEncounter = encounterById.getData(encounterId);
@@ -1541,9 +1535,6 @@ export const StatColumnComponent = observer(function StatColumnComponent({
       },
     });
   const { mutate: deleteColumn } = api.deleteColumn.useMutation({
-    onSettled: async () => {
-      return await getColumns.invalidate();
-    },
     onMutate: async (column) => {
       await getColumns.cancel(column.encounter_id);
       const previousColumns = getColumns.getData(column.encounter_id);

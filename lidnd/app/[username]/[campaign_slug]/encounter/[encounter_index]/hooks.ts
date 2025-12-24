@@ -111,9 +111,6 @@ export function useCycleNextTurn() {
   const uiStore = useContext(EncounterUIContext);
 
   return api.cycleNextTurn.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(encounter.id);
-    },
     onMutate: async ({ encounter_id }) => {
       if (campaign.system !== "dnd5e") {
         return;
@@ -148,9 +145,6 @@ export function useCyclePreviousTurn() {
   const uiStore = useEncounterUIStore();
 
   return api.cyclePreviousTurn.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(encounter.id);
-    },
     onMutate: async ({ encounter_id }) => {
       if (campaign.system !== "dnd5e") {
         return;
@@ -206,9 +200,6 @@ export function useToggleGroupTurn() {
       });
       return { previousEncounterData };
     },
-    onSettled: async () => {
-      return await encounterById.invalidate(id);
-    },
   });
 }
 
@@ -251,11 +242,6 @@ export function useRemoveParticipantFromEncounter() {
         encounterById.setData(id, context.previousEncounterData);
       }
     },
-    onSettled: async () => {
-      await encounters.invalidate(id);
-      await getColumns.invalidate(id);
-      return await encounterById.invalidate(id);
-    },
   });
 }
 
@@ -265,9 +251,6 @@ export function useUpdateEncounterParticipant() {
   const id = useEncounterId();
   const { mutate: cycleNext } = useCycleNextTurn();
   return api.updateEncounterParticipant.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(id);
-    },
     onMutate: async (newParticipant) => {
       await encounterById.cancel(id);
       const previousEncounter = encounterById.getData(id);
@@ -299,9 +282,6 @@ export function useDeleteEncounter() {
   const [campaign] = useCampaign();
   const { encountersInCampaign: encountersQuery } = api.useUtils();
   return api.deleteEncounter.useMutation({
-    onSettled: async () => {
-      await encountersQuery.invalidate();
-    },
     onMutate: async (id) => {
       await encountersQuery.cancel();
       const previous = encountersQuery.getData();
@@ -321,9 +301,6 @@ export function useUpdateEncounter() {
   const { encounterById } = api.useUtils();
   const [encounter] = useEncounter();
   const mutation = api.updateEncounter.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(encounter.id);
-    },
     onMutate: async (newEncounter) => {
       await encounterById.cancel(encounter.id);
       const previousEncounter = encounterById.getData(encounter.id);
@@ -357,10 +334,6 @@ export function useUpdateCampaignEncounter() {
   const campaignId = useCampaignId();
 
   const mutation = api.updateEncounter.useMutation({
-    onSettled: async (en) => {
-      if (!en) return;
-      return await encounters.invalidate(campaignId);
-    },
     onMutate: async (en) => {
       if (!en) return;
       await encounters.cancel(campaignId);
@@ -409,9 +382,6 @@ export function useUpdateEncounterMinionParticipant() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
   return api.updateEncounterMinionParticipant.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(id);
-    },
     onMutate: async (newParticipant) => {
       await encounterById.cancel(id);
       const previousEncounter = encounterById.getData(id);
@@ -430,9 +400,6 @@ export function useRemoveStatusEffect() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
   return api.removeStatusEffect.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(id);
-    },
     onMutate: async (newStatusEffect) => {
       await encounterById.cancel(id);
       const previousEncounter = encounterById.getData(id);
@@ -496,9 +463,6 @@ export function useAddExistingCreatureAsParticipant(encounter: {
         encounterById.setData(id, context.previousEncounterData);
       }
     },
-    onSettled: async () => {
-      return await invalidateAll(encounter);
-    },
   });
 }
 
@@ -538,9 +502,6 @@ export function useUpdateCreature() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
   return api.updateCreature.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(id);
-    },
     onMutate: async (newCreature) => {
       await encounterById.cancel(id);
       const previousEncounter = encounterById.getData(id);
@@ -561,9 +522,6 @@ export function useStartEncounter() {
   const [campaign] = useCampaign();
 
   return api.startEncounter.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(id);
-    },
     onMutate: async () => {
       await encounterById.cancel(id);
       const previousEncounter = encounterById.getData(id);

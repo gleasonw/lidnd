@@ -71,24 +71,18 @@ export function useUploadParticipant({
         statBlockPresigned: data.statBlockPresigned,
         creature: data.creature,
       });
-    },
-    onSettled: async (data) => {
-      if (data?.creature) {
-        if (ParticipantUtils.hasIcon(data)) {
-          uiStore.setUploadStatusForCreature(data.creature, {
-            type: "icon",
-            status: "pending",
-          });
-        }
-        if (ParticipantUtils.hasStatBlock(data)) {
-          uiStore.setUploadStatusForCreature(data.creature, {
-            type: "statBlock",
-            status: "pending",
-          });
-        }
+      if (ParticipantUtils.hasIcon(data)) {
+        uiStore.setUploadStatusForCreature(data.creature, {
+          type: "icon",
+          status: "pending",
+        });
       }
-
-      return await invalidateAll(encounter);
+      if (ParticipantUtils.hasStatBlock(data)) {
+        uiStore.setUploadStatusForCreature(data.creature, {
+          type: "statBlock",
+          status: "pending",
+        });
+      }
     },
   });
 }
