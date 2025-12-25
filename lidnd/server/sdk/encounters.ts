@@ -226,7 +226,8 @@ export const ServerEncounter = {
       where: (encounter, { eq, and }) =>
         and(
           eq(encounter.user_id, ctx.user.id),
-          eq(encounter.campaign_id, campaign_id)
+          eq(encounter.campaign_id, campaign_id),
+          eq(encounter.is_archived, false)
         ),
       with: {
         participants: {

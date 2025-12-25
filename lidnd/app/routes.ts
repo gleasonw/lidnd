@@ -66,6 +66,16 @@ export const appRoutes = {
     return `${this.campaign({ campaign, user })}?tab=creatures`;
   },
 
+  archivedEncountersForCampaign({
+    campaign,
+    user,
+  }: {
+    campaign: { slug: string };
+    user: LidndUser;
+  }) {
+    return `${this.campaign({ campaign, user })}/encounters/archive`;
+  },
+
   sessionsForCampaign({
     campaign,
     user,

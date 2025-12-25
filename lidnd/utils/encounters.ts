@@ -680,6 +680,7 @@ export const EncounterUtils = {
       ended_at: encounter.ended_at ?? null,
       status: encounter.status ?? "prep",
       label: encounter.label ?? "active",
+      is_archived: encounter.is_archived ?? false,
       order: encounter.order ?? 0,
       index_in_campaign: encounter.index_in_campaign ?? 0,
       is_editing_columns: encounter.is_editing_columns ?? true,

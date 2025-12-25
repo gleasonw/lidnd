@@ -229,6 +229,7 @@ export const encounters = pgTable(
     ended_at: timestamp("ended_at"),
     status: encounter_status_enum("status").default("prep").notNull(),
     label: encounter_label_enum("label").default("active").notNull(),
+    is_archived: boolean("is_archived").default(false).notNull(),
     order: doublePrecision("order").default(1).notNull(),
     index_in_campaign: integer("index_in_campaign").notNull().default(0),
     // specific to a drawsteel system, maybe eventually we split out a "drawsteel.average_victories" type of structure

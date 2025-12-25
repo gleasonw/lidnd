@@ -3,10 +3,9 @@ import {
   CreateEncounterForm,
 } from "./encounter/campaign-encounters-overview";
 import { ServerCampaign } from "@/server/sdk/campaigns";
-import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
-import { MoveLeft, Trash2 } from "lucide-react";
+import { ArchiveIcon, MoveLeft, Trash2 } from "lucide-react";
 import { db } from "@/server/db";
 import * as R from "remeda";
 import {
@@ -25,6 +24,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { RemoveCreatureFromCampaign } from "@/app/[username]/[campaign_slug]/RemoveCreatureFromCampaignButton";
+import { appRoutes } from "@/app/routes";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -53,6 +53,10 @@ export default async function CampaignPage(props: {
   }
 
   const campaignRoute = appRoutes.campaign({ campaign: campaignData, user });
+  const archivedEncountersRoute = appRoutes.archivedEncountersForCampaign({
+    campaign: campaignData,
+    user,
+  });
 
   const sessionsInCampaign = await ServerCampaign.sessionsForCampaign(
     { user },
@@ -150,6 +154,12 @@ export default async function CampaignPage(props: {
                 Creatures
               </Button>
             </Link>
+            <Link href={archivedEncountersRoute}>
+              <Button variant="ghost">
+                <ArchiveIcon className="mr-2 h-4 w-4" />
+                Archived encounters
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -173,7 +183,11 @@ export default async function CampaignPage(props: {
           ) : (
             <div className="flex flex-col gap-4">
               {sortedSessions.map((session) => {
-                const encounterCount = session.encounters?.length ?? 0;
+                const activeEncounters =
+                  session.encounters?.filter(
+                    (encounter) => !encounter.is_archived
+                  ) ?? [];
+                const encounterCount = activeEncounters.length;
                 return (
                   <div key={session.id} className="flex flex-col gap-4 p-3">
                     <div className="flex flex-wrap items-start justify-between gap-4">
@@ -211,8 +225,8 @@ export default async function CampaignPage(props: {
                     ) : (
                       <>
                         <ul className="grid gap-4 md:grid-cols-2">
-                          {session.encounters
-                            ?.slice()
+                          {activeEncounters
+                            .slice()
                             .sort(
                               (a, b) =>
                                 (a.created_at?.getTime() ?? 0) -

@@ -70,6 +70,7 @@ export const ServerCampaign = {
         and(eq(sessions.id, gameSessionId), eq(sessions.user_id, ctx.user.id)),
       with: {
         encounters: {
+          where: (encounter, { eq }) => eq(encounter.is_archived, false),
           with: {
             participants: {
               with: {
