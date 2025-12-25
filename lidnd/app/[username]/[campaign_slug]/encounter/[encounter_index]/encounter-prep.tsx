@@ -45,7 +45,6 @@ const useEncounterPrepStore = () => {
 
 export function EncounterNameInput() {
   const id = useEncounterId();
-  const { encounterById } = api.useUtils();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
   const [campaign] = useCampaign();
   const user = useUser();

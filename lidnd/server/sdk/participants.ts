@@ -49,8 +49,6 @@ export const ServerParticipants = {
       });
     }
 
-    console.log({ input: participant, updatedParticipant });
-
     return updatedParticipant;
   },
 };

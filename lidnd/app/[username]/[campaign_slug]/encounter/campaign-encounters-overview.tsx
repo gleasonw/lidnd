@@ -21,6 +21,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { createEncounter } from "@/app/[username]/actions";
+import type { Encounter } from "@/server/api/router";
 
 export function CampaignParty({ campaign }: { campaign: CampaignWithData }) {
   const user = useUser();
@@ -67,9 +68,11 @@ export function DifficultyBadge({
 export function CreateEncounterForm({
   gameSessionId,
   buttonExtra,
+  afterCreate,
 }: {
   gameSessionId: string;
   buttonExtra?: React.ReactNode;
+  afterCreate?: (encounter: Encounter) => void;
 }) {
   const [campaign] = useCampaign();
 
@@ -98,7 +101,7 @@ export function CreateEncounterForm({
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          await createEncounter({
+          const newEncounter = await createEncounter({
             name,
             description,
             campaign_id: campaign.id,
@@ -112,6 +115,7 @@ export function CreateEncounterForm({
             campaignById.invalidate(campaign.id),
             campaignFromUrl.invalidate(),
           ]);
+          afterCreate?.(newEncounter);
         }}
         className={"flex flex-col gap-5 pt-3"}
       >

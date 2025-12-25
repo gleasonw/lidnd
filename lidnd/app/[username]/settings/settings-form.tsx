@@ -8,7 +8,6 @@ import z from "zod";
 
 export function SettingsForm() {
   const [userSettings] = api.settings.useSuspenseQuery();
-  const { settings } = api.useUtils();
   const { mutate: updateSettings, isPending: isLoading } =
     api.updateSettings.useMutation({});
 

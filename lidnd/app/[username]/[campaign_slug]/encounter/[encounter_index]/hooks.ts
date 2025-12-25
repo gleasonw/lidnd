@@ -103,7 +103,6 @@ export function useEncounter() {
 
 //TODO: this should really be done in the backend, we shouldn't have to chain the call ourselves on the front
 export function useCycleNextTurn() {
-  const [encounter] = useEncounter();
   const [campaign] = useCampaign();
   const { encounterById } = api.useUtils();
   // nullable uiStore since we sometimes call this outside the encounter run ui, and optional
@@ -139,7 +138,6 @@ export function useCycleNextTurn() {
 }
 
 export function useCyclePreviousTurn() {
-  const [encounter] = useEncounter();
   const [campaign] = useCampaign();
   const { encounterById } = api.useUtils();
   const uiStore = useEncounterUIStore();
@@ -176,7 +174,6 @@ export function useSelectedCreature() {
 
 /**only applicable for drawsteel */
 export function useToggleGroupTurn() {
-  const id = useEncounterId();
   const uiStore = useEncounterUIStore();
   const { encounterById } = api.useUtils();
   return api.updateGroupTurn.useMutation({
@@ -205,11 +202,7 @@ export function useToggleGroupTurn() {
 
 export function useRemoveParticipantFromEncounter() {
   const id = useEncounterId();
-  const {
-    encounterById,
-    encountersInCampaign: encounters,
-    getColumns,
-  } = api.useUtils();
+  const { encounterById } = api.useUtils();
   const { mutate: cycleNext } = useCycleNextTurn();
 
   return api.removeParticipantFromEncounter.useMutation({
@@ -430,7 +423,7 @@ export function useAddExistingCreatureAsParticipant(encounter: {
   campaign_id: string;
 }) {
   const id = encounter.id;
-  const { cancelAll, invalidateAll } = useEncounterQueryUtils();
+  const { cancelAll } = useEncounterQueryUtils();
   const { encounterById } = api.useUtils();
   const { data: creatures } = api.getUserCreatures.useQuery({ name: "" });
   return api.addExistingCreatureAsParticipant.useMutation({

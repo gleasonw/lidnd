@@ -3,12 +3,13 @@ import { db } from "@/server/db";
 import {
   encounters,
   encounterSelectSchema,
+  participants,
   participantSchema,
   turnGroupSelectSchema,
 } from "@/server/db/schema";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { ServerParticipants } from "@/server/sdk/participants";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { z } from "zod";
 import * as ServerTurnGroup from "@/server/sdk/turnGroups";
 
@@ -40,15 +41,19 @@ export const encountersRouter = {
       })
     )
     .mutation(async (opts) => {
-      console.log({ total_input: opts.input.encounter.participants });
+      // ensure ownership
+      await ServerEncounter.encounterByIdThrows(
+        opts.ctx,
+        opts.input.encounter.id
+      );
       await db.transaction(async (tx) => {
-        await ServerEncounter.updateEncounter({
-          encounter: opts.input.encounter,
-          user_id: opts.ctx.user.id,
-          dbObject: tx,
-        });
-        await Promise.all(
-          opts.input.encounter.participants.map(async (p) => {
+        await Promise.all([
+          ServerEncounter.updateEncounter({
+            encounter: opts.input.encounter,
+            user_id: opts.ctx.user.id,
+            dbObject: tx,
+          }),
+          ...opts.input.encounter.participants.map(async (p) => {
             if (p.encounter_id !== opts.input.encounter.id) {
               return;
             }
@@ -56,16 +61,28 @@ export const encountersRouter = {
               participant: p,
               dbObject: tx,
             });
-          })
-        );
-        await Promise.all(
-          opts.input.encounter.turn_groups.map(async (tg) => {
+          }),
+          ...opts.input.encounter.turn_groups.map(async (tg) => {
             if (tg.encounter_id !== opts.input.encounter.id) {
               return;
             }
             await ServerTurnGroup.updateTurnGroup(tg, tx);
-          })
-        );
+          }),
+        ]);
       });
+      // remove participants that were deleted while offline
+      const ghostParticipants = await db
+        .delete(participants)
+        .where(
+          and(
+            eq(participants.encounter_id, opts.input.encounter.id),
+            notInArray(
+              participants.id,
+              opts.input.encounter.participants.map((p) => p.id)
+            )
+          )
+        )
+        .returning();
+      console.log(`removed ghost participants: `, ghostParticipants);
     }),
 };
