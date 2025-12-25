@@ -55,14 +55,14 @@ export async function createEncounter(encounter: EncounterInsert) {
   const user = await LidndAuth.getUser();
   if (!user) {
     console.error("No user found, cannot create encounter");
-    return { message: "No user found", status: 400 };
+    throw new Error("No user found");
   }
   const encounterInput = encounterInsertSchema
     .omit({ user_id: true })
     .safeParse(encounter);
   if (!encounterInput.success) {
     console.error("Encounter input parsing failed", encounterInput.error);
-    return { message: "Invalid input", status: 400 };
+    throw new Error("Invalid encounter input");
   }
   const newEncounter = await ServerEncounter.create(
     { user },

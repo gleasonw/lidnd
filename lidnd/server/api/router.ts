@@ -156,16 +156,11 @@ export const appRouter = t.router({
       )
     )
     .mutation(async (opts) => {
-      const result = await db
-        .update(encounters)
-        .set(opts.input)
-        .where(
-          and(
-            eq(encounters.id, opts.input.id),
-            eq(encounters.user_id, opts.ctx.user.id)
-          )
-        )
-        .returning();
+      const result = await ServerEncounter.updateEncounter({
+        encounter: opts.input,
+        dbObject: db,
+        user_id: opts.ctx.user.id,
+      });
       if (result.length === 0) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

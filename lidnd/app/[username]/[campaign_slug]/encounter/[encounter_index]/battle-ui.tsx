@@ -831,7 +831,7 @@ function TurnGroupLabel({
     <Button
       variant="ghost"
       onClick={() => uiStore.toggleFocusThisGroup(id)}
-      className="h-4 w-8 rounded-sm shadow-lg"
+      className="h-full rounded-sm shadow-lg"
       style={{ background: hex_color ?? "" }}
     />
   );
@@ -1440,30 +1440,32 @@ function TurnTakerQuickView({
   const hasPlayed = EncounterUtils.participantHasPlayed(encounter, participant);
   return (
     <div
-      className={clsx("flex gap-2 p-1 rounded-md items-center", {
+      className={clsx("flex flex-col p-1 rounded-md", {
         "opacity-50": hasPlayed,
       })}
     >
-      <Button
-        variant={hasPlayed ? "ghost" : "outline"}
-        onClick={() =>
-          toggleParticipantHasPlayedThisRound({
-            encounter_id: id,
-            participant_id: participant.id,
-          })
-        }
-        className={clsx("flex p-2 gap-1 rounded-md")}
-      >
-        {hasPlayed ? (
-          <CheckCircle className="h-4 w-4" />
-        ) : (
-          <Circle className="h-4 w-4" />
-        )}
-      </Button>
-      {buttonExtra}
       {turnGroupForParticipant
         ? turnGroupForParticipant.name
         : ParticipantUtils.name(participant)}
+      <div className="flex w-full">
+        <Button
+          variant={hasPlayed ? "ghost" : "outline"}
+          onClick={() =>
+            toggleParticipantHasPlayedThisRound({
+              encounter_id: id,
+              participant_id: participant.id,
+            })
+          }
+          className={clsx("flex p-2 gap-1 rounded-md")}
+        >
+          {hasPlayed ? (
+            <CheckCircle className="h-4 w-4" />
+          ) : (
+            <Circle className="h-4 w-4" />
+          )}
+        </Button>
+        {buttonExtra}
+      </div>
     </div>
   );
 }
@@ -1473,9 +1475,6 @@ export function CreateNewColumnButton() {
   const encounterId = useEncounterId();
   const { data: columns } = api.getColumns.useQuery(encounterId);
   const { mutate: createColumn } = api.createColumn.useMutation({
-    onSettled: async () => {
-      return await getColumns.invalidate(encounterId);
-    },
     onMutate: async (newColumn) => {
       await getColumns.cancel(newColumn.encounter_id);
       const previousEncounter = getColumns.getData(newColumn.encounter_id);
@@ -1523,9 +1522,6 @@ export const StatColumnComponent = observer(function StatColumnComponent({
   const { data: columns } = api.getColumns.useQuery(encounterId);
   const { mutate: assignParticipantToColumn } =
     api.assignParticipantToColumn.useMutation({
-      onSettled: async () => {
-        return await encounterById.invalidate(encounterId);
-      },
       onMutate: async (newColumn) => {
         await encounterById.cancel(encounterId);
         const previousEncounter = encounterById.getData(encounterId);
@@ -1541,9 +1537,6 @@ export const StatColumnComponent = observer(function StatColumnComponent({
       },
     });
   const { mutate: deleteColumn } = api.deleteColumn.useMutation({
-    onSettled: async () => {
-      return await getColumns.invalidate();
-    },
     onMutate: async (column) => {
       await getColumns.cancel(column.encounter_id);
       const previousColumns = getColumns.getData(column.encounter_id);

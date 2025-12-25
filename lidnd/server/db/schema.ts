@@ -26,6 +26,7 @@ export type EncounterInsert = Omit<
   InferInsertModel<typeof encounters>,
   "user_id"
 >;
+export type ParticipantInsert = InferInsertModel<typeof participants>;
 
 export const spells = pgTable("spells", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -441,6 +442,7 @@ export const turn_groups = pgTable(
     };
   }
 );
+export const turnGroupSelectSchema = createSelectSchema(turn_groups);
 export const turnGroupInsertSchema = createInsertSchema(turn_groups);
 export type TurnGroup = InferSelectModel<typeof turn_groups>;
 export type TurnGroupInsert = InferInsertModel<typeof turn_groups>;
@@ -531,6 +533,7 @@ export const channels = pgTable("channels", {
 
 //#region validators
 
+export const encounterSelectSchema = createSelectSchema(encounters);
 export const participantSchema = createSelectSchema(participants);
 export const insertSettingsSchema = createInsertSchema(settings);
 export const updateEncounterSchema = createInsertSchema(encounters);

@@ -31,9 +31,6 @@ export default function CreaturesPage() {
     variables: deletedId,
     isPending: isDeletePending,
   } = api.deleteCreature.useMutation({
-    onSettled: async () => {
-      await getUserCreatures.invalidate();
-    },
     onMutate: async (id) => {
       await getUserCreatures.cancel({ name });
       const previous = getUserCreatures.getData({ name });

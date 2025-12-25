@@ -22,9 +22,6 @@ export function ReminderInput() {
   const [alertAfterRound, setAlertAfterRound] = React.useState<string>("");
   const [reminder, setReminder] = React.useState<string>("");
   const { mutate: removeReminder } = api.removeEncounterReminder.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(encounter.id);
-    },
     onMutate: async ({ reminder_id }) => {
       await encounterById.cancel(encounter.id);
       const previousEncounter = encounterById.getData(encounter.id);
@@ -38,9 +35,6 @@ export function ReminderInput() {
     },
   });
   const { mutate: addReminder } = api.addEncounterReminder.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(encounter.id);
-    },
     onMutate: async (newReminder) => {
       await encounterById.cancel(encounter.id);
       const previousEncounter = encounterById.getData(encounter.id);

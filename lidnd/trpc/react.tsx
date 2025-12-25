@@ -22,6 +22,7 @@ function makeQueryClient() {
         onSuccess: () => {
           qc.invalidateQueries();
         },
+        networkMode: "always",
       },
     },
   });

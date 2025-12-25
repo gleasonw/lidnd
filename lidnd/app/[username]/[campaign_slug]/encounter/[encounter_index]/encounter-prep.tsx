@@ -45,15 +45,11 @@ const useEncounterPrepStore = () => {
 
 export function EncounterNameInput() {
   const id = useEncounterId();
-  const { encounterById } = api.useUtils();
   const [encounter] = api.encounterById.useSuspenseQuery(id);
   const [campaign] = useCampaign();
   const user = useUser();
 
   const { mutate: updateEncounter } = api.updateEncounter.useMutation({
-    onSettled: async () => {
-      return await encounterById.invalidate(id);
-    },
     onSuccess: (newEncounter) =>
       newEncounter &&
       history.replaceState(

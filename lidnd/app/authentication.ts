@@ -94,6 +94,14 @@ export const LidndAuth = {
     return session.user as LidndUser;
   },
 
+  getUserThrows: async function (): Promise<LidndUser> {
+    const user = await this.getUser();
+    if (!user) {
+      throw new Error("User not logged in");
+    }
+    return user;
+  },
+
   verifyLogin: async function () {
     const user = await this.getUser();
     if (!user) {

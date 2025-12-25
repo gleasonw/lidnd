@@ -8,13 +8,8 @@ import z from "zod";
 
 export function SettingsForm() {
   const [userSettings] = api.settings.useSuspenseQuery();
-  const { settings } = api.useUtils();
   const { mutate: updateSettings, isPending: isLoading } =
-    api.updateSettings.useMutation({
-      onSettled: async () => {
-        return await settings.invalidate();
-      },
-    });
+    api.updateSettings.useMutation({});
 
   const updateSettingsSchema = z.object({
     show_health_in_discord: z.boolean(),
