@@ -127,7 +127,7 @@ export function CreatureUpdateDialog({ creature }: { creature: Creature }) {
       <DialogHeader className="text-ellipsis max-w-full p-3">
         <DialogTitle>{creature.name}</DialogTitle>
       </DialogHeader>
-      <CreatureIcon creature={creature} size="medium" />
+      <CreatureIcon creature={creature} size="small" />
       <CreatureUpdateForm creature={creature} key={creature.id} />
       <Button
         variant="ghost"

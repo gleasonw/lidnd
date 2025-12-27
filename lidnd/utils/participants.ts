@@ -128,10 +128,14 @@ function creatureId(p: ParticipantWithCreature) {
 }
 
 function isMinion(p: ParticipantWithCreature): p is MinionParticipant {
-  return p.minion_count !== undefined;
+  return p.creature.type === "minion_monster";
 }
 
-function maxHp(p: ParticipantWithCreature) {
+function maxHp(
+  p: Pick<Participant, "max_hp_override"> & {
+    creature: Pick<Creature, "max_hp">;
+  }
+) {
   if (p.max_hp_override && p.max_hp_override > 0) {
     return p.max_hp_override;
   }
@@ -144,8 +148,28 @@ function percentDamage(p: ParticipantWithCreature) {
   return (missingHP / maxHP) * 100;
 }
 
-function challengeRating(p: { creature: { challenge_rating: number } }) {
-  return p.creature.challenge_rating;
+type ChallengeRatingParticipant = Pick<Participant, "max_hp_override"> & {
+  creature: Pick<Creature, "challenge_rating" | "type" | "max_hp">;
+};
+
+function challengeRating(p: ChallengeRatingParticipant) {
+  switch (p.creature.type) {
+    case "player": {
+      return 0;
+    }
+    case "minion_monster": {
+      const count = ParticipantUtils.numberOfMinions(p);
+      const groupsOfFour = Math.floor(count / 4);
+      return p.creature.challenge_rating * groupsOfFour;
+    }
+    case "standard_monster": {
+      return p.creature.challenge_rating;
+    }
+    default: {
+      const _exhaustiveCheck: never = p.creature.type;
+      throw new Error(`Unhandled creature type: ${_exhaustiveCheck}`);
+    }
+  }
 }
 
 function placeholderParticipantWithData(
@@ -258,6 +282,13 @@ export const ParticipantUtils = {
     } else {
       return p.creature.is_inanimate;
     }
+  },
+  numberOfMinions: (p: ChallengeRatingParticipant) => {
+    if (p.creature.type !== "minion_monster") {
+      return 1;
+    }
+    const hp = ParticipantUtils.maxHp(p);
+    return Math.max(1, Math.round(hp / p.creature.max_hp));
   },
   initials,
   isAdversary,

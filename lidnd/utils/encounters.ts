@@ -28,10 +28,14 @@ type EncounterWithParticipants<
 };
 
 export type EncounterWithParticipantDifficulty = {
-  participants: Array<{
-    creature: Pick<Creature, "type" | "is_inanimate" | "challenge_rating">;
-    is_ally: boolean;
-  }>;
+  participants: Array<
+    {
+      creature: Pick<
+        Creature,
+        "type" | "is_inanimate" | "challenge_rating" | "max_hp"
+      >;
+    } & Pick<Participant, "is_ally" | "max_hp_override">
+  >;
   average_victories: Encounter["average_victories"];
 };
 
@@ -98,7 +102,7 @@ export function monstersWithNoColumn<
     participants: Array<{
       column_id: string | null;
       is_ally: boolean;
-      creature: Pick<Creature, "type">
+      creature: Pick<Creature, "type">;
     }>;
   }
 >(e: E): Array<E["participants"][number]> {

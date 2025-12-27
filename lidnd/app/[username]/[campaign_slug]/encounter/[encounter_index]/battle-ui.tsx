@@ -53,6 +53,7 @@ import {
   PlayIcon,
   PlusIcon,
   Trash,
+  UsersIcon,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -61,7 +62,7 @@ import { dragTypes, typedDrag } from "@/app/[username]/utils";
 import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { api } from "@/trpc/react";
 import type { StatColumn } from "@/server/api/columns-router";
-import { ButtonWithTooltip } from "@/components/ui/tip";
+import { ButtonWithTooltip, LidndTooltip } from "@/components/ui/tip";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
 import { CreatureUtils } from "@/utils/creatures";
@@ -991,18 +992,23 @@ function PrepParticipant({
       <CreatureIcon creature={p.creature} size="small" />
       <div className="flex flex-col max-w-full">
         <span className="truncate">{ParticipantUtils.name(p)}</span>
-        <span className="flex gap-4">
+        <span className="flex gap-5">
           <LidndLabel label={crLabel(campaign)}>
             <span className="text-base ml-1">
               {ParticipantUtils.challengeRating(p)}
             </span>
           </LidndLabel>
-          <LidndLabel label={"HP"}>
+          <LidndLabel label={ParticipantUtils.isMinion(p) ? "Total HP" : "HP"}>
             <span className="text-base ml-1">{ParticipantUtils.maxHp(p)}</span>
-            {p.max_hp_override ? (
-              <span className="text-gray-300 pl-2">({p.creature.max_hp})</span>
-            ) : null}
           </LidndLabel>
+          {ParticipantUtils.isMinion(p) ? (
+            <div className="flex text-gray-400 gap-2">
+              <LidndTooltip text="Minion">
+                <UsersIcon className="h-5 w-5" />
+              </LidndTooltip>
+              <span>x {ParticipantUtils.numberOfMinions(p)}</span>
+            </div>
+          ) : null}
         </span>
       </div>
       {encounter.turn_groups.length > 0 ? (
