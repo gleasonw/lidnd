@@ -569,6 +569,11 @@ export const ParticipantBattleData = observer(function BattleCard({
   ...props
 }: BattleCardProps) {
   const encounterUiStore = useEncounterUIStore();
+  const [encounter] = useEncounter();
+  const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
+  const tgForParticipant = participant.turn_group_id
+    ? turnGroupsById[participant.turn_group_id]
+    : undefined;
 
   return (
     <div
@@ -586,7 +591,13 @@ export const ParticipantBattleData = observer(function BattleCard({
                     {ParticipantUtils.hasIcon(participant) ? (
                       <BattleCardCreatureIcon participant={participant} />
                     ) : null}
-                    <div className="flex justify-between w-full">
+                    {tgForParticipant ? (
+                      <TurnGroupLabel
+                        turnGroup={tgForParticipant}
+                        className="h- w-5"
+                      />
+                    ) : null}
+                    <div className="flex justify-between w-full flex-wrap items-center">
                       <BattleCardCreatureName participant={participant} />
                       {ParticipantUtils.isMinion(participant) ? (
                         <div className="flex gap-1 text-gray-400 px-3">
@@ -828,8 +839,10 @@ export function BattleCardStatusEffects({
 
 function TurnGroupLabel({
   turnGroup,
+  className,
 }: {
   turnGroup?: Pick<TurnGroup, "id" | "hex_color">;
+  className?: string;
 }) {
   const uiStore = useEncounterUIStore();
   if (!turnGroup) {
@@ -841,7 +854,7 @@ function TurnGroupLabel({
     <Button
       variant="ghost"
       onClick={() => uiStore.toggleFocusThisGroup(id)}
-      className="h-full rounded-sm shadow-lg"
+      className={clsx("rounded-sm shadow-lg", className)}
       style={{ background: hex_color ?? "" }}
     />
   );
@@ -851,16 +864,9 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
   participant,
 }: BattleCardParticipantProps) {
   const [encounter] = useEncounter();
-  const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
-  const tgForParticipant = participant.turn_group_id
-    ? turnGroupsById[participant.turn_group_id]
-    : undefined;
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   return (
     <span className="flex gap-1 items-center">
-      {tgForParticipant ? (
-        <TurnGroupLabel turnGroup={tgForParticipant} />
-      ) : null}
       <LidndPopover
         trigger={
           <Button
@@ -1310,12 +1316,8 @@ export const RunEncounter = observer(function LinearBattleUI() {
   const { parentWidth, containerRef } = useParentResizeObserver();
 
   return (
-    <div className="flex flex-col gap-2 h-full">
-      <div className="flex gap-2 shadow-lg">
-        <GroupBattleUITools />
-        <GroupTurnToggles />
-      </div>
-
+    <div className="flex flex-col gap-2 h-full w-full">
+      <GroupTurnToggles middle={<GroupBattleUITools />} />
       <div
         className="flex relative w-full h-full max-h-full overflow-hidden pb-2"
         ref={containerRef}
@@ -1330,7 +1332,7 @@ export const RunEncounter = observer(function LinearBattleUI() {
   );
 });
 
-function GroupTurnToggles() {
+function GroupTurnToggles({ middle }: { middle?: React.ReactNode }) {
   const [encounter] = useEncounter();
   const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
   const participantsByTurnGroup =
@@ -1338,14 +1340,14 @@ function GroupTurnToggles() {
   const participantsWithoutTurnGroup =
     EncounterUtils.monstersWithoutTurnGroup(encounter);
   return (
-    <div className="flex gap-2 items-center">
-      <div className="flex gap-4 flex-wrap">
+    <Card className="flex gap-4 p-2 items-center justify-evenly w-full sticky top-0 z-50">
+      <div className="flex gap-5 flex-wrap">
         {EncounterUtils.players(encounter).map((p) => (
           <TurnTakerQuickView participant={p} key={p.id} />
         ))}
       </div>
-      <span className="h-full w-1 border bg-gray-200"></span>
-      <div className="flex gap-4 flex-wrap">
+      {middle}
+      <div className="flex gap-5 flex-wrap">
         {participantsWithoutTurnGroup.map((p) => (
           <TurnTakerQuickView participant={p} key={p.id} />
         ))}
@@ -1358,7 +1360,7 @@ function GroupTurnToggles() {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -1456,28 +1458,30 @@ function TurnTakerQuickView({
   const hasPlayed = EncounterUtils.participantHasPlayed(encounter, participant);
   return (
     <div
-      className={clsx("flex flex-col p-1 rounded-md", {
+      className={clsx("flex flex-col p-2 rounded-md", {
         "opacity-50": hasPlayed,
       })}
     >
       {turnGroupForParticipant
         ? turnGroupForParticipant.name
         : ParticipantUtils.name(participant)}
-      <div className="flex w-full">
+      <div className="flex w-full gap-2">
         <Button
-          variant={hasPlayed ? "ghost" : "outline"}
+          variant="outline"
           onClick={() =>
             toggleParticipantHasPlayedThisRound({
               encounter_id: id,
               participant_id: participant.id,
             })
           }
-          className={clsx("flex p-2 gap-1 rounded-md")}
+          className={clsx("flex p-2 gap-1 rounded-md", {
+            "shadow-lg": !hasPlayed,
+          })}
         >
           {hasPlayed ? (
-            <CheckCircle className="h-4 w-4" />
+            <CheckCircle className="h-4 w-8" />
           ) : (
-            <Circle className="h-4 w-4" />
+            <Circle className="h-4 w-8" />
           )}
         </Button>
         {buttonExtra}
