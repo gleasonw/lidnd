@@ -8,12 +8,17 @@ import {
   stat_columns,
   type EncounterInsert,
 } from "@/server/db/schema";
-import type { InsertParticipant, Participant } from "@/server/api/router";
+import type {
+  Creature,
+  InsertParticipant,
+  Participant,
+} from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import _ from "lodash";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { EncounterUtils } from "@/utils/encounters";
+import { CreatureUtils } from "@/utils/creatures";
 
 async function create(
   ctx: LidndContext,
@@ -88,8 +93,8 @@ async function create(
             {
               encounter_id: encounterResult.id,
               creature_id: creature.id,
-              is_ally: !creature.is_player,
-              hp: creature.is_player ? 1 : creature.max_hp,
+              is_ally: !CreatureUtils.isPlayer(creature),
+              hp: CreatureUtils.startOfEncounterHP(creature),
               creature,
             },
             tx
@@ -116,7 +121,7 @@ async function create(
 // we should define a "recipe" and then persist the results
 async function addParticipant(
   ctx: LidndContext,
-  participant: InsertParticipant & { creature?: { is_player: boolean } },
+  participant: InsertParticipant & { creature?: Pick<Creature, "type"> },
   dbObject = db
 ) {
   return await dbObject.transaction(async (tx) => {
@@ -136,12 +141,7 @@ async function addParticipant(
       return;
     }
 
-    // don't add player creatures to columns
-    if (participant.creature?.is_player) {
-      return;
-    }
-
-    if (participant.creature?.is_player === undefined) {
+    if (!("creature" in participant)) {
       // fetch the creature to check if this is a player
       const creature = await tx.query.creatures.findFirst({
         where: (creatures, { eq }) => eq(creatures.id, participant.creature_id),
@@ -152,7 +152,7 @@ async function addParticipant(
           message: "Failed to add participant",
         });
       }
-      if (creature.is_player) {
+      if (CreatureUtils.isPlayer(creature)) {
         return;
       }
     }

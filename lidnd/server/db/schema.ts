@@ -20,6 +20,7 @@ import {
   doublePrecision,
 } from "drizzle-orm/pg-core";
 import { createSelectSchema, createInsertSchema } from "drizzle-zod";
+import { creatureTypes } from "@/server/constants";
 
 export type DbSpell = InferInsertModel<typeof spells>;
 export type EncounterInsert = Omit<
@@ -360,6 +361,8 @@ export const participantRelations = relations(
 
 export type CreatureInsert = InferInsertModel<typeof creatures>;
 
+export const creatureTypeEnum = pgEnum("creature_type", creatureTypes);
+
 export const creatures = pgTable(
   "creatures",
   {
@@ -373,9 +376,12 @@ export const creatures = pgTable(
     max_hp: integer("max_hp").notNull().default(1),
     initiative_bonus: integer("initiative_bonus").default(0).notNull(),
     challenge_rating: real("challenge_rating").default(0).notNull(),
-    is_player: boolean("is_player").default(false).notNull(),
+    type: creatureTypeEnum("creature_type")
+      .notNull()
+      .default("standard_monster"),
     /** should we only show the creature as a statblock + a name? primary use case is malice blocks for draw steel */
     is_inanimate: boolean("is_inanimate").default(false).notNull(),
+
     user_id: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),

@@ -13,8 +13,8 @@ import * as R from "remeda";
 type ParticipantWithCreature = Participant & { creature: Creature };
 type MinionParticipant = ParticipantWithCreature & { minion_count: number };
 
-function isPlayer(participant: { creature: { is_player: boolean } }) {
-  return participant.creature.is_player;
+function isPlayer(participant: { creature: Pick<Creature, "type"> }) {
+  return CreatureUtils.isPlayer(participant.creature);
 }
 
 function healthPercent(participant: ParticipantWithCreature) {
@@ -107,14 +107,14 @@ function isDead(p: ParticipantWithCreature) {
   return p.hp <= 0;
 }
 
-function isFriendly(p: { is_ally: boolean; creature: { is_player: boolean } }) {
+function isFriendly(p: { is_ally: boolean; creature: Pick<Creature, "type"> }) {
   return isPlayer(p) || p.is_ally;
 }
 
 // need to just create a "role" field on the participant
 function isAdversary(p: {
   is_ally: boolean;
-  creature: { is_player: boolean };
+  creature: Pick<Creature, "type">;
 }) {
   return !isFriendly(p);
 }
@@ -234,9 +234,7 @@ function initials({ creature }: { creature: { name: string } }) {
 function isActivatable(p: {
   hp: number;
   is_active: boolean;
-  creature: {
-    is_player: boolean;
-  };
+  creature: Pick<Creature, "type">;
 }) {
   // if the active creature is dead, we have to keep them in the order until the turn changes.
   // a rare occurrence, but possible.
@@ -248,9 +246,9 @@ export const ParticipantUtils = {
   isInanimate: (
     p:
       | Pick<Participant, "inanimate">
-      | { creature: { is_inanimate: boolean } }
+      | { creature: Pick<Creature, "is_inanimate"> }
       | (Pick<Participant, "inanimate"> & {
-          creature: { is_inanimate: boolean };
+          creature: Pick<Creature, "is_inanimate">;
         })
   ) => {
     if ("inanimate" in p && "creature" in p) {

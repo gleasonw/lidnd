@@ -29,7 +29,7 @@ type EncounterWithParticipants<
 
 export type EncounterWithParticipantDifficulty = {
   participants: Array<{
-    creature: Pick<Creature, "is_player" | "is_inanimate" | "challenge_rating">;
+    creature: Pick<Creature, "type" | "is_inanimate" | "challenge_rating">;
     is_ally: boolean;
   }>;
   average_victories: Encounter["average_victories"];
@@ -98,7 +98,7 @@ export function monstersWithNoColumn<
     participants: Array<{
       column_id: string | null;
       is_ally: boolean;
-      creature: { is_player: boolean };
+      creature: Pick<Creature, "type">
     }>;
   }
 >(e: E): Array<E["participants"][number]> {
@@ -387,7 +387,7 @@ export const EncounterUtils = {
   },
 
   playerCount(encounter: {
-    participants: Array<{ creature: { is_player: boolean } }>;
+    participants: Array<{ creature: Pick<Creature, "type"> }>;
   }) {
     return encounter.participants.filter((p) => ParticipantUtils.isPlayer(p))
       .length;

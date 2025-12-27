@@ -1,7 +1,5 @@
 "use client";
 
-import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
-import { QuickAddParticipantsButton } from "@/app/[username]/[campaign_slug]/game-session-quick-add";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import {
@@ -24,7 +22,6 @@ const maxMonstersToShow = 10;
 
 function EncounterDetails() {
   const [encounterData] = useEncounter();
-  const [campaignData] = useCampaign();
   const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
   const { encounter: encounterLink } = useEncounterLinks();
   const monsters = EncounterUtils.monsters(encounterData);
@@ -65,14 +62,6 @@ function EncounterDetails() {
             )}
           </div>
         )}
-
-        <div className="flex items-center w-12 h-12">
-          <QuickAddParticipantsButton
-            encounterId={encounterData.id}
-            campaignId={campaignData.id}
-            innerText={monsters && monsters.length > 0 ? "" : "Monsters"}
-          />
-        </div>
       </div>
     </li>
   );

@@ -19,7 +19,6 @@ function createParticipant({
   id,
   is_active = true,
   initiative = 1,
-  is_player = true,
   hp = 10,
   minion_count = 0,
   max_hp = 10,
@@ -36,10 +35,10 @@ function createParticipant({
     },
     {
       id,
-      is_player,
       name: "testing",
       user_id: "testing",
       max_hp,
+      type: "standard_monster",
     }
   );
 }

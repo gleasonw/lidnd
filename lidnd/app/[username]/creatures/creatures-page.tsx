@@ -12,6 +12,17 @@ import { DialogTitle } from "@radix-ui/react-dialog";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { groupBy } from "remeda";
 import { useDeleteCreature } from "@/app/[username]/[campaign_slug]/campaign-hooks";
+import { ParticipantUtils } from "@/utils/participants";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { creatureTypes } from "@/server/constants";
+import { LidndLabel } from "@/components/ui/LidndLabel";
+import { CreatureUtils } from "@/utils/creatures";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");
@@ -29,7 +40,7 @@ export default function CreaturesPage() {
   const displayCreatures = creatures;
 
   const groupedCreatures = groupBy(displayCreatures ?? [], (c) =>
-    c.is_player ? "player" : "npc"
+    ParticipantUtils.isPlayer({ creature: c }) ? "player" : "npc"
   );
 
   return (
@@ -135,7 +146,7 @@ export function CreatureUpdateForm({ creature }: { creature: Creature }) {
   );
   const [maxHp, setMaxHp] = useState(creature.max_hp);
   const [name, setName] = useState(creature.name);
-  const [isPlayer, setIsPlayer] = useState(creature.is_player);
+  const [type, setType] = useState(creature.type);
   const [isInanimate, setIsInanimate] = useState(creature.is_inanimate);
 
   const { mutate: updateCreature, isPending: isLoading } =
@@ -144,7 +155,7 @@ export function CreatureUpdateForm({ creature }: { creature: Creature }) {
 
   return (
     <form className="flex flex-col gap-5 justify-between">
-      {!creature.is_player && (
+      {!CreatureUtils.isPlayer(creature) && (
         <label>
           Challenge Rating
           <Input
@@ -171,15 +182,26 @@ export function CreatureUpdateForm({ creature }: { creature: Creature }) {
           onChange={(e) => setName(e.target.value)}
         />
       </label>
-      <label>
-        <Checkbox
-          checked={isPlayer ?? false}
-          onCheckedChange={(checked) =>
-            checked !== "indeterminate" && setIsPlayer(checked)
+      <LidndLabel label="Creature type">
+        <Select
+          value={type}
+          onValueChange={(value) =>
+            setType(value as (typeof creatureTypes)[number])
           }
-        />
-        Player
-      </label>
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select type..." />
+          </SelectTrigger>
+          <SelectContent>
+            {creatureTypes.map((ct) => (
+              <SelectItem key={ct} value={ct}>
+                {ct.replaceAll("_", " ")}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </LidndLabel>
+
       <label>
         <Checkbox
           checked={isInanimate ?? false}
@@ -198,7 +220,7 @@ export function CreatureUpdateForm({ creature }: { creature: Creature }) {
               challenge_rating: challengeRating,
               max_hp: maxHp,
               name,
-              is_player: isPlayer,
+              type,
               is_inanimate: isInanimate,
             });
           }}

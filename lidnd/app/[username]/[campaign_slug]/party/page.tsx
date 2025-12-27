@@ -136,7 +136,7 @@ function PartyLevelInput() {
   const { mutate: updateCampaign } = useUpdateCampaign(campaign);
 
   const [partyLevel, setPartyLevel] = React.useState(
-    campaign?.party_level ?? 1,
+    campaign?.party_level ?? 1
   );
 
   const handlePartyLevelChange = useDebouncedCallback((level: string) => {
@@ -233,7 +233,7 @@ function ExistingCreaturesForPartyAdd({ campaignId }: { campaignId: string }) {
   });
   const { mutate: addCreature } = useAddExistingToParty({ id: campaignId });
   const creaturesPlayersFirst = R.sort(creatures ?? [], (a, b) =>
-    a.is_player ? -1 : b.is_player ? 1 : 0,
+    a.type === "player" ? -1 : b.type === "player" ? 1 : 0
   );
   return (
     <div className="flex flex-col gap-5">

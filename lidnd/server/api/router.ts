@@ -20,7 +20,7 @@ import {
   campaignCreatureLink,
 } from "@/server/db/schema";
 import * as ServerTurnGroup from "@/server/sdk/turnGroups";
-import { eq, and, ilike, lte, exists } from "drizzle-orm";
+import { eq, and, ilike, lte, exists, ne } from "drizzle-orm";
 import { db } from "@/server/db";
 import { z } from "zod";
 import { getIconAWSname, getStatBlockAWSname } from "@/server/api/utils";
@@ -703,20 +703,24 @@ export const appRouter = t.router({
 
   getUserCreatures: protectedProcedure
     .input(
-      z.object({
-        name: z.string().optional(),
-        is_player: z.boolean().optional(),
-        maxCR: z.number().optional(),
-        campaignId: z.string().optional(),
-      })
+      z
+        .object({
+          name: z.string().optional(),
+          maxCR: z.number().optional(),
+          includePlayers: z.boolean().optional(),
+          campaignId: z.string().optional(),
+        })
+        .merge(creatureUploadSchema.pick({ type: true }))
     )
     .query(async (opts) => {
       const filters = [eq(creatures.user_id, opts.ctx.user.id)];
       if (opts.input.name) {
         filters.push(ilike(creatures.name, `%${opts.input.name}%`));
       }
-      if (opts.input.is_player !== undefined) {
-        filters.push(eq(creatures.is_player, opts.input.is_player));
+      if (opts.input.type !== undefined) {
+        filters.push(eq(creatures.type, opts.input.type));
+      } else if (opts.input.includePlayers !== true) {
+        filters.push(ne(creatures.type, "player"));
       }
       if (opts.input.maxCR !== undefined) {
         filters.push(lte(creatures.challenge_rating, opts.input.maxCR));

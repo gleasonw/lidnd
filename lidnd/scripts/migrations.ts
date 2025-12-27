@@ -19,7 +19,7 @@ async function setPlayerHpTo1() {
   const results = await db
     .update(participants)
     .set({ hp: 1 })
-    .where(eq(creatures.is_player, true))
+    .where(eq(creatures.type, "player"))
     .returning();
   console.log(results);
   return process.exit(0);

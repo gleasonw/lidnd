@@ -51,7 +51,6 @@ export function useUploadParticipant({
             CreatureUtils.placeholder({
               ...data.creature,
               user_id: "pending",
-              is_player: Boolean(data.creature.is_player),
               is_inanimate: Boolean(data.creature.is_inanimate),
             })
           );

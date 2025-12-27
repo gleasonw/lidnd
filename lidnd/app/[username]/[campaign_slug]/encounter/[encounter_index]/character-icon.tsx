@@ -1,6 +1,7 @@
 "use client";
 
 import { useUIStore } from "@/app/UIStore";
+import type { Creature } from "@/server/api/router";
 import { CreatureUtils } from "@/utils/creatures";
 import { ParticipantUtils } from "@/utils/participants";
 import clsx from "clsx";
@@ -41,13 +42,7 @@ export const CreatureIcon = observer(function CreatureIcon({
   creature,
   size,
 }: {
-  creature: {
-    id: string;
-    icon_width: number;
-    icon_height: number;
-    name: string;
-    is_player: boolean;
-  };
+  creature: Pick<Creature, "id" | "icon_width" | "icon_height" | "type" | "name">;
   size?: IconSize;
 }) {
   const dimensions = iconDimensions(creature, size);
@@ -58,7 +53,7 @@ export const CreatureIcon = observer(function CreatureIcon({
 
   const initials = ParticipantUtils.initials({ creature });
   const fallbackText = initials ? initials.slice(0, 2) : "?";
-  const fallbackColor = creature.is_player ? "#2563eb" : "#b91c1c";
+  const fallbackColor = ParticipantUtils.isPlayer({creature}) ? "#2563eb" : "#b91c1c";
   if (creature.id === "pending") {
     // catch the case where we'v just uploaded but not yet set the
     // image upload status in the ui store...

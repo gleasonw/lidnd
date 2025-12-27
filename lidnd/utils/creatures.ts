@@ -5,6 +5,14 @@ export const CreatureUtils = {
     return `icon-${creature.id}.png`;
   },
 
+  isPlayer(creature: { type: Creature["type"] }) {
+    return creature.type === "player";
+  },
+
+  startOfEncounterHP(creature: { max_hp: number; type: Creature["type"] }) {
+    return this.isPlayer(creature) ? 1 : creature.max_hp;
+  },
+
   statBlockKey(creature: { id: Creature["id"] }) {
     return `stat_block-${creature.id}.png`;
   },
@@ -23,7 +31,6 @@ export const CreatureUtils = {
       id: creature.id ?? "pending",
       created_at: new Date(),
       challenge_rating: creature.challenge_rating ?? 0,
-      is_player: creature.is_player ?? false,
       is_inanimate: creature.is_inanimate ?? false,
       max_hp: creature.max_hp ?? 0,
       initiative_bonus: creature.initiative_bonus ?? 0,
@@ -31,6 +38,7 @@ export const CreatureUtils = {
       stat_block_width: creature.stat_block_width ?? 250,
       icon_height: creature.icon_height ?? 250,
       icon_width: creature.icon_width ?? 250,
+      type: creature.type ?? "standard_monster",
     };
   },
 };
