@@ -90,6 +90,7 @@
     "react-dom": "19.2.0",
     "react-hook-form": "^7.53.1",
     "react-query": "^3.39.3",
+    "react-resizable-panels": "^4.0.15",
     "remeda": "^2.16.0",
     "sonner": "^2.0.7",
     "superjson": "^2.2.1",
