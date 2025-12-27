@@ -34,7 +34,7 @@ export type EncounterWithParticipantDifficulty = {
         Creature,
         "type" | "is_inanimate" | "challenge_rating" | "max_hp"
       >;
-    } & Pick<Participant, "is_ally" | "max_hp_override">
+    } & Pick<Participant, "is_ally" | "max_hp_override" | "hp">
   >;
   average_victories: Encounter["average_victories"];
 };

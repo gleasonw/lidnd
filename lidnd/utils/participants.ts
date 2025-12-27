@@ -148,7 +148,10 @@ function percentDamage(p: ParticipantWithCreature) {
   return (missingHP / maxHP) * 100;
 }
 
-type ChallengeRatingParticipant = Pick<Participant, "max_hp_override"> & {
+type ChallengeRatingParticipant = Pick<
+  Participant,
+  "max_hp_override" | "hp"
+> & {
   creature: Pick<Creature, "challenge_rating" | "type" | "max_hp">;
 };
 
@@ -283,12 +286,13 @@ export const ParticipantUtils = {
       return p.creature.is_inanimate;
     }
   },
-  numberOfMinions: (p: ChallengeRatingParticipant) => {
+  numberOfMinions: (
+    p: ChallengeRatingParticipant & Pick<Participant, "hp">
+  ) => {
     if (p.creature.type !== "minion_monster") {
       return 1;
     }
-    const hp = ParticipantUtils.maxHp(p);
-    return Math.max(1, Math.round(hp / p.creature.max_hp));
+    return Math.max(1, Math.round(p.hp / p.creature.max_hp));
   },
   initials,
   isAdversary,

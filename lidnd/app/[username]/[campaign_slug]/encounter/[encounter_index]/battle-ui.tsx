@@ -585,8 +585,16 @@ export const ParticipantBattleData = observer(function BattleCard({
                     {ParticipantUtils.hasIcon(participant) ? (
                       <BattleCardCreatureIcon participant={participant} />
                     ) : null}
-                    <div className="flex flex-col w-full">
+                    <div className="flex justify-between w-full">
                       <BattleCardCreatureName participant={participant} />
+                      {ParticipantUtils.isMinion(participant) ? (
+                        <div className="flex gap-1 text-gray-400 px-3">
+                          <UsersIcon className="h-5 w-5  inline-block" />
+                          <span>
+                            x {ParticipantUtils.numberOfMinions(participant)}
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>
