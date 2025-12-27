@@ -11,10 +11,10 @@ import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { CreatureIcon } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/character-icon";
 import { groupBy } from "remeda";
+import { useDeleteCreature } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 
 export default function CreaturesPage() {
   const [name, setName] = useState("");
-  const { getUserCreatures } = api.useUtils();
   const { data: creatures } = api.getUserCreatures.useQuery({
     name,
   });
@@ -26,24 +26,7 @@ export default function CreaturesPage() {
     (creature) => creature.id === selectedCreatureId
   );
 
-  const {
-    mutate: deleteCreature,
-    variables: deletedId,
-    isPending: isDeletePending,
-  } = api.deleteCreature.useMutation({
-    onMutate: async (id) => {
-      await getUserCreatures.cancel({ name });
-      const previous = getUserCreatures.getData({ name });
-      getUserCreatures.setData({ name }, (old) => {
-        return old?.filter((creature) => creature.id !== id);
-      });
-      return { previous };
-    },
-  });
-
-  const displayCreatures = isDeletePending
-    ? creatures?.filter((creature) => creature.id !== deletedId)
-    : creatures;
+  const displayCreatures = creatures;
 
   const groupedCreatures = groupBy(displayCreatures ?? [], (c) =>
     c.is_player ? "player" : "npc"
@@ -96,43 +79,38 @@ export default function CreaturesPage() {
         }
       >
         {selectedCreature ? (
-          <CreatureUpdateDialog
-            creature={selectedCreature}
-            deleteCreature={deleteCreature}
-          />
+          <CreatureUpdateDialog creature={selectedCreature} />
         ) : null}
       </Dialog>
     </div>
   );
 }
 
-function CreatureCard({
+export function CreatureCard({
   creature,
   setSelectedCreatureId,
+  extra,
 }: {
   creature: Creature;
-  setSelectedCreatureId: (id: string | null) => void;
+  setSelectedCreatureId?: (id: string | null) => void;
+  extra?: React.ReactNode;
 }) {
   return (
     <div key={creature.id} className="flex gap-2 p-3 items-center">
       <Button
         variant="ghost"
-        onClick={() => setSelectedCreatureId(creature.id)}
+        onClick={() => setSelectedCreatureId?.(creature.id)}
       >
         <CreatureIcon creature={creature} size="medium" />
         <span>{creature.name}</span>
       </Button>
+      {extra}
     </div>
   );
 }
 
-function CreatureUpdateDialog({
-  creature,
-  deleteCreature,
-}: {
-  creature: Creature;
-  deleteCreature: (id: string) => void;
-}) {
+export function CreatureUpdateDialog({ creature }: { creature: Creature }) {
+  const { mutate: deleteCreature } = useDeleteCreature();
   return (
     <DialogContent>
       <DialogHeader className="text-ellipsis max-w-full p-3">
@@ -151,7 +129,7 @@ function CreatureUpdateDialog({
   );
 }
 
-function CreatureUpdateForm({ creature }: { creature: Creature }) {
+export function CreatureUpdateForm({ creature }: { creature: Creature }) {
   const [challengeRating, setChallengeRating] = useState(
     creature.challenge_rating
   );
@@ -162,6 +140,7 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
 
   const { mutate: updateCreature, isPending: isLoading } =
     api.updateCreature.useMutation();
+  const { mutate: deleteCreature } = useDeleteCreature();
 
   return (
     <form className="flex flex-col gap-5 justify-between">
@@ -210,22 +189,31 @@ function CreatureUpdateForm({ creature }: { creature: Creature }) {
         />
         Inanimate (show only statblock and name)
       </label>
-      <LoadingButton
-        onClick={(e) => {
-          e.preventDefault();
-          updateCreature({
-            id: creature.id,
-            challenge_rating: challengeRating,
-            max_hp: maxHp,
-            name,
-            is_player: isPlayer,
-            is_inanimate: isInanimate,
-          });
-        }}
-        isLoading={isLoading}
-      >
-        Update
-      </LoadingButton>
+      <div className="flex">
+        <LoadingButton
+          onClick={(e) => {
+            e.preventDefault();
+            updateCreature({
+              id: creature.id,
+              challenge_rating: challengeRating,
+              max_hp: maxHp,
+              name,
+              is_player: isPlayer,
+              is_inanimate: isInanimate,
+            });
+          }}
+          isLoading={isLoading}
+        >
+          Update
+        </LoadingButton>
+        <Button
+          onClick={() => deleteCreature(creature.id)}
+          className="ml-auto text-destructive"
+          variant="ghost"
+        >
+          Delete
+        </Button>
+      </div>
     </form>
   );
 }

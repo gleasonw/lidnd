@@ -25,6 +25,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { RemoveCreatureFromCampaign } from "@/app/[username]/[campaign_slug]/RemoveCreatureFromCampaignButton";
+import { CreatureUpdateForm } from "@/creatures/creatures-page";
+import { LidndDialog } from "@/components/ui/lidnd_dialog";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -266,9 +268,17 @@ async function CampaignCreatures({ campaign }: { campaign: { id: string } }) {
       TODO: add creature
       <div className="grid grid-cols-2 lg:grid-cols-3">
         {creaturesToShow.map((c) => (
-          <div key={c.id} className="flex items-center gap-2">
-            <CreatureIcon creature={c} />
-            {c.name}
+          <div key={c.id} className="flex gap-2">
+            <LidndDialog
+              title="Update Creature"
+              trigger={
+                <Button variant="ghost">
+                  <CreatureIcon creature={c} size="medium" />
+                  <span>{c.name}</span>
+                </Button>
+              }
+              content={<CreatureUpdateForm creature={c} />}
+            />
             <RemoveCreatureFromCampaign creature={c} campaign={campaign} />
           </div>
         ))}

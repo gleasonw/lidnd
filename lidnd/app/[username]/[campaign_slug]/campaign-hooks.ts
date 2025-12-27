@@ -14,6 +14,20 @@ export function useCampaign() {
   return api.campaignById.useSuspenseQuery(campaignId);
 }
 
+export function useDeleteCreature() {
+  const { getUserCreatures } = api.useUtils();
+  return api.deleteCreature.useMutation({
+    onMutate: async (id) => {
+      await getUserCreatures.cancel();
+      const previous = getUserCreatures.getData();
+      getUserCreatures.setData({}, (old) => {
+        return old?.filter((creature) => creature.id !== id);
+      });
+      return { previous };
+    },
+  });
+}
+
 export function useUpdateCampaign(campaign: { id: string }) {
   const campaignId = campaign.id;
   const { campaignById } = api.useUtils();
