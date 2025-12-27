@@ -18,7 +18,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install pnpm
-        run: npm install -g pnpm
+        run: npm install -g corepack@0.24.1 && corepack enable
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm vitest run
