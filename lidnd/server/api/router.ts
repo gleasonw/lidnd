@@ -18,13 +18,18 @@ import {
   creatureUploadSchema,
   encounters,
   campaignCreatureLink,
+  images,
 } from "@/server/db/schema";
 import * as ServerTurnGroup from "@/server/sdk/turnGroups";
 import { eq, and, ilike, lte, exists, ne } from "drizzle-orm";
 import { db } from "@/server/db";
 import { z } from "zod";
 import { getIconAWSname, getStatBlockAWSname } from "@/server/api/utils";
-import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import {
   ServerEncounter,
   type EncounterWithData,
@@ -40,6 +45,8 @@ import { participantsRouter } from "./participants-router";
 import { ServerCreature } from "@/server/sdk/creatures";
 import { gameSessionRouter } from "@/server/api/game-session-router";
 import { revalidatePath } from "next/cache";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { ImageUtils } from "@/utils/images";
 
 export type Encounter = typeof encounters.$inferSelect;
 export type Creature = typeof creatures.$inferSelect;
@@ -57,6 +64,54 @@ export type EncounterWithParticipants = Encounter & {
 export type InsertParticipant = typeof participants.$inferInsert;
 
 export const appRouter = t.router({
+  upload: protectedProcedure
+    .input(
+      z.object({
+        filename: z.string(),
+        filetype: z.string(),
+        requestOnlyIdentifier: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const imageAsset = await db
+        .insert(images)
+        .values({
+          name: opts.input.filename,
+          user_id: opts.ctx.user.id,
+        })
+        .returning();
+
+      if (imageAsset.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create image  asset",
+        });
+      }
+      const image = imageAsset[0]!;
+      const s3Client = new S3Client({
+        region: process.env.AWS_REGION,
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+        },
+      });
+      const signedUrl = await getSignedUrl(
+        //@ts-expect-error weird aws type error. initialize not assignable to serialize?
+        s3Client,
+        new PutObjectCommand({
+          Bucket: process.env.AWS_BUCKET_NAME!,
+          Key: ImageUtils.assetKey(image),
+          ContentType: opts.input.filetype,
+        }),
+        { expiresIn: 3600 }
+      );
+      return {
+        image,
+        signedUrl,
+        requestOnlyIdentifier: opts.input.requestOnlyIdentifier,
+      };
+    }),
+
   spells: publicProcedure.input(z.string()).query(async (opts) => {
     return await db
       .select()

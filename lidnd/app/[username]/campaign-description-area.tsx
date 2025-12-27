@@ -3,7 +3,7 @@
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import { api } from "@/trpc/react";
-import Placeholder from "@tiptap/extension-placeholder";
+import { Placeholder } from "@tiptap/extensions";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import React from "react";

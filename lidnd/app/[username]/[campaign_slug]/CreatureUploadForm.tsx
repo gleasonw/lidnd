@@ -423,7 +423,7 @@ async function pollForUploadSuccess(
   throw new Error(`failed to upload ${type} for creature ${creature.id}`);
 }
 
-async function uploadFileToAWS(file: File, presignedUrl: string) {
+export async function uploadFileToAWS(file: File, presignedUrl: string) {
   try {
     const response = await fetch(presignedUrl, {
       method: "PUT",

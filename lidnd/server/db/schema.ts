@@ -29,6 +29,15 @@ export type EncounterInsert = Omit<
 >;
 export type ParticipantInsert = InferInsertModel<typeof participants>;
 
+export const images = pgTable("images", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 256 }).notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  user_id: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+});
+
 export const spells = pgTable("spells", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 256 }).notNull(),

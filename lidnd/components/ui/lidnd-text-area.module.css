@@ -1,5 +1,5 @@
 .root {
-  [contenteditable] {
+  [contenteditable="true"] {
     height: 100%;
   }
 }

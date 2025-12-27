@@ -35,7 +35,7 @@ import {
 import { useDebouncedCallback } from "use-debounce";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
+import { Placeholder } from "@tiptap/extensions";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import {
   ReminderInput,

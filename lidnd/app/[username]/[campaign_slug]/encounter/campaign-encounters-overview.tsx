@@ -15,7 +15,7 @@ import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { appRoutes } from "@/app/routes";
 import { Badge } from "@/components/ui/badge";
 import type { CampaignWithData } from "@/server/sdk/campaigns";
-import { Placeholder } from "@tiptap/extension-placeholder";
+import { Placeholder } from "@tiptap/extensions";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
