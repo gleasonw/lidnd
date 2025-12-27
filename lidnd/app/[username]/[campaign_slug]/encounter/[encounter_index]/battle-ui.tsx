@@ -94,6 +94,7 @@ import { AddColumn } from "@/app/public/images/icons/AddColumn";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { getQueryKey } from "@trpc/react-query";
+import { ParticipantEditDialog } from "@/encounters/[encounter_index]/ParticipantEditDialog";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -997,6 +998,7 @@ function PrepParticipant({
   return (
     <div key={p.id} className="flex gap-2 items-center max-w-[400px]">
       <RemoveCreatureFromEncounterButton participant={p} />
+      <ParticipantEditDialog participant={p} />
       <CreatureIcon creature={p.creature} size="small" />
       <div className="flex flex-col max-w-full">
         <span className="truncate">{ParticipantUtils.name(p)}</span>
