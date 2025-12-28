@@ -1002,9 +1002,21 @@ function PrepParticipant({
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
   return (
-    <div key={p.id} className="flex gap-2 items-center max-w-[400px]">
+    <div
+      key={p.id}
+      className="flex gap-2 items-center max-w-[400px] cursor-grab active:cursor-grabbing"
+      draggable={encounter.turn_groups.length > 0}
+      onDragStart={(e) => {
+        if (encounter.turn_groups.length > 0) {
+          typedDrag.set(e.dataTransfer, dragTypes.participant, p);
+        }
+      }}
+    >
       <RemoveCreatureFromEncounterButton participant={p} />
       <ParticipantEditDialog participant={p} />
+      {encounter.turn_groups.length > 0 ? (
+        <Grip className="h-4 w-4 text-gray-400" />
+      ) : null}
       <CreatureIcon creature={p.creature} size="small" />
       <div className="flex flex-col max-w-full">
         <span className="truncate">{ParticipantUtils.name(p)}</span>
@@ -1027,13 +1039,6 @@ function PrepParticipant({
           ) : null}
         </span>
       </div>
-      {encounter.turn_groups.length > 0 ? (
-        <div className="ml-auto">
-          <LidndLabel label="Group">
-            <TurnGroupSelect participant={p} />
-          </LidndLabel>
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -1042,6 +1047,8 @@ function TurnGroupSetup() {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
   const [creatureAddDialogIsOpen, setCreatureAddDialogIsOpen] = useState(false);
+  const [acceptDrop, setAcceptDrop] = useState(0);
+  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   const monstersWihoutGroup = EncounterUtils.monstersInCrOrder(
     encounter
   ).filter((m) => !m.turn_group_id);
@@ -1101,11 +1108,54 @@ function TurnGroupSetup() {
         </LidndLabel>
       </div>
       <div className={clsx("flex flex-col gap-5")}>
-        {monstersWihoutGroup.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 gap-x-12">
-            {monstersWihoutGroup.map((p) => (
-              <PrepParticipant participant={p} key={p.id} />
-            ))}
+        {monstersWihoutGroup.length > 0 || encounter.turn_groups.length > 0 ? (
+          <div
+            className={clsx(
+              "grid grid-cols-1 sm:grid-cols-2 gap-3 gap-x-12 min-h-[60px] border-2 border-dashed border-transparent p-3 rounded",
+              {
+                "border-blue-400 bg-blue-50": acceptDrop > 0,
+              }
+            )}
+            onDrop={(e) => {
+              e.preventDefault();
+              const droppedParticipant = typedDrag.get(
+                e.dataTransfer,
+                dragTypes.participant
+              );
+              if (droppedParticipant) {
+                updateParticipant({
+                  ...droppedParticipant,
+                  created_at: new Date(droppedParticipant.created_at),
+                  turn_group_id: null,
+                });
+              }
+              setAcceptDrop(0);
+            }}
+            onDragOver={(e) => {
+              if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
+                e.preventDefault();
+              }
+            }}
+            onDragEnter={(e) => {
+              if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
+                e.preventDefault();
+                setAcceptDrop((count) => count + 1);
+              }
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setAcceptDrop((count) => count - 1);
+            }}
+          >
+            {monstersWihoutGroup.length > 0 ? (
+              monstersWihoutGroup.map((p) => (
+                <PrepParticipant participant={p} key={p.id} />
+              ))
+            ) : (
+              <div className="col-span-2 text-center text-gray-400">
+                Drag participants here to remove them from groups
+              </div>
+            )}
           </div>
         ) : null}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1122,12 +1172,14 @@ function TurnGroupSetup() {
 function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
+  const [acceptDrop, setAcceptDrop] = useState(0);
   // maybe this is wasteful to compute every render, but I think it's fine
   const turnGroupedParticipants =
     EncounterUtils.participantsByTurnGroup(encounter);
   const participantsInGroup = turnGroupedParticipants[tg.id] || [];
   const { mutate: updateTurnGroup } = api.updateTurnGroup.useMutation();
   const { mutate: deleteTurnGroup } = api.deleteTurnGroup.useMutation();
+  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   const totalCr = R.sumBy(participantsInGroup, (p) =>
     ParticipantUtils.challengeRating(p)
   );
@@ -1138,7 +1190,42 @@ function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
       hex_color: hexColor,
     });
   return (
-    <div key={tg.id} className="flex flex-col gap-2 border-2 border-dashed p-3">
+    <div
+      key={tg.id}
+      className={clsx("flex flex-col gap-2 border-2 border-dashed p-3", {
+        "ring-2 ring-blue-400": acceptDrop > 0,
+      })}
+      onDrop={(e) => {
+        e.preventDefault();
+        const droppedParticipant = typedDrag.get(
+          e.dataTransfer,
+          dragTypes.participant
+        );
+        if (droppedParticipant) {
+          updateParticipant({
+            ...droppedParticipant,
+            created_at: new Date(droppedParticipant.created_at),
+            turn_group_id: tg.id,
+          });
+        }
+        setAcceptDrop(0);
+      }}
+      onDragOver={(e) => {
+        if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
+          e.preventDefault();
+        }
+      }}
+      onDragEnter={(e) => {
+        if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
+          e.preventDefault();
+          setAcceptDrop((count) => count + 1);
+        }
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        setAcceptDrop((count) => count - 1);
+      }}
+    >
       <div className="flex gap-3 items-center">
         <Button
           variant="ghost"
@@ -1193,44 +1280,6 @@ function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
           <PrepParticipant participant={p} key={p.id} />
         )) || <span>No participants assigned</span>}
       </div>
-    </div>
-  );
-}
-
-function TurnGroupSelect({
-  participant: p,
-}: {
-  participant: ParticipantWithData;
-}) {
-  const [encounter] = useEncounter();
-  const { mutate: updateParticipant } = useUpdateEncounterParticipant();
-  const turnGroupsById = R.indexBy(encounter.turn_groups, (tg) => tg.id);
-
-  return (
-    <div className="h-10 gap-2">
-      <Select
-        value={p.turn_group_id ?? undefined}
-        onValueChange={(val) =>
-          updateParticipant({
-            ...p,
-            turn_group_id: val === "no-group" ? null : val,
-          })
-        }
-      >
-        <SelectTrigger className="border-0 p-0 gap-0 justify-start">
-          <SelectValue placeholder="Assign">
-            {p.turn_group_id ? turnGroupsById[p.turn_group_id]?.name : null}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {encounter.turn_groups.map((tg) => (
-            <SelectItem key={tg.id} value={tg.id}>
-              {tg.name}
-            </SelectItem>
-          ))}
-          <SelectItem value={"no-group"}>No group</SelectItem>
-        </SelectContent>
-      </Select>
     </div>
   );
 }
