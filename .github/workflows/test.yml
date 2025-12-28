@@ -23,5 +23,5 @@ jobs:
       
       
       - run: pnpm install --frozen-lockfile
-        working-directory: ./lidnd/lidnd
+        working-directory: lidnd
       - run: pnpm vitest run
