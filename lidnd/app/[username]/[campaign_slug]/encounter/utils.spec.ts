@@ -124,33 +124,30 @@ describe("Participant turn order tests", () => {
 
 describe("Overkill minions", () => {
   test("overkill damage kills the right number of minions", () => {
-    const participant = createParticipant({
-      id: "1",
-      minion_count: 3,
-      max_hp: 6,
-    });
+    const participant = ParticipantUtils.placeholderParticipantWithData(
+      {
+        id: "1",
+        encounter_id: "nonsense",
+        creature_id: "test",
+        max_hp_override: 10,
+        hp: 10,
+      },
+      {
+        type: "minion_monster",
+        id: "test",
+        name: "test",
+        user_id: "test",
+        max_hp: 2,
+      }
+    );
 
-    // should be able to infer from createParticipant args. this is faster
-    if (!ParticipantUtils.isMinion(participant)) {
-      throw new Error("not a minion");
-    }
-
-    expect(ParticipantUtils.updateMinionCount(participant, 2, 4)).toBe(2);
-    expect(ParticipantUtils.updateMinionCount(participant, 2, 13)).toBe(0);
-
-    const p2 = createParticipant({
-      id: "2",
-      minion_count: 10,
-      max_hp: 22,
-    });
-
-    if (!ParticipantUtils.isMinion(p2)) {
-      throw new Error("not a minion");
-    }
-
-    expect(ParticipantUtils.updateMinionCount(p2, 5, 80)).toBe(6);
-    expect(ParticipantUtils.updateMinionCount(p2, 5, 0)).toBe(10);
-    expect(ParticipantUtils.updateMinionCount(p2, 0, 1)).toBe(9);
+    expect(ParticipantUtils.numberOfMinions(participant)).toBe(5);
+    participant.hp -= 4;
+    expect(ParticipantUtils.numberOfMinions(participant)).toBe(3);
+    participant.hp -= 1;
+    expect(ParticipantUtils.numberOfMinions(participant)).toBe(3);
+    participant.hp -= 1;
+    expect(ParticipantUtils.numberOfMinions(participant)).toBe(2);
   });
 });
 
