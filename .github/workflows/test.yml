@@ -15,10 +15,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
 
       - name: Install pnpm
-        run: npm install -g corepack@0.24.1 && corepack enable
-
+        uses: pnpm/action-setup@v4.2.0
+      
+      
       - run: pnpm install --frozen-lockfile
       - run: pnpm vitest run
