@@ -16,7 +16,7 @@ import {
   gameSessions,
 } from "@/server/db/schema";
 import { revalidatePath } from "next/cache";
-import { and, eq, exists } from "drizzle-orm";
+import { and, eq, exists, ilike } from "drizzle-orm";
 import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
 import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
 import { SessionCreateForm } from "@/app/[username]/[campaign_slug]/CreateSessionForm";
@@ -27,6 +27,7 @@ import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { RemoveCreatureFromCampaign } from "@/app/[username]/[campaign_slug]/RemoveCreatureFromCampaignButton";
 import { CreatureUpdateForm } from "@/creatures/creatures-page";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
+import { CampaignCreatureSearch } from "@/app/[username]/[campaign_slug]/CampaignCreatureSearch";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -162,7 +163,14 @@ export default async function CampaignPage(props: {
 
       {searchParams?.tab === "creatures" ? (
         <section>
-          <CampaignCreatures campaign={campaignData} />
+          <CampaignCreatures
+            campaign={campaignData}
+            search={
+              typeof searchParams?.search === "string"
+                ? searchParams.search
+                : undefined
+            }
+          />
         </section>
       ) : (
         <section className="flex flex-col gap-6">
@@ -241,7 +249,13 @@ export default async function CampaignPage(props: {
   );
 }
 
-async function CampaignCreatures({ campaign }: { campaign: { id: string } }) {
+async function CampaignCreatures({
+  campaign,
+  search,
+}: {
+  campaign: { id: string };
+  search?: string;
+}) {
   const user = await LidndAuth.getUser();
 
   if (!user) {
@@ -259,30 +273,43 @@ async function CampaignCreatures({ campaign }: { campaign: { id: string } }) {
         )
       )
   );
+
+  const filters = [eq(creatures.user_id, user.id), onlyCampaignFilter];
+  if (search) {
+    filters.push(ilike(creatures.name, `%${search}%`));
+  }
+
   const creaturesToShow = await db
     .select()
     .from(creatures)
-    .where(and(eq(creatures.user_id, user.id), onlyCampaignFilter));
+    .where(and(...filters));
+
   return (
-    <div>
-      TODO: add creature
-      <div className="grid grid-cols-2 lg:grid-cols-3">
-        {creaturesToShow.map((c) => (
-          <div key={c.id} className="flex gap-2">
-            <LidndDialog
-              title="Update Creature"
-              trigger={
-                <Button variant="ghost">
-                  <CreatureIcon creature={c} size="medium" />
-                  <span>{c.name}</span>
-                </Button>
-              }
-              content={<CreatureUpdateForm creature={c} />}
-            />
-            <RemoveCreatureFromCampaign creature={c} campaign={campaign} />
-          </div>
-        ))}
-      </div>
+    <div className="flex flex-col gap-4">
+      <CampaignCreatureSearch defaultValue={search} />
+      {creaturesToShow.length === 0 ? (
+        <p className="text-muted-foreground">
+          {search ? "No creatures match your search" : "No creatures yet"}
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-3">
+          {creaturesToShow.map((c) => (
+            <div key={c.id} className="flex gap-2">
+              <LidndDialog
+                title="Update Creature"
+                trigger={
+                  <Button variant="ghost">
+                    <CreatureIcon creature={c} size="medium" />
+                    <span>{c.name}</span>
+                  </Button>
+                }
+                content={<CreatureUpdateForm creature={c} />}
+              />
+              <RemoveCreatureFromCampaign creature={c} campaign={campaign} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

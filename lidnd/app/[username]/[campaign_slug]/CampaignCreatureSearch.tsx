@@ -1,0 +1,50 @@
+"use client";
+
+import { Input } from "@/components/ui/input";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useTransition } from "react";
+
+export function CampaignCreatureSearch({
+  defaultValue,
+}: {
+  defaultValue?: string;
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+
+  const updateSearch = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value) {
+        params.set("search", value);
+      } else {
+        params.delete("search");
+      }
+      // Keep the tab param
+      params.set("tab", "creatures");
+
+      startTransition(() => {
+        router.push(`?${params.toString()}`);
+      });
+    },
+    [router, searchParams]
+  );
+
+  return (
+    <div className="relative max-w-sm">
+      <Input
+        type="text"
+        placeholder="Search creatures..."
+        defaultValue={defaultValue}
+        onChange={(e) => updateSearch(e.target.value)}
+        className={isPending ? "opacity-50" : ""}
+      />
+      {isPending && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+        </div>
+      )}
+    </div>
+  );
+}
