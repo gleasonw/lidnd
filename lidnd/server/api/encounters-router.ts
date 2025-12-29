@@ -222,6 +222,11 @@ export const encountersRouter = {
               tag: true,
             },
           },
+          participants: {
+            with: {
+              creature: true,
+            },
+          },
         },
       });
     }),

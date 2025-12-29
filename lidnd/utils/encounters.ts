@@ -15,6 +15,7 @@ import * as R from "remeda";
 import {
   ParticipantUtils,
   type ChallengeRatingParticipant,
+  type SortableNameableParticipant,
 } from "@/utils/participants";
 import type { LidndUser } from "@/app/authentication";
 import _ from "lodash";
@@ -654,11 +655,9 @@ export const EncounterUtils = {
     );
   },
 
-  monstersInCrOrder<
-    P extends ChallengeRatingParticipant & {
-      creature: { name: string };
-    } & Pick<Participant, "initiative" | "created_at" | "id">
-  >(encounter: { participants: Array<P> }) {
+  monstersInCrOrder<P extends SortableNameableParticipant>(encounter: {
+    participants: Array<P>;
+  }) {
     return this.participantsByName(encounter)
       .filter((p) => !ParticipantUtils.isFriendly(p))
       .sort(

@@ -21,7 +21,7 @@ export default function RollPage() {
   const [encounter] = api.encounterById.useSuspenseQuery(id);
   const { mutate: startEncounter } = useStartEncounter();
   const refMap = React.useRef(new Map<string, HTMLDivElement>());
-  const { encounter: encounterLink } = useEncounterLinks();
+  const { encounter: encounterLink } = useEncounterLinks(encounter);
   const router = useRouter();
 
   function start() {

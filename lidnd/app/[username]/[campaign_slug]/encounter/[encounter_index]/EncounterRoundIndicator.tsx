@@ -27,7 +27,7 @@ export const EncounterDetails = observer(function EncounterDetails() {
   const [encounter] = useEncounter();
   const [now, setNow] = useState(Date.now());
   const uiStore = useEncounterUIStore();
-  const { campaignLink } = useEncounterLinks();
+  const { campaignLink } = useEncounterLinks(encounter);
 
   const { mutate: updateEncounter } = useUpdateEncounter();
 

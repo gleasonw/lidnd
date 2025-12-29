@@ -158,6 +158,10 @@ export type ChallengeRatingParticipant = Pick<
   creature: Pick<Creature, "challenge_rating" | "type" | "max_hp">;
 };
 
+export type SortableNameableParticipant = ChallengeRatingParticipant & {
+  creature: { name: string };
+} & Pick<Participant, "initiative" | "created_at" | "id">;
+
 function challengeRating(p: ChallengeRatingParticipant) {
   switch (p.creature.type) {
     case "player": {

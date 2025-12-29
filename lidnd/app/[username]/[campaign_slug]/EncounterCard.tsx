@@ -1,37 +1,45 @@
 "use client";
 
-import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
-import { useEncounter } from "@/encounters/[encounter_index]/hooks";
 import { useEncounterLinks } from "@/encounters/link-hooks";
+import type { Creature, Encounter } from "@/server/api/router";
 import { EncounterUtils } from "@/utils/encounters";
-import { ParticipantUtils } from "@/utils/participants";
+import {
+  ParticipantUtils,
+  type SortableNameableParticipant,
+} from "@/utils/participants";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { useEffect } from "react";
 
-export function EncounterCard({ encounter }: { encounter: { id: string } }) {
-  return (
-    <EncounterId encounterId={encounter.id}>
-      <EncounterDetails />
-    </EncounterId>
-  );
-}
+type EncounterDataForCard = Pick<
+  Encounter,
+  "description" | "name" | "id" | "index_in_campaign"
+> & {
+  participants: Array<
+    SortableNameableParticipant & {
+      creature: Pick<Creature, "icon_width" | "icon_height" | "id">;
+    }
+  >;
+};
 
 const maxMonstersToShow = 2;
 
-function EncounterDetails() {
-  const [encounterData] = useEncounter();
-  const { encounter: encounterLink } = useEncounterLinks();
-  const monstersByCr = EncounterUtils.monstersInCrOrder(encounterData);
+export function EncounterCard({
+  encounter,
+}: {
+  encounter: EncounterDataForCard;
+}) {
+  const { encounter: encounterLink } = useEncounterLinks(encounter);
+  const monstersByCr = EncounterUtils.monstersInCrOrder(encounter);
   const monstersNotShown = Math.max(0, monstersByCr.length - maxMonstersToShow);
   const [onlyClientImageUrl, setOnlyClientImageUrl] = React.useState<
     string | null
   >(null);
 
   useEffect(() => {
-    setOnlyClientImageUrl(EncounterUtils.imageUrl(encounterData));
-  }, [encounterData]);
+    setOnlyClientImageUrl(EncounterUtils.imageUrl(encounter));
+  }, [encounter]);
 
   return (
     <Link
@@ -51,9 +59,7 @@ function EncounterDetails() {
             />
           )}
           <div className="flex flex-col gap-2 flex-1">
-            <p className="text-base">
-              {encounterData.name || "Unnamed encounter"}
-            </p>
+            <p className="text-base">{encounter.name || "Unnamed encounter"}</p>
             {/* <DifficultyBadge encounter={encounterData} /> */}
             <div className="flex flex-col gap-1 text-muted-foreground">
               {monstersByCr.slice(0, maxMonstersToShow).map((participant) => (

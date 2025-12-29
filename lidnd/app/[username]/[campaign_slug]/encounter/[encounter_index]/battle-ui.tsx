@@ -103,7 +103,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
   const { mutate: startEncounter } = useStartEncounter();
   const { mutate: updateEncounter } = useUpdateEncounter();
   const uiStore = useEncounterUIStore();
-  const { rollEncounter } = useEncounterLinks();
+  const { rollEncounter } = useEncounterLinks(encounter);
   const user = useUser();
   const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
 
