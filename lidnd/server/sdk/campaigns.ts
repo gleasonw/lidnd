@@ -145,7 +145,10 @@ export const ServerCampaign = {
       );
     const campaignTagIds = campaignTagQuery.map((t) => t.encounter_tags.id);
     return await dbObject.query.encounter_tags.findMany({
-      where: inArray(encounter_tags.id, campaignTagIds),
+      where:
+        campaignTagIds.length > 0
+          ? inArray(encounter_tags.id, campaignTagIds)
+          : undefined,
       with: {
         encounterLinks: {
           with: { encounter: true },
