@@ -82,7 +82,7 @@ export function ReminderInput() {
         setAlertAfterRound("");
         setReminder("");
       }}
-      className="flex bg-white flex-col gap-3 rounded-lg"
+      className="flex bg-white flex-col rounded-lg"
     >
       <section className="flex gap-3 p-3 items-end flex-wrap">
         <label>
@@ -124,7 +124,7 @@ export function ReminderInput() {
         .slice()
         .sort((a, b) => a.alert_after_round - b.alert_after_round)
         .map((reminder) => (
-          <div className="flex gap-1 items-center p-3" key={reminder.id}>
+          <div className="flex gap-1 items-center p-2" key={reminder.id}>
             <span>{reminder.reminder}</span>
             <span>top of round {reminder.alert_after_round}</span>
             <ButtonWithTooltip

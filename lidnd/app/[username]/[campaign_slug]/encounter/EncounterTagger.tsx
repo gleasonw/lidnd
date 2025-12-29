@@ -9,7 +9,7 @@ import {
   useRemoveTagFromEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import type { AutocompleteOption } from "@/components/ui/lidnd-autocomplete";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface EncounterTaggerProps {
   className?: string;
@@ -87,14 +87,13 @@ export function EncounterTagger({ className }: EncounterTaggerProps) {
 
       <div className="flex gap-2">
         {encounter.tags.map((tag) => (
-          <span
+          <Badge
+            variant="outline"
+            className="text-blue-700 border-blue-700"
             key={tag.id}
-            className={cn(
-              "px-2 py-1 rounded-full text-sm bg-gray-200 dark:bg-gray-700"
-            )}
           >
             {tag.tag.name}
-          </span>
+          </Badge>
         ))}
       </div>
     </div>

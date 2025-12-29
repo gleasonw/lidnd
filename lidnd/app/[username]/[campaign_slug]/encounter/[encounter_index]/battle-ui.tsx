@@ -52,6 +52,7 @@ import {
   MoreHorizontal,
   PlayIcon,
   PlusIcon,
+  SkullIcon,
   Trash,
   UsersIcon,
   X,
@@ -178,8 +179,8 @@ export const EncounterBattleUI = observer(function BattleUI() {
             )}
           >
             {/**don't put gap here, it makes the tab contennt bits take up a bunch of vert space */}
-            <div className="flex flex-col w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full">
-              <div className="w-full flex flex-col gap-3">
+            <div className="flex flex-col w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full gap-3">
+              <div className="w-full flex flex-col gap-5">
                 <EncounterNameInput />
                 <div className="flex gap-8">
                   <TabsList>
@@ -206,7 +207,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 data-value="prep"
               >
                 <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full">
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-5">
                       <div className="flex gap-3">
                         <LidndLabel label="Target difficulty">
@@ -256,14 +257,14 @@ export const EncounterBattleUI = observer(function BattleUI() {
                         </LidndLabel>
                       </div>
                     </div>
+                    <Card className="p-2">
+                      <ReminderInput />
+                    </Card>
                     <div>
                       <DescriptionTextArea />
                     </div>
-                    <Card>
-                      <ReminderInput />
-                    </Card>
                   </div>
-                  <div className="flex flex-col gap-8 min-h-0">
+                  <div className="flex flex-col gap-10 min-h-0">
                     <div
                       className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
                     >
@@ -391,13 +392,15 @@ function EncounterBudgetSlider() {
   const hardCutoff = tiers.hardTier / max;
 
   return (
-    <div className="w-full border h-5 relative text-gray-500">
+    <div className="w-full border h-6 relative ">
       <div
-        className="h-full bg-black absolute left-0 top-0"
-        style={{ width: `${(EncounterUtils.totalCr(encounter) / max) * 100}%` }}
-      />
+        className="h-full absolute top-0 -translate-y-0.5"
+        style={{ left: `${(EncounterUtils.totalCr(encounter) / max) * 100}%` }}
+      >
+        <SkullIcon />
+      </div>
       <div
-        className="w-1 h-full bg-black absolute"
+        className="w-1 h-full bg-gray-500 absolute text-gray-500"
         style={{ left: `${easyCutOff * 100}%` }}
       >
         <span className="absolute bottom-full">{tiers.easyTier}</span>
@@ -405,14 +408,14 @@ function EncounterBudgetSlider() {
         <span className="absolute top-full">Easy</span>
       </div>
       <div
-        className="w-1 h-full bg-black absolute"
+        className="w-1 h-full bg-gray-500 absolute text-gray-500"
         style={{ left: `${standardCutoff * 100}%` }}
       >
         <span className="absolute bottom-full">{tiers.standardTier}</span>
         <span className="absolute top-full">Standard</span>
       </div>
       <div
-        className="w-1 h-full bg-black absolute"
+        className="w-1 h-full bg-gray-500 absolute text-gray-500"
         style={{ left: `${hardCutoff * 100}%` }}
       >
         <span className="absolute bottom-full">{tiers.hardTier}</span>
@@ -1078,7 +1081,7 @@ function TurnGroupSetup() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <LidndDialog
         isOpen={creatureAddDialogIsOpen}
         onClose={() => setCreatureAddDialogIsOpen(false)}
@@ -1096,22 +1099,22 @@ function TurnGroupSetup() {
           </Button>
         }
       />
-      <div className="flex flex-wrap gap-10 items-center">
-        <LidndLabel label="Player count" className="flex gap-2 items-center">
-          <span className="text-lg">
-            {EncounterUtils.playerCount(encounter)}
-          </span>
-        </LidndLabel>
-        <LidndLabel
-          label="Single player strength"
-          className="gap-2 flex items-center"
-        >
-          <span className="text-lg">
-            {targetSinglePlayerStrength({ encounter, campaign })}
-          </span>
-        </LidndLabel>
-      </div>
-      <div className={clsx("flex flex-col gap-5")}>
+      <div className={clsx("flex flex-col gap-3")}>
+        <div className="flex flex-wrap gap-10 items-center">
+          <LidndLabel label="Player count" className="flex gap-2 items-center">
+            <span className="text-lg">
+              {EncounterUtils.playerCount(encounter)}
+            </span>
+          </LidndLabel>
+          <LidndLabel
+            label="Single player strength"
+            className="gap-2 flex items-center"
+          >
+            <span className="text-lg">
+              {targetSinglePlayerStrength({ encounter, campaign })}
+            </span>
+          </LidndLabel>
+        </div>
         {monstersWihoutGroup.length > 0 || encounter.turn_groups.length > 0 ? (
           <div
             className={clsx(
