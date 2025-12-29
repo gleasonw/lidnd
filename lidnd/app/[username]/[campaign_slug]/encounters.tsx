@@ -17,7 +17,7 @@ export function Encounters() {
     matchName: encounterSearch,
   });
 
-  const groupByTag = searchParams.get("groupByTag") === "true";
+  const groupByTag = searchParams.get("groupByTag") !== "false";
   const encountersGroupedByTag = groupByTag
     ? R.pipe(
         encounters ?? [],
