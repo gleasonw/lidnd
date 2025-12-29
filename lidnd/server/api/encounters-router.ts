@@ -14,6 +14,8 @@ import { ServerParticipants } from "@/server/sdk/participants";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { z } from "zod";
 import * as ServerTurnGroup from "@/server/sdk/turnGroups";
+import { ServerCampaign } from "@/server/sdk/campaigns";
+import { revalidatePath } from "next/cache";
 
 export const encountersRouter = {
   removeEncountersFromSession: protectedProcedure
@@ -95,6 +97,18 @@ export const encountersRouter = {
     });
   }),
 
+  getCampaignTags: protectedProcedure
+    .input(
+      z.object({
+        campaignId: z.string(),
+      })
+    )
+    .query(async (opts) => {
+      return await ServerCampaign.encountersByTag(opts.ctx, {
+        campaignId: opts.input.campaignId,
+      });
+    }),
+
   createTag: protectedProcedure
     .input(
       z.object({
@@ -156,6 +170,7 @@ export const encountersRouter = {
           tag_id: opts.input.tag_id,
         })
         .returning();
+      revalidatePath("/");
 
       return relation;
     }),
@@ -182,5 +197,6 @@ export const encountersRouter = {
             eq(encounter_to_tag.tag_id, opts.input.tag_id)
           )
         );
+      revalidatePath("/");
     }),
 };

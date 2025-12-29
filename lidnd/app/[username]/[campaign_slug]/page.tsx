@@ -17,6 +17,7 @@ import { CampaignCreatureSearch } from "@/app/[username]/[campaign_slug]/Campaig
 import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
 import { EncountersSearchBar } from "@/app/[username]/[campaign_slug]/EncountersSearchBar";
 import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
+import { GroupByTagToggle } from "@/app/[username]/[campaign_slug]/GroupByTagToggle";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -53,6 +54,18 @@ export default async function CampaignPage(props: {
     db
   );
 
+  const encountersByTag = await ServerCampaign.encountersByTag(
+    UserUtils.context(user),
+    {
+      campaignId: campaignData.id,
+    },
+    db
+  );
+
+  const encountersWithNoTag = encounters.filter((e) => e.tags.length === 0);
+
+  const groupByTag = searchParams?.groupByTag === "true";
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6 max-h-full">
       <header className="flex flex-col gap-6 border-b pb-4">
@@ -68,7 +81,6 @@ export default async function CampaignPage(props: {
           </Link>
           <CampaignParty campaign={campaignData} />
         </div>
-
         <div className="flex flex-wrap items-end gap-4">
           <div className="space-y-2">
             <h1 className="text-2xl tracking-tight">{campaignData.name}</h1>
@@ -134,11 +146,50 @@ export default async function CampaignPage(props: {
             }
           />
 
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {encounters.map((encounter) => (
-              <EncounterCard key={encounter.id} encounter={encounter} />
-            ))}
-          </div>
+          <GroupByTagToggle />
+
+          {groupByTag ? (
+            <div className="flex flex-col gap-8">
+              {encountersByTag.length === 0 ? (
+                <p className="text-muted-foreground">
+                  No tagged encounters. Add tags to your encounters to group
+                  them.
+                </p>
+              ) : (
+                encountersByTag.map((tagGroup) => (
+                  <div key={tagGroup.id} className="flex flex-col gap-4">
+                    <h2 className="text-lg font-semibold border-b pb-2">
+                      {tagGroup.name}
+                    </h2>
+                    <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {tagGroup.encounterLinks.map((link) => (
+                        <EncounterCard
+                          key={link.encounter_id}
+                          encounter={link.encounter}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+              {encountersWithNoTag.length > 0 && (
+                <div className="flex flex-col gap-4">
+                  <h2 className="text-lg border-b pb-2">No tag</h2>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {encountersWithNoTag.map((encounter) => (
+                      <EncounterCard key={encounter.id} encounter={encounter} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {encounters.map((encounter) => (
+                <EncounterCard key={encounter.id} encounter={encounter} />
+              ))}
+            </div>
+          )}
         </section>
       )}
     </div>

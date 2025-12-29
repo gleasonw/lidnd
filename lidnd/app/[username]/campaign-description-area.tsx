@@ -51,6 +51,7 @@ export function CampaignDescriptionArea({
   const editor = useEditor({
     extensions: [StarterKit, configuredPlaceholder],
     content: campaign?.description ?? "",
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const content = editor.getHTML();
       debouncedUpdate(content);

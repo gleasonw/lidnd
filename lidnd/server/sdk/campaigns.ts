@@ -1,9 +1,14 @@
 import { type LidndContext } from "@/server/api/base-trpc";
 import { db } from "@/server/db";
-import { campaigns, encounters } from "@/server/db/schema";
+import {
+  campaigns,
+  encounter_tags,
+  encounter_to_tag,
+  encounters,
+} from "@/server/db/schema";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { TRPCError } from "@trpc/server";
-import { and, eq, ilike } from "drizzle-orm";
+import { and, eq, ilike, inArray } from "drizzle-orm";
 import { cache } from "react";
 
 export const ServerCampaign = {
@@ -112,6 +117,43 @@ export const ServerCampaign = {
     });
   },
 
+  encountersByTag: async function (
+    ctx: LidndContext,
+    filters: { campaignId: string; tagId?: string },
+    dbObject = db
+  ) {
+    const filtersToApply = [
+      eq(encounters.campaign_id, filters.campaignId),
+      eq(encounters.user_id, ctx.user.id),
+    ];
+    if (filters.tagId) {
+      filtersToApply.push(eq(encounter_to_tag.tag_id, filters.tagId));
+    }
+
+    const campaignTagQuery = await dbObject
+      .select()
+      .from(encounters)
+      .innerJoin(
+        encounter_to_tag,
+        eq(encounters.id, encounter_to_tag.encounter_id)
+      )
+      .innerJoin(encounter_tags, eq(encounter_to_tag.tag_id, encounter_tags.id))
+      .where(
+        and(
+          ...[...filtersToApply, eq(encounters.campaign_id, filters.campaignId)]
+        )
+      );
+    const campaignTagIds = campaignTagQuery.map((t) => t.encounter_tags.id);
+    return await dbObject.query.encounter_tags.findMany({
+      where: inArray(encounter_tags.id, campaignTagIds),
+      with: {
+        encounterLinks: {
+          with: { encounter: true },
+        },
+      },
+    });
+  },
+
   encounters: async function (
     ctx: LidndContext,
     filters: { campaignId: string; matchName?: string },
@@ -126,6 +168,13 @@ export const ServerCampaign = {
     }
     return await dbObject.query.encounters.findMany({
       where: and(...filtersToApply),
+      with: {
+        tags: {
+          with: {
+            tag: true,
+          },
+        },
+      },
     });
   },
 
