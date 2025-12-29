@@ -1,15 +1,14 @@
 "use client";
 
-import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
 import { EncounterId } from "@/encounters/[encounter_index]/encounter-id";
-import {
-  useEncounter,
-  useRemoveParticipantFromEncounter,
-} from "@/encounters/[encounter_index]/hooks";
-import { DifficultyBadge } from "@/encounters/campaign-encounters-overview";
+import { useEncounter } from "@/encounters/[encounter_index]/hooks";
 import { useEncounterLinks } from "@/encounters/link-hooks";
 import { EncounterUtils } from "@/utils/encounters";
+import { ParticipantUtils } from "@/utils/participants";
+import Image from "next/image";
 import Link from "next/link";
+import React from "react";
+import { useEffect } from "react";
 
 export function EncounterCard({ encounter }: { encounter: { id: string } }) {
   return (
@@ -18,51 +17,62 @@ export function EncounterCard({ encounter }: { encounter: { id: string } }) {
     </EncounterId>
   );
 }
-const maxMonstersToShow = 10;
+
+const maxMonstersToShow = 2;
 
 function EncounterDetails() {
   const [encounterData] = useEncounter();
-  const { mutate: removeParticipant } = useRemoveParticipantFromEncounter();
   const { encounter: encounterLink } = useEncounterLinks();
-  const monsters = EncounterUtils.monsters(encounterData);
-  const isOverflowing = monsters.length > maxMonstersToShow;
+  const monstersByCr = EncounterUtils.monstersInCrOrder(encounterData);
+  const monstersNotShown = Math.max(0, monstersByCr.length - maxMonstersToShow);
+  const [onlyClientImageUrl, setOnlyClientImageUrl] = React.useState<
+    string | null
+  >(null);
+
+  useEffect(() => {
+    setOnlyClientImageUrl(EncounterUtils.imageUrl(encounterData));
+  }, [encounterData]);
+
   return (
-    <li className="flex flex-col gap-4 rounded-lg border bg-background p-4 shadow-sm">
-      <Link href={encounterLink}>
-        <div className="flex items-start justify-between gap-3 hover:bg-gray-10">
-          <div className="space-y-1">
-            <p className="text-base font-medium">
+    <Link
+      href={encounterLink}
+      className="flex flex-col gap-4 rounded-lg border bg-background p-4 shadow-sm"
+    >
+      <div className="flex flex-col gap-2 hover:bg-gray-10">
+        <div className="flex gap-3 items-start">
+          {onlyClientImageUrl && (
+            <Image
+              src={onlyClientImageUrl}
+              alt="Encounter Image"
+              width={50}
+              height={50}
+              className="rounded flex-shrink-0 transition-opacity duration-200"
+              style={{ opacity: onlyClientImageUrl ? 1 : 0 }}
+            />
+          )}
+          <div className="flex flex-col gap-2 flex-1">
+            <p className="text-base">
               {encounterData.name || "Unnamed encounter"}
             </p>
+            {/* <DifficultyBadge encounter={encounterData} /> */}
+            <div className="flex flex-col gap-1 text-muted-foreground">
+              {monstersByCr.slice(0, maxMonstersToShow).map((participant) => (
+                <span
+                  key={participant.id}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  {ParticipantUtils.name(participant)}
+                </span>
+              ))}
+              {monstersNotShown > 0 ? (
+                <span className="text-sm text-muted-foreground">
+                  and {monstersNotShown} more...
+                </span>
+              ) : null}
+            </div>
           </div>
-          <DifficultyBadge encounter={encounterData} />
         </div>
-      </Link>
-      <div className="flex gap-2 h-12">
-        {monsters.length > 0 && (
-          <div className="flex -space-x-4 h-16">
-            {monsters?.slice(0, maxMonstersToShow).map((p) => (
-              <button
-                className="rounded-full w-12 h-12 flex items-center justify-center overflow-hidden border-2 border-white bg-white"
-                key={p.id}
-                onClick={() =>
-                  removeParticipant({
-                    participant_id: p.id,
-                    encounter_id: encounterData.id,
-                  })
-                }
-              >
-                <CreatureIcon creature={p.creature} size="v-small" />
-              </button>
-            ))}
-            {isOverflowing && (
-              <div className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-white bg-gray-200 text-sm font-medium text-gray-600">
-                +{monsters.length - maxMonstersToShow}
-              </div>
-            )}
-          </div>
-        )}
       </div>
-    </li>
+    </Link>
   );
 }

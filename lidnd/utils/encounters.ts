@@ -12,7 +12,10 @@ import type {
 } from "@/server/api/router";
 import type { EncounterWithData } from "@/server/sdk/encounters";
 import * as R from "remeda";
-import { ParticipantUtils } from "@/utils/participants";
+import {
+  ParticipantUtils,
+  type ChallengeRatingParticipant,
+} from "@/utils/participants";
 import type { LidndUser } from "@/app/authentication";
 import _ from "lodash";
 import { CreatureUtils } from "@/utils/creatures";
@@ -602,7 +605,12 @@ export const EncounterUtils = {
     return encounter.participants;
   },
 
-  participantsByName(encounter: EncounterWithParticipants) {
+  participantsByName<
+    P extends { creature: { name: string } } & Pick<
+      Participant,
+      "initiative" | "created_at" | "id"
+    >
+  >(encounter: { participants: Array<P> }) {
     return R.sort(encounter.participants, (a, b) => {
       const res = ParticipantUtils.name(a).localeCompare(
         ParticipantUtils.name(b)
@@ -646,7 +654,11 @@ export const EncounterUtils = {
     );
   },
 
-  monstersInCrOrder(encounter: EncounterWithParticipants<ParticipantWithData>) {
+  monstersInCrOrder<
+    P extends ChallengeRatingParticipant & {
+      creature: { name: string };
+    } & Pick<Participant, "initiative" | "created_at" | "id">
+  >(encounter: { participants: Array<P> }) {
     return this.participantsByName(encounter)
       .filter((p) => !ParticipantUtils.isFriendly(p))
       .sort(
@@ -667,6 +679,43 @@ export const EncounterUtils = {
       this.participants(encounter).filter((p) => ParticipantUtils.isPlayer(p)),
       ParticipantUtils.sortLinearly
     );
+  },
+
+  imageUrl(
+    encounter: Pick<Encounter, "description"> & {
+      participants: Array<
+        ChallengeRatingParticipant & {
+          creature: Pick<
+            Creature,
+            "name" | "icon_height" | "icon_width" | "id"
+          >;
+        } & Pick<Participant, "initiative" | "created_at" | "id">
+      >;
+    }
+  ) {
+    // if we have a description, try to extract the first image from it
+    if (encounter.description && typeof DOMParser !== "undefined") {
+      const doc = new DOMParser().parseFromString(
+        encounter.description,
+        "text/html"
+      );
+      const img = doc.querySelector("img");
+      if (img && img.src) {
+        return img.src;
+      }
+    }
+
+    // otherwise, check the highest CR monster for an image
+    const monstersByCr = EncounterUtils.monstersInCrOrder(encounter);
+    if (monstersByCr.length > 0) {
+      const highestCrMonster = monstersByCr[0]!;
+      if (ParticipantUtils.hasIcon(highestCrMonster)) {
+        return ParticipantUtils.iconUrl(highestCrMonster);
+      }
+    }
+
+    // maybe in the future we let users set a custom image for the encounter?
+    return null;
   },
 
   placeholder(

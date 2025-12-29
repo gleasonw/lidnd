@@ -107,8 +107,11 @@ function isDead(p: ParticipantWithCreature) {
   return p.hp <= 0;
 }
 
-function isFriendly(p: { is_ally: boolean; creature: Pick<Creature, "type"> }) {
-  return isPlayer(p) || p.is_ally;
+function isFriendly(p: {
+  is_ally?: boolean;
+  creature: Pick<Creature, "type">;
+}) {
+  return isPlayer(p) || p.is_ally || false;
 }
 
 // need to just create a "role" field on the participant
@@ -119,11 +122,11 @@ function isAdversary(p: {
   return !isFriendly(p);
 }
 
-function name(p: ParticipantWithCreature) {
+function name(p: { creature: Pick<Creature, "name"> }) {
   return p.creature.name;
 }
 
-function creatureId(p: ParticipantWithCreature) {
+function creatureId(p: { creature: Pick<Creature, "id"> }) {
   return p.creature.id;
 }
 
@@ -148,7 +151,7 @@ function percentDamage(p: ParticipantWithCreature) {
   return (missingHP / maxHP) * 100;
 }
 
-type ChallengeRatingParticipant = Pick<
+export type ChallengeRatingParticipant = Pick<
   Participant,
   "max_hp_override" | "hp"
 > & {
@@ -318,4 +321,7 @@ export const ParticipantUtils = {
   hasIcon,
   hasStatBlock,
   outOfTurn: participantOutOfTurn,
+  iconUrl: (participant: { creature: Pick<Creature, "id"> }) => {
+    return CreatureUtils.awsURL(participant.creature, "icon");
+  },
 };

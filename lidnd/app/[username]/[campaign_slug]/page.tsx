@@ -1,26 +1,12 @@
-import {
-  CampaignParty,
-  CreateEncounterForm,
-} from "./encounter/campaign-encounters-overview";
+import { CampaignParty } from "./encounter/campaign-encounters-overview";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
-import { MoveLeft, Trash2 } from "lucide-react";
+import { MoveLeft } from "lucide-react";
 import { db } from "@/server/db";
-import * as R from "remeda";
-import {
-  campaignCreatureLink,
-  creatures,
-  encounters,
-  gameSessions,
-} from "@/server/db/schema";
-import { revalidatePath } from "next/cache";
+import { campaignCreatureLink, creatures } from "@/server/db/schema";
 import { and, eq, exists, ilike } from "drizzle-orm";
-import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
-import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
-import { SessionCreateForm } from "@/app/[username]/[campaign_slug]/CreateSessionForm";
-import { ButtonWithTooltip } from "@/components/ui/tip";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";
@@ -28,6 +14,9 @@ import { RemoveCreatureFromCampaign } from "@/app/[username]/[campaign_slug]/Rem
 import { CreatureUpdateForm } from "@/creatures/creatures-page";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { CampaignCreatureSearch } from "@/app/[username]/[campaign_slug]/CampaignCreatureSearch";
+import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
+import { EncountersSearchBar } from "@/app/[username]/[campaign_slug]/EncountersSearchBar";
+import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -55,49 +44,14 @@ export default async function CampaignPage(props: {
     return <div>No campaign found... this is a bug</div>;
   }
 
-  const campaignRoute = appRoutes.campaign({ campaign: campaignData, user });
-
-  const sessionsInCampaign = await ServerCampaign.sessionsForCampaign(
-    { user },
-    campaignData.id
+  const encounters = await ServerCampaign.encounters(
+    UserUtils.context(user),
+    {
+      campaignId: campaignData.id,
+      matchName: searchParams?.encounterSearch as string,
+    },
+    db
   );
-
-  const sortedSessions = R.sort(
-    sessionsInCampaign,
-    (a, b) => (b.created_at?.getTime() ?? 0) - (a.created_at?.getTime() ?? 0)
-  );
-
-  async function deleteSession(form: FormData) {
-    "use server";
-    if (!user) {
-      console.error("No user found, cannot delete session");
-      throw new Error("No user found");
-    }
-
-    const sessionId = form.get("session_id")?.toString();
-
-    if (!sessionId) {
-      throw new Error("Session id is required");
-    }
-
-    await db
-      .update(encounters)
-      .set({ session_id: null })
-      .where(
-        and(
-          eq(encounters.session_id, sessionId),
-          eq(encounters.user_id, user.id)
-        )
-      );
-
-    await db
-      .delete(gameSessions)
-      .where(
-        and(eq(gameSessions.id, sessionId), eq(gameSessions.user_id, user.id))
-      );
-
-    revalidatePath(campaignRoute);
-  }
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6 max-h-full">
@@ -136,7 +90,7 @@ export default async function CampaignPage(props: {
                   searchParams?.tab !== "creatures" ? "outline" : "ghost"
                 }
               >
-                Sessions
+                Encounters
               </Button>
             </Link>
             <Link
@@ -156,10 +110,6 @@ export default async function CampaignPage(props: {
           </div>
         </div>
       </header>
-      {/*TODO: wacky bug that makes the next dialog disappear if this one isn't present. moving fast for now */}
-      <div className="mx-auto">
-        <SessionCreateForm campaignData={campaignData} />
-      </div>
 
       {searchParams?.tab === "creatures" ? (
         <section>
@@ -174,75 +124,21 @@ export default async function CampaignPage(props: {
         </section>
       ) : (
         <section className="flex flex-col gap-6">
-          {sortedSessions.length === 0 ? (
-            <div className="flex flex-col gap-4">
-              <p className="font-medium text-base text-foreground">
-                No sessions yet
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {sortedSessions.map((session) => {
-                const encounterCount = session.encounters?.length ?? 0;
-                return (
-                  <div key={session.id} className="flex flex-col gap-4 p-3">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-semibold tracking-tight">
-                          {session.name}
-                        </h3>
-                        {session.description ? (
-                          <p className="max-w-2xl text-sm text-muted-foreground">
-                            {session.description}
-                          </p>
-                        ) : null}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <form action={deleteSession} className="ml-auto">
-                          <input
-                            type="hidden"
-                            name="session_id"
-                            value={session.id}
-                          />
-                          <ButtonWithTooltip
-                            text="Delete session"
-                            variant="ghost"
-                            size="sm"
-                            className="gap-2 text-gray-400"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </ButtonWithTooltip>
-                        </form>
-                      </div>
-                    </div>
+          <CreateEncounterButton />
 
-                    {encounterCount === 0 ? (
-                      <CreateEncounterForm gameSessionId={session.id} />
-                    ) : (
-                      <>
-                        <ul className="grid gap-4 md:grid-cols-2">
-                          {session.encounters
-                            ?.slice()
-                            .sort(
-                              (a, b) =>
-                                (a.created_at?.getTime() ?? 0) -
-                                (b.created_at?.getTime() ?? 0)
-                            )
-                            .map((encounter) => (
-                              <EncounterCard
-                                key={encounter.id}
-                                encounter={encounter}
-                              />
-                            ))}
-                        </ul>
-                        <CreateEncounterButton gameSessionId={session.id} />
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <EncountersSearchBar
+            search={
+              typeof searchParams?.encounterSearch === "string"
+                ? searchParams.encounterSearch
+                : undefined
+            }
+          />
+
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {encounters.map((encounter) => (
+              <EncounterCard key={encounter.id} encounter={encounter} />
+            ))}
+          </div>
         </section>
       )}
     </div>

@@ -3,7 +3,7 @@ import { db } from "@/server/db";
 import { campaigns, encounters } from "@/server/db/schema";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { and, eq, ilike } from "drizzle-orm";
 import { cache } from "react";
 
 export const ServerCampaign = {
@@ -109,6 +109,23 @@ export const ServerCampaign = {
           },
         },
       },
+    });
+  },
+
+  encounters: async function (
+    ctx: LidndContext,
+    filters: { campaignId: string; matchName?: string },
+    dbObject = db
+  ) {
+    const filtersToApply = [
+      eq(encounters.campaign_id, filters.campaignId),
+      eq(encounters.user_id, ctx.user.id),
+    ];
+    if (filters.matchName) {
+      filtersToApply.push(ilike(encounters.name, `%${filters.matchName}%`));
+    }
+    return await dbObject.query.encounters.findMany({
+      where: and(...filtersToApply),
     });
   },
 

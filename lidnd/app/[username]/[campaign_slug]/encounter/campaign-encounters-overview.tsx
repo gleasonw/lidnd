@@ -52,7 +52,7 @@ export function DifficultyBadge({
   const diffColor = EncounterUtils.difficultyCssClasses(encounter, campaign);
   return (
     <Badge
-      className={`${diffColor} flex-grow-0 h-8 text-sm flex gap-1 rounded-sm`}
+      className={`${diffColor} max-w-fit h-6 text-xs flex gap-1 rounded-sm`}
     >
       <span>
         {EncounterUtils.difficulty({
@@ -66,11 +66,9 @@ export function DifficultyBadge({
 }
 
 export function CreateEncounterForm({
-  gameSessionId,
   buttonExtra,
   afterCreate,
 }: {
-  gameSessionId: string;
   buttonExtra?: React.ReactNode;
   afterCreate?: (encounter: Encounter) => void;
 }) {
@@ -105,7 +103,6 @@ export function CreateEncounterForm({
             name,
             description,
             campaign_id: campaign.id,
-            session_id: gameSessionId,
           });
           setName("");
           setDescription("");

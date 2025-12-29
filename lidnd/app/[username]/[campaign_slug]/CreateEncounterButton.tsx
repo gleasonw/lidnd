@@ -10,11 +10,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-export function CreateEncounterButton({
-  gameSessionId,
-}: {
-  gameSessionId: string;
-}) {
+export function CreateEncounterButton() {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [campaign] = useCampaign();
   const user = useUser();
@@ -25,11 +21,7 @@ export function CreateEncounterButton({
       onClose={() => setDialogOpen(false)}
       title="Create New Encounter"
       trigger={
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => setDialogOpen(true)}
-        >
+        <Button className="w-full" onClick={() => setDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Create Encounter
         </Button>
@@ -40,7 +32,6 @@ export function CreateEncounterButton({
             setDialogOpen(false);
             router.push(appRoutes.encounter({ campaign, encounter: e, user }));
           }}
-          gameSessionId={gameSessionId}
           buttonExtra={
             <Button
               variant="ghost"
