@@ -8,14 +8,14 @@ export function GroupByTagToggle() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
-  const groupByTag = searchParams.get("groupByTag") === "true";
+  const groupByTag = searchParams.get("groupByTag") !== "false";
 
   const handleToggle = (checked: boolean) => {
     const params = new URLSearchParams(searchParams.toString());
     if (checked) {
       params.set("groupByTag", "true");
     } else {
-      params.delete("groupByTag");
+      params.set("groupByTag", "false");
     }
     router.push(`${pathname}?${params.toString()}`);
   };
