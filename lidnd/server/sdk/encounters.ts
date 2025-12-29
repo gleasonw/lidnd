@@ -255,6 +255,11 @@ export const ServerEncounter = {
             },
           },
         },
+        tags: {
+          with: {
+            tag: true,
+          },
+        },
       },
     });
   },
@@ -327,6 +332,11 @@ export const ServerEncounter = {
           },
         },
         turn_groups: true,
+        tags: {
+          with: {
+            tag: true,
+          },
+        },
       },
     });
   },
@@ -392,6 +402,11 @@ export const ServerEncounter = {
         campaigns: {
           with: {
             legacySystem: true,
+          },
+        },
+        tags: {
+          with: {
+            tag: true,
           },
         },
       },

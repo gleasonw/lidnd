@@ -526,3 +526,31 @@ export function useStartEncounter() {
     },
   });
 }
+
+/**
+ * Hook to fetch all tags for the current user
+ */
+export function useUserTags() {
+  return api.getUserTags.useQuery();
+}
+
+/**
+ * Hook to create a new tag
+ */
+export function useCreateTag() {
+  return api.createTag.useMutation();
+}
+
+/**
+ * Hook to add a tag to an encounter with optimistic update
+ */
+export function useAddTagToEncounter() {
+  return api.addTagToEncounter.useMutation();
+}
+
+/**
+ * Hook to remove a tag from an encounter with optimistic update
+ */
+export function useRemoveTagFromEncounter() {
+  return api.removeTagFromEncounter.useMutation();
+}

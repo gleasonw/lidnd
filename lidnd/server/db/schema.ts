@@ -265,6 +265,7 @@ export const encountersRelations = relations(encounters, ({ many, one }) => ({
   }),
   columns: many(stat_columns),
   turn_groups: many(turn_groups),
+  tags: many(encounter_to_tag),
 }));
 
 //todo: there are system-specific fields in here...
@@ -344,6 +345,71 @@ export const statColumnRelations = relations(stat_columns, ({ one, many }) => ({
   }),
   participants: many(participants),
 }));
+
+export type EncounterTag = InferSelectModel<typeof encounter_tags>;
+export const encounter_tags = pgTable(
+  "encounter_tags",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: varchar("name", { length: 256 }).notNull(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => {
+    return {
+      userIndex: index("user_index_encounter_tags").on(t.user_id),
+    };
+  }
+);
+
+export const encounterTagRelations = relations(
+  encounter_tags,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [encounter_tags.user_id],
+      references: [users.id],
+    }),
+    encounterLinks: many(encounter_to_tag),
+  })
+);
+
+export const encounter_to_tag = pgTable(
+  "encounter_to_tag",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    encounter_id: uuid("encounter_id")
+      .notNull()
+      .references(() => encounters.id, { onDelete: "cascade" }),
+    tag_id: uuid("tag_id")
+      .notNull()
+      .references(() => encounter_tags.id, { onDelete: "cascade" }),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => {
+    return {
+      encounterIndex: index("encounter_to_tag_encounter_index").on(
+        t.encounter_id
+      ),
+      tagIndex: index("encounter_to_tag_tag_index").on(t.tag_id),
+    };
+  }
+);
+
+export const encounterToTagRelations = relations(
+  encounter_to_tag,
+  ({ one }) => ({
+    encounter: one(encounters, {
+      fields: [encounter_to_tag.encounter_id],
+      references: [encounters.id],
+    }),
+    tag: one(encounter_tags, {
+      fields: [encounter_to_tag.tag_id],
+      references: [encounter_tags.id],
+    }),
+  })
+);
 
 export const participantRelations = relations(
   participants,

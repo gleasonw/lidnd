@@ -95,6 +95,7 @@ import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { getQueryKey } from "@trpc/react-query";
 import { ParticipantEditDialog } from "@/encounters/[encounter_index]/ParticipantEditDialog";
+import { EncounterTagger } from "@/encounters/EncounterTagger";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -250,6 +251,9 @@ export const EncounterBattleUI = observer(function BattleUI() {
                             />
                           </LidndLabel>
                         )}
+                        <LidndLabel label="Tags">
+                          <EncounterTagger />
+                        </LidndLabel>
                       </div>
                     </div>
                     <div>
