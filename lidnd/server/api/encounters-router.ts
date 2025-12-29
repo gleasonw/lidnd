@@ -11,7 +11,7 @@ import {
 } from "@/server/db/schema";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { ServerParticipants } from "@/server/sdk/participants";
-import { and, eq, inArray, notInArray } from "drizzle-orm";
+import { and, eq, ilike, inArray, notInArray } from "drizzle-orm";
 import { z } from "zod";
 import * as ServerTurnGroup from "@/server/sdk/turnGroups";
 import { ServerCampaign } from "@/server/sdk/campaigns";
@@ -198,5 +198,31 @@ export const encountersRouter = {
           )
         );
       revalidatePath("/");
+    }),
+
+  getEncounters: protectedProcedure
+    .input(
+      z.object({
+        campaignId: z.string(),
+        matchName: z.string().optional(),
+      })
+    )
+    .query(async (opts) => {
+      return await db.query.encounters.findMany({
+        where: and(
+          eq(encounters.campaign_id, opts.input.campaignId),
+          eq(encounters.user_id, opts.ctx.user.id),
+          opts.input.matchName
+            ? ilike(encounters.name, `%${opts.input.matchName}%`)
+            : undefined
+        ),
+        with: {
+          tags: {
+            with: {
+              tag: true,
+            },
+          },
+        },
+      });
     }),
 };

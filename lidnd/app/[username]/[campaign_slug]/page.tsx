@@ -14,10 +14,8 @@ import { RemoveCreatureFromCampaign } from "@/app/[username]/[campaign_slug]/Rem
 import { CreatureUpdateForm } from "@/creatures/creatures-page";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { CampaignCreatureSearch } from "@/app/[username]/[campaign_slug]/CampaignCreatureSearch";
-import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
-import { EncountersSearchBar } from "@/app/[username]/[campaign_slug]/EncountersSearchBar";
 import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
-import { GroupByTagToggle } from "@/app/[username]/[campaign_slug]/GroupByTagToggle";
+import { Encounters } from "@/app/[username]/[campaign_slug]/encounters";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -44,27 +42,6 @@ export default async function CampaignPage(props: {
     console.error("No campaign found, layout should have redirected");
     return <div>No campaign found... this is a bug</div>;
   }
-
-  const encounters = await ServerCampaign.encounters(
-    UserUtils.context(user),
-    {
-      campaignId: campaignData.id,
-      matchName: searchParams?.encounterSearch as string,
-    },
-    db
-  );
-
-  const encountersByTag = await ServerCampaign.encountersByTag(
-    UserUtils.context(user),
-    {
-      campaignId: campaignData.id,
-    },
-    db
-  );
-
-  const encountersWithNoTag = encounters.filter((e) => e.tags.length === 0);
-
-  const groupByTag = searchParams?.groupByTag === "true";
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6 max-h-full">
@@ -137,59 +114,7 @@ export default async function CampaignPage(props: {
       ) : (
         <section className="flex flex-col gap-6">
           <CreateEncounterButton />
-
-          <EncountersSearchBar
-            search={
-              typeof searchParams?.encounterSearch === "string"
-                ? searchParams.encounterSearch
-                : undefined
-            }
-          />
-
-          <GroupByTagToggle />
-
-          {groupByTag ? (
-            <div className="flex flex-col gap-8">
-              {encountersByTag.length === 0 ? (
-                <p className="text-muted-foreground">
-                  No tagged encounters. Add tags to your encounters to group
-                  them.
-                </p>
-              ) : (
-                encountersByTag.map((tagGroup) => (
-                  <div key={tagGroup.id} className="flex flex-col gap-4">
-                    <h2 className="text-lg font-semibold border-b pb-2">
-                      {tagGroup.name}
-                    </h2>
-                    <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {tagGroup.encounterLinks.map((link) => (
-                        <EncounterCard
-                          key={link.encounter_id}
-                          encounter={link.encounter}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
-              {encountersWithNoTag.length > 0 && (
-                <div className="flex flex-col gap-4">
-                  <h2 className="text-lg border-b pb-2">No tag</h2>
-                  <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {encountersWithNoTag.map((encounter) => (
-                      <EncounterCard key={encounter.id} encounter={encounter} />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {encounters.map((encounter) => (
-                <EncounterCard key={encounter.id} encounter={encounter} />
-              ))}
-            </div>
-          )}
+          <Encounters />
         </section>
       )}
     </div>
