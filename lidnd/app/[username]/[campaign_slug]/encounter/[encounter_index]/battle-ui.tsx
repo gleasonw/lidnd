@@ -99,6 +99,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getQueryKey } from "@trpc/react-query";
 import { ParticipantEditDialog } from "@/encounters/[encounter_index]/ParticipantEditDialog";
 import { EncounterTagger } from "@/encounters/EncounterTagger";
+import { DeleteEncounterButton } from "@/encounters/[encounter_index]/DeleteEncounterButton";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -314,6 +315,9 @@ export const EncounterBattleUI = observer(function BattleUI() {
               </TabsContent>
             </div>
           </Tabs>
+          <div className="w-full flex items-center justify-center p-10">
+            <DeleteEncounterButton encounter={encounter} />
+          </div>
         </div>
       );
     case "run":

@@ -42,7 +42,7 @@ export default async function EncounterLayout(props: {
       <EncounterId encounterId={encounter.id}>
         <NetworkErrorCatcher>
           <div
-            className={`relative ${css.root} flex flex-col max-h-full h-full`}
+            className={`relative ${css.root} flex flex-col max-h-full h-full pb-2`}
           >
             {/**we don't really have space for this nav on group initiative... might need to rethink slightly */}
             {campaign?.system === "dnd5e" && (

@@ -23,9 +23,11 @@ import { parseWithZod } from "@conform-to/zod";
 export async function removeEncounter({
   encounterId,
   campaignId,
+  redirectToCampaign = false,
 }: {
   encounterId: string;
   campaignId: string;
+  redirectToCampaign?: boolean;
 }) {
   "use server";
 
@@ -48,7 +50,9 @@ export async function removeEncounter({
   }
 
   await deleteEncounter({ id: encounterId });
-  revalidatePath(appRoutes.campaign({ campaign, user }));
+  if (redirectToCampaign) {
+    redirect(appRoutes.campaign({ campaign, user }));
+  }
 }
 
 export async function createEncounter(encounter: EncounterInsert) {
@@ -87,7 +91,7 @@ export async function deleteEncounter(encounter: { id: string }) {
     { user },
     encounter
   );
-  revalidatePath(`/`);
+  revalidatePath(`/`, "layout");
   return deletedEncounter;
 }
 
