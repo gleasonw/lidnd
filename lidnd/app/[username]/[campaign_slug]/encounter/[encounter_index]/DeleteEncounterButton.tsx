@@ -36,14 +36,14 @@ export function DeleteEncounterButton({
             type="submit"
           >
             <TrashIcon className="mr-2" />
-            Delete Encounter
+            Delete
           </Button>
         </form>
       }
       trigger={
-        <Button variant="ghost" className="text-destructive">
+        <Button variant="ghost" className="text-gray-400">
           <TrashIcon />
-          Delete encounter
+          Delete
         </Button>
       }
     />

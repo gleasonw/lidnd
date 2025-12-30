@@ -326,7 +326,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
               </TabsContent>
             </div>
           </Tabs>
-          <div className="w-full flex items-center justify-center p-10">
+          <div className="w-full flex items-center justify-center p-24">
             <DeleteEncounterButton encounter={encounter} />
           </div>
         </div>

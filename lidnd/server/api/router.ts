@@ -20,7 +20,7 @@ import {
   images,
 } from "@/server/db/schema";
 import * as ServerTurnGroup from "@/server/sdk/turnGroups";
-import { eq, and, ilike, lte, exists, ne } from "drizzle-orm";
+import { eq, and, ilike, lte, exists } from "drizzle-orm";
 import { db } from "@/server/db";
 import { z } from "zod";
 import { getIconAWSname, getStatBlockAWSname } from "@/server/api/utils";
@@ -760,8 +760,6 @@ export const appRouter = t.router({
       }
       if (opts.input.type !== undefined) {
         filters.push(eq(creatures.type, opts.input.type));
-      } else if (opts.input.includePlayers !== true) {
-        filters.push(ne(creatures.type, "player"));
       }
       if (opts.input.maxCR !== undefined) {
         filters.push(lte(creatures.challenge_rating, opts.input.maxCR));

@@ -153,9 +153,11 @@ async function addParticipant(
           message: "Failed to add participant",
         });
       }
-      if (CreatureUtils.isPlayer(creature)) {
-        return;
-      }
+      participant.creature = creature;
+    }
+
+    if (CreatureUtils.isPlayer(participant.creature!)) {
+      return;
     }
 
     const columnToAssign = EncounterUtils.destinationColumnForNewParticipant(
