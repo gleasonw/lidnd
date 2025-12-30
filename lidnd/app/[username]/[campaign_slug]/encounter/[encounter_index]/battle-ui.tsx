@@ -100,6 +100,7 @@ import { ParticipantEditDialog } from "@/encounters/[encounter_index]/Participan
 import { EncounterTagger } from "@/encounters/EncounterTagger";
 import { DeleteEncounterButton } from "@/encounters/[encounter_index]/DeleteEncounterButton";
 import { QuickAddParticipantsButton } from "@/encounters/[encounter_index]/QuickAddParticipant";
+import { Kbd } from "@/components/ui/kbd";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -151,13 +152,14 @@ export const EncounterBattleUI = observer(function BattleUI() {
             <div className="flex gap-8 ml-auto">
               {campaign.system === "dnd5e" ? (
                 <Link href={rollEncounter}>
-                  <Button>Start encounter</Button>
+                  <Button variant="secondary">Start encounter</Button>
                 </Link>
               ) : (
                 <Button
                   onClick={() => {
                     startEncounter(encounter.id);
                   }}
+                  variant="secondary"
                 >
                   <PlayIcon />
                   Start encounter
@@ -1123,6 +1125,10 @@ function TurnGroupSetup() {
     });
   }, []);
 
+  useHotkey("a", () => {
+    setCreatureAddDialogIsOpen(true);
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex w-full items-center justify-center gap-3">
@@ -1144,6 +1150,7 @@ function TurnGroupSetup() {
             >
               <AngryIcon />
               Upload adversary
+              <Kbd>A</Kbd>
             </Button>
           }
         />

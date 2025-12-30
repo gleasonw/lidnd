@@ -18,6 +18,17 @@ export function useCampaign() {
 export function useHotkey(key: string, handler: (e: KeyboardEvent) => void) {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      //make sure this is not triggered when typing in an input or textarea
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" ||
+        target.isContentEditable ||
+        target.getAttribute("role") === "textbox"
+      ) {
+        return;
+      }
       if (e.key.toLowerCase() === key.toLowerCase() && !e.repeat) {
         handler(e);
       }

@@ -3,7 +3,6 @@
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
 import { EncountersSearchBar } from "@/app/[username]/[campaign_slug]/EncountersSearchBar";
-import { GroupByTagToggle } from "@/app/[username]/[campaign_slug]/GroupByTagToggle";
 import { api } from "@/trpc/react";
 import { useSearchParams } from "next/navigation";
 import * as R from "remeda";
@@ -42,7 +41,6 @@ export function Encounters() {
   return (
     <>
       <EncountersSearchBar search={encounterSearch} />
-      <GroupByTagToggle />
       {groupByTag ? (
         <div className="flex flex-col gap-8">
           {tagsWithEncounters.length === 0 ? (
