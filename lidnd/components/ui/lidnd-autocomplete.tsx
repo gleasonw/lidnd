@@ -46,14 +46,14 @@ export function LidndAutocomplete({
           aria-expanded={open}
           className="w-[200px] justify-between"
         >
-          {options.length > 0 ? options[0]?.label : "Select..."}
+          Select
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
           <CommandInput
-            placeholder="Search..."
+            placeholder="Search... (enter to create)"
             className="h-9"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -66,7 +66,7 @@ export function LidndAutocomplete({
             }}
           />
           <CommandList>
-            <CommandEmpty>No framework found.</CommandEmpty>
+            <CommandEmpty>No option found.</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
