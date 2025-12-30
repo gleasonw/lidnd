@@ -13,16 +13,10 @@ export function CreateEncounterButton() {
       className="w-full flex items-center justify-center"
       onSubmit={(e) => {
         e.preventDefault();
+        startTransition(() => createEncounter({ campaign_id: campaign.id }));
       }}
     >
-      <Button
-        className="w-56"
-        type="submit"
-        disabled={isPending}
-        onSubmit={() =>
-          startTransition(() => createEncounter({ campaign_id: campaign.id }))
-        }
-      >
+      <Button className="w-56" type="submit" disabled={isPending}>
         Create Encounter
       </Button>
     </form>
