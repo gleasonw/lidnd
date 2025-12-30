@@ -117,6 +117,7 @@ export function monstersWithNoColumn<
 }
 
 const difficulties = {
+  Trivial: "Trivial",
   Easy: "Easy",
   Standard: "Standard",
   Hard: "Hard",
@@ -160,6 +161,7 @@ const difficultyClasses = {
   Standard: "text-blue-700 bg-blue-100",
   Hard: "text-yellow-700 bg-yellow-100",
   Deadly: "text-red-700 bg-red-100",
+  Trivial: "",
 } as const;
 
 function cssClassForDifficulty(d: Difficulty) {
@@ -204,7 +206,7 @@ function remainingCr(
 ) {
   const goalCr = EncounterUtils.goalCr(e, c);
   if (goalCr === "no-players") {
-    return "no-players";
+    return 0;
   }
   const totalCr = EncounterUtils.totalCr(e);
   return goalCr - totalCr;
@@ -406,6 +408,7 @@ export const EncounterUtils = {
     campaign: Pick<Campaign, "system" | "party_level">;
   }):
     | {
+        trivialTier: number;
         easyTier: number;
         standardTier: number;
         hardTier: number;
@@ -443,8 +446,9 @@ export const EncounterUtils = {
         const easyTier = foundLevel.easy * playersAndAllies;
         const standardTier = foundLevel.standard * playersAndAllies;
         const hardTier = foundLevel.hard * playersAndAllies;
-
-        return { easyTier, standardTier, hardTier };
+        // not really supporting 5e well right now, trivial tier is same as easy. but also this difficulty
+        // system came from flee mortals iirc
+        return { easyTier, standardTier, hardTier, trivialTier: easyTier };
       }
       case "drawsteel": {
         if (playersLevel < 1 || playersLevel > 10) {
@@ -468,6 +472,7 @@ export const EncounterUtils = {
           );
         }
         return {
+          trivialTier: partyEncounterStrength - oneHeroStrength,
           easyTier: partyEncounterStrength,
           standardTier: partyEncounterStrength + oneHeroStrength,
           hardTier: partyEncounterStrength + threeHeroStrength,
@@ -584,12 +589,14 @@ export const EncounterUtils = {
     if (tiers === "no-players") {
       return "no-players";
     }
-    const { standardTier, hardTier } = tiers;
-    if (cr < standardTier) {
+    const { standardTier, hardTier, trivialTier, easyTier } = tiers;
+    if (cr <= trivialTier) {
+      return difficulties.Trivial;
+    } else if (cr <= easyTier) {
       return difficulties.Easy;
-    } else if (cr < hardTier) {
+    } else if (cr <= standardTier) {
       return difficulties.Standard;
-    } else if (cr === hardTier) {
+    } else if (cr <= hardTier) {
       return difficulties.Hard;
     } else {
       return difficulties.Deadly;

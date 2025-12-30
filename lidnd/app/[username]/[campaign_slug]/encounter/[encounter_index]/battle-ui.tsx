@@ -53,7 +53,6 @@ import {
   HomeIcon,
   MoreHorizontal,
   PlayIcon,
-  PlusIcon,
   SkullIcon,
   Trash,
   TrashIcon,
@@ -100,6 +99,7 @@ import { getQueryKey } from "@trpc/react-query";
 import { ParticipantEditDialog } from "@/encounters/[encounter_index]/ParticipantEditDialog";
 import { EncounterTagger } from "@/encounters/EncounterTagger";
 import { DeleteEncounterButton } from "@/encounters/[encounter_index]/DeleteEncounterButton";
+import { QuickAddParticipantsButton } from "@/encounters/[encounter_index]/QuickAddParticipant";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -268,34 +268,43 @@ export const EncounterBattleUI = observer(function BattleUI() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-10 min-h-0">
-                    <div
-                      className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-sm text-gray-400">Current</span>
-                        <span className="text-2xl font-bold">{difficulty}</span>
-                      </div>
+                    <div className="flex flex-col gap-1">
+                      <div
+                        className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-400">Current</span>
+                          <span className="text-2xl font-bold">
+                            {difficulty}
+                          </span>
+                        </div>
 
-                      <div className="flex flex-col items-baseline">
-                        <span className="text-sm whitespace-nowrap text-gray-400">
-                          Total {CampaignUtils.crLabel(campaign)}
-                        </span>
-                        <span className="text-2xl font-bold">
-                          {EncounterUtils.totalCr(encounter)}
-                        </span>
+                        <div className="flex flex-col items-baseline">
+                          <span className="text-sm whitespace-nowrap text-gray-400">
+                            Total {CampaignUtils.crLabel(campaign)}
+                          </span>
+                          <span className="text-2xl font-bold">
+                            {EncounterUtils.totalCr(encounter)}
+                          </span>
+                        </div>
+                        {EncounterUtils.remainingCr(encounter, campaign) > 0 ? (
+                          <div className="flex flex-col items-baseline">
+                            <span className="text-sm whitespace-nowrap text-gray-400">
+                              Remaining {CampaignUtils.crLabel(campaign)}
+                            </span>
+                            <span className="text-2xl font-bold">
+                              {EncounterUtils.remainingCr(encounter, campaign)}
+                            </span>
+                          </div>
+                        ) : null}
                       </div>
-                      <div className="flex flex-col items-baseline">
-                        <span className="text-sm whitespace-nowrap text-gray-400">
-                          Remaining {CampaignUtils.crLabel(campaign)}
-                        </span>
-                        <span className="text-2xl font-bold">
-                          {EncounterUtils.remainingCr(encounter, campaign)}
-                        </span>
-                      </div>
-                      <div className="w-full pb-3 pt-3 sm:pb-0">
-                        <EncounterBudgetSlider />
+                      <div className="flex gap-2">
+                        <div className="w-full pb-3 pt-3 sm:pb-0">
+                          <EncounterBudgetSlider />
+                        </div>
                       </div>
                     </div>
+
                     <div className="flex flex-col gap-5 xl:max-h-full xl:overflow-auto">
                       {campaign.system === "drawsteel" ? (
                         <TurnGroupSetup />
@@ -432,32 +441,28 @@ function EncounterBudgetSlider() {
   return (
     <div className="w-full border h-6 relative ">
       <div
-        className="h-full absolute top-0 -translate-y-0.5"
+        className="h-full absolute top-0"
         style={{ left: `${(EncounterUtils.totalCr(encounter) / max) * 100}%` }}
       >
-        <SkullIcon />
+        <SkullIcon className="-translate-y-0.5 -translate-x-2.5 " />
       </div>
       <div
         className="w-1 h-full bg-gray-500 absolute text-gray-500"
         style={{ left: `${easyCutOff * 100}%` }}
       >
         <span className="absolute bottom-full">{tiers.easyTier}</span>
-
-        <span className="absolute top-full">Easy</span>
       </div>
       <div
         className="w-1 h-full bg-gray-500 absolute text-gray-500"
         style={{ left: `${standardCutoff * 100}%` }}
       >
         <span className="absolute bottom-full">{tiers.standardTier}</span>
-        <span className="absolute top-full">Standard</span>
       </div>
       <div
         className="w-1 h-full bg-gray-500 absolute text-gray-500"
         style={{ left: `${hardCutoff * 100}%` }}
       >
         <span className="absolute bottom-full">{tiers.hardTier}</span>
-        <span className="absolute top-full">Hard</span>
       </div>
     </div>
   );
@@ -1120,23 +1125,34 @@ function TurnGroupSetup() {
 
   return (
     <div className="flex flex-col gap-6">
-      <LidndDialog
-        isOpen={creatureAddDialogIsOpen}
-        onClose={() => setCreatureAddDialogIsOpen(false)}
-        title="Add adversary"
-        content={
-          <Card className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
-            <EditModeOpponentForm
-              onSubmitSuccess={() => setCreatureAddDialogIsOpen(false)}
-            />
-          </Card>
-        }
-        trigger={
-          <Button onClick={() => setCreatureAddDialogIsOpen(true)}>
-            Add adversary <PlusIcon />
-          </Button>
-        }
-      />
+      <div className="flex w-full items-center justify-center gap-3">
+        <LidndDialog
+          isOpen={creatureAddDialogIsOpen}
+          onClose={() => setCreatureAddDialogIsOpen(false)}
+          title="Add adversary"
+          content={
+            <div className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
+              <EditModeOpponentForm
+                onSubmitSuccess={() => setCreatureAddDialogIsOpen(false)}
+              />
+            </div>
+          }
+          trigger={
+            <Button
+              onClick={() => setCreatureAddDialogIsOpen(true)}
+              className=""
+            >
+              <AngryIcon />
+              Upload adversary
+            </Button>
+          }
+        />
+        <QuickAddParticipantsButton
+          encounterId={encounter.id}
+          campaignId={campaign.id}
+        />
+      </div>
+
       <div className={clsx("flex flex-col gap-3")}>
         <div className="flex flex-wrap gap-10 items-center">
           <LidndLabel label="Player count" className="flex gap-2 items-center">

@@ -83,10 +83,7 @@ export const ExistingMonster = observer(function ExistingMonster({
   const { data: creatures } = api.getUserCreatures.useQuery({
     name,
     campaignId: filterInCampaign ? encounter.campaign_id : undefined,
-    maxCR:
-      uiStore.filterExistingCreaturesByCrBudget && crBudget !== "no-players"
-        ? crBudget
-        : undefined,
+    maxCR: uiStore.filterExistingCreaturesByCrBudget ? crBudget : undefined,
   });
 
   return (
