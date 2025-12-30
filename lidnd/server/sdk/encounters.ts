@@ -42,12 +42,12 @@ async function create(
 
     const newIndex = currentMaxIndex + 1;
 
-    const [encounter, { campaignToPlayers }] = await Promise.all([
+    const [encounter, campaign] = await Promise.all([
       tx
         .insert(encounters)
         .values({
           ...input,
-          name: input.name ?? "Unnamed encounter",
+          name: input.name ?? "",
           user_id: ctx.user.id,
           index_in_campaign: newIndex,
           status: "prep",
@@ -85,6 +85,7 @@ async function create(
       ])
       .returning();
 
+    const { campaignToPlayers } = campaign;
     if (campaignToPlayers && campaignToPlayers.length > 0) {
       await Promise.all(
         campaignToPlayers.map(({ player: creature }) =>
@@ -112,7 +113,7 @@ async function create(
       });
     }
 
-    return result;
+    return { encounter: encounterResult, campaign };
   });
 }
 

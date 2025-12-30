@@ -15,7 +15,10 @@ import type {
 } from "@/server/api/router";
 import { LidndPopover } from "@/encounters/base-popover";
 import { EffectIcon } from "./status-input";
-import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
+import {
+  useCampaign,
+  useHotkey,
+} from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { observer } from "mobx-react-lite";
 import { ParticipantUtils } from "@/utils/participants";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
@@ -29,7 +32,6 @@ import {
   useStartEncounter,
   useToggleGroupTurn,
   useUpdateEncounterParticipant,
-  useEncounterHotkey,
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import { useDebouncedCallback } from "use-debounce";
@@ -54,6 +56,7 @@ import {
   PlusIcon,
   SkullIcon,
   Trash,
+  TrashIcon,
   UsersIcon,
   X,
 } from "lucide-react";
@@ -86,7 +89,6 @@ import {
 } from "@/components/ui/select";
 import { crLabel } from "@/utils/campaigns";
 import type { TurnGroup } from "@/server/db/schema";
-import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index]/encounter-prep";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import * as CampaignUtils from "@/utils/campaigns";
 import { labelColors } from "@/lib/utils";
@@ -108,14 +110,14 @@ export const EncounterBattleUI = observer(function BattleUI() {
   const user = useUser();
   const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
 
-  useEncounterHotkey("k", (e) => {
+  useHotkey("k", (e) => {
     if (e.metaKey || e.ctrlKey) {
       e.preventDefault();
       uiStore.toggleParticipantEdit();
     }
   });
 
-  useEncounterHotkey("e", (e) => {
+  useHotkey("e", (e) => {
     if (e.metaKey || e.ctrlKey) {
       e.preventDefault();
       const cols = encounter.columns;
@@ -362,6 +364,7 @@ function EncounterNameInput({
   return (
     <LidndTextInput
       value={localName}
+      autoFocus={encounter.name.length === 0}
       className={clsx("bg-transparent", {
         "text-3xl font-bold": textSize === "large",
         "text-lg h-7": textSize === "small",
@@ -376,6 +379,37 @@ function EncounterNameInput({
   );
 }
 
+export interface RemoveCreatureFromEncounterButtonProps {
+  participant: ParticipantWithData;
+  moreText?: string;
+}
+
+export function RemoveCreatureFromEncounterButton(
+  props: RemoveCreatureFromEncounterButtonProps
+) {
+  const { participant } = props;
+
+  const id = useEncounterId();
+  const [encounter] = api.encounterById.useSuspenseQuery(id);
+  const { mutate: removeCreatureFromEncounter } =
+    useRemoveParticipantFromEncounter();
+  return (
+    <ButtonWithTooltip
+      text="Remove creature"
+      variant="ghost"
+      className="p-2 text-gray-300"
+      onClick={() =>
+        removeCreatureFromEncounter({
+          encounter_id: encounter.id,
+          participant_id: participant.id,
+        })
+      }
+    >
+      {props.moreText}
+      <TrashIcon className="text-gray-200" />
+    </ButtonWithTooltip>
+  );
+}
 function EncounterBudgetSlider() {
   const [campaign] = useCampaign();
   const [encounter] = useEncounter();

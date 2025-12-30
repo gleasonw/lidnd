@@ -7,11 +7,24 @@ import { api } from "@/trpc/react";
 import { CreatureUtils } from "@/utils/creatures";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { useEffect } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 export function useCampaign() {
   const campaignId = useCampaignId();
   return api.campaignById.useSuspenseQuery(campaignId);
+}
+
+export function useHotkey(key: string, handler: (e: KeyboardEvent) => void) {
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key.toLowerCase() === key.toLowerCase() && !e.repeat) {
+        handler(e);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [key, handler]);
 }
 
 export function useDeleteCreature() {

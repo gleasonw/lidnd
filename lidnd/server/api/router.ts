@@ -10,7 +10,6 @@ import {
   campaigns,
   campaignToPlayer,
   creaturesSchema,
-  encounterInsertSchema,
   reminderInsertSchema,
   updateCampaignSchema,
   updateEncounterSchema,
@@ -184,19 +183,6 @@ export const appRouter = t.router({
           )
         )
         .returning();
-    }),
-
-  createEncounter: protectedProcedure
-    .input(
-      encounterInsertSchema.merge(
-        z.object({
-          user_id: z.string().optional(),
-          index_in_campaign: z.number().optional(),
-        })
-      )
-    )
-    .mutation(async (opts) => {
-      return await ServerEncounter.create(opts.ctx, opts.input);
     }),
 
   updateEncounter: protectedProcedure

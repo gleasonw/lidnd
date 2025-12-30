@@ -1,5 +1,7 @@
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { appRoutes } from "@/app/routes";
+import { FadeInSuspense } from "@/components/ui/fade-in-suspense";
+import { EncounterBattleUI } from "@/encounters/[encounter_index]/battle-ui";
 import { encounterFromPathParams } from "@/server/utils";
 import { redirect } from "next/navigation";
 
@@ -21,5 +23,17 @@ export default async function EncounterPage(props: {
     params
   );
 
-  return redirect(appRoutes.encounter({ campaign, encounter, user }));
+  if (encounter.name.length === 0) {
+    return (
+      <FadeInSuspense
+        fallback={<div>Loading encounter...</div>}
+        wrapperClassName="flex h-full overflow-auto max-h-full"
+      >
+        <EncounterBattleUI />
+      </FadeInSuspense>
+    );
+  } else {
+    // just to give the user a pretty URL slug
+    return redirect(appRoutes.encounter({ campaign, encounter, user }));
+  }
 }

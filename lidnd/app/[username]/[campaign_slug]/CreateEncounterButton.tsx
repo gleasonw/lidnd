@@ -1,50 +1,40 @@
 "use client";
 
-import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
-import { useUser } from "@/app/[username]/user-provider";
-import { appRoutes } from "@/app/routes";
+import {
+  useCampaign,
+  useHotkey,
+} from "@/app/[username]/[campaign_slug]/campaign-hooks";
+import { createEncounter } from "@/app/[username]/actions";
 import { Button } from "@/components/ui/button";
-import { LidndDialog } from "@/components/ui/lidnd_dialog";
-import { CreateEncounterForm } from "@/encounters/campaign-encounters-overview";
+import { Kbd } from "@/components/ui/kbd";
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
-import React from "react";
+import { useTransition } from "react";
 
 export function CreateEncounterButton() {
-  const [dialogOpen, setDialogOpen] = React.useState(false);
   const [campaign] = useCampaign();
-  const user = useUser();
-  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  useHotkey("e", () => {
+    startTransition(() => createEncounter({ campaign_id: campaign.id }));
+  });
   return (
-    <LidndDialog
-      isOpen={dialogOpen}
-      onClose={() => setDialogOpen(false)}
-      title="Create New Encounter"
-      trigger={
-        <Button className="w-full" onClick={() => setDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Encounter
-        </Button>
-      }
-      content={
-        <CreateEncounterForm
-          afterCreate={(e) => {
-            setDialogOpen(false);
-            router.push(appRoutes.encounter({ campaign, encounter: e, user }));
-          }}
-          buttonExtra={
-            <Button
-              variant="ghost"
-              onClick={(e) => {
-                e.preventDefault();
-                setDialogOpen(false);
-              }}
-            >
-              Cancel
-            </Button>
-          }
-        />
-      }
-    />
+    <form
+      className="w-full flex items-center justify-center"
+      onSubmit={(e) => {
+        e.preventDefault();
+      }}
+    >
+      <Button
+        className="w-56"
+        type="submit"
+        disabled={isPending}
+        onSubmit={() =>
+          startTransition(() => createEncounter({ campaign_id: campaign.id }))
+        }
+      >
+        <Plus className="mr-2 h-4 w-4" />
+        Create Encounter
+        <Kbd>E</Kbd>
+      </Button>
+    </form>
   );
 }

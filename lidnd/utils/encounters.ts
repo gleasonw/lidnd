@@ -724,7 +724,7 @@ export const EncounterUtils = {
       id: encounter.id ?? Math.random().toString(),
       campaign_id: encounter.campaign_id,
       user_id: encounter.user_id ?? "pending",
-      name: encounter.name ?? "Unnamed encounter",
+      name: encounter.name ?? "",
       description: encounter.description ?? null,
       started_at: encounter.started_at ?? new Date(),
       created_at: encounter.created_at ?? new Date(),

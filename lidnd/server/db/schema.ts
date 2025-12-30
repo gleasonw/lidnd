@@ -221,7 +221,7 @@ export const encounters = pgTable(
   "encounters",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    name: text("name").notNull().default("Unnamed encounter"),
+    name: text("name").notNull().default(""),
     target_difficulty: target_difficulty_enum("target_difficulty")
       .default("standard")
       .notNull(),

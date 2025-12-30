@@ -64,12 +64,17 @@ export async function createEncounter(encounter: EncounterInsert) {
     console.error("Encounter input parsing failed", encounterInput.error);
     throw new Error("Invalid encounter input");
   }
-  const newEncounter = await ServerEncounter.create(
+  const { encounter: newEncounter, campaign } = await ServerEncounter.create(
     { user },
     encounterInput.data
   );
   revalidatePath(`/`);
-  return newEncounter;
+  const newEncounterLink = appRoutes.encounter({
+    campaign,
+    encounter: newEncounter,
+    user,
+  });
+  return redirect(newEncounterLink);
 }
 
 export async function deleteEncounter(encounter: { id: string }) {
