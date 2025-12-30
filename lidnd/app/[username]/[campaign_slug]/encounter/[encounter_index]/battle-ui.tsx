@@ -48,7 +48,6 @@ import {
   CheckCircle,
   Circle,
   Columns,
-  Grid2X2,
   Grip,
   HomeIcon,
   MoreHorizontal,
@@ -78,7 +77,6 @@ import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundI
 import { Input } from "@/components/ui/input";
 import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
-import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectTrigger,
@@ -101,6 +99,8 @@ import { EncounterTagger } from "@/encounters/EncounterTagger";
 import { DeleteEncounterButton } from "@/encounters/[encounter_index]/DeleteEncounterButton";
 import { QuickAddParticipantsButton } from "@/encounters/[encounter_index]/QuickAddParticipant";
 import { Kbd } from "@/components/ui/kbd";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Switch } from "@/components/ui/switch";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -135,6 +135,9 @@ export const EncounterBattleUI = observer(function BattleUI() {
     campaign,
   });
 
+  const searchParams = useSearchParams();
+  const isPreview = searchParams.get("preview") === "true";
+
   switch (encounter.status) {
     case "prep":
       return (
@@ -149,7 +152,8 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 <HomeIcon /> Campaign
               </Button>
             </Link>
-            <div className="flex gap-8 ml-auto">
+            <div className="flex gap-8 ml-auto items-center">
+              <PreviewSwitch />
               {campaign.system === "dnd5e" ? (
                 <Link href={rollEncounter}>
                   <Button variant="secondary">Start encounter</Button>
@@ -176,45 +180,31 @@ export const EncounterBattleUI = observer(function BattleUI() {
             </div>
           </div>
 
-          <Tabs
-            defaultValue="prep"
+          <div
             className={clsx(
               "flex justify-center w-full xl:max-h-full",
               battleStyles.root
             )}
           >
             {/**don't put gap here, it makes the tab contennt bits take up a bunch of vert space */}
-            <div className="flex flex-col w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full gap-3">
+            <div className="flex flex-col w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full gap-5">
               <div className="w-full flex flex-col gap-5">
                 <EncounterNameInput />
-                <div className="flex gap-8">
-                  <TabsList>
-                    <TabsTrigger
-                      value="prep"
-                      className="flex gap-2 items-center"
-                    >
-                      <span>Opponents</span>
-                      <AngryIcon className="mr-2 h-4 w-4" />
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="preview"
-                      className="flex gap-2 items-center"
-                    >
-                      <span>Preview</span>
-                      <Grid2X2 className="mr-2 h-4 w-4" />
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
               </div>
-              <TabsContent
-                value="prep"
-                className="w-full xl:max-h-full flex flex-col gap-5"
-                data-value="prep"
-              >
-                <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full">
-                  <div className="flex flex-col gap-5">
+              {isPreview ? (
+                <div className="w-full" data-value="preview">
+                  <div className="w-full flex gap-3 h-full">
+                    <EncounterBattlePreview />
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="w-full xl:max-h-full flex flex-col gap-5"
+                  data-value="prep"
+                >
+                  <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full">
                     <div className="flex flex-col gap-5">
-                      <div className="flex gap-3">
+                      <div className="flex gap-5 flex-wrap">
                         <LidndLabel label="Target difficulty">
                           <Select
                             onValueChange={(v) => {
@@ -261,71 +251,68 @@ export const EncounterBattleUI = observer(function BattleUI() {
                           <EncounterTagger />
                         </LidndLabel>
                       </div>
+                      <Card className="p-2">
+                        <ReminderInput />
+                      </Card>
+                      <div>
+                        <DescriptionTextArea />
+                      </div>
                     </div>
-                    <Card className="p-2">
-                      <ReminderInput />
-                    </Card>
-                    <div>
-                      <DescriptionTextArea />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-10 min-h-0">
-                    <div className="flex flex-col gap-1">
-                      <div
-                        className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-sm text-gray-400">Current</span>
-                          <span className="text-2xl font-bold">
-                            {difficulty}
-                          </span>
-                        </div>
-
-                        <div className="flex flex-col items-baseline">
-                          <span className="text-sm whitespace-nowrap text-gray-400">
-                            Total {CampaignUtils.crLabel(campaign)}
-                          </span>
-                          <span className="text-2xl font-bold">
-                            {EncounterUtils.totalCr(encounter)}
-                          </span>
-                        </div>
-                        {EncounterUtils.remainingCr(encounter, campaign) > 0 ? (
-                          <div className="flex flex-col items-baseline">
-                            <span className="text-sm whitespace-nowrap text-gray-400">
-                              Remaining {CampaignUtils.crLabel(campaign)}
+                    <div className="flex flex-col gap-10 min-h-0">
+                      <div className="flex flex-col gap-1">
+                        <div
+                          className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm text-gray-400">
+                              Current
                             </span>
                             <span className="text-2xl font-bold">
-                              {EncounterUtils.remainingCr(encounter, campaign)}
+                              {difficulty}
                             </span>
                           </div>
-                        ) : null}
-                      </div>
-                      <div className="flex gap-2">
-                        <div className="w-full pb-3 pt-3 sm:pb-0">
-                          <EncounterBudgetSlider />
+
+                          <div className="flex flex-col items-baseline">
+                            <span className="text-sm whitespace-nowrap text-gray-400">
+                              Total {CampaignUtils.crLabel(campaign)}
+                            </span>
+                            <span className="text-2xl font-bold">
+                              {EncounterUtils.totalCr(encounter)}
+                            </span>
+                          </div>
+                          {EncounterUtils.remainingCr(encounter, campaign) >
+                          0 ? (
+                            <div className="flex flex-col items-baseline">
+                              <span className="text-sm whitespace-nowrap text-gray-400">
+                                Remaining {CampaignUtils.crLabel(campaign)}
+                              </span>
+                              <span className="text-2xl font-bold">
+                                {EncounterUtils.remainingCr(
+                                  encounter,
+                                  campaign
+                                )}
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="w-full pb-3 pt-3 sm:pb-0">
+                            <EncounterBudgetSlider />
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex flex-col gap-5 xl:max-h-full xl:overflow-auto">
-                      {campaign.system === "drawsteel" ? (
-                        <TurnGroupSetup />
-                      ) : null}
+                      <div className="flex flex-col gap-5 xl:max-h-full xl:overflow-auto">
+                        {campaign.system === "drawsteel" ? (
+                          <TurnGroupSetup />
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </TabsContent>
-              <TabsContent
-                value="preview"
-                className="w-full"
-                data-value="preview"
-              >
-                <div className="w-full flex gap-3 h-full">
-                  <EncounterBattlePreview />
-                </div>
-              </TabsContent>
+              )}
             </div>
-          </Tabs>
+          </div>
           <div className="w-full flex items-center justify-center p-24">
             <DeleteEncounterButton encounter={encounter} />
           </div>
@@ -360,6 +347,30 @@ export const EncounterBattleUI = observer(function BattleUI() {
     }
   }
 });
+
+function PreviewSwitch() {
+  const searchParams = useSearchParams();
+  const isPreview = searchParams.get("preview") === "true";
+  const router = useRouter();
+  return (
+    <LidndLabel label="Prep" className="flex items-center gap-3">
+      <Switch
+        id="group-by-tag"
+        checked={isPreview}
+        onCheckedChange={() => {
+          const params = new URLSearchParams(searchParams.toString());
+          if (isPreview) {
+            params.delete("preview");
+          } else {
+            params.set("preview", "true");
+          }
+          router.push(`?${params.toString()}`);
+        }}
+      />
+      <span className="text-sm text-gray-400">Layout</span>
+    </LidndLabel>
+  );
+}
 
 function EncounterNameInput({
   textSize = "large",
