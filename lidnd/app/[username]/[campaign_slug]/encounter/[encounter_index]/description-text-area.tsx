@@ -15,7 +15,10 @@ import {
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import clsx from "clsx";
 import { api } from "@/trpc/react";
-import { uploadFileToAWS } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
+import {
+  readImageHeightWidth,
+  uploadFileToAWS,
+} from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 import { ImageUtils } from "@/utils/images";
 
 export function DescriptionTextArea({
@@ -46,17 +49,8 @@ export function DescriptionTextArea({
     currentEditor: Editor;
   }) {
     const { file, pos, currentEditor: editor } = args;
-    let imageWidth = 0;
-    let imageHeight = 0;
-    await new Promise<void>((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        imageWidth = img.naturalWidth;
-        imageHeight = img.naturalHeight;
-        resolve();
-      };
-      img.src = URL.createObjectURL(file);
-    });
+    const { width: imageWidth, height: imageHeight } =
+      await readImageHeightWidth(file);
     console.log("Uploading image with dimensions", imageWidth, imageHeight);
     // todo: what if the image already exists?
     const res = await uploadAsset({

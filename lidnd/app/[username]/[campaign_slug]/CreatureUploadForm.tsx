@@ -443,7 +443,7 @@ export async function uploadFileToAWS(file: File, presignedUrl: string) {
   }
 }
 
-async function readImageHeightWidth(
+export async function readImageHeightWidth(
   file: File
 ): Promise<{ height: number; width: number }> {
   return new Promise((resolve, reject) => {

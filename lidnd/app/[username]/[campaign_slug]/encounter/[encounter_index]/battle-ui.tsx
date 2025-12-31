@@ -114,6 +114,11 @@ import {
   removeImageAssetFromEncounter,
 } from "@/app/[username]/actions";
 import { ImageUtils } from "@/utils/images";
+import { ImageUpload } from "@/encounters/image-upload";
+import {
+  uploadFileToAWS,
+  readImageHeightWidth,
+} from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -1380,14 +1385,60 @@ function ImageAssetAddButton() {
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [uploadImage, setUploadImage] = useState<File | undefined>(undefined);
+  const [isUploading, setIsUploading] = useState(false);
   const { data: images } = api.imageAssets.useQuery({
     search: debouncedSearch,
   });
   const qc = useQueryClient();
+  const { mutate: uploadAsset } = api.upload.useMutation();
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     setDebouncedSearch(value);
   }, 300);
+
+  const handleImageUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const { width, height } = await readImageHeightWidth(file);
+      uploadAsset(
+        {
+          filename: file.name,
+          filetype: file.type,
+          width,
+          height,
+        },
+        {
+          onSuccess: async (data) => {
+            try {
+              await uploadFileToAWS(file, data.signedUrl);
+              await addImageAssetToEncounter({
+                encounterId: encounter.id,
+                inputAsset: {
+                  url: ImageUtils.url(data.image),
+                  type: "plain",
+                  baseModel: data.image,
+                },
+              });
+              qc.invalidateQueries();
+              setUploadImage(undefined);
+            } catch (error) {
+              console.error("Failed to upload image:", error);
+            } finally {
+              setIsUploading(false);
+            }
+          },
+          onError: (error) => {
+            console.error("Failed to create image asset:", error);
+            setIsUploading(false);
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Failed to read image dimensions:", error);
+      setIsUploading(false);
+    }
+  };
 
   return (
     <LidndDialog
@@ -1400,14 +1451,30 @@ function ImageAssetAddButton() {
       }
       content={
         <div className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-auto">
-          <LidndTextInput
-            placeholder="Search images..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              debouncedSetSearch(e.target.value);
-            }}
-          />
+          <div className="border-b pb-4">
+            <h3 className="text-sm font-medium mb-3">Upload New Image</h3>
+            <ImageUpload
+              image={uploadImage}
+              clearImage={() => setUploadImage(undefined)}
+              onUpload={handleImageUpload}
+              dropText={isUploading ? "Uploading..." : "Drop image to upload"}
+              dropIcon={<ImageIcon />}
+              fileInputProps={{ disabled: isUploading }}
+            />
+          </div>
+          <div>
+            <h3 className="text-sm font-medium mb-3">
+              Or Select Existing Image
+            </h3>
+            <LidndTextInput
+              placeholder="Search images..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                debouncedSetSearch(e.target.value);
+              }}
+            />
+          </div>
           <div className="grid grid-cols-3">
             {images?.map((i) => (
               <form
