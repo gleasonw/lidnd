@@ -258,7 +258,12 @@ export const EncounterBattleUI = observer(function BattleUI() {
                         <DescriptionTextArea />
                       </div>
                     </div>
-                    <div className="flex flex-col gap-10 min-h-0">
+                    <div
+                      className={clsx(
+                        "flex flex-col gap-10 min-h-0",
+                        battleStyles.adversarySection
+                      )}
+                    >
                       <div className="flex flex-col gap-1">
                         <div
                           className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
@@ -1118,7 +1123,6 @@ function TurnGroupSetup() {
   const keyForExistingCreature = getQueryKey(
     api.addExistingCreatureAsParticipant
   );
-  console.log("keyForExistingCreature", keyForExistingCreature);
   const qc = useQueryClient();
   // i would have to prop drill a bit to get a callback into existing creature add, so instead
   // i will do this
@@ -1190,7 +1194,8 @@ function TurnGroupSetup() {
         {monstersWihoutGroup.length > 0 || encounter.turn_groups.length > 0 ? (
           <div
             className={clsx(
-              "grid grid-cols-1 sm:grid-cols-2 gap-3 gap-x-12 min-h-[60px] border-2 border-dashed border-transparent p-3 rounded",
+              "gap-3 gap-x-12 p-3 rounded min-h-[150px]",
+              battleStyles.adversaryGrid,
               {
                 "border-blue-400 bg-blue-50": acceptDrop > 0,
               }
@@ -1237,7 +1242,7 @@ function TurnGroupSetup() {
             )}
           </div>
         ) : null}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className={clsx("gap-4", battleStyles.adversaryGrid)}>
           {encounter.turn_groups.map((tg) => (
             <TurnGroupDisplay tg={tg} key={tg.id} />
           ))}
@@ -1271,9 +1276,12 @@ function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
   return (
     <div
       key={tg.id}
-      className={clsx("flex flex-col gap-2 border-2 border-dashed p-3", {
-        "ring-2 ring-blue-400": acceptDrop > 0,
-      })}
+      className={clsx(
+        "flex flex-col gap-2 border-2 border-dashed p-3 min-h-[200px]",
+        {
+          "border-blue-400": acceptDrop > 0,
+        }
+      )}
       onDrop={(e) => {
         e.preventDefault();
         const droppedParticipant = typedDrag.get(
