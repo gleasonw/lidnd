@@ -1381,8 +1381,17 @@ function AssetThumbnail({
 function ImageAssetAddButton() {
   const [encounter] = useEncounter();
   const [isPending, startTransition] = useTransition();
-  const { data: images } = api.imageAssets.useQuery();
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { data: images } = api.imageAssets.useQuery({
+    search: debouncedSearch,
+  });
   const qc = useQueryClient();
+
+  const debouncedSetSearch = useDebouncedCallback((value: string) => {
+    setDebouncedSearch(value);
+  }, 300);
+
   return (
     <LidndDialog
       title="Add static image"
@@ -1394,6 +1403,14 @@ function ImageAssetAddButton() {
       }
       content={
         <div className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-auto">
+          <LidndTextInput
+            placeholder="Search images..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              debouncedSetSearch(e.target.value);
+            }}
+          />
           <div className="grid grid-cols-3">
             {images?.map((i) => (
               <form

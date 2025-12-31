@@ -142,35 +142,43 @@ export const appRouter = t.router({
     return encounter;
   }),
 
-  imageAssets: protectedProcedure.query(async (opts) => {
-    // creatures with ref assets will have that asset pulled in plainAssets
-    const [userCreaturesNoRefAsset, plainAssets] = await Promise.all([
-      db
-        .select()
-        .from(creatures)
-        .where(
-          and(
-            eq(creatures.user_id, opts.ctx.user.id),
-            isNull(creatures.stat_block_asset),
-            ne(creatures.type, "player")
-          )
-        ),
-      db.query.images.findMany({
-        where: eq(images.user_id, opts.ctx.user.id),
-      }),
-    ]);
-    const urlsForStatBlocks = userCreaturesNoRefAsset.map((c) => ({
-      url: CreatureUtils.awsURL(c, "statBlock"),
-      type: "statBlock" as const,
-      baseModel: c,
-    }));
-    const urlsForPlainAssetes = plainAssets.map((i) => ({
-      url: ImageUtils.url(i),
-      type: "plain" as const,
-      baseModel: i,
-    }));
-    return [...urlsForStatBlocks, ...urlsForPlainAssetes];
-  }),
+  imageAssets: protectedProcedure
+    .input(z.object({ search: z.string().optional() }).optional())
+    .query(async (opts) => {
+      const search = opts.input?.search;
+      // creatures with ref assets will have that asset pulled in plainAssets
+      const [userCreaturesNoRefAsset, plainAssets] = await Promise.all([
+        db
+          .select()
+          .from(creatures)
+          .where(
+            and(
+              eq(creatures.user_id, opts.ctx.user.id),
+              isNull(creatures.stat_block_asset),
+              ne(creatures.type, "player"),
+              search ? ilike(creatures.name, `%${search}%`) : undefined
+            )
+          ),
+        db.query.images.findMany({
+          where: (img, { eq, and, ilike: ilikeFn }) =>
+            and(
+              eq(img.user_id, opts.ctx.user.id),
+              search ? ilikeFn(img.name, `%${search}%`) : undefined
+            ),
+        }),
+      ]);
+      const urlsForStatBlocks = userCreaturesNoRefAsset.map((c) => ({
+        url: CreatureUtils.awsURL(c, "statBlock"),
+        type: "statBlock" as const,
+        baseModel: c,
+      }));
+      const urlsForPlainAssetes = plainAssets.map((i) => ({
+        url: ImageUtils.url(i),
+        type: "plain" as const,
+        baseModel: i,
+      }));
+      return [...urlsForStatBlocks, ...urlsForPlainAssetes];
+    }),
 
   encountersInCampaign: protectedProcedure
     .input(z.string())
