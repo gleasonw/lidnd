@@ -127,7 +127,7 @@ export function ReminderInput() {
         </Button>
       </div>
       {encounter?.reminders && encounter.reminders.length > 0 && (
-        <div className="border-t">
+        <div>
           {encounter.reminders
             .slice()
             .sort((a, b) => a.alert_after_round - b.alert_after_round)
