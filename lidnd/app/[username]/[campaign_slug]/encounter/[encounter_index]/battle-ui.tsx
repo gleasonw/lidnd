@@ -475,26 +475,32 @@ function EncounterBudgetSlider() {
 
   return (
     <div className="w-full border h-6 relative ">
-      <div
-        className="h-full absolute top-0"
-        style={{ left: `${(EncounterUtils.totalCr(encounter) / max) * 100}%` }}
+      <motion.div
+        animate={{
+          x: `${(EncounterUtils.totalCr(encounter) / max) * 100}%`,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 300,
+          damping: 30,
+        }}
       >
         <SkullIcon className="-translate-y-0.5 -translate-x-2.5 " />
-      </div>
+      </motion.div>
       <div
-        className="w-1 h-full bg-gray-500 absolute text-gray-500"
+        className="w-1 h-full bg-gray-500 absolute text-gray-500 top-0"
         style={{ left: `${easyCutOff * 100}%` }}
       >
         <span className="absolute bottom-full">{tiers.easyTier}</span>
       </div>
       <div
-        className="w-1 h-full bg-gray-500 absolute text-gray-500"
+        className="w-1 h-full bg-gray-500 absolute text-gray-500 top-0"
         style={{ left: `${standardCutoff * 100}%` }}
       >
         <span className="absolute bottom-full">{tiers.standardTier}</span>
       </div>
       <div
-        className="w-1 h-full bg-gray-500 absolute text-gray-500"
+        className="w-1 h-full bg-gray-500 absolute text-gray-500 top-0"
         style={{ left: `${hardCutoff * 100}%` }}
       >
         <span className="absolute bottom-full">{tiers.hardTier}</span>
