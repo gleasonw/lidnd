@@ -476,6 +476,7 @@ function EncounterBudgetSlider() {
   return (
     <div className="w-full border h-6 relative ">
       <motion.div
+        initial={false}
         animate={{
           x: `${(EncounterUtils.totalCr(encounter) / max) * 100}%`,
         }}
