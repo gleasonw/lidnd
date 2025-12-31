@@ -264,19 +264,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                           <EncounterTagger />
                         </LidndLabel>
                       </div>
-                      <div className="flex gap-2 w-full">
-                        <Card className="p-1">
-                          <ReminderInput />
-                        </Card>
-                        <Card className="p-1">
-                          <ImageAssetAddButton />
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {encounter.assets?.map((asset) => (
-                              <AssetThumbnail key={asset.id} asset={asset} />
-                            ))}
-                          </div>
-                        </Card>
-                      </div>
+                      <ReminderInput />
 
                       <div>
                         <DescriptionTextArea />
@@ -513,10 +501,19 @@ function EncounterBudgetSlider() {
 function EncounterBattlePreview() {
   const { data: columns } = api.getColumns.useQuery(useEncounterId());
   const { parentWidth, containerRef } = useParentResizeObserver();
+  const [encounter] = useEncounter();
   return (
     <div className="flex flex-col">
-      <div>
+      <div className="flex gap-2 items-center">
         <EqualizeColumnsButton />
+        <div className="p-1 flex gap-2 items-center h-20">
+          <ImageAssetAddButton />
+          <div className="flex flex-wrap gap-2 mt-2">
+            {encounter.assets?.map((asset) => (
+              <AssetThumbnail key={asset.id} asset={asset} />
+            ))}
+          </div>
+        </div>
       </div>
       <div
         className="flex min-h-[450px] overflow-hidden w-full h-full border shadow-md"
