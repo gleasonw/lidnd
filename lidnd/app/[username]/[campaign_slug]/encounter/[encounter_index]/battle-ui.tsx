@@ -251,16 +251,14 @@ export const EncounterBattleUI = observer(function BattleUI() {
                           <EncounterTagger />
                         </LidndLabel>
                       </div>
-                      <Card className="p-2">
-                        <ReminderInput />
-                      </Card>
+                      <ReminderInput />
                       <div>
                         <DescriptionTextArea />
                       </div>
                     </div>
-                    <div
+                    <Card
                       className={clsx(
-                        "flex flex-col gap-10 min-h-0",
+                        "flex flex-col gap-10 min-h-0 p-4",
                         battleStyles.adversarySection
                       )}
                     >
@@ -312,7 +310,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                           <TurnGroupSetup />
                         ) : null}
                       </div>
-                    </div>
+                    </Card>
                   </div>
                 </div>
               )}
@@ -1069,15 +1067,20 @@ function PrepParticipant({
 }) {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
+  const uiStore = useEncounterUIStore();
   return (
     <Card
       key={p.id}
-      className="flex gap-2 items-center max-w-[400px] cursor-grab active:cursor-grabbing max-h-fit p-1"
+      className="flex gap-2 items-center max-w-[400px] cursor-grab active:cursor-grabbing max-h-fit p-1 shadow-md"
       draggable={encounter.turn_groups.length > 0}
       onDragStart={(e) => {
         if (encounter.turn_groups.length > 0) {
           typedDrag.set(e.dataTransfer, dragTypes.participant, p);
+          uiStore.setActiveDragType("participant");
         }
+      }}
+      onDragEnd={() => {
+        uiStore.setActiveDragType(null);
       }}
     >
       <CreatureIcon creature={p.creature} size="small" />
@@ -1109,9 +1112,10 @@ function PrepParticipant({
   );
 }
 
-function TurnGroupSetup() {
+const TurnGroupSetup = observer(function TurnGroupSetup() {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
+  const uiStore = useEncounterUIStore();
   const [creatureAddDialogIsOpen, setCreatureAddDialogIsOpen] = useState(false);
   const [acceptDrop, setAcceptDrop] = useState(0);
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
@@ -1141,6 +1145,13 @@ function TurnGroupSetup() {
   useHotkey("a", () => {
     setCreatureAddDialogIsOpen(true);
   });
+
+  const nonEmptyTurnGroups = Object.values(
+    EncounterUtils.participantsByTurnGroup(encounter)
+  ).filter((participants) => participants.length > 0)?.length;
+
+  const numberOfMonsterTurnTakers =
+    monstersWihoutGroup.length + nonEmptyTurnGroups;
 
   return (
     <div className="flex flex-col gap-6">
@@ -1174,28 +1185,37 @@ function TurnGroupSetup() {
       </div>
 
       <div className={clsx("flex flex-col gap-3")}>
-        <div className="flex flex-wrap gap-10 items-center">
-          <LidndLabel label="Player count" className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-5 items-center">
+          <LidndLabel label="Player count" className="flex flex-col gap-2">
             <span className="text-lg">
               {EncounterUtils.playerCount(encounter)}
             </span>
           </LidndLabel>
           <LidndLabel
+            label="Monster turn takers"
+            className="flex flex-col gap-2"
+          >
+            <span className="text-lg">{numberOfMonsterTurnTakers}</span>
+          </LidndLabel>
+          <LidndLabel
             label="Single player strength"
-            className="gap-2 flex items-center"
+            className="gap-2 flex flex-col"
           >
             <span className="text-lg">
               {targetSinglePlayerStrength({ encounter, campaign })}
             </span>
           </LidndLabel>
+          <CreateTurnGroupForm />
         </div>
         {monstersWihoutGroup.length > 0 || encounter.turn_groups.length > 0 ? (
           <div
             className={clsx(
-              "gap-3 gap-x-12 p-3 rounded min-h-[150px]",
+              "gap-3 gap-x-12 p-3 rounded min-h-[150px] border-2",
               battleStyles.adversaryGrid,
               {
                 "border-blue-400 bg-blue-50": acceptDrop > 0,
+                "border-dashed": uiStore.activeDragType === "participant",
+                "border-transparent": uiStore.activeDragType !== "participant",
               }
             )}
             onDrop={(e) => {
@@ -1234,7 +1254,7 @@ function TurnGroupSetup() {
                 <PrepParticipant participant={p} key={p.id} />
               ))
             ) : (
-              <div className="col-span-2 text-center text-gray-400">
+              <div className="col-span-2 text-center text-gray-400 text-sm">
                 Drag participants here to remove them from groups
               </div>
             )}
@@ -1244,16 +1264,20 @@ function TurnGroupSetup() {
           {encounter.turn_groups.map((tg) => (
             <TurnGroupDisplay tg={tg} key={tg.id} />
           ))}
-          <CreateTurnGroupForm />
         </div>
       </div>
     </div>
   );
-}
+});
 
-function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
+const TurnGroupDisplay = observer(function TurnGroupDisplay({
+  tg,
+}: {
+  tg: TurnGroup;
+}) {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
+  const uiStore = useEncounterUIStore();
   const [acceptDrop, setAcceptDrop] = useState(0);
   // maybe this is wasteful to compute every render, but I think it's fine
   const turnGroupedParticipants =
@@ -1274,12 +1298,11 @@ function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
   return (
     <div
       key={tg.id}
-      className={clsx(
-        "flex flex-col gap-2 border-2 border-dashed p-3 min-h-[200px]",
-        {
-          "border-blue-400": acceptDrop > 0,
-        }
-      )}
+      className={clsx("flex flex-col gap-2 border-2  p-3 min-h-[200px]", {
+        "border-dashed": uiStore.activeDragType === "participant",
+        "border-transparent": uiStore.activeDragType !== "participant",
+        "border-blue-400 bg-blue-50": acceptDrop > 0,
+      })}
       onDrop={(e) => {
         e.preventDefault();
         const droppedParticipant = typedDrag.get(
@@ -1360,56 +1383,72 @@ function TurnGroupDisplay({ tg }: { tg: TurnGroup }) {
           </div>
         </LidndPopover>
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 w-full h-full">
+        {participantsInGroup.length === 0 && (
+          <span className="flex w-full h-full items-center justify-center text-gray-400 text-sm">
+            Drag here to assign
+          </span>
+        )}
         {participantsInGroup.map((p) => (
           <PrepParticipant participant={p} key={p.id} />
         )) || <span>No participants assigned</span>}
       </div>
     </div>
   );
-}
+});
 
 function CreateTurnGroupForm() {
   const [encounter] = useEncounter();
   const { mutate: createTurnGroup } = api.createTurnGroup.useMutation();
   const [name, setName] = useState("");
-  const [hexColor, setHexColor] = useState("#ff0000");
+  const [hexColor, setHexColor] = useState(labelColors.at(0) || "#FFFFFF");
   return (
-    <form
-      className="flex flex-col gap-3"
-      onSubmit={(e) => {
-        e.preventDefault();
-        createTurnGroup({
-          encounter_id: encounter.id,
-          name,
-          hex_color: hexColor,
-        });
-      }}
-    >
-      <LidndTextInput
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Turn group name"
-      />
-      <div className="flex flex-wrap gap-3">
-        {labelColors.map((color) => (
-          <Button
-            className={clsx("w-3 h-3", {
-              "opacity-25": color !== hexColor,
-            })}
-            key={color}
-            onClick={(e) => {
-              e.preventDefault();
-              setHexColor(color);
-            }}
-            style={{ backgroundColor: color }}
-          />
-        ))}
-      </div>
-      <Button variant="secondary" type="submit">
-        Create turn group
-      </Button>
-    </form>
+    <Card className="p-2 shadow-none">
+      <form
+        className="flex gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          createTurnGroup({
+            encounter_id: encounter.id,
+            name,
+            hex_color: hexColor,
+          });
+        }}
+      >
+        <LidndTextInput
+          variant="ghost"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Turn group name"
+        />
+        <LidndPopover
+          className="flex flex-wrap gap-3"
+          trigger={
+            <Button variant="ghost" className="flex items-center gap-2">
+              <span>Color</span>
+              <div className="h-4 w-4" style={{ backgroundColor: hexColor }} />
+            </Button>
+          }
+        >
+          {labelColors.map((color) => (
+            <Button
+              className={clsx("w-3 h-3", {
+                "opacity-25": color !== hexColor,
+              })}
+              key={color}
+              onClick={(e) => {
+                e.preventDefault();
+                setHexColor(color);
+              }}
+              style={{ backgroundColor: color }}
+            />
+          ))}
+        </LidndPopover>
+        <Button variant="secondary" type="submit">
+          Create turn group
+        </Button>
+      </form>
+    </Card>
   );
 }
 

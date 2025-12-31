@@ -21,6 +21,7 @@ class EncounterUIStore {
   userDismissedReminder = false;
   isDraggingBattleCard = false;
   filterExistingCreaturesByCrBudget = false;
+  activeDragType: "participant" | null = null;
   /**
    * participantId -> ref
    *  */
@@ -50,6 +51,10 @@ class EncounterUIStore {
 
   toggleShowMoreEncounterButtons = () => {
     this.showMoreEncounterButtons = !this.showMoreEncounterButtons;
+  };
+
+  setActiveDragType = (type: "participant" | null) => {
+    this.activeDragType = type;
   };
 
   constructor() {
