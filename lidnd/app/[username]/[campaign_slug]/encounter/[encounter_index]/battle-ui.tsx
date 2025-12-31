@@ -428,7 +428,7 @@ export function RemoveCreatureFromEncounterButton(
     <ButtonWithTooltip
       text="Remove creature"
       variant="ghost"
-      className="p-2 text-gray-300"
+      className="p-2 text-gray-400"
       onClick={() =>
         removeCreatureFromEncounter({
           encounter_id: encounter.id,
@@ -1070,9 +1070,9 @@ function PrepParticipant({
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
   return (
-    <div
+    <Card
       key={p.id}
-      className="flex gap-2 items-center max-w-[400px] cursor-grab active:cursor-grabbing"
+      className="flex gap-2 items-center max-w-[400px] cursor-grab active:cursor-grabbing max-h-fit p-1"
       draggable={encounter.turn_groups.length > 0}
       onDragStart={(e) => {
         if (encounter.turn_groups.length > 0) {
@@ -1080,11 +1080,6 @@ function PrepParticipant({
         }
       }}
     >
-      <RemoveCreatureFromEncounterButton participant={p} />
-      <ParticipantEditDialog participant={p} />
-      {encounter.turn_groups.length > 0 ? (
-        <Grip className="h-4 w-4 text-gray-400" />
-      ) : null}
       <CreatureIcon creature={p.creature} size="small" />
       <div className="flex flex-col max-w-full">
         <span className="truncate">{ParticipantUtils.name(p)}</span>
@@ -1107,7 +1102,10 @@ function PrepParticipant({
           ) : null}
         </span>
       </div>
-    </div>
+      <div className="ml-auto">
+        <ParticipantEditDialog participant={p} />
+      </div>
+    </Card>
   );
 }
 

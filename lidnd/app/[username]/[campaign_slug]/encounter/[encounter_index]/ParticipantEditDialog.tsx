@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LidndPopover } from "@/encounters/base-popover";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import type { ParticipantWithData } from "@/server/api/router";
 import { useUpdateEncounterParticipant } from "@/encounters/[encounter_index]/hooks";
+import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index]/battle-ui";
 
 export function ParticipantEditDialog({
   participant,
@@ -38,7 +39,7 @@ export function ParticipantEditDialog({
           variant="ghost"
           className="p-2 text-gray-300"
         >
-          <Pencil className="h-4 w-4" />
+          <MoreHorizontal className="h-4 w-4" />
         </ButtonWithTooltip>
       }
     >
@@ -57,9 +58,9 @@ export function ParticipantEditDialog({
             </span>
           ) : null}
         </div>
-        <div className="flex justify-end">
+
+        <div className="flex w-full">
           <Button
-            size="sm"
             disabled={!canSave}
             onClick={() => {
               const trimmedMaxHp = maxHpOverride.trim();
@@ -81,6 +82,10 @@ export function ParticipantEditDialog({
             Save
           </Button>
         </div>
+        <RemoveCreatureFromEncounterButton
+          moreText="Remove from encounter"
+          participant={participant}
+        />
       </div>
     </LidndPopover>
   );
