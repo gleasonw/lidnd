@@ -204,7 +204,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 >
                   <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full">
                     <div className="flex flex-col gap-5">
-                      <div className="flex gap-5 flex-wrap">
+                      <div className="flex gap-5">
                         <LidndLabel label="Target difficulty">
                           <Select
                             onValueChange={(v) => {

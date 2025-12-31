@@ -7,7 +7,6 @@ import {
   participantSchema,
   turnGroupSelectSchema,
   encounter_tags,
-  encounter_to_tag,
 } from "@/server/db/schema";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { ServerParticipants } from "@/server/sdk/participants";
@@ -15,7 +14,7 @@ import { and, eq, ilike, inArray, notInArray } from "drizzle-orm";
 import { z } from "zod";
 import * as ServerTurnGroup from "@/server/sdk/turnGroups";
 import { ServerCampaign } from "@/server/sdk/campaigns";
-import { revalidatePath } from "next/cache";
+import { invalidateServerFunctionCache } from "@/app/[username]/actions";
 
 export const encountersRouter = {
   removeEncountersFromSession: protectedProcedure
@@ -134,43 +133,11 @@ export const encountersRouter = {
       })
     )
     .mutation(async (opts) => {
-      // Verify encounter ownership
-      await ServerEncounter.encounterByIdThrows(
+      const relation = await ServerEncounter.addTagToEncounter(
         opts.ctx,
-        opts.input.encounter_id
+        opts.input
       );
-
-      // Check if tag belongs to user
-      const tag = await db.query.encounter_tags.findFirst({
-        where: (t, { eq, and }) =>
-          and(eq(t.id, opts.input.tag_id), eq(t.user_id, opts.ctx.user.id)),
-      });
-
-      if (!tag) {
-        throw new Error("Tag not found or does not belong to user");
-      }
-
-      // Check if relationship already exists
-      const existing = await db.query.encounter_to_tag.findFirst({
-        where: (ett, { eq, and }) =>
-          and(
-            eq(ett.encounter_id, opts.input.encounter_id),
-            eq(ett.tag_id, opts.input.tag_id)
-          ),
-      });
-
-      if (existing) {
-        return existing;
-      }
-
-      const [relation] = await db
-        .insert(encounter_to_tag)
-        .values({
-          encounter_id: opts.input.encounter_id,
-          tag_id: opts.input.tag_id,
-        })
-        .returning();
-      revalidatePath("/");
+      await invalidateServerFunctionCache();
 
       return relation;
     }),
@@ -183,21 +150,8 @@ export const encountersRouter = {
       })
     )
     .mutation(async (opts) => {
-      // Verify encounter ownership
-      await ServerEncounter.encounterByIdThrows(
-        opts.ctx,
-        opts.input.encounter_id
-      );
-
-      await db
-        .delete(encounter_to_tag)
-        .where(
-          and(
-            eq(encounter_to_tag.encounter_id, opts.input.encounter_id),
-            eq(encounter_to_tag.tag_id, opts.input.tag_id)
-          )
-        );
-      revalidatePath("/");
+      await ServerEncounter.removeTagFromEncounter(opts.ctx, opts.input);
+      await invalidateServerFunctionCache();
     }),
 
   getEncounters: protectedProcedure

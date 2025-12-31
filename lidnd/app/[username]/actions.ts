@@ -20,6 +20,11 @@ import _ from "lodash";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { parseWithZod } from "@conform-to/zod";
 
+export async function invalidateServerFunctionCache() {
+  console.log("INVALIDATING");
+  revalidatePath(`/`);
+}
+
 export async function removeEncounter({
   encounterId,
   campaignId,
@@ -190,4 +195,36 @@ export async function updateEncounterDescription(
     .update(encounters)
     .set({ description: parsedDescription ?? "" })
     .where(and(eq(encounters.id, id), eq(encounters.user_id, user.id)));
+}
+
+export async function addTagToEncounterAction(input: {
+  encounter_id: string;
+  tag_id: string;
+}) {
+  "use server";
+
+  const user = await LidndAuth.getUser();
+  if (!user) {
+    throw new Error("No user found");
+  }
+
+  const relation = await ServerEncounter.addTagToEncounter({ user }, input);
+  await invalidateServerFunctionCache();
+
+  return relation;
+}
+
+export async function removeTagFromEncounterAction(input: {
+  encounter_id: string;
+  tag_id: string;
+}) {
+  "use server";
+
+  const user = await LidndAuth.getUser();
+  if (!user) {
+    throw new Error("No user found");
+  }
+
+  await ServerEncounter.removeTagFromEncounter({ user }, input);
+  await invalidateServerFunctionCache();
 }

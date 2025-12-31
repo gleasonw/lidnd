@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { MoveLeft } from "lucide-react";
 import { db } from "@/server/db";
-import { campaignCreatureLink, creatures } from "@/server/db/schema";
+import {
+  campaignCreatureLink,
+  creatures,
+  encounters,
+} from "@/server/db/schema";
 import { and, eq, exists, ilike } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -15,7 +19,9 @@ import { CreatureUpdateForm } from "@/creatures/creatures-page";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { CampaignCreatureSearch } from "@/app/[username]/[campaign_slug]/CampaignCreatureSearch";
 import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
-import { Encounters } from "@/app/[username]/[campaign_slug]/encounters";
+import * as R from "remeda";
+import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
+import { EncountersSearchBar } from "@/app/[username]/[campaign_slug]/EncountersSearchBar";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -42,6 +48,49 @@ export default async function CampaignPage(props: {
     console.error("No campaign found, layout should have redirected");
     return <div>No campaign found... this is a bug</div>;
   }
+
+  const encounterSearch = searchParams?.encounterSearch as string | undefined;
+
+  const encountersInCampaign = await db.query.encounters.findMany({
+    where: and(
+      eq(encounters.campaign_id, campaignData.id),
+      eq(encounters.user_id, user.id),
+      encounterSearch
+        ? ilike(encounters.name, `%${encounterSearch}%`)
+        : undefined
+    ),
+    with: {
+      tags: {
+        with: {
+          tag: true,
+        },
+      },
+      participants: {
+        with: {
+          creature: true,
+        },
+      },
+    },
+  });
+
+  const encountersGroupedByTag = R.pipe(
+    encountersInCampaign ?? [],
+    R.flatMap((e) => e.tags.map((et) => ({ tag: et.tag, encounter: e }))),
+    R.groupBy((et) => et.tag.id)
+  );
+
+  const tagsWithEncounters = Object.entries(encountersGroupedByTag).map(
+    ([tagId, tagGroup]) => {
+      const firstTag = tagGroup[0].tag;
+      return {
+        ...firstTag,
+        encounters: tagGroup.map((et) => et.encounter),
+      };
+    }
+  );
+
+  const encountersWithNoTag =
+    encountersInCampaign?.filter((e) => e.tags.length === 0) || [];
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6 max-h-full">
@@ -114,7 +163,37 @@ export default async function CampaignPage(props: {
       ) : (
         <section className="flex flex-col gap-6">
           <CreateEncounterButton />
-          <Encounters />
+          <EncountersSearchBar search={encounterSearch} />
+          <div className="flex flex-col gap-8">
+            {tagsWithEncounters.length === 0 ? (
+              <p className="text-muted-foreground">
+                No tagged encounters. Add tags to your encounters to group them.
+              </p>
+            ) : (
+              tagsWithEncounters.map((tagGroup) => (
+                <div key={tagGroup.id} className="flex flex-col gap-4">
+                  <h2 className="text-lg font-semibold border-b pb-2">
+                    {tagGroup.name}
+                  </h2>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {tagGroup.encounters.map((encounter) => (
+                      <EncounterCard key={encounter.id} encounter={encounter} />
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+            {encountersWithNoTag.length > 0 && (
+              <div className="flex flex-col gap-4">
+                <h2 className="text-lg border-b pb-2">No tag</h2>
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {encountersWithNoTag.map((encounter) => (
+                    <EncounterCard key={encounter.id} encounter={encounter} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </section>
       )}
     </div>

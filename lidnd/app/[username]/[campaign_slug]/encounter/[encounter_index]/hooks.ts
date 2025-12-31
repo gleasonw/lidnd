@@ -11,7 +11,7 @@ import {
   EncounterUIContext,
   useEncounterUIStore,
 } from "@/encounters/[encounter_index]/EncounterUiStore";
-import { useContext } from "react";
+import { useContext, useTransition } from "react";
 
 import { useEffect } from "react";
 import { useCreatureForm } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
@@ -19,6 +19,10 @@ import { z } from "zod";
 import { creatureUploadSchema } from "@/server/db/schema";
 import { omit } from "remeda";
 import { useUploadParticipant } from "@/encounters/[encounter_index]/encounter-upload-hooks";
+import {
+  addTagToEncounterAction,
+  removeTagFromEncounterAction,
+} from "@/app/[username]/actions";
 
 /**
  * We don't actually upload these, but we want to make sure the user has
@@ -530,12 +534,43 @@ export function useCreateTag() {
  * Hook to add a tag to an encounter with optimistic update
  */
 export function useAddTagToEncounter() {
-  return api.addTagToEncounter.useMutation();
+  const [isPending, startTransition] = useTransition();
+  const utils = api.useUtils();
+
+  return {
+    mutate: (input: { encounter_id: string; tag_id: string }) => {
+      startTransition(async () => {
+        await addTagToEncounterAction(input);
+        await utils.invalidate();
+      });
+    },
+    mutateAsync: async (input: { encounter_id: string; tag_id: string }) => {
+      const result = await addTagToEncounterAction(input);
+      await utils.invalidate();
+      return result;
+    },
+    isPending,
+  };
 }
 
 /**
  * Hook to remove a tag from an encounter with optimistic update
  */
 export function useRemoveTagFromEncounter() {
-  return api.removeTagFromEncounter.useMutation();
+  const [isPending, startTransition] = useTransition();
+  const utils = api.useUtils();
+
+  return {
+    mutate: (input: { encounter_id: string; tag_id: string }) => {
+      startTransition(async () => {
+        await removeTagFromEncounterAction(input);
+        await utils.invalidate();
+      });
+    },
+    mutateAsync: async (input: { encounter_id: string; tag_id: string }) => {
+      await removeTagFromEncounterAction(input);
+      await utils.invalidate();
+    },
+    isPending,
+  };
 }

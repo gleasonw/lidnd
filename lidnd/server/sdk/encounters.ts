@@ -7,6 +7,7 @@ import {
   type EncounterStatus,
   stat_columns,
   type EncounterInsert,
+  encounter_to_tag,
 } from "@/server/db/schema";
 import type {
   Creature,
@@ -466,6 +467,73 @@ export const ServerEncounter = {
     ]);
   },
   addParticipant,
+  async addTagToEncounter(
+    ctx: LidndContext,
+    input: {
+      encounter_id: string;
+      tag_id: string;
+    },
+    dbObject = db
+  ) {
+    // Verify encounter ownership
+    await ServerEncounter.encounterByIdThrows(ctx, input.encounter_id);
+
+    // Check if tag belongs to user
+    const tag = await dbObject.query.encounter_tags.findFirst({
+      where: (t, { eq, and }) =>
+        and(eq(t.id, input.tag_id), eq(t.user_id, ctx.user.id)),
+    });
+
+    if (!tag) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Tag not found or does not belong to user",
+      });
+    }
+
+    // Check if relationship already exists
+    const existing = await dbObject.query.encounter_to_tag.findFirst({
+      where: (ett, { eq, and }) =>
+        and(
+          eq(ett.encounter_id, input.encounter_id),
+          eq(ett.tag_id, input.tag_id)
+        ),
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    const [relation] = await dbObject
+      .insert(encounter_to_tag)
+      .values({
+        encounter_id: input.encounter_id,
+        tag_id: input.tag_id,
+      })
+      .returning();
+
+    return relation;
+  },
+  async removeTagFromEncounter(
+    ctx: LidndContext,
+    input: {
+      encounter_id: string;
+      tag_id: string;
+    },
+    dbObject = db
+  ) {
+    // Verify encounter ownership
+    await ServerEncounter.encounterByIdThrows(ctx, input.encounter_id);
+
+    await dbObject
+      .delete(encounter_to_tag)
+      .where(
+        and(
+          eq(encounter_to_tag.encounter_id, input.encounter_id),
+          eq(encounter_to_tag.tag_id, input.tag_id)
+        )
+      );
+  },
 };
 
 export type EncounterWithData = NonNullable<
