@@ -15,6 +15,10 @@ export function EncounterImage({
     setImageUrl(EncounterUtils.imageUrl(encounter));
   }, [encounter]);
 
+  if (!imageUrl) {
+    return <div className="w-6 h-6 bg-gray-300 rounded-md" />;
+  }
+
   return (
     <Image src={imageUrl ?? ""} alt={encounter.name} width={25} height={25} />
   );
