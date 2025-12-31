@@ -8,6 +8,8 @@ import {
   stat_columns,
   type EncounterInsert,
   encounter_to_tag,
+  type LidndImage,
+  encounterAsset,
 } from "@/server/db/schema";
 import type {
   Creature,
@@ -321,6 +323,11 @@ export const ServerEncounter = {
           },
         },
         reminders: true,
+        assets: {
+          with: {
+            image: true,
+          },
+        },
         columns: {
           with: {
             participants: {
@@ -533,6 +540,56 @@ export const ServerEncounter = {
           eq(encounter_to_tag.tag_id, input.tag_id)
         )
       );
+  },
+  async addAsset(
+    ctx: LidndContext,
+    input: {
+      encounterId: string;
+      asset: LidndImage;
+    }
+  ) {
+    const encounter = await ServerEncounter.encounterByIdThrows(
+      ctx,
+      input.encounterId
+    );
+    const suitableColumn = encounter.columns
+      .slice()
+      .filter((c) => !c.is_home_column)
+      .sort((a, b) => {
+        return a.participants.length - b.participants.length;
+      })
+      .at(0);
+    const newEncounterAsset = await db
+      .insert(encounterAsset)
+      .values({
+        encounter_id: encounter.id,
+        asset_id: input.asset.id,
+        stat_column_id: suitableColumn ? suitableColumn.id : null,
+      })
+      .returning();
+    return newEncounterAsset[0];
+  },
+  async removeAsset(
+    ctx: LidndContext,
+    input: {
+      encounterId: string;
+      assetId: string;
+    }
+  ) {
+    const encounter = await ServerEncounter.encounterByIdThrows(
+      ctx,
+      input.encounterId
+    );
+    const result = await db
+      .delete(encounterAsset)
+      .where(
+        and(
+          eq(encounterAsset.id, input.assetId),
+          eq(encounterAsset.encounter_id, encounter.id)
+        )
+      )
+      .returning();
+    return result[0];
   },
 };
 

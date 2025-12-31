@@ -4,9 +4,12 @@ import { getPageSession } from "@/server/api/utils";
 import { redirect } from "next/navigation";
 import {
   campaigns,
+  creatures,
   encounterInsertSchema,
   encounters,
+  images,
   type EncounterInsert,
+  type LidndImage,
 } from "@/server/db/schema";
 import { z } from "zod";
 import { db } from "@/server/db";
@@ -19,10 +22,105 @@ import { LidndAuth } from "@/app/authentication";
 import _ from "lodash";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { parseWithZod } from "@conform-to/zod";
+import type { Creature } from "@/server/api/router";
+import { CreatureUtils } from "@/utils/creatures";
 
 export async function invalidateServerFunctionCache() {
   console.log("INVALIDATING");
   revalidatePath(`/`);
+}
+
+export async function addImageAssetToEncounter(input: {
+  encounterId: string;
+  inputAsset:
+    | {
+        url: string;
+        type: "statBlock";
+        baseModel: Creature;
+      }
+    | {
+        url: string;
+        type: "plain";
+        baseModel: LidndImage;
+      };
+}) {
+  const user = await LidndAuth.getUser();
+  if (!user) {
+    console.error("No user found, cannot add asset to encounter");
+    throw new Error("No user found");
+  }
+  const { encounterId, inputAsset } = input;
+  switch (inputAsset.type) {
+    case "plain": {
+      return await ServerEncounter.addAsset(
+        { user },
+        {
+          encounterId,
+          asset: inputAsset.baseModel,
+        }
+      );
+    }
+    case "statBlock": {
+      const newBaseAsset = await db
+        .insert(images)
+        .values({
+          name: CreatureUtils.statBlockKey(inputAsset.baseModel),
+          width: inputAsset.baseModel.stat_block_width,
+          height: inputAsset.baseModel.stat_block_height,
+          user_id: user.id,
+        })
+        .returning();
+      // attach to creaturexK
+      const assetToUse = newBaseAsset[0];
+      if (!assetToUse) {
+        throw new Error("Failed to create image asset");
+      }
+      await db
+        .update(creatures)
+        .set({
+          stat_block_asset: assetToUse.id,
+        })
+        .where(
+          and(
+            eq(creatures.id, inputAsset.baseModel.id),
+            eq(creatures.user_id, user.id)
+          )
+        );
+      return await ServerEncounter.addAsset(
+        { user },
+        {
+          encounterId,
+          asset: assetToUse,
+        }
+      );
+    }
+    default: {
+      const _exhaustiveCheck: never = inputAsset;
+      throw new Error(
+        `Unhandled asset type ${_exhaustiveCheck}: ${JSON.stringify(
+          inputAsset
+        )}`
+      );
+    }
+  }
+}
+
+export async function removeImageAssetFromEncounter(input: {
+  encounterId: string;
+  assetId: string;
+}) {
+  const user = await LidndAuth.getUser();
+  if (!user) {
+    console.error("No user found, cannot remove asset from encounter");
+    throw new Error("No user found");
+  }
+  return await ServerEncounter.removeAsset(
+    { user },
+    {
+      encounterId: input.encounterId,
+      assetId: input.assetId,
+    }
+  );
 }
 
 export async function removeEncounter({

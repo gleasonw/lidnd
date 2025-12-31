@@ -20,7 +20,7 @@ import {
   images,
 } from "@/server/db/schema";
 import * as ServerTurnGroup from "@/server/sdk/turnGroups";
-import { eq, and, ilike, lte, exists } from "drizzle-orm";
+import { eq, and, ilike, lte, exists, isNull, ne } from "drizzle-orm";
 import { db } from "@/server/db";
 import { z } from "zod";
 import { getIconAWSname, getStatBlockAWSname } from "@/server/api/utils";
@@ -46,6 +46,7 @@ import { gameSessionRouter } from "@/server/api/game-session-router";
 import { revalidatePath } from "next/cache";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { ImageUtils } from "@/utils/images";
+import { CreatureUtils } from "@/utils/creatures";
 
 export type Encounter = typeof encounters.$inferSelect;
 export type Creature = typeof creatures.$inferSelect;
@@ -68,7 +69,8 @@ export const appRouter = t.router({
       z.object({
         filename: z.string(),
         filetype: z.string(),
-        requestOnlyIdentifier: z.string(),
+        width: z.number(),
+        height: z.number(),
       })
     )
     .mutation(async (opts) => {
@@ -77,6 +79,8 @@ export const appRouter = t.router({
         .values({
           name: opts.input.filename,
           user_id: opts.ctx.user.id,
+          width: opts.input.width,
+          height: opts.input.height,
         })
         .returning();
 
@@ -107,7 +111,6 @@ export const appRouter = t.router({
       return {
         image,
         signedUrl,
-        requestOnlyIdentifier: opts.input.requestOnlyIdentifier,
       };
     }),
 
@@ -137,6 +140,36 @@ export const appRouter = t.router({
       });
     }
     return encounter;
+  }),
+
+  imageAssets: protectedProcedure.query(async (opts) => {
+    // creatures with ref assets will have that asset pulled in plainAssets
+    const [userCreaturesNoRefAsset, plainAssets] = await Promise.all([
+      db
+        .select()
+        .from(creatures)
+        .where(
+          and(
+            eq(creatures.user_id, opts.ctx.user.id),
+            isNull(creatures.stat_block_asset),
+            ne(creatures.type, "player")
+          )
+        ),
+      db.query.images.findMany({
+        where: eq(images.user_id, opts.ctx.user.id),
+      }),
+    ]);
+    const urlsForStatBlocks = userCreaturesNoRefAsset.map((c) => ({
+      url: CreatureUtils.awsURL(c, "statBlock"),
+      type: "statBlock" as const,
+      baseModel: c,
+    }));
+    const urlsForPlainAssetes = plainAssets.map((i) => ({
+      url: ImageUtils.url(i),
+      type: "plain" as const,
+      baseModel: i,
+    }));
+    return [...urlsForStatBlocks, ...urlsForPlainAssetes];
   }),
 
   encountersInCampaign: protectedProcedure

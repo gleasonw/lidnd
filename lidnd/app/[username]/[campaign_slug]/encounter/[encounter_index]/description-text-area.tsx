@@ -1,7 +1,7 @@
 "use client";
 
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-import { useEditor } from "@tiptap/react";
+import { Editor, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Placeholder } from "@tiptap/extensions";
 import TiptapImage from "@tiptap/extension-image";
@@ -38,7 +38,45 @@ export function DescriptionTextArea({
     placeholder: "Objectives, monster tactics, etc...",
   });
 
-  const pendingFiles = React.useRef<Record<string, File>>({});
+  const { mutateAsync: uploadAsset } = api.upload.useMutation();
+
+  async function uploadAndInsertImage(args: {
+    file: File;
+    pos?: number;
+    currentEditor: Editor;
+  }) {
+    const { file, pos, currentEditor: editor } = args;
+    let imageWidth = 0;
+    let imageHeight = 0;
+    await new Promise<void>((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        imageWidth = img.naturalWidth;
+        imageHeight = img.naturalHeight;
+        resolve();
+      };
+      img.src = URL.createObjectURL(file);
+    });
+    console.log("Uploading image with dimensions", imageWidth, imageHeight);
+    // todo: what if the image already exists?
+    const res = await uploadAsset({
+      filename: file.name,
+      filetype: file.type,
+      width: imageWidth,
+      height: imageHeight,
+    });
+    await uploadFileToAWS(file, res.signedUrl);
+    editor
+      ?.chain()
+      .insertContentAt(pos ?? editor.state.selection.anchor, {
+        type: "image",
+        attrs: {
+          src: ImageUtils.url(res.image),
+        },
+      })
+      .focus()
+      .run();
+  }
 
   const editor = useEditor({
     extensions: [
@@ -58,27 +96,13 @@ export function DescriptionTextArea({
           "image/webp",
         ],
         onDrop: (currentEditor, files, pos) => {
-          files.forEach((file) => {
-            // sort of wonky but we don't have any way of getting the file into the onsuccess mutation callback,
-            // and I don't want to pass the whole file through the server
-            const requestIdentifier = crypto.randomUUID();
-            pendingFiles.current[requestIdentifier] = file;
-            uploadAsset({
-              filename: file.name,
-              filetype: file.type,
-              requestOnlyIdentifier: requestIdentifier,
-            });
+          files.forEach(async (file) => {
+            await uploadAndInsertImage({ file, pos, currentEditor });
           });
         },
         onPaste: (currentEditor, files, htmlContent) => {
-          files.forEach((file) => {
-            const requestOnlyIdentifier = crypto.randomUUID();
-            pendingFiles.current[requestOnlyIdentifier] = file;
-            uploadAsset({
-              filename: file.name,
-              filetype: file.type,
-              requestOnlyIdentifier,
-            });
+          files.forEach(async (file) => {
+            await uploadAndInsertImage({ file, currentEditor });
           });
         },
       }),
@@ -90,31 +114,6 @@ export function DescriptionTextArea({
       debouncedUpdate(content);
     },
     onCreate: () => setIsTipTapReady(true),
-  });
-
-  // i don't love how this flow works. mostly, the fact that react query mutations accept a callback is
-  // making this more complex
-  const { mutate: uploadAsset } = api.upload.useMutation({
-    onSuccess: async (data) => {
-      const fileForName = pendingFiles.current[data.requestOnlyIdentifier];
-      if (!fileForName) {
-        console.error(
-          `No pending file found for filename ${data.image.name} when uploading asset`
-        );
-        return;
-      }
-      await uploadFileToAWS(fileForName, data.signedUrl);
-      editor
-        ?.chain()
-        .insertContentAt(editor.state.selection.anchor, {
-          type: "image",
-          attrs: {
-            src: ImageUtils.url(data.image),
-          },
-        })
-        .focus()
-        .run();
-    },
   });
 
   return (

@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LidndPopover } from "@/encounters/base-popover";
 import { api } from "@/trpc/react";
 import type { Creature } from "@/server/api/router";
-import { cn } from "@/lib/utils";
 import { useAddExistingCreatureAsParticipant } from "@/encounters/[encounter_index]/hooks";
 import { Switch } from "@/components/ui/switch";
 import { LidndLabel } from "@/components/ui/LidndLabel";
@@ -15,12 +13,14 @@ type QuickAddParticipantsButtonProps = {
   encounterId: string;
   campaignId: string;
   className?: string;
+  trigger: React.ReactNode;
 };
 
 export function QuickAddParticipantsButton({
   encounterId,
   campaignId,
   className,
+  trigger,
 }: QuickAddParticipantsButtonProps) {
   const [search, setSearch] = useState("");
   const [inCampaign, setInCampaign] = useState(true);
@@ -61,11 +61,7 @@ export function QuickAddParticipantsButton({
       className="w-80 p-0"
       open={isPopoverOpen}
       onOpenChange={setIsPopoverOpen}
-      trigger={
-        <Button variant="secondary" className={cn("gap-2", className)}>
-          Existing
-        </Button>
-      }
+      trigger={trigger}
     >
       <div className="flex flex-col gap-3 p-3">
         <Input

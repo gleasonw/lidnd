@@ -4,7 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import * as R from "remeda";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { motion, useIsPresent } from "framer-motion";
 import clsx from "clsx";
 import battleStyles from "./battle-ui.module.css";
@@ -50,6 +57,7 @@ import {
   Columns,
   Grip,
   HomeIcon,
+  ImageIcon,
   MoreHorizontal,
   PlayIcon,
   SkullIcon,
@@ -85,7 +93,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { crLabel } from "@/utils/campaigns";
-import type { TurnGroup } from "@/server/db/schema";
+import type { EncounterAsset, TurnGroup } from "@/server/db/schema";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import * as CampaignUtils from "@/utils/campaigns";
 import { labelColors } from "@/lib/utils";
@@ -101,6 +109,11 @@ import { QuickAddParticipantsButton } from "@/encounters/[encounter_index]/Quick
 import { Kbd } from "@/components/ui/kbd";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Switch } from "@/components/ui/switch";
+import {
+  addImageAssetToEncounter,
+  removeImageAssetFromEncounter,
+} from "@/app/[username]/actions";
+import { ImageUtils } from "@/utils/images";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -251,7 +264,20 @@ export const EncounterBattleUI = observer(function BattleUI() {
                           <EncounterTagger />
                         </LidndLabel>
                       </div>
-                      <ReminderInput />
+                      <div className="flex gap-2 w-full">
+                        <Card className="p-1">
+                          <ReminderInput />
+                        </Card>
+                        <Card className="p-1">
+                          <ImageAssetAddButton />
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {encounter.assets?.map((asset) => (
+                              <AssetThumbnail key={asset.id} asset={asset} />
+                            ))}
+                          </div>
+                        </Card>
+                      </div>
+
                       <div>
                         <DescriptionTextArea />
                       </div>
@@ -508,6 +534,18 @@ function EncounterBattlePreview() {
               <StatColumnComponent column={c} index={i} key={c.id}>
                 {i === 0 ? <DescriptionTextArea /> : null}
                 <PreviewCardsForColumn column={c} />
+                {c.assets.map((asset) => (
+                  <div key={asset.id} className="flex flex-col relative">
+                    <AssetDragButton asset={asset} />
+                    <Image
+                      src={ImageUtils.url(asset.image)}
+                      alt={asset.image.name}
+                      key={asset.id}
+                      width={asset.image.width}
+                      height={asset.image.height}
+                    />
+                  </div>
+                ))}
               </StatColumnComponent>
             )
           )}
@@ -539,6 +577,28 @@ export const ColumnDragButton = observer(function ColumnDragButton({
       draggable
     >
       <Grip />
+    </Button>
+  );
+});
+
+export const AssetDragButton = observer(function AssetDragButton({
+  asset,
+}: {
+  asset: EncounterAsset;
+}) {
+  const uiStore = useEncounterUIStore();
+
+  return (
+    <Button
+      variant="ghost"
+      className="absolute top-1 left-1 z-10 cursor-grab p-1 h-auto"
+      onDragStart={(e) => {
+        typedDrag.set(e.dataTransfer, dragTypes.asset, asset);
+        uiStore.startDraggingBattleCard();
+      }}
+      draggable
+    >
+      <Grip className="w-4 h-4" />
     </Button>
   );
 });
@@ -581,7 +641,7 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
   const uiStore = useEncounterUIStore();
 
   return (
-    <div className="flex flex-col max-h-full overflow-hidden h-full">
+    <div className="flex flex-col max-h-full overflow-hidden">
       {participantsInColumn.length === 0 ? (
         <div className="">No stat blocks yet</div>
       ) : null}
@@ -1181,6 +1241,12 @@ const TurnGroupSetup = observer(function TurnGroupSetup() {
         <QuickAddParticipantsButton
           encounterId={encounter.id}
           campaignId={campaign.id}
+          trigger={
+            <Button variant="secondary" className="gap-2">
+              <AngryIcon />
+              Existing
+            </Button>
+          }
         />
       </div>
 
@@ -1269,6 +1335,100 @@ const TurnGroupSetup = observer(function TurnGroupSetup() {
     </div>
   );
 });
+
+function AssetThumbnail({
+  asset,
+}: {
+  asset: {
+    id: string;
+    image: { id: string; name: string; width: number; height: number };
+  };
+}) {
+  const [encounter] = useEncounter();
+  const [isPending, startTransition] = useTransition();
+  const qc = useQueryClient();
+
+  return (
+    <div className="relative group border rounded overflow-hidden">
+      <Image
+        src={ImageUtils.url(asset.image)}
+        alt={asset.image.name}
+        width={80}
+        height={80}
+        className="object-cover"
+      />
+      <Button
+        variant="ghost"
+        size="sm"
+        className="absolute top-0 right-0 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 bg-red-500 hover:bg-red-600 text-white"
+        onClick={() => {
+          startTransition(async () => {
+            await removeImageAssetFromEncounter({
+              encounterId: encounter.id,
+              assetId: asset.id,
+            });
+            qc.invalidateQueries();
+          });
+        }}
+        disabled={isPending}
+      >
+        <Trash className="h-3 w-3" />
+      </Button>
+    </div>
+  );
+}
+
+function ImageAssetAddButton() {
+  const [encounter] = useEncounter();
+  const [isPending, startTransition] = useTransition();
+  const { data: images } = api.imageAssets.useQuery();
+  const qc = useQueryClient();
+  return (
+    <LidndDialog
+      title="Add static image"
+      trigger={
+        <Button variant="secondary">
+          <ImageIcon />
+          Add static image
+        </Button>
+      }
+      content={
+        <div className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-auto">
+          <div className="grid grid-cols-3">
+            {images?.map((i) => (
+              <form
+                key={i.baseModel.id}
+                className="border p-1"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  startTransition(async () => {
+                    await addImageAssetToEncounter({
+                      encounterId: encounter.id,
+                      inputAsset: i,
+                    });
+                    qc.invalidateQueries();
+                  });
+                }}
+              >
+                <span>{i.baseModel.name}</span>
+                <Image
+                  key={i.baseModel.id}
+                  src={i.url}
+                  alt="image"
+                  width={100}
+                  height={100}
+                />
+                <Button variant={"ghost"} type="submit">
+                  {isPending ? "Adding..." : "Add to encounter"}
+                </Button>
+              </form>
+            ))}
+          </div>
+        </div>
+      }
+    />
+  );
+}
 
 const TurnGroupDisplay = observer(function TurnGroupDisplay({
   tg,
@@ -1593,6 +1753,19 @@ export const StatColumns = observer(function StatColumns() {
             )}
           </div>
         ))}
+        {/** eventually i'll have to do a column order thing. but not now! */}
+        {c.assets.map((asset) => (
+          <div key={asset.id} className="w-full h-full relative">
+            {uiStore.isEditingInitiative && <AssetDragButton asset={asset} />}
+            <Image
+              src={ImageUtils.url(asset.image)}
+              alt={asset.image.name}
+              key={asset.id}
+              width={asset.image.width}
+              height={asset.image.height}
+            />
+          </div>
+        ))}
       </div>
     </StatColumnComponent>
   ));
@@ -1676,7 +1849,8 @@ export function CreateNewColumnButton() {
         return StatColumnUtils.add(columns, {
           ...newColumn,
           participants: [],
-          id: Math.random.toString(),
+          assets: [],
+          id: Math.random().toString(),
           is_home_column: false,
         });
       });
@@ -1729,6 +1903,36 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         return { previousEncounter };
       },
     });
+  // long term, should probably have a more generic op here. if we want to add anything more to columns,
+  // we should refactor first.
+  const { mutate: assignAssetToColumn } = api.assignAssetToColumn.useMutation({
+    onMutate: async (input) => {
+      await getColumns.cancel(encounterId);
+      const previousColumns = getColumns.getData(encounterId);
+      getColumns.setData(encounterId, (old) => {
+        if (!old) return old;
+        return old.map((col) => {
+          if (col.id === input.column_id) {
+            return {
+              ...col,
+              assets: [
+                ...col.assets.filter((a) => a.id !== input.asset_id),
+                col.assets.find((a) => a.id === input.asset_id) ||
+                  old
+                    .flatMap((c) => c.assets)
+                    .find((a) => a.id === input.asset_id)!,
+              ],
+            };
+          }
+          return {
+            ...col,
+            assets: col.assets.filter((a) => a.id !== input.asset_id),
+          };
+        });
+      });
+      return { previousColumns };
+    },
+  });
   const { mutate: deleteColumn } = api.deleteColumn.useMutation({
     onMutate: async (column) => {
       await getColumns.cancel(column.encounter_id);
@@ -1755,30 +1959,48 @@ export const StatColumnComponent = observer(function StatColumnComponent({
             e.dataTransfer,
             dragTypes.participant
           );
-          if (!droppedParticipant) {
-            console.error("No participant found when dragging");
+          const droppedAsset = typedDrag.get(e.dataTransfer, dragTypes.asset);
+
+          if (droppedParticipant) {
+            assignParticipantToColumn({
+              participant_id: droppedParticipant.id,
+              column_id: column.id,
+              encounter_id: encounterId,
+            });
+          } else if (droppedAsset) {
+            assignAssetToColumn({
+              asset_id: droppedAsset.id,
+              column_id: column.id,
+              encounter_id: encounterId,
+            });
+          } else {
+            console.error("No participant or asset found when dragging");
             return;
           }
-          assignParticipantToColumn({
-            participant_id: droppedParticipant.id,
-            column_id: column.id,
-            encounter_id: encounterId,
-          });
           setAcceptDrop(0);
         }}
         onDragEnter={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (
-            !typedDrag.includes(e.dataTransfer, dragTypes.participant) ||
-            column.is_home_column
-          ) {
+          const hasParticipant = typedDrag.includes(
+            e.dataTransfer,
+            dragTypes.participant
+          );
+          const hasAsset = typedDrag.includes(e.dataTransfer, dragTypes.asset);
+
+          if ((!hasParticipant && !hasAsset) || column.is_home_column) {
             return;
           }
           setAcceptDrop((count) => count + 1);
         }}
         onDragOver={(e) => {
-          if (!typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
+          const hasParticipant = typedDrag.includes(
+            e.dataTransfer,
+            dragTypes.participant
+          );
+          const hasAsset = typedDrag.includes(e.dataTransfer, dragTypes.asset);
+
+          if (!hasParticipant && !hasAsset) {
             return;
           }
           e.preventDefault();

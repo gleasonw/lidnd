@@ -1,4 +1,5 @@
 import type { Encounter, Participant } from "@/server/api/router";
+import type { EncounterAsset } from "@/server/db/schema";
 import { z } from "zod";
 
 export function isStringMeaningful(str: string | null) {
@@ -26,6 +27,7 @@ export const dragTypes = {
   encounter: "encounter",
   nonsense: "nonsense",
   participant: "participant",
+  asset: "asset",
 } as const;
 
 export type DragTypeData = {
@@ -33,6 +35,8 @@ export type DragTypeData = {
     ? Encounter
     : key extends "participant"
     ? Participant
+    : key extends "asset"
+    ? EncounterAsset
     : never;
 };
 
@@ -48,6 +52,9 @@ export const typedDrag = {
     return dt;
   },
   get<K extends DragKey>(dt: DataTransfer, key: K): DragTypeData[K] | null {
+    if (!this.includes(dt, key)) {
+      return null;
+    }
     return JSON.parse(dt.getData(dragTypes[key])) ?? null;
   },
   includes<K extends DragKey>(dt: DataTransfer, key: K): boolean {

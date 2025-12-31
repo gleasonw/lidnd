@@ -1,4 +1,7 @@
 import type { Creature } from "@/server/api/router";
+import { baseAwsUrl } from "@/utils/images";
+
+export const statBlockPrefix = "stat_block-";
 
 export const CreatureUtils = {
   iconKey(creature: { id: Creature["id"] }) {
@@ -14,7 +17,7 @@ export const CreatureUtils = {
   },
 
   statBlockKey(creature: { id: Creature["id"] }) {
-    return `stat_block-${creature.id}.png`;
+    return `${statBlockPrefix}${creature.id}.png`;
   },
 
   awsURL(
@@ -23,7 +26,7 @@ export const CreatureUtils = {
   ) {
     const key =
       type === "icon" ? this.iconKey(creature) : this.statBlockKey(creature);
-    return `https://dnd-init-tracker-icons-stats.s3.us-west-1.amazonaws.com/${key}`;
+    return `${baseAwsUrl}/${key}`;
   },
 
   placeholder(creature: Partial<Creature>): Creature {
@@ -42,6 +45,7 @@ export const CreatureUtils = {
       icon_height: creature.icon_height ?? 250,
       icon_width: creature.icon_width ?? 250,
       type: creature.type ?? "standard_monster",
+      stat_block_asset: creature.stat_block_asset ?? null,
     };
   },
 };

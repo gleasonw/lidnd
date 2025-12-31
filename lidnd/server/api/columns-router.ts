@@ -1,6 +1,6 @@
 import { protectedProcedure } from "@/server/api/base-trpc";
 import { db } from "@/server/db";
-import { participants, stat_columns } from "@/server/db/schema";
+import { participants, stat_columns, encounterAsset } from "@/server/db/schema";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import { TRPCError } from "@trpc/server";
@@ -21,6 +21,11 @@ export const columnsRouter = {
         where: (columns, { eq }) => and(eq(columns.encounter_id, opts.input)),
         with: {
           participants: true,
+          assets: {
+            with: {
+              image: true,
+            },
+          },
         },
         orderBy: (columns, { asc }) => [desc(columns.is_home_column)],
       }),
@@ -252,5 +257,32 @@ export const columnsRouter = {
         .update(participants)
         .set({ column_id: finalSql })
         .where(inArray(participants.id, participantIds));
+    }),
+  assignAssetToColumn: protectedProcedure
+    .input(
+      z.object({
+        asset_id: z.string(),
+        column_id: z.string(),
+        encounter_id: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      await ServerEncounter.encounterByIdThrows(
+        opts.ctx,
+        opts.input.encounter_id
+      );
+      const result = await db
+        .update(encounterAsset)
+        .set({ stat_column_id: opts.input.column_id })
+        .where(eq(encounterAsset.id, opts.input.asset_id))
+        .returning();
+
+      if (result.length === 0) {
+        throw new TRPCError({
+          message: `Asset not found or failed to update`,
+          code: "INTERNAL_SERVER_ERROR",
+        });
+      }
+      return result[0];
     }),
 };

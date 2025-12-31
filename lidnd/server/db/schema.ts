@@ -29,6 +29,7 @@ export type EncounterInsert = Omit<
 >;
 export type ParticipantInsert = InferInsertModel<typeof participants>;
 
+export type LidndImage = InferSelectModel<typeof images>;
 export const images = pgTable("images", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 256 }).notNull(),
@@ -36,7 +37,14 @@ export const images = pgTable("images", {
   user_id: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  width: integer("width").notNull().default(100),
+  height: integer("height").notNull().default(100),
 });
+
+export const imageRelations = relations(images, ({ many }) => ({
+  encounterAssets: many(encounterAsset),
+  creatures: many(creatures),
+}));
 
 export const spells = pgTable("spells", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -266,6 +274,37 @@ export const encountersRelations = relations(encounters, ({ many, one }) => ({
   columns: many(stat_columns),
   turn_groups: many(turn_groups),
   tags: many(encounter_to_tag),
+  assets: many(encounterAsset),
+}));
+
+export type EncounterAsset = InferSelectModel<typeof encounterAsset>;
+export const encounterAsset = pgTable("encounter_assets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  encounter_id: uuid("encounter_id")
+    .references(() => encounters.id, { onDelete: "cascade" })
+    .notNull(),
+  asset_id: uuid("asset_id")
+    .references(() => images.id, { onDelete: "cascade" })
+    .notNull(),
+  //TODO: potentially an issue here if somehow an encounter asset gets assigned to a stat column from another encounter. that would be pretty wild, but possible
+  stat_column_id: uuid("stat_column_id").references(() => stat_columns.id, {
+    onDelete: "set null",
+  }),
+});
+
+export const encounterAssetRelations = relations(encounterAsset, ({ one }) => ({
+  encounter: one(encounters, {
+    fields: [encounterAsset.encounter_id],
+    references: [encounters.id],
+  }),
+  image: one(images, {
+    fields: [encounterAsset.asset_id],
+    references: [images.id],
+  }),
+  column: one(stat_columns, {
+    fields: [encounterAsset.stat_column_id],
+    references: [stat_columns.id],
+  }),
 }));
 
 //todo: there are system-specific fields in here...
@@ -344,6 +383,7 @@ export const statColumnRelations = relations(stat_columns, ({ one, many }) => ({
     references: [encounters.id],
   }),
   participants: many(participants),
+  assets: many(encounterAsset),
 }));
 
 export type EncounterTag = InferSelectModel<typeof encounter_tags>;
@@ -447,6 +487,10 @@ export const creatures = pgTable(
     icon_height: integer("image_height").default(250).notNull(),
     stat_block_width: integer("stat_block_width").default(250).notNull(),
     stat_block_height: integer("stat_block_height").default(250).notNull(),
+    /**slowly migrating to using a ref'd asset instead of inferring from creature fields. this should be SOT */
+    stat_block_asset: uuid("stat_block_asset").references(() => images.id, {
+      onDelete: "set null",
+    }),
     created_at: timestamp("created_at").defaultNow().notNull(),
     max_hp: integer("max_hp").notNull().default(1),
     initiative_bonus: integer("initiative_bonus").default(0).notNull(),
@@ -468,9 +512,13 @@ export const creatures = pgTable(
   }
 );
 
-export const creatureRelations = relations(creatures, ({ many }) => ({
+export const creatureRelations = relations(creatures, ({ many, one }) => ({
   participants: many(participants),
   campaignLinks: many(campaignCreatureLink),
+  statBlockAsset: one(images, {
+    fields: [creatures.stat_block_asset],
+    references: [images.id],
+  }),
 }));
 
 export const campaignCreatureLink = pgTable(
