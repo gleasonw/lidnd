@@ -56,7 +56,6 @@ import {
   Circle,
   Columns,
   Grip,
-  HomeIcon,
   ImageIcon,
   MoreHorizontal,
   PlayIcon,
@@ -78,8 +77,6 @@ import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBl
 import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
 import { EncounterUtils, targetSinglePlayerStrength } from "@/utils/encounters";
-import { appRoutes } from "@/app/routes";
-import { useUser } from "@/app/[username]/user-provider";
 import { useEncounterLinks } from "@/encounters/link-hooks";
 import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 import { Input } from "@/components/ui/input";
@@ -127,7 +124,6 @@ export const EncounterBattleUI = observer(function BattleUI() {
   const { mutate: updateEncounter } = useUpdateEncounter();
   const uiStore = useEncounterUIStore();
   const { rollEncounter } = useEncounterLinks(encounter);
-  const user = useUser();
   const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
 
   useHotkey("k", (e) => {
@@ -160,44 +156,6 @@ export const EncounterBattleUI = observer(function BattleUI() {
     case "prep":
       return (
         <div className="flex flex-col max-h-full overflow-auto h-full">
-          {/** TODO: figure out a way to make this a consistent header */}
-          <div className="flex gap-1 p-3">
-            <Link
-              href={appRoutes.campaign({ campaign, user })}
-              className="text-gray-400"
-            >
-              <Button variant="ghost">
-                <HomeIcon /> Campaign
-              </Button>
-            </Link>
-            <div className="flex gap-8 ml-auto items-center">
-              <PreviewSwitch />
-              {campaign.system === "dnd5e" ? (
-                <Link href={rollEncounter}>
-                  <Button variant="secondary">Start encounter</Button>
-                </Link>
-              ) : (
-                <Button
-                  onClick={() => {
-                    startEncounter(encounter.id);
-                  }}
-                  variant="secondary"
-                >
-                  <PlayIcon />
-                  Start encounter
-                </Button>
-              )}
-              <div className="flex gap-1">
-                {EncounterUtils.allies(encounter).map((a) => (
-                  <CreatureIcon key={a.id} creature={a.creature} size="small" />
-                ))}
-                <Link href={appRoutes.party({ campaign, user })}>
-                  <Button variant="outline">Edit party</Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-
           <div
             className={clsx(
               "flex justify-center w-full xl:max-h-full",
@@ -205,9 +163,27 @@ export const EncounterBattleUI = observer(function BattleUI() {
             )}
           >
             {/**don't put gap here, it makes the tab contennt bits take up a bunch of vert space */}
-            <div className="flex flex-col w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full gap-5">
-              <div className="w-full flex flex-col gap-5">
+            <div className="flex flex-col max-w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full gap-5">
+              <div className="w-full flex gap-5 py-2">
                 <EncounterNameInput />
+                <div className="flex gap-8 ml-auto items-center pr-2">
+                  <PreviewSwitch />
+                  {campaign.system === "dnd5e" ? (
+                    <Link href={rollEncounter}>
+                      <Button variant="secondary">Start encounter</Button>
+                    </Link>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        startEncounter(encounter.id);
+                      }}
+                      variant="secondary"
+                    >
+                      <PlayIcon />
+                      Start encounter
+                    </Button>
+                  )}
+                </div>
               </div>
               {isPreview ? (
                 <div className="w-full" data-value="preview">

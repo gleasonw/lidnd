@@ -37,9 +37,9 @@ export default function PartyPage() {
   const { mutate: removeFromParty } = useRemoveFromParty(campaign);
 
   return (
-    <div className="flex flex-col gap-5 w-[800px] mx-auto overflow-auto">
+    <div className="flex flex-col gap-5 w-[700px] mx-auto">
       {/* todo: make a table */}
-      <Card className="p-5">
+      <div className="p-5">
         <Tabs defaultValue="new">
           <span className="flex gap-1 flex-wrap pr-2">
             <TabsList>
@@ -73,7 +73,7 @@ export default function PartyPage() {
             <ExistingCreaturesForPartyAdd campaignId={campaign.id} />
           </TabsContent>
         </Tabs>
-      </Card>
+      </div>
       <PartyLevelInput />
       <div className="flex gap-5 p-3">
         {campaign.campaignToPlayers.map((c) => (

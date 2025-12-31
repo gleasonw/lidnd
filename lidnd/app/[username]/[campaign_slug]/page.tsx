@@ -1,9 +1,7 @@
-import { CampaignParty } from "./encounter/campaign-encounters-overview";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
-import { MoveLeft } from "lucide-react";
 import { db } from "@/server/db";
 import {
   campaignCreatureLink,
@@ -19,9 +17,9 @@ import { CreatureUpdateForm } from "@/creatures/creatures-page";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { CampaignCreatureSearch } from "@/app/[username]/[campaign_slug]/CampaignCreatureSearch";
 import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
-import * as R from "remeda";
 import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
 import { EncountersSearchBar } from "@/app/[username]/[campaign_slug]/EncountersSearchBar";
+import { EncounterUtils } from "@/utils/encounters";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -73,15 +71,12 @@ export default async function CampaignPage(props: {
     },
   });
 
-  const encountersGroupedByTag = R.pipe(
-    encountersInCampaign ?? [],
-    R.flatMap((e) => e.tags.map((et) => ({ tag: et.tag, encounter: e }))),
-    R.groupBy((et) => et.tag.id)
-  );
+  const encountersGroupedByTag =
+    EncounterUtils.groupEncountersByTag(encountersInCampaign);
 
   const tagsWithEncounters = Object.entries(encountersGroupedByTag).map(
     ([tagId, tagGroup]) => {
-      const firstTag = tagGroup[0].tag;
+      const firstTag = tagGroup[0]?.tag;
       return {
         ...firstTag,
         encounters: tagGroup.map((et) => et.encounter),
@@ -95,18 +90,6 @@ export default async function CampaignPage(props: {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6 max-h-full">
       <header className="flex flex-col gap-6 border-b pb-4">
-        <div className="flex items-center justify-between gap-4">
-          <Link href={appRoutes.dashboard(user)}>
-            <Button
-              variant="ghost"
-              className="px-2 text-sm opacity-60 hover:opacity-100"
-            >
-              <MoveLeft className="mr-2 h-4 w-4" />
-              All campaigns
-            </Button>
-          </Link>
-          <CampaignParty campaign={campaignData} />
-        </div>
         <div className="flex flex-wrap items-end gap-4">
           <div className="space-y-2">
             <h1 className="text-2xl tracking-tight">{campaignData.name}</h1>

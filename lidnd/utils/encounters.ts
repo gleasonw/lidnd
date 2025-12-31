@@ -950,6 +950,24 @@ export const EncounterUtils = {
     };
   },
 
+  groupEncountersByTag<
+    TEncounter extends { tags: Array<{ tag: { id: string } }> }
+  >(
+    encounters: Array<TEncounter> | null
+  ): Record<
+    string,
+    Array<{
+      tag: TEncounter["tags"][number]["tag"];
+      encounter: TEncounter;
+    }>
+  > {
+    return R.pipe(
+      encounters ?? [],
+      R.flatMap((e) => e.tags.map((et) => ({ tag: et.tag, encounter: e }))),
+      R.groupBy((et) => et.tag.id)
+    );
+  },
+
   moveToNextGroupTurnRound<E extends CyclableEncounter>(encounter: E): E {
     return {
       ...encounter,
