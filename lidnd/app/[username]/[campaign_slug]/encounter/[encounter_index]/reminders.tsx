@@ -15,12 +15,21 @@ import { EncounterUtils } from "@/utils/encounters";
 import { Clock, Plus, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 export function ReminderInput() {
   const [encounter] = useEncounter();
   const { encounterById } = api.useUtils();
-  const [alertAfterRound, setAlertAfterRound] = React.useState<string>("");
+  const [alertAfterRound, setAlertAfterRound] = React.useState<string>("1");
   const [reminder, setReminder] = React.useState<string>("");
+  const inputRef = React.useRef<HTMLInputElement>(null);
   const { mutate: removeReminder } = api.removeEncounterReminder.useMutation({
     onMutate: async ({ reminder_id }) => {
       await encounterById.cancel(encounter.id);
@@ -74,74 +83,84 @@ export function ReminderInput() {
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        if (!reminder.trim()) return;
         addReminder({
           encounter_id: encounter.id,
           alert_after_round: coerceInt(alertAfterRound),
           reminder: reminder,
         });
-        setAlertAfterRound("");
+        setAlertAfterRound("1");
         setReminder("");
+        inputRef.current?.focus();
       }}
       className="flex bg-white flex-col rounded-lg"
     >
-      <section className="flex gap-3 p-3 items-end flex-wrap">
-        <label>
-          <div className="flex gap-2 items-center opacity-60">
-            <Clock />
-            Remind
-          </div>
-
-          <LidndTextInput
-            variant="ghost"
-            placeholder="Reinforcements..."
-            value={reminder}
-            onChange={(e) => setReminder(e.target.value)}
-          />
-        </label>
-
-        <label>
-          <div className="flex gap-2 items-center opacity-60">
-            top of round (0 = all)
-          </div>
-          <LidndTextInput
-            type="number"
-            variant="ghost"
-            placeholder="1"
-            className="w-24"
-            value={alertAfterRound}
-            onChange={(e) =>
-              setAlertAfterRound(coerceInt(e.target.value).toString())
-            }
-          />
-        </label>
-
-        <Button type="submit" variant="outline">
-          Add
+      <div className="flex gap-2 p-3 items-center">
+        <Clock className="text-muted-foreground shrink-0" size={20} />
+        <LidndTextInput
+          ref={inputRef}
+          placeholder="Reinforcements arrive..."
+          value={reminder}
+          onChange={(e) => setReminder(e.target.value)}
+          className="flex-1 min-w-0"
+        />
+        <Select value={alertAfterRound} onValueChange={setAlertAfterRound}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="0">All rounds</SelectItem>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20].map((n) => (
+              <SelectItem key={n} value={n.toString()}>
+                Round {n}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          type="submit"
+          size="icon"
+          variant="outline"
+          disabled={!reminder.trim()}
+        >
           <Plus />
         </Button>
-      </section>
-      {encounter?.reminders
-        .slice()
-        .sort((a, b) => a.alert_after_round - b.alert_after_round)
-        .map((reminder) => (
-          <div className="flex gap-1 items-center p-2" key={reminder.id}>
-            <span>{reminder.reminder}</span>
-            <span>top of round {reminder.alert_after_round}</span>
-            <ButtonWithTooltip
-              text="Remove reminder"
-              variant="ghost"
-              onClick={(e) => {
-                e.preventDefault();
-                removeReminder({
-                  reminder_id: reminder.id,
-                  encounter_id: encounter.id,
-                });
-              }}
-            >
-              <X />
-            </ButtonWithTooltip>
-          </div>
-        ))}
+      </div>
+      {encounter?.reminders && encounter.reminders.length > 0 && (
+        <div className="border-t">
+          {encounter.reminders
+            .slice()
+            .sort((a, b) => a.alert_after_round - b.alert_after_round)
+            .map((reminder) => (
+              <div
+                className="flex gap-3 items-center px-3 py-2 hover:bg-gray-50 group"
+                key={reminder.id}
+              >
+                <Badge variant="secondary" className="shrink-0">
+                  {reminder.alert_after_round === 0
+                    ? "All"
+                    : `R${reminder.alert_after_round}`}
+                </Badge>
+                <span className="flex-1 text-sm">{reminder.reminder}</span>
+                <ButtonWithTooltip
+                  text="Remove reminder"
+                  variant="ghost"
+                  size="icon"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    removeReminder({
+                      reminder_id: reminder.id,
+                      encounter_id: encounter.id,
+                    });
+                  }}
+                >
+                  <X size={16} />
+                </ButtonWithTooltip>
+              </div>
+            ))}
+        </div>
+      )}
     </form>
   );
 }
