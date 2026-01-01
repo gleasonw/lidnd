@@ -5,9 +5,16 @@ import { Input } from "@/components/ui/input";
 import { LidndPopover } from "@/encounters/base-popover";
 import { api } from "@/trpc/react";
 import type { Creature } from "@/server/api/router";
-import { useAddExistingCreatureAsParticipant } from "@/encounters/[encounter_index]/hooks";
+import {
+  useAddExistingCreatureAsParticipant,
+  useEncounter,
+} from "@/encounters/[encounter_index]/hooks";
 import { Switch } from "@/components/ui/switch";
 import { LidndLabel } from "@/components/ui/LidndLabel";
+import { EncounterUtils } from "@/utils/encounters";
+import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
+import { ButtonWithTooltip } from "@/components/ui/tip";
+import { SortAsc, SortDesc } from "lucide-react";
 
 type QuickAddParticipantsButtonProps = {
   encounterId: string;
@@ -23,13 +30,21 @@ export function QuickAddParticipantsButton({
   trigger,
 }: QuickAddParticipantsButtonProps) {
   const [search, setSearch] = useState("");
+  const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
   const [inCampaign, setInCampaign] = useState(true);
+  const [inCrBudget, setInCrBudget] = useState<boolean>(true);
+  const [sortCr, setSortCr] = useState<"asc" | "desc" | undefined>(undefined);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const creaturesQuery = api.getUserCreatures.useQuery(
     {
       name: search,
       campaignId: inCampaign ? campaignId : undefined,
+      maxCR: inCrBudget
+        ? EncounterUtils.remainingCr(encounter, campaign)
+        : undefined,
+      crSortOrder: sortCr,
     },
     {
       placeholderData: (prev) => prev,
@@ -64,18 +79,52 @@ export function QuickAddParticipantsButton({
       trigger={trigger}
     >
       <div className="flex flex-col gap-3 p-3">
-        <Input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder={`Search adversaries`}
-          className="h-9 text-sm"
-        />
+        <div className="flex">
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={`Search adversaries`}
+            className="h-9 text-sm"
+          />
+          <ButtonWithTooltip
+            text={"Sort by CR"}
+            variant="ghost"
+            size="icon"
+            className="ml-2 h-9 w-9 p-0"
+            onClick={() => {
+              setSortCr(
+                sortCr === "asc"
+                  ? "desc"
+                  : sortCr === "desc"
+                  ? undefined
+                  : "asc"
+              );
+            }}
+          >
+            {sortCr === "asc" ? (
+              <SortAsc />
+            ) : sortCr === "desc" ? (
+              <SortDesc />
+            ) : (
+              <SortAsc style={{ opacity: 0.3 }} />
+            )}
+          </ButtonWithTooltip>
+        </div>
+
         <LidndLabel label="In campaign" className="flex gap-2 items-center">
           <Switch
             id={`quick-add-${encounterId}`}
             checked={inCampaign}
             onCheckedChange={setInCampaign}
             aria-label={inCampaign ? "In campaign" : "Any"}
+          />
+        </LidndLabel>
+        <LidndLabel label="In CR budget" className="flex gap-2 items-center">
+          <Switch
+            id={`quick-add-${encounterId}`}
+            checked={inCrBudget}
+            onCheckedChange={setInCrBudget}
+            aria-label={inCrBudget ? "In CR budget" : "Any"}
           />
         </LidndLabel>
 

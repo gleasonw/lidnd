@@ -95,7 +95,7 @@ export function ReminderInput() {
       }}
       className="flex bg-white flex-col rounded-lg"
     >
-      <div className="flex gap-2 p-3 items-center">
+      <div className="flex gap-2 items-center">
         <Clock className="text-muted-foreground shrink-0" size={20} />
         <LidndTextInput
           ref={inputRef}

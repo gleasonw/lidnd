@@ -28,27 +28,31 @@ interface LidndAutocompleteProps {
   options: AutocompleteOption[];
   onSelect?: (option: AutocompleteOption) => void;
   onEnterNew?: (inputValue: string) => void;
+  trigger?: React.ReactNode;
 }
 
 export function LidndAutocomplete({
   options,
   onSelect,
   onEnterNew,
+  trigger,
 }: LidndAutocompleteProps) {
   const [open, setOpen] = React.useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-[150px] justify-between"
-        >
-          Select
-          <ChevronsUpDown className="opacity-50" />
-        </Button>
+        {trigger ?? (
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-[150px] justify-between"
+          >
+            Select
+            <ChevronsUpDown className="opacity-50" />
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>

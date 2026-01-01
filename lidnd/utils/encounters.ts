@@ -462,10 +462,9 @@ export const EncounterUtils = {
           drawSteelEncounterGuidelines.heroLevels[
             playersLevel.toString() as keyof typeof drawSteelEncounterGuidelines.heroLevels
           ];
-        const budgetIndex = adjustedHeroCount - 1;
-        const partyEncounterStrength = heroLevelEVBudget[budgetIndex];
         const oneHeroStrength = heroLevelEVBudget[0];
-        const threeHeroStrength = heroLevelEVBudget[2];
+        const partyEncounterStrength = oneHeroStrength * adjustedHeroCount;
+        const threeHeroStrength = oneHeroStrength * 3;
         if (partyEncounterStrength === undefined) {
           throw new Error(
             `No EV budget found for this number of heroes: ${adjustedHeroCount}`
@@ -886,6 +885,14 @@ export const EncounterUtils = {
 
   turnGroupsById<TG extends { id: string }>(encounter: { turn_groups: TG[] }) {
     return R.indexBy(encounter.turn_groups, (tg) => tg.id);
+  },
+
+  turnGroupForParticipant<TG extends { id: string }>(args: {
+    participant: Pick<Participant, "turn_group_id">;
+    encounter: { turn_groups: TG[] };
+  }) {
+    const turnGroupsById = this.turnGroupsById(args.encounter);
+    return turnGroupsById[args.participant.turn_group_id ?? ""];
   },
 
   toggleGroupTurn<E extends CyclableEncounter>(

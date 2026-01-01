@@ -47,7 +47,7 @@ export async function LidndSidebar({ campaign }: { campaign: Campaign }) {
   });
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="bg-gray-100">
       <SidebarHeader>
         <SidebarMenuButton asChild>
           <Link href={appRoutes.campaign({ campaign, user })}>

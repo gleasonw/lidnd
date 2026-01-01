@@ -8,7 +8,7 @@ export function LidndLabel({
   className?: string;
 }) {
   return (
-    <label className={className}>
+    <label className={className ?? "flex flex-col"}>
       <span className="text-sm text-gray-400">{label}</span>
       {children}
     </label>

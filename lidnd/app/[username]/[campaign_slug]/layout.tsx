@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { isCampaignSlug } from "@/server/utils";
 import React from "react";
+import { cookies } from "next/headers";
 
 export default async function CampaignLayout(props: {
   children: React.ReactNode;
@@ -36,14 +37,17 @@ export default async function CampaignLayout(props: {
   if (!campaign) {
     return <div>No campaign found -- bug!</div>;
   }
+
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
   // todo: add basic nav box, that takes up the same amount of space as the initiative bar
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <CampaignId value={campaign.id}>
         <LidndSidebar campaign={campaign} />
         <SidebarTrigger />
         <div
-          className={`flex flex-col max-h-full h-full gap-5 relative max-w-full overflow-hidden `}
+          className={`flex flex-col max-h-full h-full gap-5 relative max-w-full overflow-hidden w-full `}
         >
           {children}
         </div>

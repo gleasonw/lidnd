@@ -116,6 +116,8 @@ import {
   uploadFileToAWS,
   readImageHeightWidth,
 } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
+import { appRoutes } from "@/app/routes";
+import { useUser } from "@/app/[username]/user-provider";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -151,6 +153,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
 
   const searchParams = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
+  const user = useUser();
 
   switch (encounter.status) {
     case "prep":
@@ -162,8 +165,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
               battleStyles.root
             )}
           >
-            {/**don't put gap here, it makes the tab contennt bits take up a bunch of vert space */}
-            <div className="flex flex-col max-w-[800px] xl:w-[2000px] px-4 xl:px-8 xl:max-h-full gap-5">
+            <div className="flex flex-col w-full px-4 gap-5 mx-auto max-w-[900px] xl:max-w-[2000px]">
               <div className="w-full flex gap-5 py-2">
                 <EncounterNameInput />
                 <div className="flex gap-8 ml-auto items-center pr-2">
@@ -197,67 +199,51 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   data-value="prep"
                 >
                   <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full">
-                    <div className="flex flex-col gap-5">
-                      <div className="flex gap-5">
-                        <LidndLabel label="Target difficulty">
-                          <Select
-                            onValueChange={(v) => {
-                              console.log(v);
-                              updateEncounter({
-                                ...encounter,
-                                target_difficulty: v as any,
-                              });
-                            }}
-                            defaultValue={
-                              encounter.target_difficulty || undefined
-                            }
-                          >
-                            <SelectTrigger className="w-40">
-                              <SelectValue placeholder="Select difficulty" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="easy">Easy</SelectItem>
-                              <SelectItem value="standard">Standard</SelectItem>
-                              <SelectItem value="hard">Hard</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </LidndLabel>
-                        {campaign.system === "drawsteel" && (
-                          <LidndLabel label="Est. Victories">
-                            <LidndTextInput
-                              type="number"
-                              placeholder="0"
-                              className="w-36"
-                              value={encounter.average_victories ?? ""}
-                              onChange={(e) => {
-                                const value = parseFloat(e.target.value);
-                                updateEncounter({
-                                  ...encounter,
-                                  average_victories: isNaN(value)
-                                    ? null
-                                    : value,
-                                });
-                              }}
-                            />
-                          </LidndLabel>
-                        )}
-                        <LidndLabel label="Tags">
+                    <div className="flex flex-col">
+                      <div className="flex gap-5 items-baseline">
+                        <Select
+                          onValueChange={(v) => {
+                            console.log(v);
+                            updateEncounter({
+                              ...encounter,
+                              target_difficulty: v as any,
+                            });
+                          }}
+                          defaultValue={
+                            encounter.target_difficulty || undefined
+                          }
+                        >
+                          <SelectTrigger className="w-fit">
+                            <SelectValue placeholder="Select difficulty" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="easy">
+                              Easy difficulty
+                            </SelectItem>
+                            <SelectItem value="standard">
+                              Standard difficulty
+                            </SelectItem>
+                            <SelectItem value="hard">
+                              Hard difficulty
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="flex-grow-0">
                           <EncounterTagger />
-                        </LidndLabel>
+                        </div>
                       </div>
-                      <ReminderInput />
-
                       <div>
                         <DescriptionTextArea />
                       </div>
+                      <ReminderInput />
                     </div>
-                    <Card
+                    <div
                       className={clsx(
-                        "flex flex-col gap-10 min-h-0 p-4",
+                        "flex flex-col gap-10 min-h-0",
                         battleStyles.adversarySection
                       )}
                     >
-                      <div className="flex flex-col gap-1">
+                      <div className="flex flex-col gap-3">
                         <div
                           className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
                         >
@@ -265,33 +251,37 @@ export const EncounterBattleUI = observer(function BattleUI() {
                             <span className="text-sm text-gray-400">
                               Current
                             </span>
-                            <span className="text-2xl font-bold">
-                              {difficulty}
-                            </span>
+                            <span className="text-xl">{difficulty}</span>
                           </div>
 
                           <div className="flex flex-col items-baseline">
                             <span className="text-sm whitespace-nowrap text-gray-400">
                               Total {CampaignUtils.crLabel(campaign)}
                             </span>
-                            <span className="text-2xl font-bold">
+                            <span className="text-xl">
                               {EncounterUtils.totalCr(encounter)}
                             </span>
                           </div>
-                          {EncounterUtils.remainingCr(encounter, campaign) >
-                          0 ? (
-                            <div className="flex flex-col items-baseline">
-                              <span className="text-sm whitespace-nowrap text-gray-400">
-                                Remaining {CampaignUtils.crLabel(campaign)}
-                              </span>
-                              <span className="text-2xl font-bold">
-                                {EncounterUtils.remainingCr(
-                                  encounter,
-                                  campaign
-                                )}
-                              </span>
-                            </div>
-                          ) : null}
+                          {campaign.system === "drawsteel" && (
+                            <LidndLabel label="Est. Victories">
+                              <LidndTextInput
+                                type="number"
+                                placeholder="0"
+                                variant="ghost"
+                                className="w-20 h-7"
+                                value={encounter.average_victories ?? ""}
+                                onChange={(e) => {
+                                  const value = parseFloat(e.target.value);
+                                  updateEncounter({
+                                    ...encounter,
+                                    average_victories: isNaN(value)
+                                      ? null
+                                      : value,
+                                  });
+                                }}
+                              />
+                            </LidndLabel>
+                          )}
                         </div>
                         <div className="flex gap-2">
                           <div className="w-full pb-3 pt-3 sm:pb-0">
@@ -299,13 +289,40 @@ export const EncounterBattleUI = observer(function BattleUI() {
                           </div>
                         </div>
                       </div>
+                      <Link href={appRoutes.party({ campaign, user })}>
+                        <Card className="p-3">
+                          <div className="flex justify-between">
+                            <span className="flex gap-3">
+                              <UsersIcon />
+                              Party
+                            </span>
+                            <div className="flex flex-col text-right">
+                              <span className="text-gray-400">
+                                Single player EV
+                              </span>
+                              {targetSinglePlayerStrength({
+                                encounter,
+                                campaign,
+                              })}
+                            </div>
+                          </div>
 
-                      <div className="flex flex-col gap-5 xl:max-h-full xl:overflow-auto">
-                        {campaign.system === "drawsteel" ? (
-                          <TurnGroupSetup />
-                        ) : null}
-                      </div>
-                    </Card>
+                          <div className="flex w-full justify-evenly">
+                            {EncounterUtils.players(encounter)?.map((p) => (
+                              <CreatureIcon
+                                key={p.id}
+                                creature={p.creature}
+                                size="small"
+                              />
+                            ))}
+                          </div>
+                        </Card>
+                      </Link>
+
+                      {campaign.system === "drawsteel" ? (
+                        <TurnGroupSetup />
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1113,10 +1130,21 @@ function PrepParticipant({
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
   const uiStore = useEncounterUIStore();
+  const tgForParticipant = EncounterUtils.turnGroupForParticipant({
+    encounter,
+    participant: p,
+  });
+  const crLabel = CampaignUtils.crLabel;
+
   return (
     <Card
       key={p.id}
-      className="flex gap-2 items-center max-w-[400px] cursor-grab active:cursor-grabbing max-h-fit p-1 shadow-md"
+      className={clsx(
+        "flex gap-2 items-center max-w-[400px] cursor-grab active:cursor-grabbing max-h-fit p-1 ",
+        {
+          "border-none shadow-none": tgForParticipant,
+        }
+      )}
       draggable={encounter.turn_groups.length > 0}
       onDragStart={(e) => {
         if (encounter.turn_groups.length > 0) {
@@ -1191,16 +1219,14 @@ const TurnGroupSetup = observer(function TurnGroupSetup() {
     setCreatureAddDialogIsOpen(true);
   });
 
-  const nonEmptyTurnGroups = Object.values(
-    EncounterUtils.participantsByTurnGroup(encounter)
-  ).filter((participants) => participants.length > 0)?.length;
-
-  const numberOfMonsterTurnTakers =
-    monstersWihoutGroup.length + nonEmptyTurnGroups;
-
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex w-full items-center justify-center gap-3">
+      <div className="flex gap-8 items-center">
+        <LidndLabel label={`Remaining ${CampaignUtils.crLabel(campaign)}`}>
+          <span className="text-2xl font-bold">
+            {EncounterUtils.remainingCr(encounter, campaign)}
+          </span>
+        </LidndLabel>
         <LidndDialog
           isOpen={creatureAddDialogIsOpen}
           onClose={() => setCreatureAddDialogIsOpen(false)}
@@ -1237,25 +1263,6 @@ const TurnGroupSetup = observer(function TurnGroupSetup() {
 
       <div className={clsx("flex flex-col gap-3")}>
         <div className="flex flex-wrap gap-5 items-center">
-          <LidndLabel label="Player count" className="flex flex-col gap-2">
-            <span className="text-lg">
-              {EncounterUtils.playerCount(encounter)}
-            </span>
-          </LidndLabel>
-          <LidndLabel
-            label="Monster turn takers"
-            className="flex flex-col gap-2"
-          >
-            <span className="text-lg">{numberOfMonsterTurnTakers}</span>
-          </LidndLabel>
-          <LidndLabel
-            label="Single player strength"
-            className="gap-2 flex flex-col"
-          >
-            <span className="text-lg">
-              {targetSinglePlayerStrength({ encounter, campaign })}
-            </span>
-          </LidndLabel>
           <CreateTurnGroupForm />
         </div>
         <div className={clsx("gap-4", battleStyles.adversaryGrid)}>
@@ -1266,7 +1273,7 @@ const TurnGroupSetup = observer(function TurnGroupSetup() {
         {monstersWihoutGroup.length > 0 || encounter.turn_groups.length > 0 ? (
           <div
             className={clsx(
-              "gap-3 gap-x-12 p-3 rounded min-h-[150px] border-2",
+              "gap-3 gap-x-12 rounded min-h-[150px] border-2",
               battleStyles.adversaryGrid,
               {
                 "border-blue-400 bg-blue-50": acceptDrop > 0,
@@ -1520,11 +1527,10 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
       hex_color: hexColor,
     });
   return (
-    <div
+    <Card
       key={tg.id}
-      className={clsx("flex flex-col gap-2 border-2  p-3 min-h-[200px]", {
+      className={clsx("flex flex-col gap-2  p-3 min-h-[200px]", {
         "border-dashed": uiStore.activeDragType === "participant",
-        "border-transparent": uiStore.activeDragType !== "participant",
         "border-blue-400 bg-blue-50": acceptDrop > 0,
       })}
       onDrop={(e) => {
@@ -1617,7 +1623,7 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
           <PrepParticipant participant={p} key={p.id} />
         )) || <span>No participants assigned</span>}
       </div>
-    </div>
+    </Card>
   );
 });
 

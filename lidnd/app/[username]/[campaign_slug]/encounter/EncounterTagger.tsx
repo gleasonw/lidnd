@@ -10,6 +10,7 @@ import {
 } from "@/encounters/[encounter_index]/hooks";
 import type { AutocompleteOption } from "@/components/ui/lidnd-autocomplete";
 import { Badge } from "@/components/ui/badge";
+import { PlusIcon } from "lucide-react";
 
 interface EncounterTaggerProps {
   className?: string;
@@ -83,6 +84,11 @@ export function EncounterTagger({ className }: EncounterTaggerProps) {
         options={tagOptions}
         onSelect={(opt) => handleAssignExisting(opt)}
         onEnterNew={(value) => handleSubmit(value)}
+        trigger={
+          <Badge variant="outline" className="cursor-pointer">
+            <PlusIcon className="h-4 w-4" /> Tags
+          </Badge>
+        }
       />
 
       <div className="flex gap-2">

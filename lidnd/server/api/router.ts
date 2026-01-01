@@ -20,7 +20,17 @@ import {
   images,
 } from "@/server/db/schema";
 import * as ServerTurnGroup from "@/server/sdk/turnGroups";
-import { eq, and, ilike, lte, exists, isNull, ne } from "drizzle-orm";
+import {
+  eq,
+  and,
+  ilike,
+  lte,
+  exists,
+  isNull,
+  ne,
+  asc,
+  desc,
+} from "drizzle-orm";
 import { db } from "@/server/db";
 import { z } from "zod";
 import { getIconAWSname, getStatBlockAWSname } from "@/server/api/utils";
@@ -791,6 +801,7 @@ export const appRouter = t.router({
           maxCR: z.number().optional(),
           includePlayers: z.boolean().optional(),
           campaignId: z.string().optional(),
+          crSortOrder: z.enum(["asc", "desc"]).optional(),
         })
         .merge(creatureUploadSchema.pick({ type: true }))
     )
@@ -823,7 +834,14 @@ export const appRouter = t.router({
       return await db
         .select()
         .from(creatures)
-        .where(and(...filters));
+        .where(and(...filters))
+        .orderBy(
+          opts.input.crSortOrder === "asc"
+            ? asc(creatures.challenge_rating)
+            : opts.input.crSortOrder === "desc"
+            ? desc(creatures.challenge_rating)
+            : desc(creatures.created_at)
+        );
     }),
 
   //#endregion
