@@ -158,7 +158,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
   switch (encounter.status) {
     case "prep":
       return (
-        <div className="flex flex-col max-h-full overflow-auto h-full">
+        <div className="flex flex-col max-h-full h-full">
           <div
             className={clsx(
               "flex justify-center w-full xl:max-h-full",

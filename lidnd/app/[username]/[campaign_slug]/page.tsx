@@ -88,7 +88,7 @@ export default async function CampaignPage(props: {
     encountersInCampaign?.filter((e) => e.tags.length === 0) || [];
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6 max-h-full">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6">
       <header className="flex flex-col gap-6 border-b pb-4">
         <div className="flex flex-wrap items-end gap-4">
           <div className="space-y-2">
