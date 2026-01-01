@@ -1192,9 +1192,9 @@ const TurnGroupSetup = observer(function TurnGroupSetup() {
   const [creatureAddDialogIsOpen, setCreatureAddDialogIsOpen] = useState(false);
   const [acceptDrop, setAcceptDrop] = useState(0);
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
-  const monstersWihoutGroup = EncounterUtils.monstersInCrOrder(
-    encounter
-  ).filter((m) => !m.turn_group_id);
+  const monstersWihoutGroup = EncounterUtils.monsters(encounter).filter(
+    (m) => !m.turn_group_id
+  );
   const keyForExistingCreature = getQueryKey(
     api.addExistingCreatureAsParticipant
   );
