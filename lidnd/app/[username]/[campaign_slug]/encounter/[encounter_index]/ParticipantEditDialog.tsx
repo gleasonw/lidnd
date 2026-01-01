@@ -9,6 +9,7 @@ import { ButtonWithTooltip } from "@/components/ui/tip";
 import type { ParticipantWithData } from "@/server/api/router";
 import { useUpdateEncounterParticipant } from "@/encounters/[encounter_index]/hooks";
 import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index]/battle-ui";
+import { ParticipantUtils } from "@/utils/participants";
 
 export function ParticipantEditDialog({
   participant,
@@ -18,6 +19,8 @@ export function ParticipantEditDialog({
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   const [open, setOpen] = useState(false);
   const [maxHpOverride, setMaxHpOverride] = useState("");
+
+  const isMinion = ParticipantUtils.isMinion(participant);
 
   const trimmedMaxHp = maxHpOverride.trim();
   const maxHpValue = Number(trimmedMaxHp);
@@ -45,11 +48,17 @@ export function ParticipantEditDialog({
     >
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-400">Max HP override</label>
+          <label className="text-xs text-gray-400">
+            {isMinion ? "Number of minions" : "Max HP override"}
+          </label>
           <Input
             type="number"
             value={maxHpOverride}
-            placeholder={participant.creature.max_hp.toString()}
+            placeholder={
+              isMinion
+                ? ParticipantUtils.numberOfMinions(participant).toString()
+                : participant.creature.max_hp.toString()
+            }
             onChange={(event) => setMaxHpOverride(event.target.value)}
           />
           {maxHpError ? (
@@ -64,15 +73,23 @@ export function ParticipantEditDialog({
             disabled={!canSave}
             onClick={() => {
               const trimmedMaxHp = maxHpOverride.trim();
-              const maxHpValue = Number(trimmedMaxHp);
+              const inputValue = Number(trimmedMaxHp);
               const nextParticipant = { ...participant };
 
               if (trimmedMaxHp === "") {
                 nextParticipant.max_hp_override = null;
                 nextParticipant.hp = participant.creature.max_hp;
-              } else if (!isNaN(maxHpValue) && maxHpValue > 0) {
-                nextParticipant.max_hp_override = maxHpValue;
-                nextParticipant.hp = maxHpValue;
+              } else if (!isNaN(inputValue) && inputValue > 0) {
+                if (isMinion) {
+                  // For minions, multiply the count by base HP
+                  const totalHp = inputValue * participant.creature.max_hp;
+                  nextParticipant.max_hp_override = totalHp;
+                  nextParticipant.hp = totalHp;
+                } else {
+                  // For non-minions, use the value directly as HP override
+                  nextParticipant.max_hp_override = inputValue;
+                  nextParticipant.hp = inputValue;
+                }
               }
 
               updateParticipant(nextParticipant);
