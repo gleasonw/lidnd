@@ -6,6 +6,7 @@ import { ServerCampaign } from "@/server/sdk/campaigns";
 import { isCampaignSlug } from "@/server/utils";
 import React from "react";
 import { cookies } from "next/headers";
+import { CampaignHeader } from "@/app/[username]/[campaign_slug]/CampaignHeader";
 
 export default async function CampaignLayout(props: {
   children: React.ReactNode;
@@ -40,7 +41,7 @@ export default async function CampaignLayout(props: {
 
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
-  // todo: add basic nav box, that takes up the same amount of space as the initiative bar
+  
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <CampaignId value={campaign.id}>
@@ -56,6 +57,7 @@ export default async function CampaignLayout(props: {
         <div
           className={`flex flex-col max-h-full h-full gap-5 relative max-w-full overflow-hidden w-full `}
         >
+          <CampaignHeader campaign={campaign} />
           {children}
         </div>
       </CampaignId>

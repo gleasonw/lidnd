@@ -63,7 +63,7 @@ export const appRoutes = {
     campaign: { slug: string };
     user: LidndUser;
   }) {
-    return `${this.campaign({ campaign, user })}?tab=creatures`;
+    return `${this.campaign({ campaign, user })}/creatures`;
   },
 
   sessionsForCampaign({
@@ -73,11 +73,11 @@ export const appRoutes = {
     campaign: { slug: string };
     user: LidndUser;
   }) {
-    return `${this.campaign({ campaign, user })}?tab=sessions`;
+    return `${this.campaign({ campaign, user })}`;
   },
 
   party(props: { campaign: { slug: string }; user: LidndUser }) {
-    return `${this.campaign(props)}?tab=party`;
+    return `${this.campaign(props)}/party`;
   },
 
   login: "/login",

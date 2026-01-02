@@ -21,8 +21,6 @@ export function CampaignCreatureSearch({
       } else {
         params.delete("search");
       }
-      // Keep the tab param
-      params.set("tab", "creatures");
 
       startTransition(() => {
         router.push(`?${params.toString()}`);
