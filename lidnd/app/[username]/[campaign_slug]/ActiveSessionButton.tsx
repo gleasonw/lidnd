@@ -4,7 +4,7 @@ import { useServerAction } from "@/app/[username]/[campaign_slug]/campaign-hooks
 import { updateSession } from "@/app/[username]/actions";
 import { Button } from "@/components/ui/button";
 import type { GameSession } from "@/server/db/schema";
-import { Minus, Plus, Clock } from "lucide-react";
+import { Minus, Plus, Clock, CheckSquare, CalendarCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function ActiveSessionButton({ session }: { session: GameSession }) {
@@ -93,12 +93,13 @@ export function ActiveSessionButton({ session }: { session: GameSession }) {
       </div>
 
       <Button
-        variant="destructive"
         disabled={isPending}
+        variant="outline"
         onClick={handleEndSession}
         size="sm"
-        className="h-8 text-sm ml-3"
+        className="h-8 text-sm ml-auto text-gray-500"
       >
+        <CalendarCheck className="h-4 w-4 mr-2" />
         End Session
       </Button>
     </div>
