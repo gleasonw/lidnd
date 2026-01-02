@@ -67,25 +67,16 @@ async function create(
         message: "Failed to create encounter",
       });
     }
-    // add two columns
-    const third = (1 / 3) * 100;
+    const numberOfStartingColumns = 4;
+    const initialColumnWidth = 100 / numberOfStartingColumns;
     await tx
       .insert(stat_columns)
-      .values([
-        {
+      .values(
+        Array.from({ length: numberOfStartingColumns }).map(() => ({
           encounter_id: encounterResult.id,
-          percent_width: third,
-          is_home_column: true,
-        },
-        {
-          encounter_id: encounterResult.id,
-          percent_width: third,
-        },
-        {
-          encounter_id: encounterResult.id,
-          percent_width: third,
-        },
-      ])
+          percent_width: initialColumnWidth,
+        }))
+      )
       .returning();
 
     const { campaignToPlayers } = campaign;

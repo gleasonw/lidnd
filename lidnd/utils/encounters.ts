@@ -124,7 +124,7 @@ const difficulties = {
   Deadly: "Deadly",
 } as const;
 
-type Difficulty = keyof typeof difficulties;
+export type Difficulty = keyof typeof difficulties;
 
 function difficultyCssClasses(
   e: EncounterWithParticipantDifficulty,
@@ -156,16 +156,17 @@ function difficultyClassForCR(
   return cssClassForDifficulty(difficulty);
 }
 
-const difficultyClasses = {
-  Easy: "text-green-700 bg-green-100",
-  Standard: "text-blue-700 bg-blue-100",
-  Hard: "text-yellow-700 bg-yellow-100",
-  Deadly: "text-red-700 bg-red-100",
-  Trivial: "",
-} as const;
+const colorForDifficulty = {
+  Easy: "green",
+  Standard: "blue",
+  Hard: "yellow",
+  Deadly: "red",
+  Trivial: "gray",
+} as const satisfies { [key in Difficulty]: string };
 
 function cssClassForDifficulty(d: Difficulty) {
-  return difficultyClasses[d];
+  const color = colorForDifficulty[d];
+  return `text-${color}-700 bg-${color}-100`;
 }
 
 function start(
@@ -387,6 +388,10 @@ export const EncounterUtils = {
         throw new Error(`Unhandled initiative type: ${_exhaustiveCheck}`);
       }
     }
+  },
+
+  colorForDifficulty(difficulty: Difficulty) {
+    return colorForDifficulty[difficulty];
   },
 
   totalCr(encounter: EncounterWithParticipantDifficulty) {
@@ -830,6 +835,47 @@ export const EncounterUtils = {
         columnParticipants.map((group) => group[0])
       )
       .filter((p) => p !== undefined);
+  },
+
+  evRangeForDifficulty({
+    encounter,
+    campaign,
+    difficulty,
+  }: DifficultyArgs & { difficulty: Difficulty }):
+    | { bounds: [number, number]; hardTier: number }
+    | "no-players" {
+    const tiers = this.findCRBudget({ encounter, campaign });
+    if (tiers === "no-players") {
+      return "no-players";
+    }
+    switch (difficulty) {
+      case "Trivial":
+        return { bounds: [0, tiers.trivialTier], hardTier: tiers.hardTier };
+      case "Easy":
+        return {
+          bounds: [tiers.trivialTier, tiers.easyTier],
+          hardTier: tiers.hardTier,
+        };
+      case "Standard":
+        return {
+          bounds: [tiers.easyTier, tiers.standardTier],
+          hardTier: tiers.hardTier,
+        };
+      case "Hard":
+        return {
+          bounds: [tiers.standardTier, tiers.hardTier],
+          hardTier: tiers.hardTier,
+        };
+      case "Deadly":
+        return {
+          bounds: [tiers.hardTier, Infinity],
+          hardTier: tiers.hardTier,
+        };
+      default: {
+        const _exhaustiveCheck: never = difficulty;
+        throw new Error(`Unknown difficulty: ${_exhaustiveCheck}`);
+      }
+    }
   },
 
   destinationColumnForNewParticipant(

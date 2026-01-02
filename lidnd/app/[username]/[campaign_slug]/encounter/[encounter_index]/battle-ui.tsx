@@ -76,7 +76,11 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
 import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
-import { EncounterUtils, targetSinglePlayerStrength } from "@/utils/encounters";
+import {
+  EncounterUtils,
+  targetSinglePlayerStrength,
+  type Difficulty,
+} from "@/utils/encounters";
 import { useEncounterLinks } from "@/encounters/link-hooks";
 import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 import { Input } from "@/components/ui/input";
@@ -146,14 +150,8 @@ export const EncounterBattleUI = observer(function BattleUI() {
 
   const monsters = EncounterUtils.participantsWithNoColumn(encounter);
 
-  const difficulty = EncounterUtils.difficulty({
-    encounter,
-    campaign,
-  });
-
   const searchParams = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
-  const user = useUser();
 
   switch (encounter.status) {
     case "prep":
@@ -235,89 +233,20 @@ export const EncounterBattleUI = observer(function BattleUI() {
                       <div>
                         <DescriptionTextArea />
                       </div>
-                      <ReminderInput />
+                      <Card className="p-2">
+                        <ReminderInput />
+                      </Card>
                     </div>
                     <div
                       className={clsx(
-                        "flex flex-col gap-10 min-h-0",
+                        "flex flex-col gap-7 min-h-0",
                         battleStyles.adversarySection
                       )}
                     >
-                      <div className="flex flex-col gap-3">
-                        <div
-                          className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-sm text-gray-400">
-                              Current
-                            </span>
-                            <span className="text-xl">{difficulty}</span>
-                          </div>
-
-                          <div className="flex flex-col items-baseline">
-                            <span className="text-sm whitespace-nowrap text-gray-400">
-                              Total {CampaignUtils.crLabel(campaign)}
-                            </span>
-                            <span className="text-xl">
-                              {EncounterUtils.totalCr(encounter)}
-                            </span>
-                          </div>
-                          {campaign.system === "drawsteel" && (
-                            <LidndLabel label="Est. Victories">
-                              <LidndTextInput
-                                type="number"
-                                placeholder="0"
-                                variant="ghost"
-                                className="w-20 h-7"
-                                value={encounter.average_victories ?? ""}
-                                onChange={(e) => {
-                                  const value = parseFloat(e.target.value);
-                                  updateEncounter({
-                                    ...encounter,
-                                    average_victories: isNaN(value)
-                                      ? null
-                                      : value,
-                                  });
-                                }}
-                              />
-                            </LidndLabel>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <div className="w-full pb-3 pt-3 sm:pb-0">
-                            <EncounterBudgetSlider />
-                          </div>
-                        </div>
-                      </div>
-                      <Link href={appRoutes.party({ campaign, user })}>
-                        <Card className="p-3">
-                          <div className="flex justify-between">
-                            <span className="flex gap-3">
-                              <UsersIcon />
-                              Party
-                            </span>
-                            <div className="flex flex-col text-right">
-                              <span className="text-gray-400">
-                                Single player EV
-                              </span>
-                              {targetSinglePlayerStrength({
-                                encounter,
-                                campaign,
-                              })}
-                            </div>
-                          </div>
-
-                          <div className="flex w-full justify-evenly">
-                            {EncounterUtils.players(encounter)?.map((p) => (
-                              <CreatureIcon
-                                key={p.id}
-                                creature={p.creature}
-                                size="small"
-                              />
-                            ))}
-                          </div>
-                        </Card>
-                      </Link>
+                      <Card className="p-5 flex flex-col gap-5">
+                        <DifficultySection />
+                      </Card>
+                      <PartySection />
 
                       {campaign.system === "drawsteel" ? (
                         <TurnGroupSetup />
@@ -362,6 +291,100 @@ export const EncounterBattleUI = observer(function BattleUI() {
     }
   }
 });
+
+function PartySection() {
+  const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
+  const user = useUser();
+  return (
+    <Link href={appRoutes.party({ campaign, user })}>
+      <Card className="p-5">
+        <div className="flex justify-between">
+          <span className="flex gap-3">
+            <UsersIcon />
+            Party
+          </span>
+          <div className="flex flex-col text-right">
+            <span className="text-gray-400">Single player EV</span>
+            {targetSinglePlayerStrength({
+              encounter,
+              campaign,
+            })}
+          </div>
+        </div>
+
+        <div className="flex w-full justify-evenly">
+          {EncounterUtils.players(encounter)?.map((p) => (
+            <CreatureIcon key={p.id} creature={p.creature} size="small" />
+          ))}
+        </div>
+      </Card>
+    </Link>
+  );
+}
+
+function DifficultySection() {
+  const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
+  const { mutate: updateEncounter } = useUpdateEncounter();
+  const difficulty = EncounterUtils.difficulty({
+    encounter,
+    campaign,
+  });
+  if (difficulty === "no-players") {
+    return <div>No players in encounter</div>;
+  }
+  const difficultyCssClass = EncounterUtils.cssClassForDifficulty(difficulty);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div
+        className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
+      >
+        <div className="flex flex-col">
+          <span
+            className={clsx(
+              "text-lg p-2 rounded-md w-24 text-center",
+              difficultyCssClass
+            )}
+          >
+            {difficulty}
+          </span>
+        </div>
+
+        <div className="flex flex-col items-baseline">
+          <span className="text-sm whitespace-nowrap text-gray-400">
+            Total {CampaignUtils.crLabel(campaign)}
+          </span>
+          <span className="">{EncounterUtils.totalCr(encounter)}</span>
+        </div>
+        {campaign.system === "drawsteel" && (
+          <LidndLabel label="Est. Victories">
+            <LidndTextInput
+              type="number"
+              placeholder="0"
+              variant="ghost"
+              className="w-20 h-7"
+              value={encounter.average_victories ?? ""}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value);
+                updateEncounter({
+                  ...encounter,
+                  average_victories: isNaN(value) ? null : value,
+                });
+              }}
+            />
+          </LidndLabel>
+        )}
+      </div>
+      <div className="flex gap-2">
+        <div className="w-full pb-3 pt-3 sm:pb-0">
+          <EncounterBudgetSlider />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function PreviewSwitch() {
   const searchParams = useSearchParams();
@@ -461,13 +484,10 @@ function EncounterBudgetSlider() {
     return <div>No players in encounter</div>;
   }
 
-  const max = tiers.hardTier + 10;
-  const easyCutOff = tiers.easyTier / max;
-  const standardCutoff = tiers.standardTier / max;
-  const hardCutoff = tiers.hardTier / max;
+  const max = tiers.hardTier;
 
   return (
-    <div className="w-full border h-6 relative ">
+    <div className="w-full h-6 relative border rounded-md ">
       <motion.div
         initial={false}
         animate={{
@@ -478,27 +498,69 @@ function EncounterBudgetSlider() {
           stiffness: 300,
           damping: 30,
         }}
+        style={{ position: "relative", zIndex: 10 }}
       >
-        <SkullIcon className="-translate-y-0.5 -translate-x-2.5 " />
+        <SkullIcon className="bg-white border-2 border-gray-800 rounded-full p-0.5 shadow-lg -translate-x-1/2" />
       </motion.div>
-      <div
-        className="w-1 h-full bg-gray-500 absolute text-gray-500 top-0"
-        style={{ left: `${easyCutOff * 100}%` }}
-      >
-        <span className="absolute bottom-full">{tiers.easyTier}</span>
-      </div>
-      <div
-        className="w-1 h-full bg-gray-500 absolute text-gray-500 top-0"
-        style={{ left: `${standardCutoff * 100}%` }}
-      >
-        <span className="absolute bottom-full">{tiers.standardTier}</span>
-      </div>
-      <div
-        className="w-1 h-full bg-gray-500 absolute text-gray-500 top-0"
-        style={{ left: `${hardCutoff * 100}%` }}
-      >
-        <span className="absolute bottom-full">{tiers.hardTier}</span>
-      </div>
+      <SliderTier difficulty="Trivial" />
+      <SliderTier difficulty="Easy" />
+      <SliderTier difficulty="Standard" />
+      <SliderTier difficulty="Hard" />
+    </div>
+  );
+}
+
+function SliderTier({ difficulty }: { difficulty: Difficulty }) {
+  const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
+
+  const currentDifficulty = EncounterUtils.difficulty({
+    encounter,
+    campaign,
+  });
+
+  console.log({ difficulty, currentDifficulty });
+
+  const res = EncounterUtils.evRangeForDifficulty({
+    encounter,
+    campaign,
+    difficulty,
+  });
+  const color = EncounterUtils.colorForDifficulty(difficulty);
+  if (res === "no-players") {
+    return null;
+  }
+  const { hardTier, bounds } = res;
+  const [lowBound, highBound] = bounds;
+  const leftPercent = lowBound / hardTier;
+  const width = (highBound - lowBound) / hardTier;
+  const tailwindClass =
+    color === "gray"
+      ? "bg-gray-300"
+      : color === "blue"
+      ? "bg-blue-300"
+      : color === "green"
+      ? "bg-green-300"
+      : color === "yellow"
+      ? "bg-yellow-300"
+      : "bg-red-300";
+
+  return (
+    <div
+      className={clsx(`absolute top-0 h-6`, {
+        [tailwindClass]: true,
+        "bg-opacity-50": difficulty !== currentDifficulty,
+      })}
+      style={{
+        left: `${leftPercent * 100}%`,
+        width: `${width * 100}%`,
+      }}
+    >
+      {lowBound !== 0 && (
+        <span className="absolute bottom-full -translate-x-1/2 text-gray-500 opacity-100">
+          {lowBound}
+        </span>
+      )}
     </div>
   );
 }

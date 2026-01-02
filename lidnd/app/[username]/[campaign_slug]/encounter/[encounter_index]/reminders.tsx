@@ -99,6 +99,7 @@ export function ReminderInput() {
         <Clock className="text-muted-foreground shrink-0" size={20} />
         <LidndTextInput
           ref={inputRef}
+          variant="ghost"
           placeholder="Reinforcements arrive..."
           value={reminder}
           onChange={(e) => setReminder(e.target.value)}
