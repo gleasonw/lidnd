@@ -58,27 +58,27 @@ export function ActiveSessionButton({ session }: { session: GameSession }) {
   };
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2 border rounded-md bg-card flex-1">
-      <div className="flex flex-col gap-0">
-        <span className="font-semibold text-sm">{session.name}</span>
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Clock className="h-3 w-3" />
+    <div className="flex items-center gap-5 p-4 border rounded-md bg-card flex-1">
+      <div className="flex flex-col gap-0.5">
+        <span className="font-semibold text-base">{session.name}</span>
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4" />
           <span>{duration}</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-1 border-l pl-3">
-        <span className="text-xs text-muted-foreground">Victories</span>
+      <div className="flex items-center gap-2 border-l pl-5">
+        <span className="text-sm text-muted-foreground">Victories</span>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => handleVictoryChange(-1)}
           disabled={isPending || victoryCount === 0}
-          className="h-6 w-6"
+          className="h-8 w-8"
         >
-          <Minus className="h-3 w-3" />
+          <Minus className="h-4 w-4" />
         </Button>
-        <span className="text-lg font-bold min-w-[1.5rem] text-center">
+        <span className="text-2xl font-bold min-w-[2rem] text-center">
           {victoryCount}
         </span>
         <Button
@@ -86,9 +86,9 @@ export function ActiveSessionButton({ session }: { session: GameSession }) {
           size="icon"
           onClick={() => handleVictoryChange(1)}
           disabled={isPending}
-          className="h-6 w-6"
+          className="h-8 w-8"
         >
-          <Plus className="h-3 w-3" />
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
 
@@ -97,7 +97,7 @@ export function ActiveSessionButton({ session }: { session: GameSession }) {
         disabled={isPending}
         onClick={handleEndSession}
         size="sm"
-        className="h-7 text-xs ml-2"
+        className="h-8 text-sm ml-3"
       >
         End Session
       </Button>
