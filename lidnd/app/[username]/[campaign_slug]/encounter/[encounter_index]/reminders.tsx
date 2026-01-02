@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { coerceInt } from "@/app/[username]/utils";
 
 export function ReminderInput() {
   const [encounter] = useEncounter();
@@ -66,17 +67,6 @@ export function ReminderInput() {
 
   if (!encounter) {
     return null;
-  }
-
-  function coerceInt(value: string | undefined) {
-    if (!value) {
-      return 0;
-    }
-    const int = parseInt(value);
-    if (isNaN(int)) {
-      return 0;
-    }
-    return int;
   }
 
   return (

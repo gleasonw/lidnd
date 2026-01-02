@@ -53,7 +53,7 @@ export async function LidndSidebar({
   });
 
   return (
-    <Sidebar collapsible="icon" className="bg-gray-100">
+    <Sidebar collapsible="icon" className="bg-white">
       <SidebarHeader>
         {topSlot}
         <SidebarMenuButton asChild>

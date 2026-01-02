@@ -31,3 +31,7 @@ export function crLabel(campaign: Pick<Campaign, "system">) {
       throw new Error(`Unhandled campaign system: ${_exhaustiveCheck}`);
   }
 }
+
+export function playerCount(campaign: { campaignToPlayers: Array<unknown> }) {
+  return campaign.campaignToPlayers.length;
+}

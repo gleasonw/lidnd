@@ -193,6 +193,8 @@ export const campaignToPlayerRelations = relations(
   })
 );
 
+export type GameSession = InferSelectModel<typeof gameSessions>;
+export type SessionPost = InferInsertModel<typeof gameSessions>;
 export const gameSessions = pgTable(
   "gameSessions",
   {
@@ -206,6 +208,9 @@ export const gameSessions = pgTable(
     name: varchar("name", { length: 256 }).notNull(),
     description: text("description"),
     created_at: timestamp("created_at").defaultNow(),
+    started_at: timestamp("started_at"),
+    ended_at: timestamp("ended_at"),
+    victory_count: integer("victory_count").default(0).notNull(),
   },
   (t) => {
     return {
@@ -236,8 +241,11 @@ export const encounters = pgTable(
     description: text("description"),
     malice: integer("malice").default(0).notNull(),
     started_at: timestamp("started_at"),
+    ended_at: timestamp("ended_at"),
     created_at: timestamp("created_at").defaultNow(),
-    session_id: uuid("session_id").references(() => gameSessions.id),
+    session_id: uuid("session_id").references(() => gameSessions.id, {
+      onDelete: "set null",
+    }),
     campaign_id: uuid("campaign_id")
       .notNull()
       .references(() => campaigns.id, { onDelete: "cascade" }),
@@ -246,7 +254,6 @@ export const encounters = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     current_round: integer("current_round").default(1).notNull(),
     is_editing_columns: boolean("is_editing_columns").default(true).notNull(),
-    ended_at: timestamp("ended_at"),
     status: encounter_status_enum("status").default("prep").notNull(),
     label: encounter_label_enum("label").default("active").notNull(),
     order: doublePrecision("order").default(1).notNull(),

@@ -5,14 +5,31 @@ import {
 } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 import { api } from "@/trpc/react";
 import { CreatureUtils } from "@/utils/creatures";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect } from "react";
+import { useEffect, useTransition } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 export function useCampaign() {
   const campaignId = useCampaignId();
   return api.campaignById.useSuspenseQuery(campaignId);
+}
+
+export function useServerAction<A extends (...args: any[]) => Promise<any>>(
+  action: A
+) {
+  const qc = useQueryClient();
+  const [isPending, startTransition] = useTransition();
+  return [
+    isPending,
+    async (...args: Parameters<A>) => {
+      startTransition(async () => {
+        await action(...args);
+        qc.invalidateQueries();
+      });
+    },
+  ] as const;
 }
 
 export function useHotkey(key: string, handler: (e: KeyboardEvent) => void) {
@@ -30,6 +47,7 @@ export function useHotkey(key: string, handler: (e: KeyboardEvent) => void) {
         return;
       }
       if (e.key.toLowerCase() === key.toLowerCase() && !e.repeat) {
+        e.preventDefault();
         handler(e);
       }
     }

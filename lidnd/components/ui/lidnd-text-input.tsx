@@ -1,40 +1,37 @@
 import { Input, type InputProps } from "@/components/ui/input";
+import { LidndLabel } from "@/components/ui/LidndLabel";
 import clsx from "clsx";
 import React from "react";
+
+type BaseLidnInputProps = {
+  basicLabel?: string;
+} & InputProps;
 
 export type LidndTextInputProps =
   | ({
       variant: "ghost";
       placeholder: string;
-    } & InputProps)
+    } & BaseLidnInputProps)
   | ({
       variant?: "default";
-    } & InputProps);
+    } & BaseLidnInputProps);
 
 export const LidndTextInput = React.forwardRef<
   HTMLInputElement,
   LidndTextInputProps
->(({ variant, placeholder, className, ...props }, ref) => {
-  if (variant === "ghost") {
-    return (
-      <Input
-        className={clsx(
-          "border-none outline-none focus-visible:outline-none focus-visible:ring-transparent p-0",
-          className
-        )}
-        ref={ref}
-        placeholder={placeholder}
-        {...props}
-      />
-    );
-  }
-
-  return (
+>(({ variant, placeholder, className, basicLabel, ...props }, ref) => {
+  const ghostClassName =
+    "border-none outline-none focus-visible:outline-none focus-visible:ring-transparent p-0";
+  const baseInput = (
     <Input
+      className={clsx({ [ghostClassName]: variant === "ghost" }, className)}
       ref={ref}
-      className={className}
       placeholder={placeholder}
       {...props}
     />
   );
+  if (basicLabel) {
+    return <LidndLabel label={basicLabel}>{baseInput}</LidndLabel>;
+  }
+  return baseInput;
 });

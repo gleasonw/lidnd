@@ -3,7 +3,7 @@ import { ServerCampaign } from "@/server/sdk/campaigns";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { cache } from "react";
 
-type CampaignSlug = {
+export type CampaignSlug = {
   campaign_slug: string;
 };
 
@@ -11,9 +11,9 @@ type IndexPath = {
   encounter_index: string;
 };
 
-type EncounterPath = CampaignSlug & IndexPath;
+export type EncounterPath = CampaignSlug & IndexPath;
 
-function isDefinedObject(
+export function isDefinedObject(
   obj: unknown
 ): obj is NonNullable<Record<string, unknown>> {
   return obj !== null && typeof obj === "object";

@@ -21,6 +21,7 @@ import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
 import { EncountersSearchBar } from "@/app/[username]/[campaign_slug]/EncountersSearchBar";
 import { EncounterUtils } from "@/utils/encounters";
 import { PartyPage } from "@/app/[username]/[campaign_slug]/partyPage";
+import { SessionButton } from "@/app/[username]/[campaign_slug]/SessionButton";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -164,7 +165,13 @@ export default async function CampaignPage(props: {
         </section>
       ) : (
         <section className="flex flex-col gap-6">
-          <CreateEncounterButton />
+          <div className="flex w-full justify-center">
+            <div className="flex gap-3 flex-col max-w-2xl w-full">
+              <SessionButton campaignId={campaignData.id} />
+              <CreateEncounterButton />
+            </div>
+          </div>
+
           <EncountersSearchBar search={encounterSearch} />
           <div className="flex flex-col gap-8">
             {tagsWithEncounters.length === 0 ? (

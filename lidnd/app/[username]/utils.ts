@@ -6,6 +6,17 @@ export function isStringMeaningful(str: string | null) {
   return str !== null && str !== undefined && str !== "";
 }
 
+export function coerceInt(value: string | undefined) {
+  if (!value) {
+    return 0;
+  }
+  const int = parseInt(value);
+  if (isNaN(int)) {
+    return 0;
+  }
+  return int;
+}
+
 export function isLocalDebug() {
   //check window
   if (typeof window === "undefined") {

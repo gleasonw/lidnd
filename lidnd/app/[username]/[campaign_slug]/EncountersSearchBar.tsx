@@ -2,6 +2,7 @@
 
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { Spinner } from "@/components/ui/spinner";
+import { Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useDebouncedCallback } from "use-debounce";
@@ -25,8 +26,10 @@ export function EncountersSearchBar({ search }: { search?: string }) {
   }, 300);
 
   return (
-    <div className="relative">
+    <div className="relative flex gap-3 items-center">
+      <Search className="w-5 h-5 text-gray-400" />
       <LidndTextInput
+        variant="ghost"
         value={query}
         placeholder="Search for encounter"
         className="pr-10"

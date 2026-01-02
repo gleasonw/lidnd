@@ -7,9 +7,11 @@ import {
   creatures,
   encounterInsertSchema,
   encounters,
+  gameSessions,
   images,
   type EncounterInsert,
   type LidndImage,
+  type SessionPost,
 } from "@/server/db/schema";
 import { z } from "zod";
 import { db } from "@/server/db";
@@ -156,6 +158,65 @@ export async function removeEncounter({
   if (redirectToCampaign) {
     redirect(appRoutes.campaign({ campaign, user }));
   }
+}
+
+export async function startSession({
+  campaignId,
+  name,
+  victoryCount,
+}: {
+  campaignId: string;
+  name: string;
+  victoryCount?: number;
+}) {
+  const user = await LidndAuth.getUser();
+  if (!user) {
+    console.error("No user found, cannot start session");
+    throw new Error("No user found");
+  }
+
+  const newSession = await db
+    .insert(gameSessions)
+    .values({
+      user_id: user.id,
+      campaign_id: campaignId,
+      started_at: new Date(),
+      victory_count: victoryCount || 0,
+      name,
+    })
+    .returning();
+
+  if (newSession.length === 0 || !newSession[0]) {
+    throw new Error("Failed to create game session");
+  }
+
+  revalidatePath(`/`);
+  return newSession[0];
+}
+
+export async function updateSession({
+  sessionId,
+  updated,
+}: {
+  sessionId: string;
+  updated: SessionPost;
+}) {
+  const user = await LidndAuth.getUser();
+  if (!user) {
+    console.error("No user found, cannot update session");
+    throw new Error("No user found");
+  }
+
+  await db
+    .update(gameSessions)
+    .set({
+      ...updated,
+    })
+    .where(
+      and(eq(gameSessions.id, sessionId), eq(gameSessions.user_id, user.id))
+    );
+
+  revalidatePath(`/`);
 }
 
 export async function createEncounter(encounter: EncounterInsert) {

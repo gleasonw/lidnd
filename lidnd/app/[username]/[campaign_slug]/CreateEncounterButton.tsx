@@ -3,38 +3,26 @@
 import {
   useCampaign,
   useHotkey,
+  useServerAction,
 } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { createEncounter } from "@/app/[username]/actions";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
-import { useQueryClient } from "@tanstack/react-query";
-import { useTransition } from "react";
 
 export function CreateEncounterButton() {
   const [campaign] = useCampaign();
-  const [isPending, startTransition] = useTransition();
-  const queryClient = useQueryClient();
+  const [isPending, create] = useServerAction(createEncounter);
   useHotkey("e", () => {
-    startTransition(async () => {
-      await createEncounter({ campaign_id: campaign.id });
-      queryClient.invalidateQueries();
-    });
+    create({ campaign_id: campaign.id });
   });
   return (
-    <form
-      className="w-full flex items-center justify-center"
-      onSubmit={(e) => {
-        e.preventDefault();
-        startTransition(async () => {
-          await createEncounter({ campaign_id: campaign.id });
-          queryClient.invalidateQueries();
-        });
-      }}
+    <Button
+      type="submit"
+      disabled={isPending}
+      onClick={() => create({ campaign_id: campaign.id })}
     >
-      <Button className="w-56" type="submit" disabled={isPending}>
-        Create Encounter
-        <Kbd>E</Kbd>
-      </Button>
-    </form>
+      Create Encounter
+      <Kbd>E</Kbd>
+    </Button>
   );
 }
