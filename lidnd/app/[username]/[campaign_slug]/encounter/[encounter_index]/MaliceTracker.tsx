@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Minus, Plus } from "lucide-react";
 import { useEncounter, useUpdateEncounter } from "./hooks";
 
@@ -28,7 +27,7 @@ export function MaliceTracker() {
   };
 
   return (
-    <Card className="p-4">
+    <div className="p-4">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-gray-600">Malice</span>
@@ -62,6 +61,6 @@ export function MaliceTracker() {
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
