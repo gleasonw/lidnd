@@ -18,6 +18,7 @@ import {
   AngryIcon,
   Home,
   MoreHorizontalIcon,
+  StopCircle,
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import Link from "next/link";
@@ -77,6 +78,20 @@ export const EncounterDetails = observer(function EncounterDetails() {
                   <Home />
                 </Button>
               </Link>
+              <ButtonWithTooltip
+                text="End encounter"
+                variant="ghost"
+                className="flex text-gray-400 p-2"
+                onClick={() =>
+                  updateEncounter({
+                    id: encounter.id,
+                    campaign_id: encounter.campaign_id,
+                    ended_at: new Date(),
+                  })
+                }
+              >
+                <StopCircle />
+              </ButtonWithTooltip>
               <ButtonWithTooltip
                 text="Switch to prep mode"
                 variant="ghost"

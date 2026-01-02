@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import * as R from "remeda";
-import {
+import React, {
   createContext,
   useContext,
   useEffect,
@@ -264,6 +264,10 @@ export const EncounterBattleUI = observer(function BattleUI() {
         </div>
       );
     case "run":
+      // Check if encounter has ended
+      if (encounter.ended_at) {
+        return <EndedEncounterDisplay />;
+      }
       return (
         <section className="flex flex-col max-h-full min-h-0 h-full">
           {campaign.system === "dnd5e" ? <InitiativeTracker /> : null}
@@ -321,6 +325,79 @@ function PartySection() {
         </div>
       </Card>
     </Link>
+  );
+}
+
+function EndedEncounterDisplay() {
+  const [encounter] = useEncounter();
+  const { mutate: updateEncounter } = useUpdateEncounter();
+
+  let totalRuntime = "Unknown";
+  if (encounter.started_at && encounter.ended_at) {
+    const startTime = new Date(encounter.started_at).getTime();
+    const endTime = new Date(encounter.ended_at).getTime();
+    const diffMs = endTime - startTime;
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+
+    if (diffHours > 0) {
+      const remainingMinutes = diffMinutes % 60;
+      totalRuntime = `${diffHours}h ${remainingMinutes}m`;
+    } else if (diffMinutes > 0) {
+      totalRuntime = `${diffMinutes} minutes`;
+    } else {
+      totalRuntime = `${diffSeconds} seconds`;
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-8 p-8 max-w-[900px] mx-auto">
+      <Card className="p-8 w-full">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl font-bold">{encounter.name}</h1>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="text-lg">Encounter Completed</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-muted-foreground">Total Runtime</span>
+            <span className="text-2xl font-semibold">{totalRuntime}</span>
+          </div>
+
+          {encounter.description && (
+            <div className="flex flex-col gap-2">
+              <span className="text-sm text-muted-foreground">Description</span>
+              <div
+                className="prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: encounter.description }}
+              />
+            </div>
+          )}
+
+          <div className="flex gap-3 mt-4">
+            <Button
+              onClick={() => {
+                updateEncounter({
+                  id: encounter.id,
+                  campaign_id: encounter.campaign_id,
+                  status: "prep",
+                  started_at: null,
+                  ended_at: null,
+                });
+              }}
+              variant="secondary"
+              size="lg"
+            >
+              Reset to Prep
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </div>
   );
 }
 

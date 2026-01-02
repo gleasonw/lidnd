@@ -11,10 +11,11 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { useEffect } from "react";
+import { CheckCircle } from "lucide-react";
 
 type EncounterDataForCard = Pick<
   Encounter,
-  "description" | "name" | "id" | "index_in_campaign"
+  "description" | "name" | "id" | "index_in_campaign" | "ended_at"
 > & {
   participants: Array<
     SortableNameableParticipant & {
@@ -61,8 +62,14 @@ export function EncounterCard({
             <div className="w-12 h-12 rounded bg-gray-200 flex-shrink-0" />
           )}
           <div className="flex flex-col gap-2 flex-1">
-            <p className="text-base">{encounter.name || "Unnamed encounter"}</p>
-            {/* <DifficultyBadge encounter={encounterData} /> */}
+            <div className="flex items-center gap-2">
+              <p className="text-base">
+                {encounter.name || "Unnamed encounter"}
+              </p>
+              {encounter.ended_at && (
+                <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+              )}
+            </div>
             <div className="flex flex-col gap-1 text-muted-foreground">
               {monstersByCr.slice(0, maxMonstersToShow).map((participant) => (
                 <span

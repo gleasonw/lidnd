@@ -4,7 +4,7 @@ import { useServerAction } from "@/app/[username]/[campaign_slug]/campaign-hooks
 import { updateSession } from "@/app/[username]/actions";
 import { Button } from "@/components/ui/button";
 import type { GameSession } from "@/server/db/schema";
-import { Minus, Plus, Clock, CheckSquare, CalendarCheck } from "lucide-react";
+import { Minus, Plus, Clock, CalendarCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function ActiveSessionButton({ session }: { session: GameSession }) {
