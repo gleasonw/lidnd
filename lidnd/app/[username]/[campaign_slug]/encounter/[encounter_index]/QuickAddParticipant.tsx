@@ -34,7 +34,7 @@ export function QuickAddParticipantsButton({
   const [campaign] = useCampaign();
   const [inCampaign, setInCampaign] = useState(true);
   const [inCrBudget, setInCrBudget] = useState<boolean>(true);
-  const [sortCr, setSortCr] = useState<"asc" | "desc" | undefined>(undefined);
+  const [sortCr, setSortCr] = useState<"asc" | "desc">("desc");
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const creaturesQuery = api.getUserCreatures.useQuery(
@@ -92,22 +92,10 @@ export function QuickAddParticipantsButton({
             size="icon"
             className="ml-2 h-9 w-9 p-0"
             onClick={() => {
-              setSortCr(
-                sortCr === "asc"
-                  ? "desc"
-                  : sortCr === "desc"
-                  ? undefined
-                  : "asc"
-              );
+              setSortCr(sortCr === "asc" ? "desc" : "asc");
             }}
           >
-            {sortCr === "asc" ? (
-              <SortAsc />
-            ) : sortCr === "desc" ? (
-              <SortDesc />
-            ) : (
-              <SortAsc style={{ opacity: 0.3 }} />
-            )}
+            {sortCr === "asc" ? <SortDesc /> : <SortAsc />}
           </ButtonWithTooltip>
         </div>
 
