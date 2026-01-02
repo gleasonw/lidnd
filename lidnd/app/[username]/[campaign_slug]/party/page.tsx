@@ -32,7 +32,7 @@ import { useState } from "react";
 import * as R from "remeda";
 import { useDebouncedCallback } from "use-debounce";
 
-export default function PartyPage() {
+export function PartyPage() {
   const [campaign] = useCampaign();
   const { mutate: removeFromParty } = useRemoveFromParty(campaign);
 

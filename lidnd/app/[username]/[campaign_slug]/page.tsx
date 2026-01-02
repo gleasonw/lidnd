@@ -20,6 +20,7 @@ import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEn
 import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
 import { EncountersSearchBar } from "@/app/[username]/[campaign_slug]/EncountersSearchBar";
 import { EncounterUtils } from "@/utils/encounters";
+import { PartyPage } from "@/app/[username]/[campaign_slug]/party/page";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -108,7 +109,9 @@ export default async function CampaignPage(props: {
             >
               <Button
                 variant={
-                  searchParams?.tab !== "creatures" ? "outline" : "ghost"
+                  !searchParams?.tab || searchParams?.tab === "sessions"
+                    ? "outline"
+                    : "ghost"
                 }
               >
                 Encounters
@@ -128,6 +131,18 @@ export default async function CampaignPage(props: {
                 Creatures
               </Button>
             </Link>
+            <Link
+              href={appRoutes.party({
+                campaign: campaignData,
+                user,
+              })}
+            >
+              <Button
+                variant={searchParams?.tab === "party" ? "outline" : "ghost"}
+              >
+                Party
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -142,6 +157,10 @@ export default async function CampaignPage(props: {
                 : undefined
             }
           />
+        </section>
+      ) : searchParams?.tab === "party" ? (
+        <section>
+          <CampaignParty />
         </section>
       ) : (
         <section className="flex flex-col gap-6">
@@ -246,4 +265,8 @@ async function CampaignCreatures({
       )}
     </div>
   );
+}
+
+function CampaignParty() {
+  return <PartyPage />;
 }

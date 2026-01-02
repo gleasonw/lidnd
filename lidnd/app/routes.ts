@@ -77,7 +77,7 @@ export const appRoutes = {
   },
 
   party(props: { campaign: { slug: string }; user: LidndUser }) {
-    return `${this.campaign(props)}/party`;
+    return `${this.campaign(props)}?tab=party`;
   },
 
   login: "/login",
