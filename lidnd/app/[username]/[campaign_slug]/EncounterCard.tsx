@@ -11,11 +11,16 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { useEffect } from "react";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Radio } from "lucide-react";
 
 type EncounterDataForCard = Pick<
   Encounter,
-  "description" | "name" | "id" | "index_in_campaign" | "ended_at"
+  | "description"
+  | "name"
+  | "id"
+  | "index_in_campaign"
+  | "ended_at"
+  | "started_at"
 > & {
   participants: Array<
     SortableNameableParticipant & {
@@ -49,26 +54,35 @@ export function EncounterCard({
     >
       <div className="flex flex-col gap-2 hover:bg-gray-10">
         <div className="flex gap-3 items-start">
-          {onlyClientImageUrl ? (
-            <Image
-              src={onlyClientImageUrl}
-              alt="Encounter Image"
-              width={50}
-              height={50}
-              className="rounded flex-shrink-0 transition-opacity duration-200"
-              style={{ opacity: onlyClientImageUrl ? 1 : 0 }}
-            />
-          ) : (
-            <div className="w-12 h-12 rounded bg-gray-200 flex-shrink-0" />
-          )}
+          <div className="relative flex-shrink-0">
+            {onlyClientImageUrl ? (
+              <Image
+                src={onlyClientImageUrl}
+                alt="Encounter Image"
+                width={50}
+                height={50}
+                className="rounded transition-opacity duration-200"
+                style={{ opacity: onlyClientImageUrl ? 1 : 0 }}
+              />
+            ) : (
+              <div className="w-12 h-12 rounded bg-gray-200" />
+            )}
+            {encounter.started_at && !encounter.ended_at && (
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white flex items-center justify-center">
+                <Radio className="w-3.5 h-3.5 text-red-500" />
+              </div>
+            )}
+            {encounter.ended_at && (
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white flex items-center justify-center">
+                <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+              </div>
+            )}
+          </div>
           <div className="flex flex-col gap-2 flex-1">
             <div className="flex items-center gap-2">
               <p className="text-base">
                 {encounter.name || "Unnamed encounter"}
               </p>
-              {encounter.ended_at && (
-                <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-              )}
             </div>
             <div className="flex flex-col gap-1 text-muted-foreground">
               {monstersByCr.slice(0, maxMonstersToShow).map((participant) => (

@@ -17,7 +17,7 @@ import {
 import { db } from "@/server/db";
 import { encounters } from "@/server/db/schema";
 import { and, asc, eq } from "drizzle-orm";
-import { AngryIcon, HomeIcon, Users } from "lucide-react";
+import { AngryIcon, CalendarDays, HomeIcon, Users } from "lucide-react";
 import Link from "next/link";
 
 export async function LidndSidebar({
@@ -65,6 +65,14 @@ export async function LidndSidebar({
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href={appRoutes.sessions({ campaign, user })}>
+                <CalendarDays />
+                Sessions
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link href={appRoutes.creaturesForCampaign({ campaign, user })}>

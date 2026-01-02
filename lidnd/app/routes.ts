@@ -80,5 +80,9 @@ export const appRoutes = {
     return `${this.campaign(props)}/party`;
   },
 
+  sessions(props: { campaign: { slug: string }; user: LidndUser }) {
+    return `${this.campaign(props)}/sessions`;
+  },
+
   login: "/login",
 } as const;
