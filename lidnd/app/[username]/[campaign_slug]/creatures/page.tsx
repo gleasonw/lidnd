@@ -3,10 +3,7 @@ import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { db } from "@/server/db";
-import {
-  campaignCreatureLink,
-  creatures,
-} from "@/server/db/schema";
+import { campaignCreatureLink, creatures } from "@/server/db/schema";
 import { and, eq, exists, ilike } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
 import { CreatureIcon } from "@/encounters/[encounter_index]/character-icon";

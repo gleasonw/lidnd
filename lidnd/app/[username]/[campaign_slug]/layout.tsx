@@ -41,7 +41,7 @@ export default async function CampaignLayout(props: {
 
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
-  
+
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <CampaignId value={campaign.id}>
