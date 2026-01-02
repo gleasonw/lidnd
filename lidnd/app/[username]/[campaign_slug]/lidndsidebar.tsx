@@ -20,7 +20,13 @@ import { and, asc, eq } from "drizzle-orm";
 import { AngryIcon, HomeIcon, Users } from "lucide-react";
 import Link from "next/link";
 
-export async function LidndSidebar({ campaign }: { campaign: Campaign }) {
+export async function LidndSidebar({
+  campaign,
+  topSlot,
+}: {
+  campaign: Campaign;
+  topSlot?: React.ReactNode;
+}) {
   const user = await LidndAuth.getUser();
   if (!user) {
     return <div>User not logged in</div>;
@@ -49,6 +55,7 @@ export async function LidndSidebar({ campaign }: { campaign: Campaign }) {
   return (
     <Sidebar collapsible="icon" className="bg-gray-100">
       <SidebarHeader>
+        {topSlot}
         <SidebarMenuButton asChild>
           <Link href={appRoutes.campaign({ campaign, user })}>
             <HomeIcon />

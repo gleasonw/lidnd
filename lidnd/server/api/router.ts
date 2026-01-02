@@ -402,10 +402,11 @@ export const appRouter = t.router({
             .update(encounters)
             .set({
               current_round: updatedEncounter.current_round,
+              malice: updatedEncounter.malice,
             })
             .where(eq(encounters.id, opts.input.encounter_id)),
         ]);
-        return encounter;
+        return updatedEncounter;
       });
       return result;
     }),
@@ -515,7 +516,6 @@ export const appRouter = t.router({
       }
       const newP = await ServerEncounter.addParticipant(opts.ctx, {
         hp: userCreature[0].max_hp,
-        creature: userCreature[0],
         ...opts.input,
       });
       revalidatePath("/");

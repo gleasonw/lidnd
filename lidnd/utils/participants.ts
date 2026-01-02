@@ -130,7 +130,9 @@ function creatureId(p: { creature: Pick<Creature, "id"> }) {
   return p.creature.id;
 }
 
-function isMinion(p: ParticipantWithCreature): p is MinionParticipant {
+function isMinion(p: {
+  creature: Pick<Creature, "type">;
+}): p is MinionParticipant {
   return p.creature.type === "minion_monster";
 }
 

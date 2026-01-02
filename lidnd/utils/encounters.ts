@@ -184,11 +184,18 @@ function start(
         )
       : { ...e, current_round: firstRoundNumber };
 
+  // Calculate initial malice for draw steel campaigns
+  const initialMalice =
+    campaign.system === "drawsteel"
+      ? EncounterUtils.calculateInitialMalice(e)
+      : e.malice;
+
   return {
     ...activatedEncounter,
     status: "run",
     is_editing_columns: false,
     started_at: new Date(),
+    malice: initialMalice,
   };
 }
 
@@ -406,6 +413,52 @@ export const EncounterUtils = {
   }) {
     return encounter.participants.filter((p) => ParticipantUtils.isPlayer(p))
       .length;
+  },
+
+  /**
+   * Count only alive players for malice calculation
+   */
+  alivePlayerCount(encounter: {
+    participants: Array<{
+      creature: Pick<Creature, "type">;
+      hp: number;
+    }>;
+  }) {
+    return encounter.participants.filter(
+      (p) => ParticipantUtils.isPlayer(p) && p.hp > 0
+    ).length;
+  },
+
+  /**
+   * Calculate malice for the start of combat
+   * Formula: average_victories + number_of_heroes + current_round (1)
+   */
+  calculateInitialMalice(encounter: {
+    average_victories: number | null;
+    participants: Array<{
+      creature: Pick<Creature, "type">;
+      hp: number;
+    }>;
+  }) {
+    const avgVictories = encounter.average_victories ?? 0;
+    const numHeroes = this.alivePlayerCount(encounter);
+    const initialRound = 1;
+    return avgVictories + numHeroes + initialRound;
+  },
+
+  /**
+   * Calculate malice to add at the start of a new round
+   * Formula: number_of_alive_heroes + round_number
+   */
+  calculateMaliceForRound(encounter: {
+    participants: Array<{
+      creature: Pick<Creature, "type">;
+      hp: number;
+    }>;
+    current_round: number;
+  }) {
+    const numAliveHeroes = this.alivePlayerCount(encounter);
+    return numAliveHeroes + encounter.current_round;
   },
 
   findCRBudget(args: {
@@ -749,6 +802,7 @@ export const EncounterUtils = {
       target_difficulty: encounter.target_difficulty ?? "standard",
       session_id: encounter.session_id ?? null,
       average_victories: encounter.average_victories ?? null,
+      malice: encounter.malice ?? 0,
     };
   },
 
@@ -909,6 +963,14 @@ export const EncounterUtils = {
       newParticipant.column_id = destColumnId;
     }
 
+    // Initialize minion participants with 4 minions (HP = base HP * 4)
+    if (ParticipantUtils.isMinion(newParticipant)) {
+      const baseHp = newParticipant.creature.max_hp;
+      const healthForMinionGroup = baseHp * 4;
+      newParticipant.hp = healthForMinionGroup;
+      newParticipant.max_hp_override = healthForMinionGroup;
+    }
+
     return {
       ...encounter,
       participants: [...encounter.participants, newParticipant],
@@ -941,7 +1003,7 @@ export const EncounterUtils = {
     return turnGroupsById[args.participant.turn_group_id ?? ""];
   },
 
-  toggleGroupTurn<E extends CyclableEncounter>(
+  toggleGroupTurn<E extends CyclableEncounter & { malice: number }>(
     participant_id: string,
     encounter: E
   ): UpdateTurnOrderReturn<E> {
@@ -992,8 +1054,14 @@ export const EncounterUtils = {
       this.participantHasPlayed(encounterWithUpdate, p)
     );
     if (allHavePlayed) {
+      const encounterWithNewRound = this.moveToNextGroupTurnRound(encounter);
+      // Add malice for the new round
+      const maliceToAdd = this.calculateMaliceForRound(encounterWithNewRound);
       return {
-        updatedEncounter: this.moveToNextGroupTurnRound(encounter),
+        updatedEncounter: {
+          ...encounterWithNewRound,
+          malice: encounter.malice + maliceToAdd,
+        },
         newlyActiveParticipant: participantWhoPlayed,
       };
     }

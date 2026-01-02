@@ -234,6 +234,7 @@ export const encounters = pgTable(
       .default("standard")
       .notNull(),
     description: text("description"),
+    malice: integer("malice").default(0).notNull(),
     started_at: timestamp("started_at"),
     created_at: timestamp("created_at").defaultNow(),
     session_id: uuid("session_id").references(() => gameSessions.id),

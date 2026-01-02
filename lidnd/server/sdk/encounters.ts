@@ -11,17 +11,14 @@ import {
   type LidndImage,
   encounterAsset,
 } from "@/server/db/schema";
-import type {
-  Creature,
-  InsertParticipant,
-  Participant,
-} from "@/server/api/router";
+import type { InsertParticipant, Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import _ from "lodash";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { EncounterUtils } from "@/utils/encounters";
 import { CreatureUtils } from "@/utils/creatures";
+import { ParticipantUtils } from "@/utils/participants";
 
 async function create(
   ctx: LidndContext,
@@ -72,9 +69,10 @@ async function create(
     await tx
       .insert(stat_columns)
       .values(
-        Array.from({ length: numberOfStartingColumns }).map(() => ({
+        Array.from({ length: numberOfStartingColumns }).map((_, i) => ({
           encounter_id: encounterResult.id,
           percent_width: initialColumnWidth,
+          is_home_column: i === 0,
         }))
       )
       .returning();
@@ -90,7 +88,6 @@ async function create(
               creature_id: creature.id,
               is_ally: !CreatureUtils.isPlayer(creature),
               hp: CreatureUtils.startOfEncounterHP(creature),
-              creature,
             },
             tx
           )
@@ -116,10 +113,32 @@ async function create(
 // we should define a "recipe" and then persist the results
 async function addParticipant(
   ctx: LidndContext,
-  participant: InsertParticipant & { creature?: Pick<Creature, "type"> },
+  participant: InsertParticipant,
   dbObject = db
 ) {
   return await dbObject.transaction(async (tx) => {
+    const creature = await tx.query.creatures.findFirst({
+      where: (creatures, { eq }) => eq(creatures.id, participant.creature_id),
+    });
+    if (!creature) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to add participant",
+      });
+    }
+    const participantWithCreature = {
+      ...participant,
+      creature,
+    };
+
+    // Initialize minion participants with 4 minions (HP = base HP * 4)
+    if (ParticipantUtils.isMinion(participantWithCreature)) {
+      const baseHp = participantWithCreature.creature.max_hp;
+      const healthForMinionGroup = baseHp * 4;
+      participant.hp = healthForMinionGroup;
+      participant.max_hp_override = healthForMinionGroup;
+    }
+
     const [newParticipantResult, e] = await Promise.all([
       tx.insert(participants).values(participant).returning(),
       ServerEncounter.encounterByIdThrows(ctx, participant.encounter_id, tx),
@@ -136,21 +155,7 @@ async function addParticipant(
       return;
     }
 
-    if (!("creature" in participant)) {
-      // fetch the creature to check if this is a player
-      const creature = await tx.query.creatures.findFirst({
-        where: (creatures, { eq }) => eq(creatures.id, participant.creature_id),
-      });
-      if (!creature) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to add participant",
-        });
-      }
-      participant.creature = creature;
-    }
-
-    if (CreatureUtils.isPlayer(participant.creature!)) {
+    if (ParticipantUtils.isPlayer(participantWithCreature)) {
       return;
     }
 

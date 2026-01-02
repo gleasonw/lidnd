@@ -28,7 +28,6 @@ export const ServerCampaign = {
     const campaignEncounters = await db.query.encounters.findMany({
       where: eq(encounters.campaign_id, args.campaign.id),
     });
-    console.log({ campaignEncounters });
     await Promise.all(
       campaignEncounters.map((e) =>
         ServerEncounter.addParticipant(

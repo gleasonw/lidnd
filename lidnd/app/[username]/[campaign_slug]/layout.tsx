@@ -44,8 +44,15 @@ export default async function CampaignLayout(props: {
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <CampaignId value={campaign.id}>
-        <LidndSidebar campaign={campaign} />
-        <SidebarTrigger />
+        <LidndSidebar
+          campaign={campaign}
+          topSlot={
+            <div className="pl-1.5">
+              <SidebarTrigger />
+            </div>
+          }
+        />
+
         <div
           className={`flex flex-col max-h-full h-full gap-5 relative max-w-full overflow-hidden w-full `}
         >

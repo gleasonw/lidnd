@@ -122,6 +122,7 @@ import {
 } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
+import { MaliceTracker } from "@/encounters/[encounter_index]/MaliceTracker";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -1805,7 +1806,7 @@ function GroupTurnToggles({ middle }: { middle?: React.ReactNode }) {
   const participantsWithoutTurnGroup =
     EncounterUtils.monstersWithoutTurnGroup(encounter);
   return (
-    <Card className="flex gap-4 p-2 items-center justify-evenly w-full sticky top-0 z-50">
+    <Card className="flex gap-4 p-2 items-center justify-evenly w-full sticky top-0 z-20">
       <div className="flex gap-5 flex-wrap">
         {EncounterUtils.players(encounter).map((p) => (
           <TurnTakerQuickView participant={p} key={p.id} />
@@ -1845,8 +1846,11 @@ export const StatColumns = observer(function StatColumns() {
   return columns?.map((c, index) => (
     <StatColumnComponent column={c} index={index} key={c.id}>
       {c.is_home_column ? (
-        <div className="bg-white px-3">
-          <DescriptionTextArea />
+        <div className="flex flex-col">
+          <MaliceTracker />
+          <div className="bg-white px-3">
+            <DescriptionTextArea />
+          </div>
         </div>
       ) : null}
       <div

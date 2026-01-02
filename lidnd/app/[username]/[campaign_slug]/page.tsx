@@ -20,7 +20,7 @@ import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEn
 import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
 import { EncountersSearchBar } from "@/app/[username]/[campaign_slug]/EncountersSearchBar";
 import { EncounterUtils } from "@/utils/encounters";
-import { PartyPage } from "@/app/[username]/[campaign_slug]/party/page";
+import { PartyPage } from "@/app/[username]/[campaign_slug]/partyPage";
 
 export default async function CampaignPage(props: {
   params: Promise<{

@@ -173,6 +173,7 @@ describe("Group turn toggle and round increment tests", () => {
         { ...participants[2]!, has_played_this_round: false },
       ],
       turn_groups: [],
+      malice: 0,
     };
 
     const result = EncounterUtils.toggleGroupTurn("3", encounterWithInanimate);
@@ -199,6 +200,7 @@ describe("Group turn toggle and round increment tests", () => {
       current_round: 1,
       participants: participantsWithPlayState,
       turn_groups: [],
+      malice: 0,
     };
 
     const result = EncounterUtils.toggleGroupTurn("1", encounter);
@@ -238,6 +240,7 @@ describe("Group turn toggle and round increment tests", () => {
       current_round: 1,
       participants: participantsWithGroup,
       turn_groups: [{ id: "group1", has_played_this_round: false }],
+      malice: 0,
     };
 
     const result = EncounterUtils.toggleGroupTurn("1", encounter);
@@ -304,6 +307,7 @@ describe("Group turn toggle and round increment tests", () => {
       current_round: 1,
       participants: participantsWithGroup,
       turn_groups: [{ id: "group1", has_played_this_round: false }],
+      malice: 0,
     };
 
     const result = EncounterUtils.toggleGroupTurn("2", encounter);
@@ -322,5 +326,160 @@ describe("Group turn toggle and round increment tests", () => {
 
     // Round should not increment yet
     expect(result.updatedEncounter.current_round).toBe(1);
+  });
+});
+
+describe("Malice calculation tests", () => {
+  test("starting an encounter sets initial malice to number of players + round 1", () => {
+    const players = [
+      createParticipant({ id: "p1", initiative: 20, hp: 50 }),
+      createParticipant({ id: "p2", initiative: 18, hp: 45 }),
+      createParticipant({ id: "p3", initiative: 16, hp: 40 }),
+    ];
+
+    // Override type to make them players
+    players.forEach((p) => {
+      p.creature.type = "player";
+    });
+
+    const monster = createParticipant({ id: "m1", initiative: 15, hp: 30 });
+    monster.creature.type = "standard_monster";
+
+    const encounter = {
+      id: "test",
+      campaign_id: "test",
+      user_id: "test",
+      name: "Test Encounter",
+      description: null,
+      started_at: null,
+      created_at: new Date(),
+      current_round: 0,
+      ended_at: null,
+      status: "prep" as const,
+      label: "active" as const,
+      order: 1,
+      index_in_campaign: 0,
+      is_editing_columns: true,
+      target_difficulty: "standard" as const,
+      session_id: null,
+      average_victories: 0,
+      malice: 0,
+      participants: [...players, monster],
+      reminders: [],
+      turn_groups: [],
+      columns: [],
+      tags: [],
+      assets: [],
+      campaigns: {
+        id: "test",
+        name: "Test Campaign",
+        user_id: "test",
+        description: null,
+        created_at: new Date(),
+        system: "drawsteel" as const,
+        party_level: 1,
+        slug: "test",
+        image_url: null,
+      },
+    };
+
+    const startedEncounter = EncounterUtils.start(encounter, {
+      system: "drawsteel",
+    });
+
+    // 3 players + 1 (round 1) = 4
+    expect(startedEncounter.malice).toBe(4);
+    expect(startedEncounter.status).toBe("run");
+    expect(startedEncounter.current_round).toBe(1);
+  });
+
+  test("malice increases by number of alive players + round number when round changes", () => {
+    const players = [
+      createParticipant({ id: "p1", initiative: 20, hp: 50 }),
+      createParticipant({ id: "p2", initiative: 18, hp: 45 }),
+      createParticipant({ id: "p3", initiative: 16, hp: 0 }), // Dead player
+    ];
+
+    players.forEach((p) => {
+      p.creature.type = "player";
+      p.has_played_this_round = true;
+    });
+
+    const monster = createParticipant({ id: "m1", initiative: 15, hp: 30 });
+    monster.creature.type = "standard_monster";
+    monster.has_played_this_round = false;
+
+    const encounter = {
+      current_round: 1,
+      participants: [...players, monster],
+      turn_groups: [],
+      malice: 4, // Starting malice from round 1
+    };
+
+    // Toggle the last participant to trigger round change
+    const result = EncounterUtils.toggleGroupTurn("m1", encounter);
+
+    // New round is 2, alive players are 2 (p1, p2 - p3 is dead)
+    // Malice increase: 2 (alive players) + 2 (new round) = 4
+    // Total malice: 4 (starting) + 4 (new round) = 8
+    expect(result.updatedEncounter.current_round).toBe(2);
+    expect(result.updatedEncounter.malice).toBe(8);
+  });
+
+  test("dead players don't contribute to malice generation", () => {
+    const players = [
+      createParticipant({ id: "p1", initiative: 20, hp: 0 }), // Dead
+      createParticipant({ id: "p2", initiative: 18, hp: 0 }), // Dead
+      createParticipant({ id: "p3", initiative: 16, hp: 30 }), // Alive
+    ];
+
+    players.forEach((p) => {
+      p.creature.type = "player";
+      p.has_played_this_round = true;
+    });
+
+    const monster = createParticipant({ id: "m1", initiative: 15, hp: 30 });
+    monster.creature.type = "standard_monster";
+    monster.has_played_this_round = false;
+
+    const encounter = {
+      current_round: 3,
+      participants: [...players, monster],
+      turn_groups: [],
+      malice: 10,
+    };
+
+    const result = EncounterUtils.toggleGroupTurn("m1", encounter);
+
+    // New round is 4, only 1 alive player
+    // Malice increase: 1 (alive player) + 4 (new round) = 5
+    // Total malice: 10 (starting) + 5 (new round) = 15
+    expect(result.updatedEncounter.current_round).toBe(4);
+    expect(result.updatedEncounter.malice).toBe(15);
+  });
+
+  test("malice doesn't change when toggling participants within the same round", () => {
+    const players = [
+      createParticipant({ id: "p1", initiative: 20, hp: 50 }),
+      createParticipant({ id: "p2", initiative: 18, hp: 45 }),
+    ];
+
+    players.forEach((p) => {
+      p.creature.type = "player";
+      p.has_played_this_round = false;
+    });
+
+    const encounter = {
+      current_round: 2,
+      participants: players,
+      turn_groups: [],
+      malice: 8,
+    };
+
+    // Toggle first participant - round doesn't change
+    const result = EncounterUtils.toggleGroupTurn("p1", encounter);
+
+    expect(result.updatedEncounter.current_round).toBe(2);
+    expect(result.updatedEncounter.malice).toBe(8); // No change
   });
 });
