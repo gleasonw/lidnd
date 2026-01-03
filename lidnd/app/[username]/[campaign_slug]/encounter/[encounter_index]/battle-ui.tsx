@@ -1862,7 +1862,7 @@ export const RunEncounter = observer(function LinearBattleUI() {
     <div className="flex flex-col gap-2 h-full w-full">
       <GroupTurnToggles middle={<GroupBattleUITools />} />
       <div
-        className="flex relative w-full h-full max-h-full overflow-hidden pb-2"
+        className="flex relative w-full h-full max-h-full overflow-hidden pb-2 border-t-[1px]"
         ref={containerRef}
       >
         <ParentWidthContext.Provider value={parentWidth}>
@@ -1883,7 +1883,7 @@ function GroupTurnToggles({ middle }: { middle?: React.ReactNode }) {
   const participantsWithoutTurnGroup =
     EncounterUtils.monstersWithoutTurnGroup(encounter);
   return (
-    <Card className="flex gap-4 p-2 items-center justify-evenly w-full sticky top-0 z-20">
+    <div className="flex gap-4 p-2 items-center justify-evenly w-full sticky top-0 z-20">
       <div className="flex gap-5 flex-wrap">
         {EncounterUtils.players(encounter).map((p) => (
           <TurnTakerQuickView participant={p} key={p.id} />
@@ -1903,7 +1903,7 @@ function GroupTurnToggles({ middle }: { middle?: React.ReactNode }) {
           </div>
         ))}
       </div>
-    </Card>
+    </div>
   );
 }
 
