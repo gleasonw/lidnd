@@ -613,20 +613,20 @@ function SliderTier({ difficulty }: { difficulty: Difficulty }) {
   const width = (highBound - lowBound) / hardTier;
   const tailwindClass =
     color === "gray"
-      ? "bg-gray-300"
+      ? "bg-gray-400"
       : color === "blue"
-      ? "bg-blue-300"
+      ? "bg-blue-400"
       : color === "green"
-      ? "bg-green-300"
+      ? "bg-green-400"
       : color === "yellow"
-      ? "bg-yellow-300"
-      : "bg-red-300";
+      ? "bg-yellow-400"
+      : "bg-red-400";
 
   return (
     <div
       className={clsx(`absolute top-0 h-6`, {
         [tailwindClass]: true,
-        "bg-opacity-50": difficulty !== currentDifficulty,
+        "bg-opacity-25": difficulty !== currentDifficulty,
       })}
       style={{
         left: `${leftPercent * 100}%`,
