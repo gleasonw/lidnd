@@ -180,7 +180,7 @@ describe("Group turn toggle and round increment tests", () => {
     const result = EncounterUtils.toggleGroupTurn({
       participant: { id: "3" },
       encounter: encounterWithInanimate,
-      gameSession: undefined,
+      gameSession: null,
     });
 
     // Even with an inanimate participant, if all non-inanimate have played, round should increment
@@ -211,7 +211,7 @@ describe("Group turn toggle and round increment tests", () => {
     const result = EncounterUtils.toggleGroupTurn({
       participant: { id: "1" },
       encounter,
-      gameSession: undefined,
+      gameSession: null,
     });
 
     // Last participant played, round should increment
@@ -255,7 +255,7 @@ describe("Group turn toggle and round increment tests", () => {
     const result = EncounterUtils.toggleGroupTurn({
       participant: { id: "1" },
       encounter,
-      gameSession: undefined,
+      gameSession: null,
     });
 
     // The whole group should be marked as played
@@ -270,7 +270,7 @@ describe("Group turn toggle and round increment tests", () => {
     const result2 = EncounterUtils.toggleGroupTurn({
       participant: { id: "3" },
       encounter: result.updatedEncounter,
-      gameSession: undefined,
+      gameSession: null,
     });
 
     // Now all participants have played, round should increment
@@ -279,7 +279,7 @@ describe("Group turn toggle and round increment tests", () => {
     const result3 = EncounterUtils.toggleGroupTurn({
       participant: { id: "3" },
       encounter: result2.updatedEncounter,
-      gameSession: undefined,
+      gameSession: null,
     });
 
     // After toggling again, round should remain the same since not all have played
@@ -292,7 +292,7 @@ describe("Group turn toggle and round increment tests", () => {
     const result4 = EncounterUtils.toggleGroupTurn({
       participant: { id: "1" },
       encounter: result3.updatedEncounter,
-      gameSession: undefined,
+      gameSession: null,
     });
 
     // Toggling group1 again should not increment round yet
@@ -329,7 +329,7 @@ describe("Group turn toggle and round increment tests", () => {
     const result = EncounterUtils.toggleGroupTurn({
       participant: { id: "2" },
       encounter,
-      gameSession: undefined,
+      gameSession: null,
     });
 
     // Only participant 2 should be marked as played, not the group
@@ -440,7 +440,7 @@ describe("Malice calculation tests", () => {
     const result = EncounterUtils.toggleGroupTurn({
       participant: { id: "m1" },
       encounter,
-      gameSession: undefined,
+      gameSession: null,
     });
 
     // New round is 2, alive players are 2 (p1, p2 - p3 is dead)
@@ -476,7 +476,7 @@ describe("Malice calculation tests", () => {
     const result = EncounterUtils.toggleGroupTurn({
       participant: { id: "m1" },
       encounter,
-      gameSession: undefined,
+      gameSession: null,
     });
 
     // New round is 4, only 1 alive player
@@ -508,7 +508,7 @@ describe("Malice calculation tests", () => {
     const result = EncounterUtils.toggleGroupTurn({
       participant: { id: "p1" },
       encounter,
-      gameSession: undefined,
+      gameSession: null,
     });
 
     expect(result.updatedEncounter.current_round).toBe(2);

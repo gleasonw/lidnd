@@ -13,7 +13,7 @@ import { useActiveGameSession } from "@/app/[username]/[campaign_slug]/campaign-
 export function MaliceTracker() {
   const [encounter] = useEncounter();
   const { mutate: updateEncounter } = useUpdateEncounter();
-  const { data: activeSession } = useActiveGameSession();
+  const [activeSession] = useActiveGameSession();
 
   const currentMalice = encounter.malice ?? 0;
   const hasVictories = activeSession && activeSession.victory_count > 0;

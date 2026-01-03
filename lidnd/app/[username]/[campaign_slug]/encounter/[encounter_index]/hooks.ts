@@ -165,7 +165,7 @@ export function useSelectedCreature() {
 export function useToggleGroupTurn() {
   const uiStore = useEncounterUIStore();
   const { encounterById } = api.useUtils();
-  const { data: activeSession } = useActiveGameSession();
+  const [activeSession] = useActiveGameSession();
   return api.updateGroupTurn.useMutation({
     onMutate: async ({ encounter_id, participant_id }) => {
       await encounterById.cancel(encounter_id);

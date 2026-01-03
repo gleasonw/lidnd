@@ -481,7 +481,7 @@ export const EncounterUtils = {
       }>;
       current_round: number;
     };
-    gameSession?: Pick<GameSession, "victory_count">;
+    gameSession: Pick<GameSession, "victory_count"> | null;
   }) {
     const numAliveHeroes = this.alivePlayerCount(encounter);
     return (
@@ -1040,7 +1040,7 @@ export const EncounterUtils = {
   }: {
     participant: Pick<Participant, "id">;
     encounter: E;
-    gameSession: Pick<GameSession, "victory_count"> | undefined;
+    gameSession: Pick<GameSession, "victory_count"> | null;
   }): UpdateTurnOrderReturn<E> {
     const turnGroupsById = R.indexBy(encounter.turn_groups, (tg) => tg.id);
     const participants = this.participantsInInitiativeOrder(encounter);

@@ -664,32 +664,23 @@ function EncounterBattlePreview() {
         ref={containerRef}
       >
         <ParentWidthContext.Provider value={parentWidth}>
-          {columns?.map((c, i) =>
-            c.is_home_column ? (
-              <StatColumnComponent column={c} index={i} key={c.id}>
-                <div className="w-full h-full flex">
-                  <DescriptionTextArea />
+          {columns?.map((c, i) => (
+            <StatColumnComponent column={c} index={i} key={c.id}>
+              <PreviewCardsForColumn column={c} />
+              {c.assets.map((asset) => (
+                <div key={asset.id} className="flex flex-col relative">
+                  <AssetDragButton asset={asset} />
+                  <Image
+                    src={ImageUtils.url(asset.image)}
+                    alt={asset.image.name}
+                    key={asset.id}
+                    width={asset.image.width}
+                    height={asset.image.height}
+                  />
                 </div>
-              </StatColumnComponent>
-            ) : (
-              <StatColumnComponent column={c} index={i} key={c.id}>
-                {i === 0 ? <DescriptionTextArea /> : null}
-                <PreviewCardsForColumn column={c} />
-                {c.assets.map((asset) => (
-                  <div key={asset.id} className="flex flex-col relative">
-                    <AssetDragButton asset={asset} />
-                    <Image
-                      src={ImageUtils.url(asset.image)}
-                      alt={asset.image.name}
-                      key={asset.id}
-                      width={asset.image.width}
-                      height={asset.image.height}
-                    />
-                  </div>
-                ))}
-              </StatColumnComponent>
-            )
-          )}
+              ))}
+            </StatColumnComponent>
+          ))}
         </ParentWidthContext.Provider>
       </div>
     </div>
@@ -1844,17 +1835,9 @@ const useParentResizeObserver = () => {
 
 export const RunEncounter = observer(function LinearBattleUI() {
   const { parentWidth, containerRef } = useParentResizeObserver();
-  const [encounter] = useEncounter();
   return (
     <div className="flex flex-col gap-2 h-full w-full">
-      <GroupTurnToggles
-        middle={
-          <div className="flex flex-col gap-1">
-            <EncounterDetails key={encounter.started_at?.getTime()} />
-            <MaliceTracker />
-          </div>
-        }
-      />
+      <GroupTurnToggles />
       <div
         className="flex relative w-full h-full max-h-full overflow-hidden pb-2 border-t-[1px]"
         ref={containerRef}
@@ -1869,7 +1852,7 @@ export const RunEncounter = observer(function LinearBattleUI() {
   );
 });
 
-function GroupTurnToggles({ middle }: { middle?: React.ReactNode }) {
+function GroupTurnToggles() {
   const [encounter] = useEncounter();
   const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
   const participantsByTurnGroup =
@@ -1884,7 +1867,6 @@ function GroupTurnToggles({ middle }: { middle?: React.ReactNode }) {
           <TurnTakerQuickView participant={p} key={p.id} />
         ))}
       </div>
-      {middle}
       <div className="flex gap-5 flex-wrap">
         {participantsWithoutTurnGroup.map((p) => (
           <TurnTakerQuickView participant={p} key={p.id} />
@@ -1917,13 +1899,6 @@ export const StatColumns = observer(function StatColumns() {
 
   return columns?.map((c, index) => (
     <StatColumnComponent column={c} index={index} key={c.id}>
-      {c.is_home_column ? (
-        <div className="flex flex-col">
-          <div className="bg-white px-3">
-            <DescriptionTextArea />
-          </div>
-        </div>
-      ) : null}
       <div
         className={clsx(
           "flex flex-col gap-4 h-full",
@@ -2223,6 +2198,18 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         }}
         onDragLeave={() => setAcceptDrop((count) => count - 1)}
       >
+        {column.is_home_column ? (
+          <>
+            <div className="p-3">
+              {encounter.status === "run" ? <EncounterDetails /> : null}
+              {encounter.status === "run" ? <MaliceTracker /> : null}
+            </div>
+
+            <div className="w-full h-full flex px-3">
+              <DescriptionTextArea />
+            </div>
+          </>
+        ) : null}
         {encounterUiStore.isEditingInitiative || encounter.status === "prep" ? (
           <div className="flex w-full bg-gray-200">
             {columns && columns?.length > 1 && !column.is_home_column ? (

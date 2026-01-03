@@ -20,13 +20,15 @@ export const ServerCampaign = {
     ctx: LidndContext;
     campaignId: string;
   }) {
-    return await db.query.gameSessions.findFirst({
-      where: and(
-        isNull(gameSessions.ended_at),
-        eq(gameSessions.user_id, ctx.user.id),
-        eq(gameSessions.campaign_id, campaignId)
-      ),
-    });
+    return (
+      (await db.query.gameSessions.findFirst({
+        where: and(
+          isNull(gameSessions.ended_at),
+          eq(gameSessions.user_id, ctx.user.id),
+          eq(gameSessions.campaign_id, campaignId)
+        ),
+      })) ?? null
+    );
   },
   userCampaigns: async function (ctx: LidndContext) {
     return await db

@@ -18,7 +18,7 @@ export function useCampaign() {
 
 export function useActiveGameSession() {
   const [campaign] = useCampaign();
-  return api.activeGameSession.useQuery({
+  return api.activeGameSession.useSuspenseQuery({
     campaignId: campaign.id,
   });
 }
