@@ -21,6 +21,7 @@ import { omit } from "remeda";
 import { useUploadParticipant } from "@/encounters/[encounter_index]/encounter-upload-hooks";
 import {
   addTagToEncounterAction,
+  invalidateServerFunctionCache,
   removeTagFromEncounterAction,
 } from "@/app/[username]/actions";
 
@@ -296,6 +297,11 @@ export function useUpdateEncounter() {
         };
       });
       return { previousEncounter };
+    },
+    onSuccess: async () => {
+      //TODO: this is pretty wonky and gross, but we can't invalidate in the router, it doesn't actually
+      // cause client components to re-fetch data.
+      await invalidateServerFunctionCache();
     },
   });
   return mutation;
