@@ -166,7 +166,27 @@ const colorForDifficulty = {
 
 function cssClassForDifficulty(d: Difficulty) {
   const color = colorForDifficulty[d];
-  return `text-${color}-700 bg-${color}-100`;
+  switch (color) {
+    case "blue": {
+      return "text-blue-700 bg-blue-200";
+    }
+    case "green": {
+      return "text-green-700 bg-green-200";
+    }
+    case "yellow": {
+      return "text-yellow-700 bg-yellow-200";
+    }
+    case "red": {
+      return "text-red-700 bg-red-200";
+    }
+    case "gray": {
+      return "text-gray-700 bg-gray-200";
+    }
+    default: {
+      const _exhaustiveCheck: never = color;
+      throw new Error(`Unhandled color: ${_exhaustiveCheck}`);
+    }
+  }
 }
 
 function start(
