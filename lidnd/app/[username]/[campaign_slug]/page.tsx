@@ -35,6 +35,10 @@ export default async function CampaignPage(props: {
 
   const encounterSearch = searchParams?.encounterSearch as string | undefined;
 
+  //The big learning has been that trying to have server functions fetching AND RENDERING data causes
+  // lots of headaches around invaliding the next router cache after RQ mutations. The simplest way forward
+  // seems to be using placeholderData, which just avoids any layout flickers, but doesn't impact the RQ cache.
+  // RQ cache should be our absolute SOT.
   const encountersInCampaign = await ServerEncounter.encountersInCampaign({
     ctx: UserUtils.context(user),
     campaign: { id: campaignData.id },
