@@ -298,11 +298,6 @@ export function useUpdateEncounter() {
       });
       return { previousEncounter };
     },
-    onSuccess: async () => {
-      //TODO: this is pretty wonky and gross, but we can't invalidate in the router, it doesn't actually
-      // cause client components to re-fetch data.
-      await invalidateServerFunctionCache();
-    },
   });
   return mutation;
 }

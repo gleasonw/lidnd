@@ -28,7 +28,6 @@ import type { Creature } from "@/server/api/router";
 import { CreatureUtils } from "@/utils/creatures";
 
 export async function invalidateServerFunctionCache() {
-  console.log("INVALIDATING");
   revalidatePath(`/`);
 }
 
