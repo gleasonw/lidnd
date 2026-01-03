@@ -589,7 +589,7 @@ export const appRouter = t.router({
       })
     )
     .mutation(async (opts) => {
-      db.transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         // ensure ownership
         const campaign = await ServerCampaign.campaignByIdThrows(
           opts.ctx,
@@ -671,7 +671,7 @@ export const appRouter = t.router({
       })
     )
     .mutation(async (opts) => {
-      db.transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         const campaign = await ServerCampaign.campaignByIdThrows(
           opts.ctx,
           opts.input.campaign_id,

@@ -54,19 +54,19 @@ export async function LidndSidebar({
 
   return (
     <Sidebar collapsible="icon" className="bg-white">
-      <SidebarHeader>
+      <SidebarHeader className="p-1 text-lg pb-4">
         {topSlot}
-        <SidebarMenuButton asChild>
+        <SidebarMenuButton asChild tooltip="Campaign Home">
           <Link href={appRoutes.campaign({ campaign, user })}>
             <HomeIcon />
             {campaign.name}
           </Link>
         </SidebarMenuButton>
       </SidebarHeader>
-      <SidebarContent className="p-2">
-        <SidebarMenu>
+      <SidebarContent className="p-1">
+        <SidebarMenu className="gap-2">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild tooltip="Sessions">
               <Link href={appRoutes.sessions({ campaign, user })}>
                 <CalendarDays />
                 Sessions
@@ -74,25 +74,25 @@ export async function LidndSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild tooltip="Creatures">
               <Link href={appRoutes.creaturesForCampaign({ campaign, user })}>
                 <AngryIcon />
-                Creatures
+                <span>Creatures</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild tooltip="Party">
               <Link href={appRoutes.party({ campaign, user })}>
                 <Users />
-                Party
+                <span>Party</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarGroup>
           <SidebarGroupLabel>Encounters</SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="p-2">
             <SidebarMenu>
               {encountersInCampaign.map((encounter) => (
                 <SidebarMenuItem key={encounter.id}>
