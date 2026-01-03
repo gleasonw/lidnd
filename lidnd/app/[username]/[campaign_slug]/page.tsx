@@ -2,14 +2,10 @@ import { ServerCampaign } from "@/server/sdk/campaigns";
 import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
-import { db } from "@/server/db";
-import { encounters } from "@/server/db/schema";
-import { and, eq, ilike } from "drizzle-orm";
 import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
-import { EncounterCard } from "@/app/[username]/[campaign_slug]/EncounterCard";
-import { EncountersSearchBar } from "@/app/[username]/[campaign_slug]/EncountersSearchBar";
-import { EncounterUtils } from "@/utils/encounters";
 import { SessionButton } from "@/app/[username]/[campaign_slug]/SessionButton";
+import { ServerEncounter } from "@/server/sdk/encounters";
+import { CampaignEncounters } from "@/app/[username]/[campaign_slug]/CampaignEncounters";
 
 export default async function CampaignPage(props: {
   params: Promise<{
@@ -39,43 +35,11 @@ export default async function CampaignPage(props: {
 
   const encounterSearch = searchParams?.encounterSearch as string | undefined;
 
-  const encountersInCampaign = await db.query.encounters.findMany({
-    where: and(
-      eq(encounters.campaign_id, campaignData.id),
-      eq(encounters.user_id, user.id),
-      encounterSearch
-        ? ilike(encounters.name, `%${encounterSearch}%`)
-        : undefined
-    ),
-    with: {
-      tags: {
-        with: {
-          tag: true,
-        },
-      },
-      participants: {
-        with: {
-          creature: true,
-        },
-      },
-    },
+  const encountersInCampaign = await ServerEncounter.encountersInCampaign({
+    ctx: UserUtils.context(user),
+    campaign: { id: campaignData.id },
+    search: encounterSearch,
   });
-
-  const encountersGroupedByTag =
-    EncounterUtils.groupEncountersByTag(encountersInCampaign);
-
-  const tagsWithEncounters = Object.entries(encountersGroupedByTag).map(
-    ([tagId, tagGroup]) => {
-      const firstTag = tagGroup[0]?.tag;
-      return {
-        ...firstTag,
-        encounters: tagGroup.map((et) => et.encounter),
-      };
-    }
-  );
-
-  const encountersWithNoTag =
-    encountersInCampaign?.filter((e) => e.tags.length === 0) || [];
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 pb-6">
@@ -86,38 +50,7 @@ export default async function CampaignPage(props: {
             <CreateEncounterButton />
           </div>
         </div>
-
-        <EncountersSearchBar search={encounterSearch} />
-        <div className="flex flex-col gap-8">
-          {tagsWithEncounters.length === 0 ? (
-            <p className="text-muted-foreground">
-              No tagged encounters. Add tags to your encounters to group them.
-            </p>
-          ) : (
-            tagsWithEncounters.map((tagGroup) => (
-              <div key={tagGroup.id} className="flex flex-col gap-4">
-                <h2 className="text-lg font-semibold border-b pb-2">
-                  {tagGroup.name}
-                </h2>
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {tagGroup.encounters.map((encounter) => (
-                    <EncounterCard key={encounter.id} encounter={encounter} />
-                  ))}
-                </div>
-              </div>
-            ))
-          )}
-          {encountersWithNoTag.length > 0 && (
-            <div className="flex flex-col gap-4">
-              <h2 className="text-lg border-b pb-2">No tag</h2>
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {encountersWithNoTag.map((encounter) => (
-                  <EncounterCard key={encounter.id} encounter={encounter} />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        <CampaignEncounters encountersInCampaign={encountersInCampaign} />
       </section>
     </div>
   );

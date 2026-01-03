@@ -53,7 +53,6 @@ import {
 import {
   AngryIcon,
   CheckCircle,
-  Circle,
   Columns,
   Grip,
   ImageIcon,
@@ -982,18 +981,6 @@ export const GroupParticipantHPOverride = observer(
   }
 );
 
-export const GroupBattleUITools = observer(function GroupBattleUITools() {
-  const [encounter] = useEncounter();
-  return (
-    <div className="flex flex-wrap items-center">
-      <div className="flex items-center gap-1"></div>
-      <div className="px-2">
-        <EncounterDetails key={encounter.started_at?.getTime()} />
-      </div>
-    </div>
-  );
-});
-
 export function EqualizeColumnsButton() {
   const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
   const [encounter] = useEncounter();
@@ -1857,10 +1844,17 @@ const useParentResizeObserver = () => {
 
 export const RunEncounter = observer(function LinearBattleUI() {
   const { parentWidth, containerRef } = useParentResizeObserver();
-
+  const [encounter] = useEncounter();
   return (
     <div className="flex flex-col gap-2 h-full w-full">
-      <GroupTurnToggles middle={<GroupBattleUITools />} />
+      <GroupTurnToggles
+        middle={
+          <div className="flex flex-col gap-1">
+            <EncounterDetails key={encounter.started_at?.getTime()} />
+            <MaliceTracker />
+          </div>
+        }
+      />
       <div
         className="flex relative w-full h-full max-h-full overflow-hidden pb-2 border-t-[1px]"
         ref={containerRef}
@@ -1882,8 +1876,9 @@ function GroupTurnToggles({ middle }: { middle?: React.ReactNode }) {
     EncounterUtils.participantsByTurnGroup(encounter);
   const participantsWithoutTurnGroup =
     EncounterUtils.monstersWithoutTurnGroup(encounter);
+
   return (
-    <div className="flex gap-4 p-2 items-center justify-evenly w-full sticky top-0 z-20">
+    <div className="flex gap-4 p-2 items-center justify-between w-full sticky top-0 z-20 bg-white">
       <div className="flex gap-5 flex-wrap">
         {EncounterUtils.players(encounter).map((p) => (
           <TurnTakerQuickView participant={p} key={p.id} />
@@ -1924,7 +1919,6 @@ export const StatColumns = observer(function StatColumns() {
     <StatColumnComponent column={c} index={index} key={c.id}>
       {c.is_home_column ? (
         <div className="flex flex-col">
-          <MaliceTracker />
           <div className="bg-white px-3">
             <DescriptionTextArea />
           </div>
@@ -2017,13 +2011,21 @@ function TurnTakerQuickView({
   const hasPlayed = EncounterUtils.participantHasPlayed(encounter, participant);
   return (
     <div
-      className={clsx("flex flex-col p-2 rounded-md", {
-        "opacity-50": hasPlayed,
+      className={clsx("flex flex-col p-2 rounded-lg transition-all", {
+        "opacity-60 border-transparent": hasPlayed,
+        "shadow-md": !hasPlayed,
       })}
     >
-      {turnGroupForParticipant
-        ? turnGroupForParticipant.name
-        : ParticipantUtils.name(participant)}
+      <span
+        className={clsx("text-sm font-medium", {
+          "text-gray-500": hasPlayed,
+          "text-gray-900": !hasPlayed,
+        })}
+      >
+        {turnGroupForParticipant
+          ? turnGroupForParticipant.name
+          : ParticipantUtils.name(participant)}
+      </span>
       <div className="flex w-full gap-2">
         <Button
           variant="outline"
@@ -2034,13 +2036,13 @@ function TurnTakerQuickView({
             })
           }
           className={clsx("flex p-2 gap-1 rounded-md", {
-            "shadow-lg": !hasPlayed,
+            "bg-white shadow-lg": !hasPlayed,
           })}
         >
           {hasPlayed ? (
-            <CheckCircle className="h-4 w-8" />
+            <CheckCircle className="h-4 w-4 text-green-600" />
           ) : (
-            <Circle className="h-4 w-8" />
+            <PlayIcon className="h-4 w-4 text-gray-900" />
           )}
         </Button>
         {buttonExtra}

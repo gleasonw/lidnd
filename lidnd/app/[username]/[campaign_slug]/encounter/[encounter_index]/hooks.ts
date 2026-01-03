@@ -2,9 +2,6 @@ import { api } from "@/trpc/react";
 import { useSearchParams } from "next/navigation";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
-import { removeUndefinedFields } from "@/app/[username]/utils";
-import type { UpsertEncounter } from "@/app/[username]/types";
-import { useCampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import {
@@ -21,7 +18,6 @@ import { omit } from "remeda";
 import { useUploadParticipant } from "@/encounters/[encounter_index]/encounter-upload-hooks";
 import {
   addTagToEncounterAction,
-  invalidateServerFunctionCache,
   removeTagFromEncounterAction,
 } from "@/app/[username]/actions";
 
@@ -261,21 +257,6 @@ export function useUpdateEncounterParticipant() {
   });
 }
 
-export function useDeleteEncounter() {
-  const [campaign] = useCampaign();
-  const { encountersInCampaign: encountersQuery } = api.useUtils();
-  return api.deleteEncounter.useMutation({
-    onMutate: async (id) => {
-      await encountersQuery.cancel();
-      const previous = encountersQuery.getData();
-      encountersQuery.setData(campaign.id, (old) => {
-        return old?.filter((encounter) => encounter.id !== id);
-      });
-      return { previous };
-    },
-  });
-}
-
 /**
  *
  * only callable underneath the encounter layout. encounterById is the client source of truth
@@ -300,65 +281,6 @@ export function useUpdateEncounter() {
     },
   });
   return mutation;
-}
-
-/**
- *
- *  this "updateCampaignEncounter" is kloodgy, and it shows the limitations of using react query for optimistic updates.
- since the query is the source of truth for the client, not the actual data in the db,
- we run into issues where, if we reference the wrong query when running an optimistc update,
- nothing happens on the client, or we throw an error, etc.
-
- my thought is we use this hook when updating outside the encounter layout, and "updateEncounter" when we're not (we only reference)
- encounterById as the source of truth.
- */
-export function useUpdateCampaignEncounter() {
-  const { encountersInCampaign: encounters } = api.useUtils();
-  const campaignId = useCampaignId();
-
-  const mutation = api.updateEncounter.useMutation({
-    onMutate: async (en) => {
-      if (!en) return;
-      await encounters.cancel(campaignId);
-      const previousEncounter = encounters
-        .getData(campaignId)
-        ?.find((e) => e.id === en.id);
-
-      if (!previousEncounter) {
-        throw new Error("No previous encounter found");
-      }
-
-      const filteredNewEncounter = removeUndefinedFields(en);
-      encounters.setData(campaignId, (old) => {
-        return old?.map((e) => {
-          if (e.id === en.id) {
-            return {
-              ...e,
-              ...filteredNewEncounter,
-            };
-          }
-          return e;
-        });
-      });
-      return { previousEncounter };
-    },
-  });
-
-  const updateEncounter = (
-    encounter: Omit<
-      UpsertEncounter,
-      "user_id" | "campaign_id" | "index_in_campaign"
-    > & {
-      id: string;
-    }
-  ) => {
-    mutation.mutate({
-      ...removeUndefinedFields(encounter),
-      campaign_id: campaignId,
-    });
-  };
-
-  return { ...mutation, mutate: updateEncounter };
 }
 
 export function useUpdateEncounterMinionParticipant() {
@@ -454,14 +376,12 @@ export function useAddExistingCreatureAsParticipant(encounter: {
  * A cludgy hook that is needed to make sure that, no matter the source, ui derived from encounter state updates after a mutation to encounters
  */
 export function useEncounterQueryUtils() {
-  const { encountersInCampaign, getColumns, encounterById, campaignById } =
-    api.useUtils();
+  const { getColumns, encounterById, campaignById } = api.useUtils();
 
   const cancelAll = async (encounter: { id: string; campaign_id: string }) => {
     await Promise.all([
       encounterById.cancel(encounter.id),
       getColumns.cancel(encounter.id),
-      encountersInCampaign.cancel(encounter.campaign_id),
       campaignById.cancel(encounter.campaign_id),
     ]);
   };
@@ -473,7 +393,6 @@ export function useEncounterQueryUtils() {
     await Promise.all([
       encounterById.invalidate(encounter.id),
       getColumns.invalidate(encounter.id),
-      encountersInCampaign.invalidate(encounter.campaign_id),
       campaignById.invalidate(encounter.campaign_id),
     ]);
   };

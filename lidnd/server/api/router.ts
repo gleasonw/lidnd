@@ -191,11 +191,18 @@ export const appRouter = t.router({
     }),
 
   encountersInCampaign: protectedProcedure
-    .input(z.string())
+    .input(
+      z.object({
+        campaign: z.object({ id: z.string() }),
+        search: z.string().optional(),
+      })
+    )
     .query(async (opts) => {
-      const campaignId = opts.input;
-
-      return await ServerEncounter.encountersInCampaign(opts.ctx, campaignId);
+      return await ServerEncounter.encountersInCampaign({
+        ctx: opts.ctx,
+        campaign: { id: opts.input.campaign.id },
+        search: opts.input.search,
+      });
     }),
 
   encounterFromCampaignIndex: protectedProcedure

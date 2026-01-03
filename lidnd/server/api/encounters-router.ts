@@ -14,7 +14,7 @@ import { and, eq, ilike, inArray, notInArray } from "drizzle-orm";
 import { z } from "zod";
 import * as ServerTurnGroup from "@/server/sdk/turnGroups";
 import { ServerCampaign } from "@/server/sdk/campaigns";
-import { invalidateServerFunctionCache } from "@/app/[username]/actions";
+import { invalidateCampaignEncountersFetch } from "@/app/[username]/actions";
 
 export const encountersRouter = {
   removeEncountersFromSession: protectedProcedure
@@ -137,7 +137,7 @@ export const encountersRouter = {
         opts.ctx,
         opts.input
       );
-      await invalidateServerFunctionCache();
+      await invalidateCampaignEncountersFetch();
 
       return relation;
     }),
@@ -151,7 +151,7 @@ export const encountersRouter = {
     )
     .mutation(async (opts) => {
       await ServerEncounter.removeTagFromEncounter(opts.ctx, opts.input);
-      await invalidateServerFunctionCache();
+      await invalidateCampaignEncountersFetch();
     }),
 
   getEncounters: protectedProcedure

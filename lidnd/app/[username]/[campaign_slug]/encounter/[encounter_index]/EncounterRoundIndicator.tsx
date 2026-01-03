@@ -11,24 +11,20 @@ import {
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
 import { LidndPopover } from "@/encounters/base-popover";
-import { useEncounterLinks } from "@/encounters/link-hooks";
 import {
   Edit,
   ListOrdered,
   AngryIcon,
-  Home,
   MoreHorizontalIcon,
   StopCircle,
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export const EncounterDetails = observer(function EncounterDetails() {
   const [encounter] = useEncounter();
   const [now, setNow] = useState(Date.now());
   const uiStore = useEncounterUIStore();
-  const { campaignLink } = useEncounterLinks(encounter);
 
   const { mutate: updateEncounter } = useUpdateEncounter();
 
@@ -52,16 +48,12 @@ export const EncounterDetails = observer(function EncounterDetails() {
       const elapsedMs = now - startTime.getTime();
       const minutes = Math.floor(elapsedMs / 1000 / 60);
       return (
-        <div className="flex gap-2 w-40 px-4">
-          <div className="flex flex-col gap-1 items-start">
-            <span className="whitespace-nowrap font-bold text-lg">
-              Round {encounter.current_round}
-            </span>
-            <span className="text-sm text-gray-500 whitespace-nowrap">
-              {minutes === 0 ? "now" : `${minutes} minutes`}
-            </span>
-          </div>
+        <div className="flex gap-2">
+          <span className="whitespace-nowrap font-bold text-xl">
+            Round {encounter.current_round}
+          </span>
           <LidndPopover
+            className="w-full"
             trigger={
               <Button
                 variant="ghost"
@@ -73,11 +65,9 @@ export const EncounterDetails = observer(function EncounterDetails() {
             }
           >
             <div className="flex gap-2">
-              <Link href={campaignLink} className="flex gap-3">
-                <Button variant="ghost" className="text-gray-400 p-2">
-                  <Home />
-                </Button>
-              </Link>
+              <div className="flex items-center gap-2 px-3 text-sm text-gray-500">
+                Duration: {minutes === 0 ? "<1" : minutes} min
+              </div>
               <ButtonWithTooltip
                 text="End encounter"
                 variant="ghost"

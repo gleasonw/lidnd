@@ -13,12 +13,16 @@ import {
 } from "@/server/db/schema";
 import type { InsertParticipant, Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
-import { eq, and, sql, inArray } from "drizzle-orm";
+import { eq, and, sql, inArray, ilike } from "drizzle-orm";
 import _ from "lodash";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { EncounterUtils } from "@/utils/encounters";
 import { CreatureUtils } from "@/utils/creatures";
 import { ParticipantUtils } from "@/utils/participants";
+
+export type EncountersInCampaign = Awaited<
+  ReturnType<typeof ServerEncounter.encountersInCampaign>
+>;
 
 async function create(
   ctx: LidndContext,
@@ -26,10 +30,10 @@ async function create(
   dbObject = db
 ) {
   return await db.transaction(async (tx) => {
-    const encountersInCampaign = await ServerEncounter.encountersInCampaign(
+    const encountersInCampaign = await ServerEncounter.encountersInCampaign({
       ctx,
-      input.campaign_id
-    );
+      campaign: { id: input.campaign_id },
+    });
 
     const indexInCampaign = _.maxBy(
       encountersInCampaign,
@@ -236,30 +240,31 @@ export const ServerEncounter = {
   deleteEncounter,
   create,
   getEncounters,
-  encountersInCampaign: async function (
-    ctx: LidndContext,
-    campaign_id: string
-  ) {
+  encountersInCampaign: async function ({
+    ctx,
+    campaign,
+    search,
+  }: {
+    ctx: LidndContext;
+    campaign: { id: string };
+    search?: string | undefined;
+  }) {
+    const { user } = ctx;
     return await db.query.encounters.findMany({
-      where: (encounter, { eq, and }) =>
-        and(
-          eq(encounter.user_id, ctx.user.id),
-          eq(encounter.campaign_id, campaign_id)
-        ),
+      where: and(
+        eq(encounters.campaign_id, campaign.id),
+        eq(encounters.user_id, user.id),
+        search ? ilike(encounters.name, `%${search}%`) : undefined
+      ),
       with: {
-        participants: {
-          with: {
-            creature: true,
-            status_effects: {
-              with: {
-                effect: true,
-              },
-            },
-          },
-        },
         tags: {
           with: {
             tag: true,
+          },
+        },
+        participants: {
+          with: {
+            creature: true,
           },
         },
       },

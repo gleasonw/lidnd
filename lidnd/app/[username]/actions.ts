@@ -16,7 +16,7 @@ import {
 import { z } from "zod";
 import { db } from "@/server/db";
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { campaignInsertSchema } from "@/app/[username]/types";
 import { and, eq } from "drizzle-orm";
 import { appRoutes } from "@/app/routes";
@@ -27,8 +27,9 @@ import { parseWithZod } from "@conform-to/zod";
 import type { Creature } from "@/server/api/router";
 import { CreatureUtils } from "@/utils/creatures";
 
-export async function invalidateServerFunctionCache() {
-  revalidatePath(`/`);
+export async function invalidateCampaignEncountersFetch() {
+  // this is a bummer...
+  revalidateTag("campaignEncounters", { expire: 0 });
 }
 
 export async function addImageAssetToEncounter(input: {
@@ -367,8 +368,7 @@ export async function addTagToEncounterAction(input: {
   }
 
   const relation = await ServerEncounter.addTagToEncounter({ user }, input);
-  await invalidateServerFunctionCache();
-
+  revalidatePath(`/`);
   return relation;
 }
 
@@ -384,5 +384,5 @@ export async function removeTagFromEncounterAction(input: {
   }
 
   await ServerEncounter.removeTagFromEncounter({ user }, input);
-  await invalidateServerFunctionCache();
+  revalidatePath(`/`);
 }

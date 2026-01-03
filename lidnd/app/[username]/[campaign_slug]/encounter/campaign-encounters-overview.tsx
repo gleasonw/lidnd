@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Edit } from "lucide-react";
-import { api } from "@/trpc/react";
 import { useCampaign } from "../campaign-hooks";
 import {
   EncounterUtils,
@@ -91,9 +90,6 @@ export function CreateEncounterForm({
     immediatelyRender: false,
   });
 
-  const { encountersInCampaign, campaignById, campaignFromUrl } =
-    api.useUtils();
-
   return (
     <Card className="px-3 pb-3">
       <form
@@ -106,12 +102,6 @@ export function CreateEncounterForm({
           });
           setName("");
           setDescription("");
-          // sync with react query local state
-          await Promise.all([
-            encountersInCampaign.invalidate(),
-            campaignById.invalidate(campaign.id),
-            campaignFromUrl.invalidate(),
-          ]);
           afterCreate?.(newEncounter);
         }}
         className={"flex flex-col gap-5 pt-3"}

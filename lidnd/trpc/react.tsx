@@ -8,7 +8,6 @@ import superjson from "superjson";
 
 import { type AppRouter } from "@/server/api/router";
 import { getUrl } from "./shared";
-import { invalidateServerFunctionCache } from "@/app/[username]/actions";
 
 export const api = createTRPCReact<AppRouter>();
 
@@ -20,15 +19,10 @@ function makeQueryClient() {
       },
       // mark all queries as stale after a mutation
       mutations: {
-        onSuccess: async () => {
-          await Promise.all([
-            qc.invalidateQueries(),
-            //TODO: this is pretty wonky and gross, but we can't invalidate in the router, it doesn't actually
-            // cause client components to re-fetch data.
-            invalidateServerFunctionCache(),
-          ]);
-        },
         networkMode: "always",
+        onSuccess: async () => {
+          await qc.invalidateQueries();
+        },
       },
     },
   });

@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 export function CampaignHeader({
   campaign,
 }: {
-  campaign: { name: string; description?: string | null };
+  campaign: { name: string; description?: string | null; slug: string };
 }) {
   const pathname = usePathname();
-  
+
   // Hide header on encounter pages
   const shouldShowHeader = !pathname.includes("/encounter/");
 
