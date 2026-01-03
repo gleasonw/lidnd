@@ -74,6 +74,18 @@ export type EncounterWithParticipants = Encounter & {
 export type InsertParticipant = typeof participants.$inferInsert;
 
 export const appRouter = t.router({
+  activeGameSession: protectedProcedure
+    .input(
+      z.object({
+        campaignId: z.string(),
+      })
+    )
+    .query(async (opts) => {
+      return await ServerCampaign.getActiveSession({
+        ctx: opts.ctx,
+        campaignId: opts.input.campaignId,
+      });
+    }),
   upload: protectedProcedure
     .input(
       z.object({
@@ -392,11 +404,17 @@ export const appRouter = t.router({
           opts.input.encounter_id,
           tx
         );
+        const activeSession = await ServerCampaign.getActiveSession({
+          ctx: opts.ctx,
+          campaignId: encounter.campaign_id,
+        });
+        console.log({ activeSession });
 
-        const { updatedEncounter } = EncounterUtils.toggleGroupTurn(
-          opts.input.participant_id,
-          encounter
-        );
+        const { updatedEncounter } = EncounterUtils.toggleGroupTurn({
+          participant: { id: opts.input.participant_id },
+          encounter,
+          gameSession: activeSession,
+        });
 
         await Promise.all([
           ...updatedEncounter.participants.map((p) =>

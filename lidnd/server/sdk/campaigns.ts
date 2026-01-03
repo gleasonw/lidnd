@@ -5,13 +5,29 @@ import {
   encounter_tags,
   encounter_to_tag,
   encounters,
+  gameSessions,
 } from "@/server/db/schema";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { TRPCError } from "@trpc/server";
-import { and, eq, ilike, inArray } from "drizzle-orm";
+import { and, eq, ilike, inArray, isNull } from "drizzle-orm";
 import { cache } from "react";
 
 export const ServerCampaign = {
+  async getActiveSession({
+    ctx,
+    campaignId,
+  }: {
+    ctx: LidndContext;
+    campaignId: string;
+  }) {
+    return await db.query.gameSessions.findFirst({
+      where: and(
+        isNull(gameSessions.ended_at),
+        eq(gameSessions.user_id, ctx.user.id),
+        eq(gameSessions.campaign_id, campaignId)
+      ),
+    });
+  },
   userCampaigns: async function (ctx: LidndContext) {
     return await db
       .select()

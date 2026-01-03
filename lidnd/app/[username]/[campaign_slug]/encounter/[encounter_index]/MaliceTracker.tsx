@@ -1,14 +1,22 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Minus, Plus } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Minus, Plus, Trophy } from "lucide-react";
 import { useEncounter, useUpdateEncounter } from "./hooks";
+import { useActiveGameSession } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 
 export function MaliceTracker() {
   const [encounter] = useEncounter();
   const { mutate: updateEncounter } = useUpdateEncounter();
+  const { data: activeSession } = useActiveGameSession();
 
   const currentMalice = encounter.malice ?? 0;
+  const hasVictories = activeSession && activeSession.victory_count > 0;
 
   const handleIncrement = () => {
     updateEncounter({
@@ -28,7 +36,28 @@ export function MaliceTracker() {
 
   return (
     <div className="flex items-center justify-between gap-5">
-      <span className="text-sm font-semibold text-gray-600">Malice</span>
+      <div className="flex flex-col gap-0.5">
+        <span className="text-sm font-semibold text-gray-600">Malice</span>
+        {hasVictories && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 text-xs text-amber-600">
+                <Trophy className="h-3 w-3" />
+                <span>+{activeSession.victory_count}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-sm">
+                Session victories are adding +{activeSession.victory_count} to
+                encounter increment each turn.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Modify victory count from the campaign home page.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
       <div className="flex items-center gap-1">
         <Button
           variant="outline"

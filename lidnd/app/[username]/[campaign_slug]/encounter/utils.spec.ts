@@ -1,4 +1,5 @@
 import type { ParticipantWithData } from "@/server/api/router";
+import type { GameSession } from "@/server/db/schema";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { test, expect, describe } from "vitest";
@@ -176,7 +177,11 @@ describe("Group turn toggle and round increment tests", () => {
       malice: 0,
     };
 
-    const result = EncounterUtils.toggleGroupTurn("3", encounterWithInanimate);
+    const result = EncounterUtils.toggleGroupTurn({
+      participant: { id: "3" },
+      encounter: encounterWithInanimate,
+      gameSession: undefined,
+    });
 
     // Even with an inanimate participant, if all non-inanimate have played, round should increment
     expect(result.updatedEncounter.current_round).toBe(2);
@@ -203,7 +208,11 @@ describe("Group turn toggle and round increment tests", () => {
       malice: 0,
     };
 
-    const result = EncounterUtils.toggleGroupTurn("1", encounter);
+    const result = EncounterUtils.toggleGroupTurn({
+      participant: { id: "1" },
+      encounter,
+      gameSession: undefined,
+    });
 
     // Last participant played, round should increment
     expect(result.updatedEncounter.current_round).toBe(2);
@@ -243,7 +252,11 @@ describe("Group turn toggle and round increment tests", () => {
       malice: 0,
     };
 
-    const result = EncounterUtils.toggleGroupTurn("1", encounter);
+    const result = EncounterUtils.toggleGroupTurn({
+      participant: { id: "1" },
+      encounter,
+      gameSession: undefined,
+    });
 
     // The whole group should be marked as played
     const updatedGroup = result.updatedEncounter.turn_groups.find(
@@ -254,18 +267,20 @@ describe("Group turn toggle and round increment tests", () => {
     // Round should not increment yet since participant 3 hasn't played
     expect(result.updatedEncounter.current_round).toBe(1);
 
-    const result2 = EncounterUtils.toggleGroupTurn(
-      "3",
-      result.updatedEncounter
-    );
+    const result2 = EncounterUtils.toggleGroupTurn({
+      participant: { id: "3" },
+      encounter: result.updatedEncounter,
+      gameSession: undefined,
+    });
 
     // Now all participants have played, round should increment
     expect(result2.updatedEncounter.current_round).toBe(2);
 
-    const result3 = EncounterUtils.toggleGroupTurn(
-      "3",
-      result2.updatedEncounter
-    );
+    const result3 = EncounterUtils.toggleGroupTurn({
+      participant: { id: "3" },
+      encounter: result2.updatedEncounter,
+      gameSession: undefined,
+    });
 
     // After toggling again, round should remain the same since not all have played
     expect(result3.updatedEncounter.current_round).toBe(2);
@@ -274,10 +289,11 @@ describe("Group turn toggle and round increment tests", () => {
         ?.has_played_this_round
     ).toBe(false);
 
-    const result4 = EncounterUtils.toggleGroupTurn(
-      "1",
-      result3.updatedEncounter
-    );
+    const result4 = EncounterUtils.toggleGroupTurn({
+      participant: { id: "1" },
+      encounter: result3.updatedEncounter,
+      gameSession: undefined,
+    });
 
     // Toggling group1 again should not increment round yet
     expect(result4.updatedEncounter.current_round).toBe(3);
@@ -310,7 +326,11 @@ describe("Group turn toggle and round increment tests", () => {
       malice: 0,
     };
 
-    const result = EncounterUtils.toggleGroupTurn("2", encounter);
+    const result = EncounterUtils.toggleGroupTurn({
+      participant: { id: "2" },
+      encounter,
+      gameSession: undefined,
+    });
 
     // Only participant 2 should be marked as played, not the group
     const participant2 = result.updatedEncounter.participants.find(
@@ -417,7 +437,11 @@ describe("Malice calculation tests", () => {
     };
 
     // Toggle the last participant to trigger round change
-    const result = EncounterUtils.toggleGroupTurn("m1", encounter);
+    const result = EncounterUtils.toggleGroupTurn({
+      participant: { id: "m1" },
+      encounter,
+      gameSession: undefined,
+    });
 
     // New round is 2, alive players are 2 (p1, p2 - p3 is dead)
     // Malice increase: 2 (alive players) + 2 (new round) = 4
@@ -449,7 +473,11 @@ describe("Malice calculation tests", () => {
       malice: 10,
     };
 
-    const result = EncounterUtils.toggleGroupTurn("m1", encounter);
+    const result = EncounterUtils.toggleGroupTurn({
+      participant: { id: "m1" },
+      encounter,
+      gameSession: undefined,
+    });
 
     // New round is 4, only 1 alive player
     // Malice increase: 1 (alive player) + 4 (new round) = 5
@@ -477,9 +505,55 @@ describe("Malice calculation tests", () => {
     };
 
     // Toggle first participant - round doesn't change
-    const result = EncounterUtils.toggleGroupTurn("p1", encounter);
+    const result = EncounterUtils.toggleGroupTurn({
+      participant: { id: "p1" },
+      encounter,
+      gameSession: undefined,
+    });
 
     expect(result.updatedEncounter.current_round).toBe(2);
     expect(result.updatedEncounter.malice).toBe(8); // No change
+  });
+
+  test("malice calculation takes gameSession victories into account", () => {
+    const players = [
+      createParticipant({ id: "p1", initiative: 20, hp: 50 }),
+      createParticipant({ id: "p2", initiative: 18, hp: 45 }),
+    ];
+
+    players.forEach((p) => {
+      p.creature.type = "player";
+      p.has_played_this_round = true;
+    });
+
+    const monster = createParticipant({ id: "m1", initiative: 15, hp: 30 });
+    monster.creature.type = "standard_monster";
+    monster.has_played_this_round = false;
+
+    const encounter = {
+      current_round: 2,
+      participants: [...players, monster],
+      turn_groups: [],
+      malice: 8,
+    };
+
+    const gameSession = {
+      id: "gs1",
+      campaign_id: "c1",
+      user_id: "u1",
+      name: "Test Session",
+      created_at: new Date(),
+      description: null,
+      started_at: new Date(),
+      ended_at: null,
+      victory_count: 3,
+    } satisfies GameSession;
+    const result = EncounterUtils.toggleGroupTurn({
+      participant: monster,
+      encounter,
+      gameSession,
+    });
+    expect(result.updatedEncounter.current_round).toBe(3);
+    expect(result.updatedEncounter.malice).toBe(16); // 8 + (2 players + 3 victories + round 3)
   });
 });

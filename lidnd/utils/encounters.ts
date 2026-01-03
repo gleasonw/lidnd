@@ -20,7 +20,7 @@ import {
 import type { LidndUser } from "@/app/authentication";
 import _ from "lodash";
 import { CreatureUtils } from "@/utils/creatures";
-import type { TurnGroup } from "@/server/db/schema";
+import type { GameSession, TurnGroup } from "@/server/db/schema";
 
 export const ESTIMATED_TURN_SECONDS = 180;
 export const ESTIMATED_ROUNDS = 2;
@@ -470,15 +470,25 @@ export const EncounterUtils = {
    * Calculate malice to add at the start of a new round
    * Formula: number_of_alive_heroes + round_number
    */
-  calculateMaliceForRound(encounter: {
-    participants: Array<{
-      creature: Pick<Creature, "type">;
-      hp: number;
-    }>;
-    current_round: number;
+  calculateMaliceForRound({
+    encounter,
+    gameSession,
+  }: {
+    encounter: {
+      participants: Array<{
+        creature: Pick<Creature, "type">;
+        hp: number;
+      }>;
+      current_round: number;
+    };
+    gameSession?: Pick<GameSession, "victory_count">;
   }) {
     const numAliveHeroes = this.alivePlayerCount(encounter);
-    return numAliveHeroes + encounter.current_round;
+    return (
+      numAliveHeroes +
+      encounter.current_round +
+      (gameSession?.victory_count ?? 0)
+    );
   },
 
   findCRBudget(args: {
@@ -1023,14 +1033,19 @@ export const EncounterUtils = {
     return turnGroupsById[args.participant.turn_group_id ?? ""];
   },
 
-  toggleGroupTurn<E extends CyclableEncounter & { malice: number }>(
-    participant_id: string,
-    encounter: E
-  ): UpdateTurnOrderReturn<E> {
+  toggleGroupTurn<E extends CyclableEncounter & { malice: number }>({
+    participant,
+    encounter,
+    gameSession,
+  }: {
+    participant: Pick<Participant, "id">;
+    encounter: E;
+    gameSession: Pick<GameSession, "victory_count"> | undefined;
+  }): UpdateTurnOrderReturn<E> {
     const turnGroupsById = R.indexBy(encounter.turn_groups, (tg) => tg.id);
     const participants = this.participantsInInitiativeOrder(encounter);
     const participantWhoPlayed = participants.find(
-      (p) => p.id === participant_id
+      (p) => p.id === participant.id
     );
     if (!participantWhoPlayed) {
       throw new Error("Participant not found");
@@ -1055,7 +1070,7 @@ export const EncounterUtils = {
       };
     } else {
       const updatedParticipants = participants.map((p) => {
-        if (p.id === participant_id) {
+        if (p.id === participant.id) {
           return {
             ...p,
             has_played_this_round: !p.has_played_this_round,
@@ -1076,7 +1091,10 @@ export const EncounterUtils = {
     if (allHavePlayed) {
       const encounterWithNewRound = this.moveToNextGroupTurnRound(encounter);
       // Add malice for the new round
-      const maliceToAdd = this.calculateMaliceForRound(encounterWithNewRound);
+      const maliceToAdd = this.calculateMaliceForRound({
+        encounter: encounterWithNewRound,
+        gameSession,
+      });
       return {
         updatedEncounter: {
           ...encounterWithNewRound,

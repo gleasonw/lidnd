@@ -3,7 +3,10 @@ import { useSearchParams } from "next/navigation";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
-import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
+import {
+  useCampaign,
+  useActiveGameSession,
+} from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import {
   EncounterUIContext,
   useEncounterUIStore,
@@ -162,6 +165,7 @@ export function useSelectedCreature() {
 export function useToggleGroupTurn() {
   const uiStore = useEncounterUIStore();
   const { encounterById } = api.useUtils();
+  const { data: activeSession } = useActiveGameSession();
   return api.updateGroupTurn.useMutation({
     onMutate: async ({ encounter_id, participant_id }) => {
       await encounterById.cancel(encounter_id);
@@ -171,10 +175,11 @@ export function useToggleGroupTurn() {
           return;
         }
 
-        const { updatedEncounter } = EncounterUtils.toggleGroupTurn(
-          participant_id,
-          old
-        );
+        const { updatedEncounter } = EncounterUtils.toggleGroupTurn({
+          participant: { id: participant_id },
+          encounter: old,
+          gameSession: activeSession,
+        });
         if (old.current_round !== updatedEncounter.current_round) {
           uiStore.resetViewedState();
         }

@@ -26,8 +26,7 @@ export type EncountersInCampaign = Awaited<
 
 async function create(
   ctx: LidndContext,
-  input: Omit<EncounterInsert, "id" | "created_at" | "user_id">,
-  dbObject = db
+  input: Omit<EncounterInsert, "id" | "created_at" | "user_id">
 ) {
   return await db.transaction(async (tx) => {
     const encountersInCampaign = await ServerEncounter.encountersInCampaign({

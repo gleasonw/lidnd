@@ -16,6 +16,13 @@ export function useCampaign() {
   return api.campaignById.useSuspenseQuery(campaignId);
 }
 
+export function useActiveGameSession() {
+  const [campaign] = useCampaign();
+  return api.activeGameSession.useQuery({
+    campaignId: campaign.id,
+  });
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useServerAction<A extends (...args: any[]) => Promise<any>>(
   action: A
