@@ -3,11 +3,7 @@ import { EncounterUI } from "@/encounters/[encounter_index]/EncounterUiStore";
 import { isEncounterPathParams } from "@/server/utils";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { LidndAuth } from "@/app/authentication";
-import Link from "next/link";
-import { appRoutes } from "@/app/routes";
-import { Home } from "lucide-react";
 import css from "./EncounterLayout.module.css";
-import { Button } from "@/components/ui/button";
 import { NetworkErrorCatcher } from "@/encounters/[encounter_index]/NetworkErrorCatcher";
 
 export default async function EncounterLayout(props: {
