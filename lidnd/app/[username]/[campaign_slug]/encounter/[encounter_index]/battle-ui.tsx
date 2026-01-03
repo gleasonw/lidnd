@@ -58,7 +58,9 @@ import {
   ImageIcon,
   MoreHorizontal,
   PlayIcon,
+  Shield,
   SkullIcon,
+  Swords,
   Trash,
   TrashIcon,
   UsersIcon,
@@ -1862,23 +1864,30 @@ function GroupTurnToggles() {
 
   return (
     <div className="flex gap-4 p-2 items-center justify-between w-full sticky top-0 z-20 bg-white">
-      <div className="flex gap-5 flex-wrap">
-        {EncounterUtils.players(encounter).map((p) => (
-          <TurnTakerQuickView participant={p} key={p.id} />
-        ))}
+      <div className="flex gap-3 items-center bg-blue-50 rounded-lg p-2">
+        <Shield className="h-4 w-4 text-blue-600" />
+        <div className="flex gap-5 flex-wrap">
+          {EncounterUtils.players(encounter).map((p) => (
+            <TurnTakerQuickView participant={p} key={p.id} />
+          ))}
+        </div>
       </div>
-      <div className="flex gap-5 flex-wrap">
-        {participantsWithoutTurnGroup.map((p) => (
-          <TurnTakerQuickView participant={p} key={p.id} />
-        ))}
-        {Object.entries(participantsByTurnGroup).map(([tgId, participants]) => (
-          <div key={tgId}>
-            <TurnTakerQuickView
-              participant={participants[0]}
-              buttonExtra={<TurnGroupLabel turnGroup={turnGroupsById[tgId]} />}
-            />
-          </div>
-        ))}
+      <div className="h-12 w-px bg-gray-300" />
+      <div className="flex gap-3 items-center bg-red-50 rounded-lg p-2">
+        <Swords className="h-4 w-4 text-red-600" />
+        <div className="flex gap-5 flex-wrap">
+          {participantsWithoutTurnGroup.map((p) => (
+            <TurnTakerQuickView participant={p} key={p.id} />
+          ))}
+          {Object.entries(participantsByTurnGroup).map(([tgId, participants]) => (
+            <div key={tgId}>
+              <TurnTakerQuickView
+                participant={participants[0]}
+                buttonExtra={<TurnGroupLabel turnGroup={turnGroupsById[tgId]} />}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -1988,7 +1997,7 @@ function TurnTakerQuickView({
     <div
       className={clsx("flex flex-col p-2 rounded-lg transition-all", {
         "opacity-60 border-transparent": hasPlayed,
-        "shadow-md": !hasPlayed,
+        "shadow-md bg-white": !hasPlayed,
       })}
     >
       <span
@@ -2010,14 +2019,14 @@ function TurnTakerQuickView({
               participant_id: participant.id,
             })
           }
-          className={clsx("flex p-2 gap-1 rounded-md", {
+          className={clsx("flex p-2 gap-1 rounded-md bg-transparent border-0", {
             "bg-white shadow-lg": !hasPlayed,
           })}
         >
           {hasPlayed ? (
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <CheckCircle className="h-4 w-4 text-black" />
           ) : (
-            <PlayIcon className="h-4 w-4 text-gray-900" />
+            <PlayIcon className="h-4 w-4 text-black" />
           )}
         </Button>
         {buttonExtra}
