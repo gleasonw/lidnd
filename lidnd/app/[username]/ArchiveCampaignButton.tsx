@@ -10,7 +10,7 @@ export function ArchiveCampaignButton({ campaign }: { campaign: Campaign }) {
     <Button
       variant="outline"
       onClick={() =>
-        updateCampaign({
+        void updateCampaign({
           ...c,
           is_archived: !c.is_archived,
         })

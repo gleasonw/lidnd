@@ -72,7 +72,7 @@ export function ActiveSessionButton({ session }: { session: GameSession }) {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => handleVictoryChange(-1)}
+          onClick={() => void handleVictoryChange(-1)}
           disabled={isPending || victoryCount === 0}
           className="h-8 w-8"
         >
@@ -84,7 +84,7 @@ export function ActiveSessionButton({ session }: { session: GameSession }) {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => handleVictoryChange(1)}
+          onClick={() => void handleVictoryChange(1)}
           disabled={isPending}
           className="h-8 w-8"
         >
@@ -95,7 +95,7 @@ export function ActiveSessionButton({ session }: { session: GameSession }) {
       <Button
         disabled={isPending}
         variant="outline"
-        onClick={handleEndSession}
+        onClick={() => void handleEndSession()}
         size="sm"
         className="h-8 text-sm ml-auto text-gray-500"
       >

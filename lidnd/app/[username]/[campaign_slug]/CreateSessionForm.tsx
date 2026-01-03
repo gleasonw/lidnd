@@ -34,16 +34,21 @@ export function SessionCreateForm({
         <DialogTitle>Create new session</DialogTitle>
         <form
           className="flex flex-col gap-4"
-          onSubmit={async (e) => {
+          onSubmit={(e) => {
             e.preventDefault();
-            await createSession({
+            createSession({
               campaign_id: campaignData.id,
               name,
               description,
-            });
-            setDialogIsOpen(false);
-            setName("");
-            setDescription("");
+            })
+              .then(() => {
+                setDialogIsOpen(false);
+                setName("");
+                setDescription("");
+              })
+              .catch((err) => {
+                console.error("Failed to create session:", err);
+              });
           }}
         >
           <div className="space-y-2">

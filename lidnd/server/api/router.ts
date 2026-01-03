@@ -474,7 +474,7 @@ export const appRouter = t.router({
         const { newlyActiveParticipant } =
           EncounterUtils.cycleNextTurn(encounter);
 
-        ServerEncounter.setActiveParticipant(
+        await ServerEncounter.setActiveParticipant(
           newlyActiveParticipant.id,
           opts.input.encounter_id
         );

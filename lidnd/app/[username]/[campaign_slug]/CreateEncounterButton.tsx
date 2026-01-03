@@ -12,14 +12,14 @@ import { Kbd } from "@/components/ui/kbd";
 export function CreateEncounterButton() {
   const [campaign] = useCampaign();
   const [isPending, create] = useServerAction(createEncounter);
-  useHotkey("e", () => {
-    create({ campaign_id: campaign.id });
+  useHotkey("e", async () => {
+    await create({ campaign_id: campaign.id });
   });
   return (
     <Button
       type="submit"
       disabled={isPending}
-      onClick={() => create({ campaign_id: campaign.id })}
+      onClick={() => void create({ campaign_id: campaign.id })}
     >
       Create Encounter
       <Kbd>E</Kbd>

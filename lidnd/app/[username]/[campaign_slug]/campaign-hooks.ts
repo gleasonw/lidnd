@@ -16,6 +16,7 @@ export function useCampaign() {
   return api.campaignById.useSuspenseQuery(campaignId);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useServerAction<A extends (...args: any[]) => Promise<any>>(
   action: A
 ) {
@@ -26,7 +27,7 @@ export function useServerAction<A extends (...args: any[]) => Promise<any>>(
     async (...args: Parameters<A>) => {
       startTransition(async () => {
         await action(...args);
-        qc.invalidateQueries();
+        await qc.invalidateQueries();
       });
     },
   ] as const;
@@ -104,7 +105,7 @@ export function useAddNewToParty({
   const uploadToAws = useAwsImageUpload({ form });
   return api.createCreatureAndAddToParty.useMutation({
     onSuccess: async (data) => {
-      uploadToAws({
+      await uploadToAws({
         iconPresigned: data.iconPresigned,
         statBlockPresigned: data.statBlockPresigned,
         creature: data.newPartyMember,

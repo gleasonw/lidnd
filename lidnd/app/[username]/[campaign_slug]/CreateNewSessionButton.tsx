@@ -49,15 +49,20 @@ export function CreateNewSessionButton({
       content={
         <form
           className="flex flex-col gap-4"
-          onSubmit={async (e) => {
+          onSubmit={(e) => {
             e.preventDefault();
             const parsedVictoryNumber = coerceInt(startingVictories);
-            await begin({
+            begin({
               campaignId: campaign.id,
               name: sessionName,
               victoryCount: parsedVictoryNumber,
-            });
-            setSessionDialogOpen(false);
+            })
+              .then(() => {
+                setSessionDialogOpen(false);
+              })
+              .catch((err) => {
+                console.error("Failed to start session:", err);
+              });
           }}
         >
           <span className="text-lg font-bold">

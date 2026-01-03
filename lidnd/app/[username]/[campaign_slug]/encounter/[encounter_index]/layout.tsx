@@ -44,27 +44,6 @@ export default async function EncounterLayout(props: {
           <div
             className={`relative ${css.root} flex flex-col max-h-full h-full pb-2`}
           >
-            {/**we don't really have space for this nav on group initiative... might need to rethink slightly */}
-            {campaign?.system === "dnd5e" && (
-              <div className={` absolute top-0 left-0 z-50`}>
-                <div
-                  className={`items-center justify-center gap-3 flex flex-col w-full h-full`}
-                >
-                  <Link
-                    href={appRoutes.campaign({
-                      campaign: { ...campaign, slug: param.campaign_slug },
-                      user,
-                    })}
-                    className="flex gap-3"
-                  >
-                    <Button variant="ghost" className="opacity-60">
-                      <Home />
-                      Campaign
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
             {props.children}
           </div>
         </NetworkErrorCatcher>

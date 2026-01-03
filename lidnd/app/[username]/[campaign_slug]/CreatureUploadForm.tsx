@@ -48,7 +48,7 @@ export function AllyCreatureUploadForm({
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={void form.handleSubmit(onSubmit)}
         className="flex flex-col gap-6 p-5 w-full"
       >
         <FormField
@@ -138,7 +138,7 @@ export function OppponentCreatureUploadForm({
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={void form.handleSubmit(onSubmit)}
         className="flex flex-col gap-6 p-5 w-full"
       >
         <FormField
@@ -241,7 +241,7 @@ export function PlayerCreatureUploadForm({
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={void form.handleSubmit(onSubmit)}
         className="flex flex-col gap-6 p-5 w-full"
       >
         <FormField
