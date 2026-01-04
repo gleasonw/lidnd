@@ -48,7 +48,7 @@ export function MaliceTracker() {
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-sm">
-                Session victories are adding +{activeSession.victory_count} to
+                Session victories are adding {activeSession.victory_count} to
                 malice increment each turn.
               </p>
               <p className="text-xs text-muted-foreground mt-1">
