@@ -29,6 +29,7 @@ type EncounterWithParticipants<
   T extends Participant = EncounterWithData["participants"][number]
 > = Encounter & {
   participants: T[];
+  average_victories: number | null;
 };
 
 export type EncounterWithParticipantDifficulty = {
@@ -40,7 +41,7 @@ export type EncounterWithParticipantDifficulty = {
       >;
     } & Pick<Participant, "is_ally" | "max_hp_override" | "hp">
   >;
-  average_victories: Encounter["average_victories"];
+  average_victories: number | null;
 };
 
 type DifficultyArgs = {
@@ -190,7 +191,7 @@ function cssClassForDifficulty(d: Difficulty) {
 }
 
 function start(
-  e: EncounterWithData,
+  e: EncounterWithData & { average_victories: number | null },
   campaign: Pick<Campaign, "system">
 ): EncounterWithData {
   const [firstActive, firstRoundNumber] =
@@ -831,7 +832,6 @@ export const EncounterUtils = {
       is_editing_columns: encounter.is_editing_columns ?? true,
       target_difficulty: encounter.target_difficulty ?? "standard",
       session_id: encounter.session_id ?? null,
-      average_victories: encounter.average_victories ?? null,
       malice: encounter.malice ?? 0,
     };
   },

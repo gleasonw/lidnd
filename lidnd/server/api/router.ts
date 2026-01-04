@@ -294,8 +294,18 @@ export const appRouter = t.router({
           encounter.campaign_id!,
           tx
         );
+        const activeSession = await ServerCampaign.getActiveSession({
+          ctx: opts.ctx,
+          campaignId: campaign.id,
+        });
 
-        const updatedEncounter = EncounterUtils.start(encounter, campaign);
+        const updatedEncounter = EncounterUtils.start(
+          {
+            ...encounter,
+            average_victories: activeSession?.victory_count ?? null,
+          },
+          campaign
+        );
         const maybeActiveParticipant = updatedEncounter.participants.find(
           (p) => p.is_active
         );

@@ -74,9 +74,11 @@ export function useParticipantForm(participantArgs: {
 }
 
 export function useEncounter() {
+  const [activeSession] = useActiveGameSession();
+
   const currentEncounterId = useEncounterId();
 
-  return api.encounterById.useSuspenseQuery(currentEncounterId, {
+  const [resp] = api.encounterById.useSuspenseQuery(currentEncounterId, {
     // wonky hack to make sure that optimistic updates to participants
     // are also applied to participants referenced through column
     // soon: replicache!
@@ -88,6 +90,12 @@ export function useEncounter() {
       })),
     }),
   });
+  // curious to see if this hack actually works. just makes it so I don't have to modify as many utils.
+  const respWithVictoriesMaybe = {
+    ...resp,
+    average_victories: activeSession ? activeSession.victory_count : null,
+  };
+  return [respWithVictoriesMaybe] as const;
 }
 
 //TODO: this should really be done in the backend, we shouldn't have to chain the call ourselves on the front
@@ -427,6 +435,7 @@ export function useStartEncounter() {
   const { encounterById } = api.useUtils();
   const id = useEncounterId();
   const [campaign] = useCampaign();
+  const [activeSession] = useActiveGameSession();
 
   return api.startEncounter.useMutation({
     onMutate: async () => {
@@ -434,7 +443,10 @@ export function useStartEncounter() {
       const previousEncounter = encounterById.getData(id);
       encounterById.setData(id, (old) => {
         if (!old) return old;
-        return EncounterUtils.start(old, campaign);
+        return EncounterUtils.start(
+          { ...old, average_victories: activeSession?.victory_count ?? null },
+          campaign
+        );
       });
       return { previousEncounter };
     },

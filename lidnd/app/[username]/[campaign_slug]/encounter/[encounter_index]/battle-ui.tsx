@@ -67,6 +67,7 @@ import {
   Swords,
   Trash,
   TrashIcon,
+  Trophy,
   UsersIcon,
   X,
 } from "lucide-react";
@@ -467,7 +468,7 @@ function EndedEncounterDisplay() {
 function DifficultySection() {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
-  const { mutate: updateEncounter } = useUpdateEncounter();
+  const [activeSession] = useActiveGameSession();
   const difficulty = EncounterUtils.difficulty({
     encounter,
     campaign,
@@ -500,22 +501,19 @@ function DifficultySection() {
           <span className="">{EncounterUtils.totalCr(encounter)}</span>
         </div>
         {campaign.system === "drawsteel" && (
-          <LidndLabel label="Est. Victories">
-            <LidndTextInput
-              type="number"
-              placeholder="0"
-              variant="ghost"
-              className="w-20 h-7"
-              value={encounter.average_victories ?? ""}
-              onChange={(e) => {
-                const value = parseFloat(e.target.value);
-                updateEncounter({
-                  ...encounter,
-                  average_victories: isNaN(value) ? null : value,
-                });
-              }}
-            />
-          </LidndLabel>
+          <div className="flex flex-col items-center gap-1">
+            <LidndLabel label="Session Victories">
+              <div className="flex items-center gap-1.5">
+                <Trophy className="h-4 w-4 text-yellow-600" />
+                <span>{activeSession?.victory_count ?? 0} </span>
+                <span className="text-gray-400 text-sm">
+                  {`(+${Math.floor(
+                    (activeSession?.victory_count ?? 0) / 2
+                  )} player budgeted)`}
+                </span>
+              </div>
+            </LidndLabel>
+          </div>
         )}
       </div>
       <div className="flex gap-2">
@@ -619,7 +617,10 @@ function EncounterBudgetSlider() {
   const [campaign] = useCampaign();
   const [encounter] = useEncounter();
 
-  const tiers = EncounterUtils.findCRBudget({ encounter, campaign });
+  const tiers = EncounterUtils.findCRBudget({
+    encounter,
+    campaign,
+  });
 
   if (tiers === "no-players") {
     return <div>No players in encounter</div>;
@@ -1659,7 +1660,9 @@ function ImageAssetAddButton() {
                       encounterId: encounter.id,
                       inputAsset: i,
                     });
-                    qc.invalidateQueries();
+                    qc.invalidateQueries().catch((err) => {
+                      console.error(err);
+                    });
                   });
                 }}
               >

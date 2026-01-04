@@ -258,8 +258,6 @@ export const encounters = pgTable(
     label: encounter_label_enum("label").default("active").notNull(),
     order: doublePrecision("order").default(1).notNull(),
     index_in_campaign: integer("index_in_campaign").notNull().default(0),
-    // specific to a drawsteel system, maybe eventually we split out a "drawsteel.average_victories" type of structure
-    average_victories: real("average_victories"),
   },
   (t) => {
     return {
