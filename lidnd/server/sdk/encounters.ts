@@ -342,7 +342,9 @@ export const ServerEncounter = {
             },
           },
         },
-        turn_groups: true,
+        turn_groups: {
+          orderBy: (tg, { asc }) => [asc(tg.name)],
+        },
         tags: {
           with: {
             tag: true,

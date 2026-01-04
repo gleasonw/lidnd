@@ -1445,14 +1445,6 @@ const TurnGroupSetup = observer(function TurnGroupSetup() {
       </div>
 
       <div className={clsx("flex flex-col gap-3")}>
-        <div className="flex flex-wrap gap-5 items-center">
-          <CreateTurnGroupForm />
-        </div>
-        <div className={clsx("gap-4", battleStyles.adversaryGrid)}>
-          {encounter.turn_groups.map((tg) => (
-            <TurnGroupDisplay tg={tg} key={tg.id} />
-          ))}
-        </div>
         {monstersWihoutGroup.length > 0 || encounter.turn_groups.length > 0 ? (
           <div
             className={clsx(
@@ -1506,6 +1498,14 @@ const TurnGroupSetup = observer(function TurnGroupSetup() {
             )}
           </div>
         ) : null}
+        <div className={clsx("gap-4", battleStyles.adversaryGrid)}>
+          {encounter.turn_groups.map((tg) => (
+            <TurnGroupDisplay tg={tg} key={tg.id} />
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-5 items-center">
+          <CreateTurnGroupForm />
+        </div>
       </div>
     </div>
   );
