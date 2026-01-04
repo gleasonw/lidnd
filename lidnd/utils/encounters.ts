@@ -165,8 +165,19 @@ const colorForDifficulty = {
   Trivial: "gray",
 } as const satisfies { [key in Difficulty]: string };
 
-function cssClassForDifficulty(d: Difficulty) {
-  const color = colorForDifficulty[d];
+function cssClassForDifficulty(d: Difficulty | Encounter["target_difficulty"]) {
+  let color: "blue" | "green" | "yellow" | "red" | "gray";
+  // annoyingly, the type for Encounter["target_difficulty"] does not match
+  // the computed "difficulty" we assign. I should probably change that at some point.
+  if (d === "easy") {
+    color = "green";
+  } else if (d === "standard") {
+    color = "blue";
+  } else if (d === "hard") {
+    color = "yellow";
+  } else {
+    color = colorForDifficulty[d];
+  }
   switch (color) {
     case "blue": {
       return "text-blue-700 bg-blue-200";
@@ -650,6 +661,26 @@ export const EncounterUtils = {
     ];
   },
 
+  isAtTargetDifficulty(
+    encounter: EncounterWithParticipants,
+    campaign: Pick<Campaign, "system" | "party_level">
+  ) {
+    const currentDifficulty = this.difficulty({
+      encounter,
+      campaign,
+    });
+    const targetDifficulty = encounter.target_difficulty;
+    if (targetDifficulty === "easy" && currentDifficulty === "Easy") {
+      return true;
+    }
+    if (targetDifficulty === "standard" && currentDifficulty === "Standard") {
+      return true;
+    }
+    if (targetDifficulty === "hard" && currentDifficulty === "Hard") {
+      return true;
+    }
+    return false;
+  },
   difficulty(args: {
     encounter: EncounterWithParticipantDifficulty;
     campaign: Pick<Campaign, "system" | "party_level">;
@@ -680,7 +711,7 @@ export const EncounterUtils = {
     const { standardTier, hardTier, trivialTier, easyTier } = tiers;
     if (cr <= trivialTier) {
       return difficulties.Trivial;
-    } else if (cr <= easyTier) {
+    } else if (cr < easyTier) {
       return difficulties.Easy;
     } else if (cr <= standardTier) {
       return difficulties.Standard;

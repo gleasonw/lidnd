@@ -67,7 +67,6 @@ import {
   Swords,
   Trash,
   TrashIcon,
-  Trophy,
   UsersIcon,
   X,
 } from "lucide-react";
@@ -247,18 +246,17 @@ export const EncounterBattleUI = observer(function BattleUI() {
                     </div>
                     <div
                       className={clsx(
-                        "flex flex-col gap-7 min-h-0",
+                        "flex flex-col gap-10 min-h-0",
                         battleStyles.adversarySection
                       )}
                     >
-                      <Card className="p-5 flex flex-col gap-5">
-                        <DifficultySection />
-                      </Card>
                       <PartySection />
-
-                      {campaign.system === "drawsteel" ? (
-                        <TurnGroupSetup />
-                      ) : null}
+                      <DifficultySection />
+                      <Card className="flex w-full p-5">
+                        {campaign.system === "drawsteel" ? (
+                          <MonsterSection />
+                        ) : null}
+                      </Card>
                     </div>
                   </div>
                 </div>
@@ -310,7 +308,7 @@ function PartySection() {
   const user = useUser();
   return (
     <Link href={appRoutes.party({ campaign, user })}>
-      <Card className="p-5">
+      <Card className="px-5 py-3">
         <div className="flex justify-between">
           <span className="flex gap-3">
             <UsersIcon />
@@ -334,7 +332,6 @@ function PartySection() {
     </Link>
   );
 }
-
 function EndedEncounterDisplay() {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
@@ -468,7 +465,6 @@ function EndedEncounterDisplay() {
 function DifficultySection() {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
-  const [activeSession] = useActiveGameSession();
   const difficulty = EncounterUtils.difficulty({
     encounter,
     campaign,
@@ -479,48 +475,16 @@ function DifficultySection() {
   const difficultyCssClass = EncounterUtils.cssClassForDifficulty(difficulty);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div
-        className={`flex w-full flex-wrap gap-6 sm:flex-nowrap rounded-md items-center`}
-      >
-        <div className="flex flex-col">
-          <span
-            className={clsx(
-              "text-lg p-2 rounded-md w-24 text-center",
-              difficultyCssClass
-            )}
-          >
-            {difficulty}
-          </span>
-        </div>
-
-        <div className="flex flex-col items-baseline">
-          <span className="text-sm whitespace-nowrap text-gray-400">
-            Total {CampaignUtils.crLabel(campaign)}
-          </span>
-          <span className="">{EncounterUtils.totalCr(encounter)}</span>
-        </div>
-        {campaign.system === "drawsteel" && (
-          <div className="flex flex-col items-center gap-1">
-            <LidndLabel label="Session Victories">
-              <div className="flex items-center gap-1.5">
-                <Trophy className="h-4 w-4 text-yellow-600" />
-                <span>{activeSession?.victory_count ?? 0} </span>
-                <span className="text-gray-400 text-sm">
-                  {`(+${Math.floor(
-                    (activeSession?.victory_count ?? 0) / 2
-                  )} player budgeted)`}
-                </span>
-              </div>
-            </LidndLabel>
-          </div>
+    <div className="flex flex-col gap-2">
+      <span
+        className={clsx(
+          "text-lg rounded-md w-24 text-center",
+          difficultyCssClass
         )}
-      </div>
-      <div className="flex gap-2">
-        <div className="w-full pb-3 pt-3 sm:pb-0">
-          <EncounterBudgetSlider />
-        </div>
-      </div>
+      >
+        {difficulty}
+      </span>
+      <EncounterBudgetSlider />
     </div>
   );
 }
@@ -1323,7 +1287,7 @@ function PrepParticipant({
     <Card
       key={p.id}
       className={clsx(
-        "flex gap-2 items-center max-w-[400px] cursor-grab active:cursor-grabbing max-h-fit p-1 ",
+        "flex gap-2 items-center cursor-grab active:cursor-grabbing max-h-fit p-1 ",
         {
           "border-none shadow-none": tgForParticipant,
         }
@@ -1368,7 +1332,7 @@ function PrepParticipant({
   );
 }
 
-const TurnGroupSetup = observer(function TurnGroupSetup() {
+const MonsterSection = observer(function TurnGroupSetup() {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
   const uiStore = useEncounterUIStore();
@@ -1402,53 +1366,93 @@ const TurnGroupSetup = observer(function TurnGroupSetup() {
     setCreatureAddDialogIsOpen(true);
   });
 
+  const remainingCr = EncounterUtils.remainingCr(encounter, campaign);
+  const isAtTargetDifficulty = EncounterUtils.isAtTargetDifficulty(
+    encounter,
+    campaign
+  );
+
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex gap-8 items-center">
-        <LidndLabel label={`Remaining ${CampaignUtils.crLabel(campaign)}`}>
-          <span className="text-2xl font-bold">
-            {EncounterUtils.remainingCr(encounter, campaign)}
-          </span>
-        </LidndLabel>
-        <LidndDialog
-          isOpen={creatureAddDialogIsOpen}
-          onClose={() => setCreatureAddDialogIsOpen(false)}
-          title="Add adversary"
-          content={
-            <div className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
-              <EditModeOpponentForm
-                onSubmitSuccess={() => setCreatureAddDialogIsOpen(false)}
-              />
-            </div>
-          }
-          trigger={
-            <Button
-              onClick={() => setCreatureAddDialogIsOpen(true)}
-              className=""
+    <div className="flex flex-col gap-6 w-full">
+      <div className="flex flex-col items-center gap-5">
+        {isAtTargetDifficulty ? (
+          <div className="text-gray-500 text-sm">
+            {remainingCr === 0 ? (
+              <span>At maximum EV for difficulty.</span>
+            ) : (
+              <span className="flex gap-2 items-baseline">
+                <span>
+                  Within budget for target difficulty. Can spend up to
+                </span>
+                <span className="text-2xl font-bold text-black">
+                  {remainingCr}
+                </span>
+                <span>more EV.</span>
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="flex gap-2 items-baseline text-gray-500 text-sm">
+            <span>{remainingCr < 0 ? "Remove" : "Add up to"}</span>
+            <span className="text-2xl font-bold text-black">
+              {Math.abs(EncounterUtils.remainingCr(encounter, campaign))}
+            </span>
+            <span>EV worth of monsters for</span>
+            <span
+              className={clsx(
+                EncounterUtils.cssClassForDifficulty(
+                  encounter.target_difficulty
+                ),
+                "p-1 rounded-md"
+              )}
             >
-              <AngryIcon />
-              Upload adversary
-              <Kbd>A</Kbd>
-            </Button>
-          }
-        />
-        <QuickAddParticipantsButton
-          encounterId={encounter.id}
-          campaignId={campaign.id}
-          trigger={
-            <Button variant="secondary" className="gap-2">
-              <AngryIcon />
-              Existing
-            </Button>
-          }
-        />
+              {encounter.target_difficulty}
+            </span>
+            <span>difficulty</span>
+          </div>
+        )}
+
+        <div className="flex gap-8 items-center">
+          <LidndDialog
+            isOpen={creatureAddDialogIsOpen}
+            onClose={() => setCreatureAddDialogIsOpen(false)}
+            title="Add adversary"
+            content={
+              <div className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
+                <EditModeOpponentForm
+                  onSubmitSuccess={() => setCreatureAddDialogIsOpen(false)}
+                />
+              </div>
+            }
+            trigger={
+              <Button
+                onClick={() => setCreatureAddDialogIsOpen(true)}
+                className=""
+              >
+                <AngryIcon />
+                Upload adversary
+                <Kbd>A</Kbd>
+              </Button>
+            }
+          />
+          <QuickAddParticipantsButton
+            encounterId={encounter.id}
+            campaignId={campaign.id}
+            trigger={
+              <Button variant="secondary" className="gap-2">
+                <AngryIcon />
+                Existing
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       <div className={clsx("flex flex-col gap-3")}>
         {monstersWihoutGroup.length > 0 || encounter.turn_groups.length > 0 ? (
           <div
             className={clsx(
-              "gap-3 gap-x-12 rounded min-h-[150px] border-2",
+              "gap-3 gap-x-12 rounded border-2 min-h-[100px]",
               battleStyles.adversaryGrid,
               {
                 "border-blue-400 bg-blue-50": acceptDrop > 0,
@@ -1503,7 +1507,7 @@ const TurnGroupSetup = observer(function TurnGroupSetup() {
             <TurnGroupDisplay tg={tg} key={tg.id} />
           ))}
         </div>
-        <div className="flex flex-wrap gap-5 items-center">
+        <div className="flex flex-wrap gap-5 w-full">
           <CreateTurnGroupForm />
         </div>
       </div>
@@ -1818,7 +1822,7 @@ function CreateTurnGroupForm() {
   const [name, setName] = useState("");
   const [hexColor, setHexColor] = useState(labelColors.at(0) || "#FFFFFF");
   return (
-    <Card className="p-2 shadow-none">
+    <div className="p-2 shadow-none w-full bg-gray-100">
       <form
         className="flex gap-3"
         onSubmit={(e) => {
@@ -1863,7 +1867,7 @@ function CreateTurnGroupForm() {
           Create turn group
         </Button>
       </form>
-    </Card>
+    </div>
   );
 }
 
