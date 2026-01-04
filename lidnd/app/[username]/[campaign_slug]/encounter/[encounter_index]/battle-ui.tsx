@@ -1714,7 +1714,7 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
   return (
     <Card
       key={tg.id}
-      className={clsx("flex flex-col gap-2  p-3 min-h-[200px]", {
+      className={clsx("flex flex-col gap-2 min-h-[200px]", {
         "border-dashed": uiStore.activeDragType === "participant",
         "border-blue-400 bg-blue-50": acceptDrop > 0,
       })}
@@ -1749,7 +1749,7 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
         setAcceptDrop((count) => count - 1);
       }}
     >
-      <div className="flex gap-3 items-center">
+      <div className="flex gap-3 items-center p-2 bg-gray-100">
         <Button
           variant="ghost"
           className="text-gray-200 p-2 w-3 h-3"
@@ -1762,7 +1762,7 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
         >
           <Trash />
         </Button>
-        <span>{tg.name}</span>
+        <span className="truncate">{tg.name}</span>
         <span className="flex gap-1">
           <span>{crLabel(campaign)}</span>
           <span>{totalCr}</span>
@@ -1798,7 +1798,7 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
           </div>
         </LidndPopover>
       </div>
-      <div className="flex flex-col gap-1 w-full h-full">
+      <div className="flex flex-col gap-1 p-2 w-full h-full">
         {participantsInGroup.length === 0 && (
           <span className="flex w-full h-full items-center justify-center text-gray-400 text-sm">
             Drag here to assign
