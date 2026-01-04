@@ -241,7 +241,7 @@ export function PlayerCreatureUploadForm({
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={void form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-6 p-5 w-full"
       >
         <FormField

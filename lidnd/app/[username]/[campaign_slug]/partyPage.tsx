@@ -1,34 +1,25 @@
 "use client";
 
 import {
-  useAddExistingToParty,
   useAddNewToParty,
   useCampaign,
   useRemoveFromParty,
   useUpdateCampaign,
 } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import {
-  AllyCreatureUploadForm,
   PlayerCreatureUploadForm,
-  useCreatureForm,
   usePlayerCreatureForm,
-  type CreatureUpload,
   type PlayerUpload,
 } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 import { useUIStore } from "@/app/UIStore";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AddCreatureButton } from "@/encounters/add-creature-button";
 import type { Creature } from "@/server/api/router";
-import { api } from "@/trpc/react";
 import { CreatureUtils } from "@/utils/creatures";
-import { Plus, Smile, User, UserPlus } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import Image from "next/image";
 import React from "react";
-import { useState } from "react";
 import * as R from "remeda";
 import { useDebouncedCallback } from "use-debounce";
 
@@ -40,39 +31,7 @@ export function PartyPage() {
     <div className="flex flex-col gap-5 w-[700px] mx-auto">
       {/* todo: make a table */}
       <div className="p-5">
-        <Tabs defaultValue="new">
-          <span className="flex gap-1 flex-wrap pr-2">
-            <TabsList>
-              <TabsTrigger value="new">
-                <Plus /> Add new creature
-              </TabsTrigger>
-              <TabsTrigger value="existing">
-                <UserPlus /> Existing creatures
-              </TabsTrigger>
-            </TabsList>
-          </span>
-          <TabsContent value="new">
-            <Tabs defaultValue="player">
-              <TabsList>
-                <TabsTrigger value="player" className="flex gap-3">
-                  <User /> Player
-                </TabsTrigger>
-                <TabsTrigger value="npc" className="flex gap-3">
-                  <Smile /> NPC
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="npc">
-                <AddNpcToPartyForm />
-              </TabsContent>
-              <TabsContent value="player">
-                <AddPlayerToPartyForm />
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-          <TabsContent value="existing">
-            <ExistingCreaturesForPartyAdd campaignId={campaign.id} />
-          </TabsContent>
-        </Tabs>
+        <AddPlayerToPartyForm />
       </div>
       <PartyLevelInput />
       <div className="flex gap-5 p-3">
@@ -164,35 +123,6 @@ function PartyLevelInput() {
   );
 }
 
-function AddNpcToPartyForm() {
-  const allyForm = useCreatureForm();
-  const [campaign] = useCampaign();
-
-  function onSubmitAlly(data: CreatureUpload) {
-    const creatureValue = R.omit(data, ["iconImage", "statBlockImage"]);
-    onPlayerUpload({
-      campaign_id: campaign.id,
-      creature: { ...creatureValue, is_player: false },
-      hasIcon: data.iconImage !== undefined,
-      hasStatBlock: data.statBlockImage !== undefined,
-    });
-  }
-
-  const { mutate: onPlayerUpload, isPending } = useAddNewToParty({
-    campaign,
-    //@ts-expect-error - need to fix the types on the form... the playerupload object and the participant upload object differ slightly
-    form: allyForm,
-  });
-
-  return (
-    <AllyCreatureUploadForm
-      form={allyForm}
-      onSubmit={onSubmitAlly}
-      isPending={isPending}
-    />
-  );
-}
-
 function AddPlayerToPartyForm() {
   const [campaign] = useCampaign();
   const playerForm = usePlayerCreatureForm();
@@ -206,6 +136,7 @@ function AddPlayerToPartyForm() {
         is_player: true,
         max_hp: 1,
         challenge_rating: 0,
+        type: "player",
       },
       hasIcon: data.iconImage !== undefined,
       hasStatBlock: false,
@@ -223,35 +154,5 @@ function AddPlayerToPartyForm() {
       onSubmit={onSubmitPlayer}
       isPending={isPending}
     />
-  );
-}
-
-function ExistingCreaturesForPartyAdd({ campaignId }: { campaignId: string }) {
-  const [name, setName] = useState("");
-  const { data: creatures } = api.getUserCreatures.useQuery({
-    name,
-  });
-  const { mutate: addCreature } = useAddExistingToParty({ id: campaignId });
-  const creaturesPlayersFirst = R.sort(creatures ?? [], (a, b) =>
-    a.type === "player" ? -1 : b.type === "player" ? 1 : 0
-  );
-  return (
-    <div className="flex flex-col gap-5">
-      <Input
-        placeholder="Search..."
-        type="text"
-        onChange={(e) => setName(e.target.value)}
-        value={name}
-      />
-      <div className={"flex flex-col gap-2 h-96 overflow-auto"}>
-        {creaturesPlayersFirst?.map((creature) => (
-          <AddCreatureButton
-            creature={creature}
-            key={creature.id}
-            onClick={() => addCreature({ creature, campaign_id: campaignId })}
-          />
-        ))}
-      </div>
-    </div>
   );
 }

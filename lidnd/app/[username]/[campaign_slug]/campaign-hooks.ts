@@ -106,44 +106,47 @@ export function useAddNewToParty({
   campaign: { id: string };
   form: UseFormReturn<PlayerUpload>;
 }) {
-  const campaignId = campaign.id;
-  const { campaignById } = api.useUtils();
+  const qc = useQueryClient();
   //@ts-expect-error - need to fix the types on the form... the playerupload object and the participant upload object differ slightly
   const uploadToAws = useAwsImageUpload({ form });
   return api.createCreatureAndAddToParty.useMutation({
     onSuccess: async (data) => {
-      await uploadToAws({
-        iconPresigned: data.iconPresigned,
-        statBlockPresigned: data.statBlockPresigned,
-        creature: data.newPartyMember,
-      });
-    },
-    onMutate: async ({ creature }) => {
-      await campaignById.cancel(campaignId);
-      const previous = campaignById.getData(campaignId);
-      campaignById.setData(campaignId, (old) => {
-        if (!old) {
-          return;
-        }
-        const playerWithPlaceholders = CreatureUtils.placeholder({
-          ...creature,
-          is_inanimate: Boolean(creature.is_inanimate),
+      if (data.iconPresigned || data.statBlockPresigned) {
+        await uploadToAws({
+          iconPresigned: data.iconPresigned,
+          statBlockPresigned: data.statBlockPresigned,
+          creature: data.newPartyMember,
         });
-        return {
-          ...old,
-          campaignToPlayers: [
-            ...old.campaignToPlayers,
-            {
-              campaign_id: campaignId,
-              player: playerWithPlaceholders,
-              player_id: playerWithPlaceholders.id,
-              id: Math.random().toString(),
-            },
-          ],
-        };
-      });
-      return { previous };
+      }
+
+      await qc.invalidateQueries();
     },
+    // onMutate: async ({ creature }) => {
+    //   await campaignById.cancel(campaignId);
+    //   const previous = campaignById.getData(campaignId);
+    //   campaignById.setData(campaignId, (old) => {
+    //     if (!old) {
+    //       return;
+    //     }
+    //     const playerWithPlaceholders = CreatureUtils.placeholder({
+    //       ...creature,
+    //       is_inanimate: Boolean(creature.is_inanimate),
+    //     });
+    //     return {
+    //       ...old,
+    //       campaignToPlayers: [
+    //         ...old.campaignToPlayers,
+    //         {
+    //           campaign_id: campaignId,
+    //           player: playerWithPlaceholders,
+    //           player_id: playerWithPlaceholders.id,
+    //           id: Math.random().toString(),
+    //         },
+    //       ],
+    //     };
+    //   });
+    //   return { previous };
+    // },
   });
 }
 
