@@ -331,6 +331,7 @@ function PartySection() {
 
 function EndedEncounterDisplay() {
   const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
   const { mutate: updateEncounter } = useUpdateEncounter();
 
   let totalRuntime = "Unknown";
@@ -368,6 +369,28 @@ function EndedEncounterDisplay() {
             <span className="text-sm text-muted-foreground">Total Runtime</span>
             <span className="text-2xl font-semibold">{totalRuntime}</span>
           </div>
+
+          {campaign.system === "drawsteel" && (
+            <div className="flex flex-col gap-2 bg-blue-50 p-4 rounded-md border border-blue-200">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-blue-900">
+                  Remember to award victories!
+                </span>
+              </div>
+              <div className="text-sm text-blue-800">
+                <ul className="space-y-1">
+                  <li>
+                    • Easy/Standard encounters:{" "}
+                    <span className="font-semibold">1 victory</span>
+                  </li>
+                  <li>
+                    • Hard/Deadly encounters:{" "}
+                    <span className="font-semibold">2 victories</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          )}
 
           {encounter.description && (
             <div className="flex flex-col gap-2">
@@ -1863,7 +1886,7 @@ function GroupTurnToggles() {
     EncounterUtils.monstersWithoutTurnGroup(encounter);
 
   return (
-    <div className="flex gap-4 p-2 items-center justify-between w-full sticky top-0 z-20 bg-white">
+    <div className="flex gap-4 p-2 items-center justify-around w-full sticky top-0 z-20 bg-white">
       <div className="flex gap-3 items-center bg-blue-50 rounded-lg p-2">
         <Shield className="h-4 w-4 text-blue-600" />
         <div className="flex gap-5 flex-wrap">
@@ -1879,14 +1902,18 @@ function GroupTurnToggles() {
           {participantsWithoutTurnGroup.map((p) => (
             <TurnTakerQuickView participant={p} key={p.id} />
           ))}
-          {Object.entries(participantsByTurnGroup).map(([tgId, participants]) => (
-            <div key={tgId}>
-              <TurnTakerQuickView
-                participant={participants[0]}
-                buttonExtra={<TurnGroupLabel turnGroup={turnGroupsById[tgId]} />}
-              />
-            </div>
-          ))}
+          {Object.entries(participantsByTurnGroup).map(
+            ([tgId, participants]) => (
+              <div key={tgId}>
+                <TurnTakerQuickView
+                  participant={participants[0]}
+                  buttonExtra={
+                    <TurnGroupLabel turnGroup={turnGroupsById[tgId]} />
+                  }
+                />
+              </div>
+            )
+          )}
         </div>
       </div>
     </div>
