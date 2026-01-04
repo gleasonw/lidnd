@@ -49,7 +49,7 @@ export function MaliceTracker() {
             <TooltipContent>
               <p className="text-sm">
                 Session victories are adding +{activeSession.victory_count} to
-                encounter increment each turn.
+                malice increment each turn.
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Modify victory count from the campaign home page.
