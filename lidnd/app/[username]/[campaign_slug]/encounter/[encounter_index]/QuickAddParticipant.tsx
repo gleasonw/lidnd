@@ -68,7 +68,6 @@ export function QuickAddParticipantsButton({
     });
 
     setSearch("");
-    setIsPopoverOpen(false);
   }
 
   return (
