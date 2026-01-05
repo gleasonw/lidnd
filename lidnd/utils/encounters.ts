@@ -1018,12 +1018,15 @@ export const EncounterUtils = {
   },
 
   destinationColumnForNewParticipant(
-    newParticipant: { creature_id: string },
+    newParticipant: { creature: Pick<Creature, "id" | "type"> },
     encounter: EncounterWithData
   ) {
+    if (newParticipant.creature.type === "player") {
+      return null;
+    }
     const columnLeaders = this.participantColumnLeaders(encounter);
     const participantOfSameCreature = columnLeaders.find(
-      (p) => p.creature_id === newParticipant.creature_id
+      (p) => p.creature_id === newParticipant.creature.id
     );
     if (participantOfSameCreature) {
       return participantOfSameCreature.column_id;

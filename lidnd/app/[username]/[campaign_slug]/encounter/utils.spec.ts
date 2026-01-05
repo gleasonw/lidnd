@@ -1,5 +1,5 @@
 import type { Campaign } from "@/app/[username]/types";
-import type { ParticipantWithData } from "@/server/api/router";
+import type { Creature, ParticipantWithData } from "@/server/api/router";
 import type { GameSession } from "@/server/db/schema";
 import { EncounterUtils } from "@/utils/encounters";
 import { ParticipantUtils } from "@/utils/participants";
@@ -570,5 +570,47 @@ describe("Add participant tests", () => {
 
     expect(result.participants.length).toBe(1);
     expect(result.participants[0]!.column_id).toBe("col1");
+  });
+
+  test("doesn't add a participant to a column if the participant is a plaer", () => {
+    const encounter = EncounterUtils.withDefaults({
+      id: "enc1",
+      columns: [
+        {
+          id: "col1",
+          encounter_id: "enc1",
+          percent_width: 100,
+          is_home_column: false,
+          participants: [],
+        },
+      ],
+    });
+
+    const creature = {
+      id: "creature1",
+      name: "Hero",
+      type: "player" as const,
+      max_hp: 30,
+      challenge_rating: 0,
+    } satisfies Pick<
+      Creature,
+      "id" | "name" | "type" | "max_hp" | "challenge_rating"
+    >;
+
+    const newParticipant = {
+      id: "p1",
+      encounter_id: "enc1",
+    };
+
+    const res = EncounterUtils.addParticipant({
+      newParticipant,
+      encounter,
+      creatureForParticipant: creature,
+    });
+
+    expect(res.participants.length).toBe(1);
+    const addedParticipant = res.participants[0]!;
+    expect(addedParticipant.creature.type).toBe("player");
+    expect(addedParticipant.column_id).toBeNull();
   });
 });
