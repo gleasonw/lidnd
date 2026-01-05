@@ -1,7 +1,8 @@
 "use client";
 
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-import { Editor, useEditor } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
+import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Placeholder } from "@tiptap/extensions";
 import TiptapImage from "@tiptap/extension-image";
@@ -94,7 +95,7 @@ export function DescriptionTextArea({
             await uploadAndInsertImage({ file, pos, currentEditor });
           });
         },
-        onPaste: (currentEditor, files, htmlContent) => {
+        onPaste: (currentEditor, files) => {
           files.forEach(async (file) => {
             await uploadAndInsertImage({ file, currentEditor });
           });
@@ -105,7 +106,7 @@ export function DescriptionTextArea({
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const content = editor.getHTML();
-      debouncedUpdate(content);
+      debouncedUpdate(content)?.catch(console.error);
     },
     onCreate: () => setIsTipTapReady(true),
   });

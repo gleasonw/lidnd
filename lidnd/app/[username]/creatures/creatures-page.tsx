@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { useState } from "react";
@@ -147,7 +146,6 @@ export function CreatureUpdateForm({ creature }: { creature: Creature }) {
   const [maxHp, setMaxHp] = useState(creature.max_hp);
   const [name, setName] = useState(creature.name);
   const [type, setType] = useState(creature.type);
-  const [isInanimate, setIsInanimate] = useState(creature.is_inanimate);
 
   const { mutate: updateCreature, isPending: isLoading } =
     api.updateCreature.useMutation();
@@ -202,15 +200,6 @@ export function CreatureUpdateForm({ creature }: { creature: Creature }) {
         </Select>
       </LidndLabel>
 
-      <label>
-        <Checkbox
-          checked={isInanimate ?? false}
-          onCheckedChange={(checked) =>
-            checked !== "indeterminate" && setIsInanimate(checked)
-          }
-        />
-        Inanimate (show only statblock and name)
-      </label>
       <div className="flex">
         <LoadingButton
           onClick={(e) => {
@@ -221,7 +210,6 @@ export function CreatureUpdateForm({ creature }: { creature: Creature }) {
               max_hp: maxHp,
               name,
               type,
-              is_inanimate: isInanimate,
             });
           }}
           isLoading={isLoading}

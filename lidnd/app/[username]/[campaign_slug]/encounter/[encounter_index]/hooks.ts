@@ -1,7 +1,6 @@
 import { api } from "@/trpc/react";
 import { useSearchParams } from "next/navigation";
 import { EncounterUtils } from "@/utils/encounters";
-import { ParticipantUtils } from "@/utils/participants";
 import { useEncounterId } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/encounter-id";
 import {
   useCampaign,
@@ -43,14 +42,22 @@ export function useParticipantForm(participantArgs: {
 
   function onSubmit(values: Zod.infer<typeof localCreatureUploadSchema>) {
     const creatureValues = omit(values, ["iconImage", "statBlockImage"]);
+    let maxHpOverride = participantArgs.overrideHp;
+    if (
+      creatureValues.type === "minion_monster" &&
+      participantArgs.overrideHp !== undefined
+    ) {
+      // we have somewhat wonkily used the overrideHp as "# of minions"
+      maxHpOverride = participantArgs.overrideHp * values.max_hp;
+    }
     uploadParticipant({
-      creature: { ...creatureValues, is_player: false },
+      creature: { ...creatureValues },
       participant: {
         encounter_id: encounter.id,
         //TODO: just use role at some point
         is_ally: participantArgs.role === "ally",
-        hp: participantArgs.overrideHp ?? values.max_hp,
-        max_hp_override: participantArgs.overrideHp,
+        hp: maxHpOverride ?? values.max_hp,
+        max_hp_override: maxHpOverride,
       },
       hasStatBlock: values.statBlockImage !== undefined,
       hasIcon: values.iconImage !== undefined,
@@ -363,23 +370,13 @@ export function useAddExistingCreatureAsParticipant(encounter: {
           (creature) => creature.id === p.creature_id
         );
         if (!selectedCreature) return;
-
-        // boolean wonkyness comes from the boolean parsing we have to do server side
-        // we should always have pure booleans locally
-        return EncounterUtils.addParticipant(
-          ParticipantUtils.placeholderParticipantWithData(p, {
-            ...selectedCreature,
-            user_id: "pending",
-          }),
-          old
-        );
+        return EncounterUtils.addParticipant({
+          encounter: old,
+          newParticipant: p,
+          creatureForParticipant: selectedCreature,
+        });
       });
       return { previousEncounterData };
-    },
-    onError: (err, variables, context) => {
-      if (context?.previousEncounterData) {
-        encounterById.setData(id, context.previousEncounterData);
-      }
     },
   });
 }

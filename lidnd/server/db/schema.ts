@@ -504,8 +504,6 @@ export const creatures = pgTable(
     type: creatureTypeEnum("creature_type")
       .notNull()
       .default("standard_monster"),
-    /** should we only show the creature as a statblock + a name? primary use case is malice blocks for draw steel */
-    is_inanimate: boolean("is_inanimate").default(false).notNull(),
 
     user_id: text("user_id")
       .notNull()
@@ -693,8 +691,6 @@ export const creatureUploadSchema = insertCreatureSchema
   .extend({
     max_hp: z.coerce.number().gt(0),
     challenge_rating: z.coerce.number(),
-    is_player: booleanSchema.optional(),
-    is_inanimate: booleanSchema.optional(),
     column_id: z.string().optional(),
   })
   .omit({ user_id: true });

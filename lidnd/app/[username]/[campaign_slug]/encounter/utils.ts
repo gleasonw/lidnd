@@ -26,6 +26,7 @@ export function defaultParticipant(
     creature_id: string;
   }
 ): Participant {
+  // TODO: does this match up with defaults in the DB schema?
   return {
     is_active: p.is_active ?? false,
     minion_count: p.minion_count ?? 0,

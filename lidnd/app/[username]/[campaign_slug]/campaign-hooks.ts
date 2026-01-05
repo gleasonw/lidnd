@@ -121,32 +121,6 @@ export function useAddNewToParty({
 
       await qc.invalidateQueries();
     },
-    // onMutate: async ({ creature }) => {
-    //   await campaignById.cancel(campaignId);
-    //   const previous = campaignById.getData(campaignId);
-    //   campaignById.setData(campaignId, (old) => {
-    //     if (!old) {
-    //       return;
-    //     }
-    //     const playerWithPlaceholders = CreatureUtils.placeholder({
-    //       ...creature,
-    //       is_inanimate: Boolean(creature.is_inanimate),
-    //     });
-    //     return {
-    //       ...old,
-    //       campaignToPlayers: [
-    //         ...old.campaignToPlayers,
-    //         {
-    //           campaign_id: campaignId,
-    //           player: playerWithPlaceholders,
-    //           player_id: playerWithPlaceholders.id,
-    //           id: Math.random().toString(),
-    //         },
-    //       ],
-    //     };
-    //   });
-    //   return { previous };
-    // },
   });
 }
 
@@ -162,7 +136,7 @@ export function useAddExistingToParty(campaign: { id: string }) {
         if (!old) {
           return;
         }
-        const playerWithPlaceholders = CreatureUtils.placeholder({
+        const playerWithPlaceholders = CreatureUtils.withDefaults({
           ...creature,
         });
         return {

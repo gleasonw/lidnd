@@ -10,7 +10,8 @@ import { useEffect } from "react";
 import { z } from "zod";
 import type { Creature } from "@/server/api/router";
 import { api } from "@/trpc/react";
-import { UIStore, useUIStore } from "@/app/UIStore";
+import type { UIStore } from "@/app/UIStore";
+import { useUIStore } from "@/app/UIStore";
 import { CreatureUtils } from "@/utils/creatures";
 import { localCreatureUploadSchema } from "@/encounters/[encounter_index]/hooks";
 
@@ -21,8 +22,7 @@ export function useCreatureForm() {
     resolver: zodResolver(localCreatureUploadSchema),
     defaultValues: {
       name: "",
-      is_player: false,
-      is_inanimate: false,
+      type: "standard_monster",
     },
     resetOptions: {
       keepValues: false,
@@ -241,6 +241,7 @@ export function PlayerCreatureUploadForm({
   return (
     <FormProvider {...form}>
       <form
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-6 p-5 w-full"
       >

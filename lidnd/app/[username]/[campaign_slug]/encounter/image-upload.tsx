@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Upload, X } from "lucide-react";
 import clsx from "clsx";
 import { ButtonWithTooltip } from "@/components/ui/tip";
+import { returnsPromise } from "@/utils/general";
 
 export function ImageUpload({
   onUpload,
@@ -17,7 +18,7 @@ export function ImageUpload({
   image,
   clearImage,
 }: {
-  onUpload: (file: any) => void;
+  onUpload: (file: File) => void | Promise<void>;
   previewSize?: number;
   dropText: string;
   dropIcon?: React.ReactNode;
@@ -42,17 +43,21 @@ export function ImageUpload({
     }
   }, [image]);
 
-  const onImageInput = useCallback(
-    (dti: DataTransferItem) => {
-      if (!dti.type.startsWith("image")) {
-        console.error(`${dti.type} is not an image`);
-        return;
-      }
+  const onImageInput = async (dti: DataTransferItem) => {
+    if (!dti.type.startsWith("image")) {
+      console.error(`${dti.type} is not an image`);
+      return;
+    }
 
-      onUpload(dti.getAsFile() ?? undefined);
-    },
-    [onUpload]
-  );
+    await doUpload(dti.getAsFile() as File);
+  };
+
+  async function doUpload(file: File) {
+    const res = onUpload(file);
+    if (returnsPromise(res)) {
+      await res;
+    }
+  }
 
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -110,7 +115,9 @@ export function ImageUpload({
           return;
         }
         setStatus("idle");
-        onImageInput(dropItem);
+        onImageInput(dropItem).catch((error) => {
+          console.error("Failed to upload dropped image:", error);
+        });
       }}
       className={clsx(
         "border-2 border-dashed border-gray-200 p-2 flex flex-col gap-2 items-center justify-center transition-all w-full",
@@ -131,7 +138,14 @@ export function ImageUpload({
           accept="image/png, image/jpeg, image/jpg"
           onChange={(e) => {
             if (e.target.files) {
-              onUpload(e.target.files[0]);
+              const maybeFile = e.target.files[0];
+              if (!maybeFile) {
+                console.error("No file found when selecting image");
+                return;
+              }
+              doUpload(maybeFile).catch((error) => {
+                console.error("Failed to upload selected image:", error);
+              });
             }
           }}
           {...fileInputProps}
@@ -158,7 +172,9 @@ export function ImageUpload({
               console.error("No item found when pasting image");
               return;
             }
-            onImageInput(item);
+            onImageInput(item).catch((error) => {
+              console.error("Failed to upload pasted image:", error);
+            });
           }}
           {...fileInputProps}
         />

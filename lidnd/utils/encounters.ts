@@ -20,7 +20,11 @@ import {
 import type { LidndUser } from "@/app/authentication";
 import _ from "lodash";
 import { CreatureUtils } from "@/utils/creatures";
-import type { GameSession, TurnGroup } from "@/server/db/schema";
+import type {
+  GameSession,
+  ParticipantPost,
+  TurnGroup,
+} from "@/server/db/schema";
 
 export const ESTIMATED_TURN_SECONDS = 180;
 export const ESTIMATED_ROUNDS = 2;
@@ -35,10 +39,7 @@ type EncounterWithParticipants<
 export type EncounterWithParticipantDifficulty = {
   participants: Array<
     {
-      creature: Pick<
-        Creature,
-        "type" | "is_inanimate" | "challenge_rating" | "max_hp"
-      >;
+      creature: Pick<Creature, "type" | "challenge_rating" | "max_hp">;
     } & Pick<Participant, "is_ally" | "max_hp_override" | "hp">
   >;
   average_victories: number | null;
@@ -53,13 +54,8 @@ function participantHasPlayed(
   e: {
     turn_groups: Array<Pick<TurnGroup, "id" | "has_played_this_round">>;
   },
-  participant: Pick<Participant, "turn_group_id" | "has_played_this_round"> & {
-    creature: { is_inanimate: boolean };
-  }
+  participant: Pick<Participant, "turn_group_id" | "has_played_this_round">
 ) {
-  if (ParticipantUtils.isInanimate(participant)) {
-    return true;
-  }
   const groupsById = R.indexBy(e.turn_groups, (tg) => tg.id);
   const groupForParticipant = groupsById[participant.turn_group_id ?? ""];
   if (groupForParticipant) {
@@ -334,6 +330,35 @@ export const EncounterUtils = {
   remainingCr,
   participantsWithNoColumn: monstersWithNoColumn,
 
+  withDefaults(partial: Partial<EncounterWithData>): EncounterWithData {
+    return {
+      id: partial.id || "test-encounter",
+      user_id: "test-user",
+      campaign_id: "test-campaign",
+      name: "Test Encounter",
+      description: null,
+      created_at: new Date(),
+      started_at: null,
+      current_round: 0,
+      ended_at: null,
+      status: "prep",
+      label: "active",
+      order: 1,
+      index_in_campaign: 0,
+      is_editing_columns: false,
+      target_difficulty: "standard",
+      session_id: null,
+      malice: 0,
+      participants: [],
+      reminders: [],
+      turn_groups: [],
+      columns: [],
+      tags: [],
+      assets: [],
+      ...partial,
+    };
+  },
+
   goalCr(
     e: EncounterWithParticipants,
     c: Pick<Campaign, "system" | "party_level">
@@ -435,7 +460,9 @@ export const EncounterUtils = {
 
   totalCr(encounter: EncounterWithParticipantDifficulty) {
     return _.sumBy(encounter.participants, (p) => {
-      if (p.is_ally || ParticipantUtils.isInanimate(p)) return 0;
+      if (p.is_ally) {
+        return 0;
+      }
       return ParticipantUtils.challengeRating(p);
     });
   },
@@ -774,10 +801,7 @@ export const EncounterUtils = {
       // column layout. really we should have some "encounter element" system that lets us add things
       // to the column layout without those things becoming participants.
 
-      (p) =>
-        !ParticipantUtils.isFriendly(p) &&
-        !p.turn_group_id &&
-        !ParticipantUtils.isInanimate(p)
+      (p) => !ParticipantUtils.isFriendly(p) && !p.turn_group_id
     );
   },
 
@@ -884,7 +908,7 @@ export const EncounterUtils = {
   },
 
   updateCreature(c: Partial<Creature>, encounter: EncounterWithData) {
-    const creatureWithPlaceholders = CreatureUtils.placeholder(c);
+    const creatureWithPlaceholders = CreatureUtils.withDefaults(c);
     return {
       ...encounter,
       participants: encounter.participants.map((p) => {
@@ -1012,21 +1036,34 @@ export const EncounterUtils = {
     );
   },
 
-  addParticipant(
-    newParticipant: ParticipantWithData,
-    encounter: EncounterWithData
-  ) {
+  addParticipant(args: {
+    newParticipant: ParticipantPost["participant"];
+    encounter: EncounterWithData;
+    creatureForParticipant: ParticipantPost["creature"];
+  }): EncounterWithData {
+    const { newParticipant, encounter, creatureForParticipant } = args;
+    const creatureWithDefaults = CreatureUtils.withDefaults(
+      creatureForParticipant
+    );
+    const participantWithDefaults = ParticipantUtils.withDefaults(
+      { ...newParticipant, creature_id: creatureWithDefaults.id },
+      creatureWithDefaults
+    );
     const destColumnId = this.destinationColumnForNewParticipant(
-      newParticipant,
+      participantWithDefaults,
       encounter
     );
     if (destColumnId) {
-      newParticipant.column_id = destColumnId;
+      participantWithDefaults.column_id = destColumnId;
     }
 
     // Initialize minion participants with 4 minions (HP = base HP * 4)
-    if (ParticipantUtils.isMinion(newParticipant)) {
-      const baseHp = newParticipant.creature.max_hp;
+    // but only if they don't already have an overridden HP value
+    if (
+      creatureWithDefaults.type === "minion_monster" &&
+      !participantWithDefaults.max_hp_override
+    ) {
+      const baseHp = creatureWithDefaults.max_hp;
       const healthForMinionGroup = baseHp * 4;
       newParticipant.hp = healthForMinionGroup;
       newParticipant.max_hp_override = healthForMinionGroup;
@@ -1034,7 +1071,7 @@ export const EncounterUtils = {
 
     return {
       ...encounter,
-      participants: [...encounter.participants, newParticipant],
+      participants: [...encounter.participants, participantWithDefaults],
     };
   },
 

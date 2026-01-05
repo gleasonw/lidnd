@@ -184,12 +184,12 @@ function challengeRating(p: ChallengeRatingParticipant) {
   }
 }
 
-function placeholderParticipantWithData(
+function withDefaults(
   p: AddParticipant,
   creature: AddCreature
 ): ParticipantWithData {
   const randomId = Math.random().toString();
-  const placeholderCreature = CreatureUtils.placeholder(creature);
+  const placeholderCreature = CreatureUtils.withDefaults(creature);
   return {
     ...defaultParticipant({
       ...p,
@@ -279,22 +279,6 @@ function isActivatable(p: {
 }
 
 export const ParticipantUtils = {
-  isInanimate: (
-    p:
-      | Pick<Participant, "inanimate">
-      | { creature: Pick<Creature, "is_inanimate"> }
-      | (Pick<Participant, "inanimate"> & {
-          creature: Pick<Creature, "is_inanimate">;
-        })
-  ) => {
-    if ("inanimate" in p && "creature" in p) {
-      return p.inanimate || p.creature.is_inanimate;
-    } else if ("inanimate" in p) {
-      return p.inanimate;
-    } else {
-      return p.creature.is_inanimate;
-    }
-  },
   numberOfMinions: (
     p: ChallengeRatingParticipant & Pick<Participant, "hp">
   ) => {
@@ -316,7 +300,7 @@ export const ParticipantUtils = {
   maxHp,
   percentDamage,
   challengeRating,
-  placeholderParticipantWithData,
+  withDefaults,
   addStatusEffect,
   updateMinionCount,
   sortLinearly,

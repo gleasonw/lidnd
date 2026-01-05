@@ -29,7 +29,8 @@ export const CreatureUtils = {
     return `${baseAwsUrl}/${key}`;
   },
 
-  placeholder(creature: Partial<Creature>): Creature {
+  withDefaults(creature: Partial<Creature>): Creature {
+    // TODO: ensure these match the defaults in the DB schema
     return {
       ...creature,
       name: creature.name ?? "",
@@ -37,7 +38,6 @@ export const CreatureUtils = {
       id: creature.id ?? "pending",
       created_at: new Date(),
       challenge_rating: creature.challenge_rating ?? 0,
-      is_inanimate: creature.is_inanimate ?? false,
       max_hp: creature.max_hp ?? 0,
       initiative_bonus: creature.initiative_bonus ?? 0,
       stat_block_height: creature.stat_block_height ?? 250,

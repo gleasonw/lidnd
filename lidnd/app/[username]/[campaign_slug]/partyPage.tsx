@@ -133,7 +133,6 @@ function AddPlayerToPartyForm() {
       campaign_id: campaign.id,
       creature: {
         ...creatureValue,
-        is_player: true,
         max_hp: 1,
         challenge_rating: 0,
         type: "player",

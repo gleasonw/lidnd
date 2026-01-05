@@ -1,3 +1,4 @@
+import type { Campaign } from "@/app/[username]/types";
 import type { ParticipantWithData } from "@/server/api/router";
 import type { GameSession } from "@/server/db/schema";
 import { EncounterUtils } from "@/utils/encounters";
@@ -11,7 +12,6 @@ type MockParticipant = {
   id: string;
   initiative: number;
   created_at: Date;
-  is_player: boolean;
   minion_count: number;
   max_hp: number;
 };
@@ -24,7 +24,7 @@ function createParticipant({
   minion_count = 0,
   max_hp = 10,
 }: Partial<MockParticipant> & { id: string }): ParticipantWithData {
-  return ParticipantUtils.placeholderParticipantWithData(
+  return ParticipantUtils.withDefaults(
     {
       id,
       encounter_id: "testing",
@@ -125,7 +125,7 @@ describe("Participant turn order tests", () => {
 
 describe("Overkill minions", () => {
   test("overkill damage kills the right number of minions", () => {
-    const participant = ParticipantUtils.placeholderParticipantWithData(
+    const participant = ParticipantUtils.withDefaults(
       {
         id: "1",
         encounter_id: "nonsense",
@@ -153,40 +153,6 @@ describe("Overkill minions", () => {
 });
 
 describe("Group turn toggle and round increment tests", () => {
-  test("round number increments when last participant plays and there's an inanimate participant", () => {
-    const participants = [
-      createParticipant({ id: "1" }),
-      createParticipant({ id: "2" }),
-      createParticipant({ id: "3" }),
-    ];
-
-    // Manually add inanimate participant and has_played_this_round
-    const inanimateParticipant = {
-      ...participants[0]!,
-      inanimate: true,
-      has_played_this_round: false,
-    };
-    const encounterWithInanimate = {
-      current_round: 1,
-      participants: [
-        inanimateParticipant,
-        { ...participants[1]!, has_played_this_round: true },
-        { ...participants[2]!, has_played_this_round: false },
-      ],
-      turn_groups: [],
-      malice: 0,
-    };
-
-    const result = EncounterUtils.toggleGroupTurn({
-      participant: { id: "3" },
-      encounter: encounterWithInanimate,
-      gameSession: null,
-    });
-
-    // Even with an inanimate participant, if all non-inanimate have played, round should increment
-    expect(result.updatedEncounter.current_round).toBe(2);
-  });
-
   test("round number increments when last participant without turn group plays", () => {
     const participants = [
       createParticipant({ id: "1" }),
@@ -365,47 +331,23 @@ describe("Malice calculation tests", () => {
     const monster = createParticipant({ id: "m1", initiative: 15, hp: 30 });
     monster.creature.type = "standard_monster";
 
-    const encounter = {
+    const campaign = {
+      system: "drawsteel" as const,
+    } satisfies Pick<Campaign, "system">;
+
+    const encounter = EncounterUtils.withDefaults({
       id: "test",
-      campaign_id: "test",
-      user_id: "test",
-      name: "Test Encounter",
-      description: null,
-      started_at: null,
-      created_at: new Date(),
       current_round: 0,
-      ended_at: null,
       status: "prep" as const,
-      label: "active" as const,
       order: 1,
-      index_in_campaign: 0,
-      is_editing_columns: true,
-      target_difficulty: "standard" as const,
-      session_id: null,
-      average_victories: 0,
       malice: 0,
       participants: [...players, monster],
-      reminders: [],
-      turn_groups: [],
-      columns: [],
-      tags: [],
-      assets: [],
-      campaigns: {
-        id: "test",
-        name: "Test Campaign",
-        user_id: "test",
-        description: null,
-        created_at: new Date(),
-        system: "drawsteel" as const,
-        party_level: 1,
-        slug: "test",
-        image_url: null,
-      },
-    };
-
-    const startedEncounter = EncounterUtils.start(encounter, {
-      system: "drawsteel",
     });
+
+    const startedEncounter = EncounterUtils.start(
+      { ...encounter, average_victories: 0 },
+      campaign
+    );
 
     // 3 players + 1 (round 1) = 4
     expect(startedEncounter.malice).toBe(4);
@@ -548,6 +490,7 @@ describe("Malice calculation tests", () => {
       ended_at: null,
       victory_count: 3,
     } satisfies GameSession;
+
     const result = EncounterUtils.toggleGroupTurn({
       participant: monster,
       encounter,
@@ -555,5 +498,77 @@ describe("Malice calculation tests", () => {
     });
     expect(result.updatedEncounter.current_round).toBe(3);
     expect(result.updatedEncounter.malice).toBe(16); // 8 + (2 players + 3 victories + round 3)
+  });
+});
+
+describe("Add participant tests", () => {
+  test("adds participant with correct creature_id", () => {
+    const encounter = EncounterUtils.withDefaults({
+      id: "enc1",
+    });
+
+    const creature = {
+      id: "creature1",
+      name: "Goblin",
+      max_hp: 10,
+      challenge_rating: 1,
+      type: "standard_monster" as const,
+    };
+
+    const newParticipant = {
+      id: "p1",
+      encounter_id: "enc1",
+      initiative: 15,
+      hp: 10,
+    };
+
+    const result = EncounterUtils.addParticipant({
+      newParticipant,
+      encounter,
+      creatureForParticipant: creature,
+    });
+
+    expect(result.participants.length).toBe(1);
+    expect(result.participants[0]!.id).toBe("p1");
+    expect(result.participants[0]!.creature_id).toBe("creature1");
+  });
+
+  test("adds participant with correct column_id when encounter has columns", () => {
+    const encounter = EncounterUtils.withDefaults({
+      id: "enc1",
+      columns: [
+        {
+          id: "col1",
+          encounter_id: "enc1",
+          percent_width: 100,
+          is_home_column: false,
+          participants: [],
+        },
+      ],
+    });
+
+    const creature = {
+      id: "creature1",
+      name: "Orc",
+      max_hp: 15,
+      challenge_rating: 2,
+      type: "standard_monster" as const,
+    };
+
+    const newParticipant = {
+      id: "p1",
+      encounter_id: "enc1",
+      initiative: 12,
+      hp: 15,
+    };
+
+    const result = EncounterUtils.addParticipant({
+      newParticipant,
+      encounter,
+      creatureForParticipant: creature,
+    });
+
+    expect(result.participants.length).toBe(1);
+    expect(result.participants[0]!.column_id).toBe("col1");
   });
 });

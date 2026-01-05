@@ -17,6 +17,7 @@ import clsx from "clsx";
 import battleStyles from "./battle-ui.module.css";
 import type {
   Creature,
+  Encounter,
   Participant,
   ParticipantWithData,
 } from "@/server/api/router";
@@ -134,7 +135,6 @@ export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
   const [encounter] = useEncounter();
   const { mutate: startEncounter } = useStartEncounter();
-  const { mutate: updateEncounter } = useUpdateEncounter();
   const uiStore = useEncounterUIStore();
   const { rollEncounter } = useEncounterLinks(encounter);
   const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
@@ -206,33 +206,6 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full">
                     <div className="flex flex-col">
                       <div className="flex gap-5 items-baseline">
-                        <Select
-                          onValueChange={(v) => {
-                            console.log(v);
-                            updateEncounter({
-                              ...encounter,
-                              target_difficulty: v as any,
-                            });
-                          }}
-                          defaultValue={
-                            encounter.target_difficulty || undefined
-                          }
-                        >
-                          <SelectTrigger className="w-fit">
-                            <SelectValue placeholder="Select difficulty" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="easy">
-                              Easy difficulty
-                            </SelectItem>
-                            <SelectItem value="standard">
-                              Standard difficulty
-                            </SelectItem>
-                            <SelectItem value="hard">
-                              Hard difficulty
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
                         <div className="flex-grow-0">
                           <EncounterTagger />
                         </div>
@@ -870,42 +843,40 @@ export const ParticipantBattleData = observer(function BattleCard({
     >
       <BattleCardLayout key={participant.id} participant={participant}>
         <div className="flex flex-col gap-3 w-full">
-          {ParticipantUtils.isInanimate(participant) ? null : (
-            <div className="flex gap-2 items-center justify-between py-2">
-              <div className="flex flex-col gap-2 w-full">
-                <div className="flex gap-3 w-full">
-                  <div className="flex gap-2 items-center relative w-full">
-                    {ParticipantUtils.hasIcon(participant) ? (
-                      <BattleCardCreatureIcon participant={participant} />
+          <div className="flex gap-2 items-center justify-between py-2">
+            <div className="flex flex-col gap-2 w-full">
+              <div className="flex gap-3 w-full">
+                <div className="flex gap-2 items-center relative w-full">
+                  {ParticipantUtils.hasIcon(participant) ? (
+                    <BattleCardCreatureIcon participant={participant} />
+                  ) : null}
+                  {tgForParticipant ? (
+                    <TurnGroupLabel
+                      turnGroup={tgForParticipant}
+                      className="h- w-5"
+                    />
+                  ) : null}
+                  <div className="flex justify-between w-full flex-wrap items-center">
+                    <BattleCardCreatureName participant={participant} />
+                    {ParticipantUtils.isMinion(participant) ? (
+                      <div className="flex gap-1 text-gray-400 px-3">
+                        <UsersIcon className="h-5 w-5  inline-block" />
+                        <span>
+                          x {ParticipantUtils.numberOfMinions(participant)}
+                        </span>
+                      </div>
                     ) : null}
-                    {tgForParticipant ? (
-                      <TurnGroupLabel
-                        turnGroup={tgForParticipant}
-                        className="h- w-5"
-                      />
-                    ) : null}
-                    <div className="flex justify-between w-full flex-wrap items-center">
-                      <BattleCardCreatureName participant={participant} />
-                      {ParticipantUtils.isMinion(participant) ? (
-                        <div className="flex gap-1 text-gray-400 px-3">
-                          <UsersIcon className="h-5 w-5  inline-block" />
-                          <span>
-                            x {ParticipantUtils.numberOfMinions(participant)}
-                          </span>
-                        </div>
-                      ) : null}
-                    </div>
                   </div>
                 </div>
-                <div className="flex justify-between">
-                  <ParticipantHealthForm
-                    participant={participant}
-                    extraInputs={<ParticipantNotes participant={participant} />}
-                  />
-                </div>
+              </div>
+              <div className="flex justify-between">
+                <ParticipantHealthForm
+                  participant={participant}
+                  extraInputs={<ParticipantNotes participant={participant} />}
+                />
               </div>
             </div>
-          )}
+          </div>
 
           {encounterUiStore.isEditingInitiative && (
             <div className="flex w-full flex-wrap">
@@ -1219,12 +1190,6 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
   );
 });
 
-export function BattleCardHealthAndStatus({
-  participant,
-}: BattleCardParticipantProps) {
-  return <div className="flex flex-col gap-9"></div>;
-}
-
 export function MinionCardStack({ minionCount }: { minionCount: number }) {
   return (
     <Badge className="absolute top-2 right-2 w-11 whitespace-nowrap">
@@ -1360,7 +1325,7 @@ const MonsterSection = observer(function TurnGroupSetup() {
         setCreatureAddDialogIsOpen(false);
       }
     });
-  }, []);
+  }, [keyForExistingCreature, qc]);
 
   useHotkey("a", () => {
     setCreatureAddDialogIsOpen(true);
@@ -1377,37 +1342,38 @@ const MonsterSection = observer(function TurnGroupSetup() {
       <div className="flex flex-col items-center gap-5">
         {isAtTargetDifficulty ? (
           <div className="text-gray-500 text-sm">
-            {remainingCr === 0 ? (
-              <span>At maximum EV for difficulty.</span>
-            ) : (
-              <span className="flex gap-2 items-baseline">
-                <span>
-                  Within budget for target difficulty. Can spend up to
-                </span>
-                <span className="text-2xl font-bold text-black">
-                  {remainingCr}
-                </span>
-                <span>more EV.</span>
-              </span>
-            )}
+            <span className="flex gap-2 items-baseline w-full">
+              {remainingCr === 0 ? (
+                <>
+                  <span>At maximum EV for</span>
+                  <span>
+                    <TargetDifficultySelect />
+                  </span>
+                  <span>difficulty.</span>
+                </>
+              ) : (
+                <>
+                  <span>Within budget for</span>
+                  <span>
+                    <TargetDifficultySelect />
+                  </span>
+                  <span>difficulty. Can spend up to</span>
+                  <span className="text-2xl font-bold text-black">
+                    {remainingCr}
+                  </span>
+                  <span>more EV.</span>
+                </>
+              )}
+            </span>
           </div>
         ) : (
           <div className="flex gap-2 items-baseline text-gray-500 text-sm">
             <span>{remainingCr < 0 ? "Remove" : "Add up to"}</span>
-            <span className="text-2xl font-bold text-black">
+            <span className="text-2xl font-bold text-black w-8 text-center">
               {Math.abs(EncounterUtils.remainingCr(encounter, campaign))}
             </span>
             <span>EV worth of monsters for</span>
-            <span
-              className={clsx(
-                EncounterUtils.cssClassForDifficulty(
-                  encounter.target_difficulty
-                ),
-                "p-1 rounded-md"
-              )}
-            >
-              {encounter.target_difficulty}
-            </span>
+            <TargetDifficultySelect />
             <span>difficulty</span>
           </div>
         )}
@@ -1515,6 +1481,33 @@ const MonsterSection = observer(function TurnGroupSetup() {
   );
 });
 
+function TargetDifficultySelect() {
+  const [encounter] = useEncounter();
+  const { mutate: updateEncounter } = useUpdateEncounter();
+
+  return (
+    <Select
+      onValueChange={(v) => {
+        console.log(v);
+        updateEncounter({
+          ...encounter,
+          target_difficulty: v as Encounter["target_difficulty"],
+        });
+      }}
+      defaultValue={encounter.target_difficulty || undefined}
+    >
+      <SelectTrigger className="w-32">
+        <SelectValue placeholder="Select difficulty" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="easy">easy</SelectItem>
+        <SelectItem value="standard">standard</SelectItem>
+        <SelectItem value="hard">hard</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
 function AssetThumbnail({
   asset,
 }: {
@@ -1546,7 +1539,7 @@ function AssetThumbnail({
               encounterId: encounter.id,
               assetId: asset.id,
             });
-            qc.invalidateQueries();
+            await qc.invalidateQueries();
           });
         }}
         disabled={isPending}
@@ -1568,7 +1561,7 @@ function ImageAssetAddButton() {
     search: debouncedSearch,
   });
   const qc = useQueryClient();
-  const { mutate: uploadAsset } = api.upload.useMutation();
+  const { mutateAsync: uploadAsset } = api.upload.useMutation();
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     setDebouncedSearch(value);
@@ -1578,39 +1571,30 @@ function ImageAssetAddButton() {
     setIsUploading(true);
     try {
       const { width, height } = await readImageHeightWidth(file);
-      uploadAsset(
-        {
-          filename: file.name,
-          filetype: file.type,
-          width,
-          height,
-        },
-        {
-          onSuccess: async (data) => {
-            try {
-              await uploadFileToAWS(file, data.signedUrl);
-              await addImageAssetToEncounter({
-                encounterId: encounter.id,
-                inputAsset: {
-                  url: ImageUtils.url(data.image),
-                  type: "plain",
-                  baseModel: data.image,
-                },
-              });
-              qc.invalidateQueries();
-              setUploadImage(undefined);
-            } catch (error) {
-              console.error("Failed to upload image:", error);
-            } finally {
-              setIsUploading(false);
-            }
+      const data = await uploadAsset({
+        filename: file.name,
+        filetype: file.type,
+        width,
+        height,
+      });
+      try {
+        await uploadFileToAWS(file, data.signedUrl);
+        await addImageAssetToEncounter({
+          encounterId: encounter.id,
+          inputAsset: {
+            url: ImageUtils.url(data.image),
+            type: "plain",
+            baseModel: data.image,
           },
-          onError: (error) => {
-            console.error("Failed to create image asset:", error);
-            setIsUploading(false);
-          },
-        }
-      );
+        });
+        await qc.invalidateQueries();
+        setUploadImage(undefined);
+      } catch (error) {
+        console.error("Failed to upload image asset:", error);
+        setIsUploading(false);
+      } finally {
+        setIsUploading(false);
+      }
     } catch (error) {
       console.error("Failed to read image dimensions:", error);
       setIsUploading(false);

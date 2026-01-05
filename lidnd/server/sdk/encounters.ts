@@ -135,7 +135,12 @@ async function addParticipant(
     };
 
     // Initialize minion participants with 4 minions (HP = base HP * 4)
-    if (ParticipantUtils.isMinion(participantWithCreature)) {
+    // unless the user has specified otherwise
+    if (
+      ParticipantUtils.isMinion(participantWithCreature) &&
+      participant.max_hp_override === undefined
+    ) {
+      console.log({ participant }, "setting default group size");
       const baseHp = participantWithCreature.creature.max_hp;
       const healthForMinionGroup = baseHp * 4;
       participant.hp = healthForMinionGroup;
