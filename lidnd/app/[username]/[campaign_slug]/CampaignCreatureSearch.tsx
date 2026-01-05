@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useTransition } from "react";
 
 export function CampaignCreatureSearch({
   defaultValue,
@@ -13,21 +13,18 @@ export function CampaignCreatureSearch({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const updateSearch = useCallback(
-    (value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value) {
-        params.set("search", value);
-      } else {
-        params.delete("search");
-      }
+  const updateSearch = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set("search", value);
+    } else {
+      params.delete("search");
+    }
 
-      startTransition(() => {
-        router.push(`?${params.toString()}`);
-      });
-    },
-    [router, searchParams]
-  );
+    startTransition(() => {
+      router.replace(`?${params.toString()}`);
+    });
+  };
 
   return (
     <div className="relative max-w-sm">
