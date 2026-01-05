@@ -170,7 +170,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
               battleStyles.root
             )}
           >
-            <div className="flex flex-col w-full px-4 gap-5 mx-auto max-w-[900px] xl:max-w-[2000px]">
+            <div className="flex flex-col w-full px-4 gap-3 mx-auto max-w-[900px] xl:max-w-[2000px]">
               <div className="w-full flex gap-5 py-2">
                 <EncounterNameInput />
                 <div className="flex gap-8 ml-auto items-center pr-2">
@@ -204,22 +204,20 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   data-value="prep"
                 >
                   <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full">
-                    <div className="flex flex-col">
-                      <div className="flex gap-5 items-baseline">
-                        <div className="flex-grow-0">
-                          <EncounterTagger />
-                        </div>
-                      </div>
-                      <div>
-                        <DescriptionTextArea />
+                    <div className="flex flex-col gap-3">
+                      <div className="flex-grow-0">
+                        <EncounterTagger />
                       </div>
                       <Card className="p-2">
                         <ReminderInput />
                       </Card>
+                      <div>
+                        <DescriptionTextArea />
+                      </div>
                     </div>
                     <div
                       className={clsx(
-                        "flex flex-col gap-10 min-h-0",
+                        "flex flex-col gap-7 min-h-0",
                         battleStyles.adversarySection
                       )}
                     >
@@ -597,8 +595,6 @@ function SliderTier({ difficulty }: { difficulty: Difficulty }) {
     encounter,
     campaign,
   });
-
-  console.log({ difficulty, currentDifficulty });
 
   const res = EncounterUtils.evRangeForDifficulty({
     encounter,

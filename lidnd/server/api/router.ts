@@ -549,9 +549,10 @@ export const appRouter = t.router({
           creature_id: userCreature[0].id,
         });
       }
-      const newP = await ServerEncounter.addParticipant(opts.ctx, {
-        hp: userCreature[0].max_hp,
-        ...opts.input,
+      const newP = await ServerEncounter.addParticipant({
+        user: opts.ctx.user,
+        creature: userCreature[0],
+        participant: opts.input,
       });
       revalidatePath("/");
       return newP;
@@ -679,11 +680,12 @@ export const appRouter = t.router({
             campaign_id: campaign.id,
             player_id: creature.id,
           }),
-          ServerCampaign.addCreatureToAllEncounters(
-            opts.ctx,
-            { creatureId: creature.id, campaign },
-            tx
-          ),
+          ServerCampaign.addCreatureToAllEncounters({
+            ctx: opts.ctx,
+            campaign,
+            creature,
+            dbObject: tx,
+          }),
         ]);
         revalidatePath(`/`);
 
@@ -727,11 +729,12 @@ export const appRouter = t.router({
             campaign_id: campaign.id,
             player_id: opts.input.creature.id,
           }),
-          ServerCampaign.addCreatureToAllEncounters(
-            opts.ctx,
-            { creatureId: opts.input.creature.id, campaign },
-            tx
-          ),
+          ServerCampaign.addCreatureToAllEncounters({
+            ctx: opts.ctx,
+            campaign,
+            creature,
+            dbObject: tx,
+          }),
         ]);
       });
     }),

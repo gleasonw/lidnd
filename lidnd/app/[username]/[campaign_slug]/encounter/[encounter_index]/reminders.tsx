@@ -12,7 +12,7 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 import { useEncounter } from "@/encounters/[encounter_index]/hooks";
 import { api } from "@/trpc/react";
 import { EncounterUtils } from "@/utils/encounters";
-import { Clock, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React from "react";
 import {
@@ -86,7 +86,19 @@ export function ReminderInput() {
       className="flex bg-white flex-col rounded-lg"
     >
       <div className="flex gap-2 items-center">
-        <Clock className="text-muted-foreground shrink-0" size={20} />
+        <Select value={alertAfterRound} onValueChange={setAlertAfterRound}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="0">Every round</SelectItem>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20].map((n) => (
+              <SelectItem key={n} value={n.toString()}>
+                Round {n}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <LidndTextInput
           ref={inputRef}
           variant="ghost"
@@ -95,19 +107,7 @@ export function ReminderInput() {
           onChange={(e) => setReminder(e.target.value)}
           className="flex-1 min-w-0"
         />
-        <Select value={alertAfterRound} onValueChange={setAlertAfterRound}>
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="0">All rounds</SelectItem>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20].map((n) => (
-              <SelectItem key={n} value={n.toString()}>
-                Round {n}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
         <Button
           type="submit"
           size="icon"

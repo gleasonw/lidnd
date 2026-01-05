@@ -6,6 +6,7 @@ import {
   encounter_to_tag,
   encounters,
   gameSessions,
+  type CreaturePost,
 } from "@/server/db/schema";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { TRPCError } from "@trpc/server";
@@ -37,25 +38,27 @@ export const ServerCampaign = {
       .where(eq(campaigns.user_id, ctx.user.id));
   },
 
-  addCreatureToAllEncounters: async function (
-    ctx: LidndContext,
-    args: { creatureId: string; campaign: { id: string } },
-    dbObject = db
-  ) {
+  addCreatureToAllEncounters: async function (args: {
+    ctx: LidndContext;
+    dbObject?: typeof db;
+    campaign: { id: string };
+    creature: CreaturePost;
+  }) {
+    const { ctx, campaign, creature, dbObject = db } = args;
     // add player to all encounters in campaign
-    const campaignEncounters = await db.query.encounters.findMany({
-      where: eq(encounters.campaign_id, args.campaign.id),
+    const campaignEncounters = await dbObject.query.encounters.findMany({
+      where: eq(encounters.campaign_id, campaign.id),
     });
     await Promise.all(
       campaignEncounters.map((e) =>
-        ServerEncounter.addParticipant(
-          ctx,
-          {
+        ServerEncounter.addParticipant({
+          user: ctx.user,
+          creature,
+          participant: {
             encounter_id: e.id,
-            creature_id: args.creatureId,
           },
-          dbObject
-        )
+          dbObject,
+        })
       )
     );
   },

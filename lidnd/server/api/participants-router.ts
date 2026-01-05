@@ -44,14 +44,12 @@ export const participantsRouter = {
           tx
         );
 
-        const np = await ServerEncounter.addParticipant(
-          opts.ctx,
-          {
-            ...opts.input.participant,
-            creature_id: nc.creature.id,
-          },
-          tx
-        );
+        const np = await ServerEncounter.addParticipant({
+          user: opts.ctx.user,
+          creature: nc.creature,
+          participant: opts.input.participant,
+          dbObject: tx,
+        });
         return [nc, np] as const;
       });
       revalidatePath("/");

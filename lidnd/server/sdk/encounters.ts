@@ -10,15 +10,16 @@ import {
   encounter_to_tag,
   type LidndImage,
   encounterAsset,
+  type ParticipantPost,
+  creatures,
 } from "@/server/db/schema";
-import type { InsertParticipant, Participant } from "@/server/api/router";
+import type { Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
 import { eq, and, sql, inArray, ilike } from "drizzle-orm";
 import _ from "lodash";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { EncounterUtils } from "@/utils/encounters";
-import { CreatureUtils } from "@/utils/creatures";
-import { ParticipantUtils } from "@/utils/participants";
+import { randomUUID } from "node:crypto";
 
 export type EncountersInCampaign = Awaited<
   ReturnType<typeof ServerEncounter.encountersInCampaign>
@@ -81,19 +82,19 @@ async function create(
       .returning();
 
     const { campaignToPlayers } = campaign;
+    console.log({ campaignToPlayers });
     if (campaignToPlayers && campaignToPlayers.length > 0) {
       await Promise.all(
         campaignToPlayers.map(({ player: creature }) =>
-          ServerEncounter.addParticipant(
-            ctx,
-            {
+          ServerEncounter.addParticipant({
+            creature,
+            participant: {
               encounter_id: encounterResult.id,
               creature_id: creature.id,
-              is_ally: !CreatureUtils.isPlayer(creature),
-              hp: CreatureUtils.startOfEncounterHP(creature),
             },
-            tx
-          )
+            user: ctx.user,
+            dbObject: tx,
+          })
         )
       );
     }
@@ -114,97 +115,53 @@ async function create(
 // todo: allow callers to pass in an encounter they've already fetched
 // todo: there are some mutations in here that optimistic updates aren't handling.
 // we should define a "recipe" and then persist the results
-async function addParticipant(
-  ctx: LidndContext,
-  participant: InsertParticipant,
-  dbObject = db
-) {
-  return await dbObject.transaction(async (tx) => {
-    const creature = await tx.query.creatures.findFirst({
-      where: (creatures, { eq }) => eq(creatures.id, participant.creature_id),
-    });
-    if (!creature) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to add participant",
-      });
-    }
-    const participantWithCreature = {
-      ...participant,
-      creature,
-    };
+async function addParticipant(args: {
+  user: LidndContext["user"];
+  creature: ParticipantPost["creature"];
+  participant: ParticipantPost["participant"];
+  dbObject?: typeof db;
+}) {
+  const { user, creature, participant, dbObject = db } = args;
+  const encounter = await ServerEncounter.encounterByIdThrows(
+    { user },
+    participant.encounter_id,
+    dbObject
+  );
 
-    // Initialize minion participants with 4 minions (HP = base HP * 4)
-    // unless the user has specified otherwise
-    if (
-      ParticipantUtils.isMinion(participantWithCreature) &&
-      participant.max_hp_override === undefined
-    ) {
-      console.log({ participant }, "setting default group size");
-      const baseHp = participantWithCreature.creature.max_hp;
-      const healthForMinionGroup = baseHp * 4;
-      participant.hp = healthForMinionGroup;
-      participant.max_hp_override = healthForMinionGroup;
-    }
-
-    const [newParticipantResult, e] = await Promise.all([
-      tx.insert(participants).values(participant).returning(),
-      ServerEncounter.encounterByIdThrows(ctx, participant.encounter_id, tx),
-    ]);
-    const newParticipant = newParticipantResult[0];
-    if (!newParticipant) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to add participant",
-      });
-    }
-
-    if (newParticipant.column_id) {
-      return;
-    }
-
-    if (ParticipantUtils.isPlayer(participantWithCreature)) {
-      return;
-    }
-
-    const columnToAssign = EncounterUtils.destinationColumnForNewParticipant(
-      newParticipant,
-      e
-    );
-    if (columnToAssign) {
-      const pWithColumn = await tx
-        .update(participants)
-        .set({ column_id: columnToAssign })
-        .where(eq(participants.id, newParticipant.id))
-        .returning();
-      if (!pWithColumn[0]) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to assign column",
-        });
-      }
-      return pWithColumn[0];
-    }
-    // we need to create a new column for this new participant
-    const newColumn = await tx
-      .insert(stat_columns)
-      .values({
-        encounter_id: participant.encounter_id,
-        percent_width: 100,
-      })
-      .returning();
-    if (!newColumn[0]) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create column",
-      });
-    }
-    await tx
-      .update(participants)
-      .set({ column_id: newColumn[0].id })
-      .where(eq(participants.id, newParticipant.id));
-    return newParticipant;
+  // TODO: maybe in the future this would be easier if addParticipant also returned a log of the changes made, for server-side code.
+  // for now we can just manually reconstruct the new encounter state.
+  const tempId = randomUUID();
+  const encounterWithNewParticipant = EncounterUtils.addParticipant({
+    encounter,
+    newParticipant: { id: tempId, ...participant },
+    creatureForParticipant: creature,
   });
+  const newParticipant = encounterWithNewParticipant.participants.find(
+    (p) => p.id === tempId
+  );
+  if (!newParticipant) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Failed to add participant",
+    });
+  }
+
+  const maybeCreature = await db.query.creatures.findFirst({
+    where: and(
+      eq(creatures.id, newParticipant.creature_id),
+      eq(creatures.user_id, user.id)
+    ),
+  });
+  const mutationsToRun = [];
+  if (maybeCreature === undefined) {
+    mutationsToRun.push(
+      dbObject.insert(creatures).values(newParticipant.creature)
+    );
+  }
+  mutationsToRun.push(dbObject.insert(participants).values(newParticipant));
+  await Promise.all(mutationsToRun);
+
+  return newParticipant;
 }
 
 async function getEncounters(ctx: LidndContext, encounterIds: string[]) {

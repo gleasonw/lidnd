@@ -26,9 +26,10 @@ export function crLabel(campaign: Pick<Campaign, "system">) {
       return "CR";
     case "drawsteel":
       return "EV";
-    default:
+    default: {
       const _exhaustiveCheck: never = campaign.system;
       throw new Error(`Unhandled campaign system: ${_exhaustiveCheck}`);
+    }
   }
 }
 
