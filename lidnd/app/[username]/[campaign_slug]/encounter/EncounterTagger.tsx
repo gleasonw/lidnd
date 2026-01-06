@@ -10,14 +10,17 @@ import {
 } from "@/encounters/[encounter_index]/hooks";
 import type { AutocompleteOption } from "@/components/ui/lidnd-autocomplete";
 import { Badge } from "@/components/ui/badge";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { appRoutes } from "@/app/routes";
+import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
+import { useUser } from "@/app/[username]/user-provider";
 
-interface EncounterTaggerProps {
-  className?: string;
-}
-
-export function EncounterTagger({ className }: EncounterTaggerProps) {
+export function EncounterTagger() {
   const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
+  const user = useUser();
   const { data: userTags = [] } = useUserTags();
   const createTag = useCreateTag();
   const addTag = useAddTagToEncounter();
@@ -57,7 +60,9 @@ export function EncounterTagger({ className }: EncounterTaggerProps) {
     if (input.length === 0) {
       return;
     } else {
-      handleCreate(input);
+      handleCreate(input).catch((err) => {
+        console.error("Error creating tag:", err);
+      });
     }
   };
 
@@ -95,10 +100,23 @@ export function EncounterTagger({ className }: EncounterTaggerProps) {
         {encounter.tags.map((tag) => (
           <Badge
             variant="outline"
-            className="text-blue-700 border-blue-700"
+            className="text-blue-700 border-blue-700 flex"
             key={tag.id}
           >
-            {tag.tag.name}
+            <Link
+              href={appRoutes.campaign({
+                campaign,
+                user,
+                encounterSearchFilters: { tagId: tag.tag_id },
+              })}
+              className="w-fit flex"
+            >
+              <span className="p-1">{tag.tag.name}</span>
+            </Link>
+
+            <Button variant="ghost" className="w-3 h-3 p-2">
+              <XIcon className="w-4 h-4" />
+            </Button>
           </Badge>
         ))}
       </div>

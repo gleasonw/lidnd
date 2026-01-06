@@ -207,6 +207,7 @@ export const appRouter = t.router({
       z.object({
         campaign: z.object({ id: z.string() }),
         search: z.string().optional(),
+        tagId: z.string().optional(),
       })
     )
     .query(async (opts) => {
@@ -214,6 +215,7 @@ export const appRouter = t.router({
         ctx: opts.ctx,
         campaign: { id: opts.input.campaign.id },
         search: opts.input.search,
+        tagId: opts.input.tagId,
       });
     }),
 

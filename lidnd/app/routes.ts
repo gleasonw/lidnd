@@ -49,11 +49,18 @@ export const appRoutes = {
   campaign({
     campaign,
     user,
+    encounterSearchFilters,
   }: {
     campaign: { slug: string };
     user: LidndUser;
+    encounterSearchFilters?: Record<string, string>;
   }) {
-    return `${this.dashboard(user)}/${campaign.slug}`;
+    const baseUrl = `${this.dashboard(user)}/${campaign.slug}`;
+    if (encounterSearchFilters) {
+      const searchParams = new URLSearchParams(encounterSearchFilters);
+      return `${baseUrl}?${searchParams.toString()}`;
+    }
+    return baseUrl;
   },
 
   creaturesForCampaign({

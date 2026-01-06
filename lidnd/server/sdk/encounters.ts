@@ -15,7 +15,7 @@ import {
 } from "@/server/db/schema";
 import type { Participant } from "@/server/api/router";
 import { TRPCError } from "@trpc/server";
-import { eq, and, sql, inArray, ilike } from "drizzle-orm";
+import { eq, and, sql, inArray, ilike, exists } from "drizzle-orm";
 import _ from "lodash";
 import { ServerCampaign } from "@/server/sdk/campaigns";
 import { EncounterUtils } from "@/utils/encounters";
@@ -205,16 +205,31 @@ export const ServerEncounter = {
     ctx,
     campaign,
     search,
+    tagId,
   }: {
     ctx: LidndContext;
     campaign: { id: string };
     search?: string | undefined;
+    tagId?: string | undefined;
   }) {
     const { user } = ctx;
     return await db.query.encounters.findMany({
       where: and(
         eq(encounters.campaign_id, campaign.id),
         eq(encounters.user_id, user.id),
+        tagId
+          ? exists(
+              db
+                .select()
+                .from(encounter_to_tag)
+                .where(
+                  and(
+                    eq(encounter_to_tag.encounter_id, encounters.id),
+                    eq(encounter_to_tag.tag_id, tagId)
+                  )
+                )
+            )
+          : undefined,
         search ? ilike(encounters.name, `%${search}%`) : undefined
       ),
       with: {

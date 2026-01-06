@@ -34,6 +34,7 @@ export default async function CampaignPage(props: {
   }
 
   const encounterSearch = searchParams?.encounterSearch as string | undefined;
+  const filteredTagId = searchParams?.tagId as string | undefined;
 
   //The big learning has been that trying to have server functions fetching AND RENDERING data causes
   // lots of headaches around invaliding the next router cache after RQ mutations. The simplest way forward
@@ -43,6 +44,7 @@ export default async function CampaignPage(props: {
     ctx: UserUtils.context(user),
     campaign: { id: campaignData.id },
     search: encounterSearch,
+    tagId: filteredTagId,
   });
 
   return (

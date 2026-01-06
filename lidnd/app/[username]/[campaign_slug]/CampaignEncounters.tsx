@@ -7,6 +7,10 @@ import { api } from "@/trpc/react";
 import { EncounterUtils } from "@/utils/encounters";
 import { useSearchParams } from "next/navigation";
 import type { EncountersInCampaign } from "@/server/sdk/encounters";
+import { EncounterTagFilter } from "@/app/[username]/[campaign_slug]/TagSelect";
+
+//TODO: use the "filtered tag id" in the server prefetch
+// add a link to the filtered encounters in the tag label, alongside one to delete the tag
 
 export function CampaignEncounters({
   encountersInCampaign,
@@ -16,10 +20,12 @@ export function CampaignEncounters({
   const [campaign] = useCampaign();
   const searchParams = useSearchParams();
   const encounterSearch = searchParams.get("encounterSearch") || undefined;
+  const filteredTagId = searchParams.get("tagId") || undefined;
   const { data: encounters } = api.encountersInCampaign.useQuery(
     {
       campaign: { id: campaign.id },
       search: encounterSearch,
+      tagId: filteredTagId,
     },
     { placeholderData: encountersInCampaign }
   );
@@ -46,9 +52,21 @@ export function CampaignEncounters({
 
   return (
     <>
-      <EncountersSearchBar search={encounterSearch} />
+      <div className="flex w-full gap-3 items-center flex-wrap">
+        <EncountersSearchBar search={encounterSearch} />
+        <div className="w-52">
+          <EncounterTagFilter />
+        </div>
+      </div>
+
       <div className="flex flex-col gap-8">
-        {tagsWithEncounters.length === 0 ? (
+        {filteredTagId ? (
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {encounters.map((encounter) => (
+              <EncounterCard key={encounter.id} encounter={encounter} />
+            ))}
+          </div>
+        ) : tagsWithEncounters.length === 0 ? (
           <p className="text-muted-foreground">
             No tagged encounters. Add tags to your encounters to group them.
           </p>
