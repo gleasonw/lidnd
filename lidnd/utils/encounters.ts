@@ -65,7 +65,7 @@ function participantHasPlayed(
   }
 }
 
-export function targetSinglePlayerStrength(args: DifficultyArgs) {
+function targetSinglePlayerStrength(args: DifficultyArgs) {
   const tiers = EncounterUtils.findCRBudget(args);
   if (tiers === "no-players") {
     return "no-players";
@@ -98,7 +98,7 @@ function participantsByTurnGroup<
   return groups;
 }
 
-export function monstersWithNoColumn<
+function monstersWithNoColumn<
   E extends {
     participants: Array<{
       column_id: string | null;
@@ -328,6 +328,7 @@ export const EncounterUtils = {
   difficultyClassForCR,
   cssClassForDifficulty,
   remainingCr,
+  targetSinglePlayerStrength,
   participantsWithNoColumn: monstersWithNoColumn,
 
   withDefaults(partial: Partial<EncounterWithData>): EncounterWithData {

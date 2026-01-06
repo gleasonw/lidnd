@@ -82,11 +82,7 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
 import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
-import {
-  EncounterUtils,
-  targetSinglePlayerStrength,
-  type Difficulty,
-} from "@/utils/encounters";
+import { EncounterUtils, type Difficulty } from "@/utils/encounters";
 import { useEncounterLinks } from "@/encounters/link-hooks";
 import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 import { Input } from "@/components/ui/input";
@@ -170,7 +166,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
               battleStyles.root
             )}
           >
-            <div className="flex flex-col w-full px-4 gap-3 mx-auto max-w-[900px] xl:max-w-[2000px]">
+            <div className="flex flex-col w-full px-4 gap-3 mx-auto max-w-[900px]">
               <div className="w-full flex gap-5 py-2">
                 <EncounterNameInput />
                 <div className="flex gap-8 ml-auto items-center pr-2">
@@ -203,32 +199,25 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   className="w-full xl:max-h-full flex flex-col gap-5"
                   data-value="prep"
                 >
-                  <div className="flex flex-col gap-5 w-full xl:grid grid-cols-2 xl:gap-6 xl:max-h-full">
+                  <div className="flex flex-col gap-5 w-full">
                     <div className="flex flex-col gap-3">
                       <div className="flex-grow-0">
                         <EncounterTagger />
                       </div>
-                      <Card className="p-2">
-                        <ReminderInput />
-                      </Card>
+                    </div>
+                    <Card className="p-5">
+                      <ReminderInput />
                       <div>
                         <DescriptionTextArea />
                       </div>
-                    </div>
-                    <div
-                      className={clsx(
-                        "flex flex-col gap-7 min-h-0",
-                        battleStyles.adversarySection
-                      )}
+                    </Card>
+                    <Card
+                      className={clsx("p-5", battleStyles.adversarySection)}
                     >
-                      <PartySection />
-                      <DifficultySection />
-                      <Card className="flex w-full p-5">
-                        {campaign.system === "drawsteel" ? (
-                          <MonsterSection />
-                        ) : null}
-                      </Card>
-                    </div>
+                      {campaign.system === "drawsteel" ? (
+                        <MonsterSection />
+                      ) : null}
+                    </Card>
                   </div>
                 </div>
               )}
@@ -273,36 +262,6 @@ export const EncounterBattleUI = observer(function BattleUI() {
   }
 });
 
-function PartySection() {
-  const [encounter] = useEncounter();
-  const [campaign] = useCampaign();
-  const user = useUser();
-  return (
-    <Link href={appRoutes.party({ campaign, user })}>
-      <Card className="px-5 py-3">
-        <div className="flex justify-between">
-          <span className="flex gap-3">
-            <UsersIcon />
-            Party
-          </span>
-          <div className="flex flex-col text-right">
-            <span className="text-gray-400">Single player EV</span>
-            {targetSinglePlayerStrength({
-              encounter,
-              campaign,
-            })}
-          </div>
-        </div>
-
-        <div className="flex w-full justify-evenly">
-          {EncounterUtils.players(encounter)?.map((p) => (
-            <CreatureIcon key={p.id} creature={p.creature} size="small" />
-          ))}
-        </div>
-      </Card>
-    </Link>
-  );
-}
 function EndedEncounterDisplay() {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
@@ -1326,7 +1285,17 @@ const MonsterSection = observer(function TurnGroupSetup() {
   useHotkey("a", () => {
     setCreatureAddDialogIsOpen(true);
   });
+  const user = useUser();
 
+  const tiers = EncounterUtils.findCRBudget({
+    encounter,
+    campaign,
+  });
+
+  if (tiers === "no-players") {
+    return <div>No players in encounter</div>;
+  }
+  const oneHeroStrength = tiers.oneHeroStrength;
   const remainingCr = EncounterUtils.remainingCr(encounter, campaign);
   const isAtTargetDifficulty = EncounterUtils.isAtTargetDifficulty(
     encounter,
@@ -1334,8 +1303,9 @@ const MonsterSection = observer(function TurnGroupSetup() {
   );
 
   return (
-    <div className="flex flex-col gap-6 w-full">
-      <div className="flex flex-col items-center gap-5">
+    <div className="flex flex-col gap-9 w-full">
+      <DifficultySection />
+      <div className="flex w-full justify-center">
         {isAtTargetDifficulty ? (
           <div className="text-gray-500 text-sm">
             <span className="flex gap-2 items-baseline w-full">
@@ -1373,41 +1343,49 @@ const MonsterSection = observer(function TurnGroupSetup() {
             <span>difficulty</span>
           </div>
         )}
+      </div>
 
-        <div className="flex gap-8 items-center">
-          <LidndDialog
-            isOpen={creatureAddDialogIsOpen}
-            onClose={() => setCreatureAddDialogIsOpen(false)}
-            title="Add adversary"
-            content={
-              <div className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
-                <EditModeOpponentForm
-                  onSubmitSuccess={() => setCreatureAddDialogIsOpen(false)}
-                />
-              </div>
-            }
-            trigger={
-              <Button
-                onClick={() => setCreatureAddDialogIsOpen(true)}
-                className=""
-              >
-                <AngryIcon />
-                Upload adversary
-                <Kbd>A</Kbd>
-              </Button>
-            }
-          />
-          <QuickAddParticipantsButton
-            encounterId={encounter.id}
-            campaignId={campaign.id}
-            trigger={
-              <Button variant="secondary" className="gap-2">
-                <AngryIcon />
-                Existing
-              </Button>
-            }
-          />
-        </div>
+      <div className="flex gap-8 items-center">
+        <LidndDialog
+          isOpen={creatureAddDialogIsOpen}
+          onClose={() => setCreatureAddDialogIsOpen(false)}
+          title="Add adversary"
+          content={
+            <div className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
+              <EditModeOpponentForm
+                onSubmitSuccess={() => setCreatureAddDialogIsOpen(false)}
+              />
+            </div>
+          }
+          trigger={
+            <Button
+              onClick={() => setCreatureAddDialogIsOpen(true)}
+              className=""
+            >
+              <AngryIcon />
+              Upload adversary
+              <Kbd>A</Kbd>
+            </Button>
+          }
+        />
+        <QuickAddParticipantsButton
+          encounterId={encounter.id}
+          campaignId={campaign.id}
+          trigger={
+            <Button variant="secondary" className="gap-2">
+              <AngryIcon />
+              Existing
+            </Button>
+          }
+        />
+        <Link href={appRoutes.party({ campaign, user })} className="ml-auto">
+          <Button variant="outline" className="p-3 flex gap-2">
+            <LidndLabel label="Hero EV">{oneHeroStrength}</LidndLabel>
+            {EncounterUtils.players(encounter).map((p) => (
+              <CreatureIcon key={p.id} creature={p.creature} size="small" />
+            ))}
+          </Button>
+        </Link>
       </div>
 
       <div className={clsx("flex flex-col gap-3")}>
@@ -1802,7 +1780,7 @@ function CreateTurnGroupForm() {
   const [name, setName] = useState("");
   const [hexColor, setHexColor] = useState(labelColors.at(0) || "#FFFFFF");
   return (
-    <div className="p-2 shadow-none w-full bg-gray-100">
+    <div className="p-2 shadow-none w-fit">
       <form
         className="flex gap-3"
         onSubmit={(e) => {
