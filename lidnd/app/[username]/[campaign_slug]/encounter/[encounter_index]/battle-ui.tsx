@@ -205,18 +205,18 @@ export const EncounterBattleUI = observer(function BattleUI() {
                         <EncounterTagger />
                       </div>
                     </div>
-                    <Card className="p-5">
-                      <ReminderInput />
-                      <div>
-                        <DescriptionTextArea />
-                      </div>
-                    </Card>
                     <Card
                       className={clsx("p-5", battleStyles.adversarySection)}
                     >
                       {campaign.system === "drawsteel" ? (
                         <MonsterSection />
                       ) : null}
+                    </Card>
+                    <Card className="p-5">
+                      <ReminderInput />
+                      <div>
+                        <DescriptionTextArea />
+                      </div>
                     </Card>
                   </div>
                 </div>
