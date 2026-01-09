@@ -199,19 +199,17 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   className="w-full xl:max-h-full flex flex-col gap-5"
                   data-value="prep"
                 >
-                  <div className="flex flex-col gap-5 w-full">
+                  <div className="flex flex-col gap-8 w-full">
                     <div className="flex flex-col gap-3">
                       <div className="flex-grow-0">
                         <EncounterTagger />
                       </div>
                     </div>
-                    <Card
-                      className={clsx("p-5", battleStyles.adversarySection)}
-                    >
+                    <div className={clsx(battleStyles.adversarySection)}>
                       {campaign.system === "drawsteel" ? (
                         <MonsterSection />
                       ) : null}
-                    </Card>
+                    </div>
                     <Card className="p-5">
                       <ReminderInput />
                       <div>
