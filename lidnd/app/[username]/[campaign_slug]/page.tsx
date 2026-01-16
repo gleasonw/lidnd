@@ -51,7 +51,7 @@ export default async function CampaignPage(props: {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 pb-6">
       <section className="flex flex-col gap-6">
         <div className="flex w-full justify-center">
-          <div className="flex gap-3 flex-col max-w-2xl w-full">
+          <div className="flex gap-6 flex-col max-w-xl w-full">
             <SessionButton campaignId={campaignData.id} />
             <CreateEncounterButton />
           </div>
