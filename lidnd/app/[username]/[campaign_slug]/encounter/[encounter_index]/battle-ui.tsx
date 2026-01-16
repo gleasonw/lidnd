@@ -158,6 +158,12 @@ export const EncounterBattleUI = observer(function BattleUI() {
   const searchParams = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
 
+  const remainingCr = EncounterUtils.remainingCr(encounter, campaign);
+  const isAtTargetDifficulty = EncounterUtils.isAtTargetDifficulty(
+    encounter,
+    campaign
+  );
+
   switch (encounter.status) {
     case "prep":
       return (
@@ -201,10 +207,56 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   className="w-full xl:max-h-full flex flex-col gap-5"
                   data-value="prep"
                 >
-                  <div className="flex flex-col gap-12 w-full">
+                  <div className="flex flex-col gap-10 w-full">
                     <div className="flex flex-col gap-3">
                       <div className="flex-grow-0">
                         <EncounterTagger />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-4">
+                      <DifficultySection />
+                      <div className="flex w-full justify-center">
+                        {isAtTargetDifficulty ? (
+                          <div className="text-gray-500 text-sm">
+                            <span className="flex gap-2 items-baseline w-full">
+                              {remainingCr === 0 ? (
+                                <>
+                                  <span>At maximum EV for</span>
+                                  <span>
+                                    <TargetDifficultySelect />
+                                  </span>
+                                  <span>difficulty.</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span>Within budget for</span>
+                                  <span>
+                                    <TargetDifficultySelect />
+                                  </span>
+                                  <span>difficulty. Can spend up to</span>
+                                  <span className="text-2xl font-bold text-black">
+                                    {remainingCr}
+                                  </span>
+                                  <span>more EV.</span>
+                                </>
+                              )}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2 items-baseline text-gray-500 text-sm">
+                            <span>
+                              {remainingCr < 0 ? "Remove" : "Add up to"}
+                            </span>
+                            <span className="text-2xl font-bold text-black w-8 text-center">
+                              {Math.abs(
+                                EncounterUtils.remainingCr(encounter, campaign)
+                              )}
+                            </span>
+                            <span>EV worth of monsters for</span>
+                            <TargetDifficultySelect />
+                            <span>difficulty</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className={clsx(battleStyles.adversarySection)}>
@@ -212,7 +264,8 @@ export const EncounterBattleUI = observer(function BattleUI() {
                         <MonsterSection />
                       ) : null}
                     </div>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col gap-3">
+                      <Separator />
                       <div className="flex flex-col gap-4">
                         <div className="font-bold">Pacing & Notes</div>
 
@@ -1302,60 +1355,9 @@ const MonsterSection = observer(function TurnGroupSetup() {
     return <div>No players in encounter</div>;
   }
   const oneHeroStrength = tiers.oneHeroStrength;
-  const remainingCr = EncounterUtils.remainingCr(encounter, campaign);
-  const isAtTargetDifficulty = EncounterUtils.isAtTargetDifficulty(
-    encounter,
-    campaign
-  );
 
   return (
     <div className="flex flex-col gap-7 w-full">
-      <DifficultySection />
-      <div className="flex w-full justify-center">
-        {isAtTargetDifficulty ? (
-          <div className="text-gray-500 text-sm">
-            <span className="flex gap-2 items-baseline w-full">
-              {remainingCr === 0 ? (
-                <>
-                  <span>At maximum EV for</span>
-                  <span>
-                    <TargetDifficultySelect />
-                  </span>
-                  <span>difficulty.</span>
-                </>
-              ) : (
-                <>
-                  <span>Within budget for</span>
-                  <span>
-                    <TargetDifficultySelect />
-                  </span>
-                  <span>difficulty. Can spend up to</span>
-                  <span className="text-2xl font-bold text-black">
-                    {remainingCr}
-                  </span>
-                  <span>more EV.</span>
-                </>
-              )}
-            </span>
-          </div>
-        ) : (
-          <div className="flex gap-2 items-baseline text-gray-500 text-sm">
-            <span>{remainingCr < 0 ? "Remove" : "Add up to"}</span>
-            <span className="text-2xl font-bold text-black w-8 text-center">
-              {Math.abs(EncounterUtils.remainingCr(encounter, campaign))}
-            </span>
-            <span>EV worth of monsters for</span>
-            <TargetDifficultySelect />
-            <span>difficulty</span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Separator />
-        <div className="text-lg font-bold">Monsters</div>
-      </div>
-
       <div className="flex gap-4 items-center">
         <LidndDialog
           isOpen={creatureAddDialogIsOpen}
