@@ -15,6 +15,7 @@ import { EncounterUtils } from "@/utils/encounters";
 import { useCampaign } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { SortAsc, SortDesc } from "lucide-react";
+import { crLabel } from "@/utils/campaigns";
 
 type QuickAddParticipantsButtonProps = {
   encounterId: string;
@@ -58,16 +59,19 @@ export function QuickAddParticipantsButton({
 
   const creaturesToDisplay = creaturesQuery.data ?? [];
 
-  async function handleAdd(creature: Creature) {
+  function handleAdd(creature: Creature) {
     if (addMonster.isPending) return;
 
-    await addMonster.mutateAsync({
-      encounter_id: encounterId,
-      creature_id: creature.id,
-      hp: creature.max_hp ?? 1,
-    });
-
-    setSearch("");
+    addMonster
+      .mutateAsync({
+        encounter_id: encounterId,
+        creature_id: creature.id,
+        hp: creature.max_hp ?? 1,
+      })
+      .then(() => {
+        setSearch("");
+      })
+      .catch(console.error);
   }
 
   return (
@@ -94,7 +98,7 @@ export function QuickAddParticipantsButton({
               setSortCr(sortCr === "asc" ? "desc" : "asc");
             }}
           >
-            {sortCr === "asc" ? <SortDesc /> : <SortAsc />}
+            {sortCr === "desc" ? <SortDesc /> : <SortAsc />}
           </ButtonWithTooltip>
         </div>
 
@@ -126,9 +130,15 @@ export function QuickAddParticipantsButton({
             >
               <div className="flex flex-col truncate">
                 <span className="truncate font-medium">{creature.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  CR {creature.challenge_rating ?? "?"}
-                </span>
+                <div className="flex gap-2">
+                  <span className="text-xs text-muted-foreground flex gap-2">
+                    <span>{crLabel(campaign)}</span>
+                    <span>{creature.challenge_rating ?? "?"}</span>
+                  </span>
+                  <span className="text-xs text-muted-foreground flex gap-2">
+                    {creature.type === "minion_monster" ? "Minion" : null}
+                  </span>
+                </div>
               </div>
             </button>
           ))}
