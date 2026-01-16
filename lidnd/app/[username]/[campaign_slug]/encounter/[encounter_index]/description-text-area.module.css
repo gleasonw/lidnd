@@ -1,5 +1,5 @@
 .root {
-  [contenteditable] {
+  [contenteditable][role="textbox"] {
     padding-top: 20px;
     padding-bottom: 50px;
   }
