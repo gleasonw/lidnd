@@ -58,11 +58,13 @@ import {
   CheckCircle,
   Columns,
   Grip,
+  Group,
   ImageIcon,
   Minus,
   MoreHorizontal,
   PlayIcon,
   Plus,
+  PlusIcon,
   Shield,
   SkullIcon,
   Swords,
@@ -108,7 +110,6 @@ import { getQueryKey } from "@trpc/react-query";
 import { ParticipantEditDialog } from "@/encounters/[encounter_index]/ParticipantEditDialog";
 import { EncounterTagger } from "@/encounters/EncounterTagger";
 import { DeleteEncounterButton } from "@/encounters/[encounter_index]/DeleteEncounterButton";
-import { QuickAddParticipantsButton } from "@/encounters/[encounter_index]/QuickAddParticipant";
 import { Kbd } from "@/components/ui/kbd";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Switch } from "@/components/ui/switch";
@@ -126,6 +127,7 @@ import {
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import { MaliceTracker } from "@/encounters/[encounter_index]/MaliceTracker";
+import { Separator } from "@/components/ui/separator";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -199,7 +201,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   className="w-full xl:max-h-full flex flex-col gap-5"
                   data-value="prep"
                 >
-                  <div className="flex flex-col gap-8 w-full">
+                  <div className="flex flex-col gap-12 w-full">
                     <div className="flex flex-col gap-3">
                       <div className="flex-grow-0">
                         <EncounterTagger />
@@ -210,12 +212,18 @@ export const EncounterBattleUI = observer(function BattleUI() {
                         <MonsterSection />
                       ) : null}
                     </div>
-                    <Card className="p-5">
-                      <ReminderInput />
+                    <div className="flex flex-col">
+                      <div className="flex flex-col gap-4">
+                        <div className="font-bold">Pacing & Notes</div>
+
+                        <div>
+                          <ReminderInput />
+                        </div>
+                      </div>
                       <div>
                         <DescriptionTextArea />
                       </div>
-                    </Card>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1205,9 +1213,10 @@ function PrepParticipant({
     <Card
       key={p.id}
       className={clsx(
-        "flex gap-2 items-center cursor-grab active:cursor-grabbing max-h-fit p-1 ",
+        "flex gap-2 items-center active:cursor-grabbing max-h-fit p-1 ",
         {
           "border-none shadow-none": tgForParticipant,
+          "cursor-grab": encounter.turn_groups.length > 0,
         }
       )}
       draggable={encounter.turn_groups.length > 0}
@@ -1257,9 +1266,8 @@ const MonsterSection = observer(function TurnGroupSetup() {
   const [creatureAddDialogIsOpen, setCreatureAddDialogIsOpen] = useState(false);
   const [acceptDrop, setAcceptDrop] = useState(0);
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
-  const monstersWihoutGroup = EncounterUtils.monsters(encounter).filter(
-    (m) => !m.turn_group_id
-  );
+  const monsters = EncounterUtils.monsters(encounter);
+  const monstersWihoutGroup = monsters.filter((m) => !m.turn_group_id);
   const keyForExistingCreature = getQueryKey(
     api.addExistingCreatureAsParticipant
   );
@@ -1301,7 +1309,7 @@ const MonsterSection = observer(function TurnGroupSetup() {
   );
 
   return (
-    <div className="flex flex-col gap-9 w-full">
+    <div className="flex flex-col gap-7 w-full">
       <DifficultySection />
       <div className="flex w-full justify-center">
         {isAtTargetDifficulty ? (
@@ -1343,7 +1351,12 @@ const MonsterSection = observer(function TurnGroupSetup() {
         )}
       </div>
 
-      <div className="flex gap-8 items-center">
+      <div className="flex flex-col gap-2">
+        <Separator />
+        <div className="text-lg font-bold">Monsters</div>
+      </div>
+
+      <div className="flex gap-4 items-center">
         <LidndDialog
           isOpen={creatureAddDialogIsOpen}
           onClose={() => setCreatureAddDialogIsOpen(false)}
@@ -1361,21 +1374,13 @@ const MonsterSection = observer(function TurnGroupSetup() {
               className=""
             >
               <AngryIcon />
-              Upload adversary
+              Add adversary
               <Kbd>A</Kbd>
             </Button>
           }
         />
-        <QuickAddParticipantsButton
-          encounterId={encounter.id}
-          campaignId={campaign.id}
-          trigger={
-            <Button variant="secondary" className="gap-2">
-              <AngryIcon />
-              Existing
-            </Button>
-          }
-        />
+        {monsters.length > 0 && <CreateTurnGroupForm />}
+
         <Link href={appRoutes.party({ campaign, user })} className="ml-auto">
           <Button variant="outline" className="p-3 flex gap-2">
             <LidndLabel label="Hero EV">{oneHeroStrength}</LidndLabel>
@@ -1386,67 +1391,72 @@ const MonsterSection = observer(function TurnGroupSetup() {
         </Link>
       </div>
 
-      <div className={clsx("flex flex-col gap-3")}>
-        {monstersWihoutGroup.length > 0 || encounter.turn_groups.length > 0 ? (
-          <div
-            className={clsx(
-              "gap-3 gap-x-12 rounded border-2 min-h-[100px]",
-              battleStyles.adversaryGrid,
-              {
-                "border-blue-400 bg-blue-50": acceptDrop > 0,
-                "border-dashed": uiStore.activeDragType === "participant",
-                "border-transparent": uiStore.activeDragType !== "participant",
-              }
-            )}
-            onDrop={(e) => {
-              e.preventDefault();
-              const droppedParticipant = typedDrag.get(
-                e.dataTransfer,
-                dragTypes.participant
-              );
-              if (droppedParticipant) {
-                updateParticipant({
-                  ...droppedParticipant,
-                  created_at: new Date(droppedParticipant.created_at),
-                  turn_group_id: null,
-                });
-              }
-              setAcceptDrop(0);
-            }}
-            onDragOver={(e) => {
-              if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
+      <div className={clsx("flex flex-col gap-5")}>
+        <div className="flex flex-col gap-4">
+          {monstersWihoutGroup.length > 0 ||
+          encounter.turn_groups.length > 0 ? (
+            <div
+              className={clsx(
+                "gap-3 gap-x-12 rounded border-2 min-h-[80px]",
+                battleStyles.adversaryGrid,
+                {
+                  "border-blue-400 bg-blue-50": acceptDrop > 0,
+                  "border-dashed": uiStore.activeDragType === "participant",
+                  "border-transparent":
+                    uiStore.activeDragType !== "participant",
+                }
+              )}
+              onDrop={(e) => {
                 e.preventDefault();
-              }
-            }}
-            onDragEnter={(e) => {
-              if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
+                const droppedParticipant = typedDrag.get(
+                  e.dataTransfer,
+                  dragTypes.participant
+                );
+                if (droppedParticipant) {
+                  updateParticipant({
+                    ...droppedParticipant,
+                    created_at: new Date(droppedParticipant.created_at),
+                    turn_group_id: null,
+                  });
+                }
+                setAcceptDrop(0);
+              }}
+              onDragOver={(e) => {
+                if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
+                  e.preventDefault();
+                }
+              }}
+              onDragEnter={(e) => {
+                if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
+                  e.preventDefault();
+                  setAcceptDrop((count) => count + 1);
+                }
+              }}
+              onDragLeave={(e) => {
                 e.preventDefault();
-                setAcceptDrop((count) => count + 1);
-              }
-            }}
-            onDragLeave={(e) => {
-              e.preventDefault();
-              setAcceptDrop((count) => count - 1);
-            }}
-          >
-            {monstersWihoutGroup.length > 0 ? (
-              monstersWihoutGroup.map((p) => (
-                <PrepParticipant participant={p} key={p.id} />
-              ))
-            ) : (
-              <div className="col-span-2 text-center text-gray-400 text-sm">
-                Drag participants here to remove them from groups
-              </div>
-            )}
-          </div>
-        ) : null}
-        <div className={clsx("gap-4", battleStyles.adversaryGrid)}>
-          {encounter.turn_groups.map((tg) => (
-            <TurnGroupDisplay tg={tg} key={tg.id} />
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-5 w-full">
-          <CreateTurnGroupForm />
+                setAcceptDrop((count) => count - 1);
+              }}
+            >
+              {monstersWihoutGroup.length > 0 ? (
+                monstersWihoutGroup.map((p) => (
+                  <PrepParticipant participant={p} key={p.id} />
+                ))
+              ) : (
+                <div className="col-span-2 text-center text-gray-400 text-sm">
+                  Drag participants here to remove them from groups
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className=" text-gray-400">No monsters yet</div>
+          )}
+          {encounter.turn_groups.length > 0 && (
+            <div className={clsx("gap-4", battleStyles.adversaryGrid)}>
+              {encounter.turn_groups.map((tg) => (
+                <TurnGroupDisplay tg={tg} key={tg.id} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1778,52 +1788,70 @@ function CreateTurnGroupForm() {
   const [name, setName] = useState("");
   const [hexColor, setHexColor] = useState(labelColors.at(0) || "#FFFFFF");
   return (
-    <div className="p-2 shadow-none w-fit">
-      <form
-        className="flex gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          createTurnGroup({
-            encounter_id: encounter.id,
-            name,
-            hex_color: hexColor,
-          });
-        }}
-      >
-        <LidndTextInput
-          variant="ghost"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Turn group name"
-        />
-        <LidndPopover
-          className="flex flex-wrap gap-3"
-          trigger={
-            <Button variant="ghost" className="flex items-center gap-2">
-              <span>Color</span>
-              <div className="h-4 w-4" style={{ backgroundColor: hexColor }} />
-            </Button>
-          }
-        >
-          {labelColors.map((color) => (
-            <Button
-              className={clsx("w-3 h-3", {
-                "opacity-25": color !== hexColor,
-              })}
-              key={color}
-              onClick={(e) => {
-                e.preventDefault();
-                setHexColor(color);
-              }}
-              style={{ backgroundColor: color }}
-            />
-          ))}
-        </LidndPopover>
-        <Button variant="secondary" type="submit">
-          Create turn group
+    <LidndPopover
+      className="w-fit"
+      trigger={
+        <Button variant="outline">
+          <Group /> Create turn group
         </Button>
-      </form>
-    </div>
+      }
+    >
+      <div className="p-2 shadow-none ">
+        <form
+          className="flex gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            createTurnGroup({
+              encounter_id: encounter.id,
+              name,
+              hex_color: hexColor,
+            });
+          }}
+        >
+          <LidndTextInput
+            variant="ghost"
+            className="w-44"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Turn group name"
+          />
+          <LidndPopover
+            className="flex flex-wrap gap-3"
+            trigger={
+              <Button variant="ghost" className="flex items-center gap-2">
+                <span>Color</span>
+                <div
+                  className="h-4 w-4"
+                  style={{ backgroundColor: hexColor }}
+                />
+              </Button>
+            }
+          >
+            {labelColors.map((color) => (
+              <Button
+                className={clsx("w-3 h-3", {
+                  "opacity-25": color !== hexColor,
+                })}
+                key={color}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setHexColor(color);
+                }}
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </LidndPopover>
+          <Button
+            className="ml-auto"
+            variant="outline"
+            type="submit"
+            disabled={!name}
+          >
+            <PlusIcon />
+          </Button>
+        </form>
+      </div>
+    </LidndPopover>
   );
 }
 
