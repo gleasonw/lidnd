@@ -1,7 +1,7 @@
 import type { LidndUser } from "@/app/authentication";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { ZodError } from "zod";
-import { createContext } from "@/server/api/context";
+import type { createContext } from "@/server/api/context";
 import superjson from "superjson";
 
 export const t = initTRPC.context<typeof createContext>().create({

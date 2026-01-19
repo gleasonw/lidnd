@@ -1,5 +1,5 @@
 import { LidndAuth } from "@/app/authentication";
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
 export async function createContext({ req }: { req: NextRequest }) {
   const user = await LidndAuth.getUser();

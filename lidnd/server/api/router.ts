@@ -1,9 +1,10 @@
 import { TRPCError } from "@trpc/server";
+import type {
+  participant_status_effects} from "@/server/db/schema";
 import {
   participants,
   creatures,
   settings,
-  participant_status_effects,
   status_effects,
   spells,
   reminders,

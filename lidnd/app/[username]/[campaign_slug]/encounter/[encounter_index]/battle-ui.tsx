@@ -158,12 +158,6 @@ export const EncounterBattleUI = observer(function BattleUI() {
   const searchParams = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
 
-  const remainingCr = EncounterUtils.remainingCr(encounter, campaign);
-  const isAtTargetDifficulty = EncounterUtils.isAtTargetDifficulty(
-    encounter,
-    campaign
-  );
-
   switch (encounter.status) {
     case "prep":
       return (
@@ -177,11 +171,12 @@ export const EncounterBattleUI = observer(function BattleUI() {
             <div className="flex flex-col w-full px-4 gap-3 mx-auto max-w-[900px]">
               <div className="w-full flex gap-5 py-2">
                 <EncounterNameInput />
-                <div className="flex gap-8 ml-auto items-center pr-2">
+                <div className="flex gap-5 ml-auto items-center pr-2">
                   <PreviewSwitch />
+                  <DifficultyBadgePopover />
                   {campaign.system === "dnd5e" ? (
                     <Link href={rollEncounter}>
-                      <Button variant="secondary">Start encounter</Button>
+                      <Button variant="secondary">Start</Button>
                     </Link>
                   ) : (
                     <Button
@@ -191,7 +186,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                       variant="secondary"
                     >
                       <PlayIcon />
-                      Start encounter
+                      Start
                     </Button>
                   )}
                 </div>
@@ -211,52 +206,6 @@ export const EncounterBattleUI = observer(function BattleUI() {
                     <div className="flex flex-col gap-3">
                       <div className="flex-grow-0">
                         <EncounterTagger />
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-4">
-                      <DifficultySection />
-                      <div className="flex w-full justify-center">
-                        {isAtTargetDifficulty ? (
-                          <div className="text-gray-500 text-sm">
-                            <span className="flex gap-2 items-baseline w-full">
-                              {remainingCr === 0 ? (
-                                <>
-                                  <span>At maximum EV for</span>
-                                  <span>
-                                    <TargetDifficultySelect />
-                                  </span>
-                                  <span>difficulty.</span>
-                                </>
-                              ) : (
-                                <>
-                                  <span>Within budget for</span>
-                                  <span>
-                                    <TargetDifficultySelect />
-                                  </span>
-                                  <span>difficulty. Can spend up to</span>
-                                  <span className="text-2xl font-bold text-black">
-                                    {remainingCr}
-                                  </span>
-                                  <span>more EV.</span>
-                                </>
-                              )}
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex gap-2 items-baseline text-gray-500 text-sm">
-                            <span>
-                              {remainingCr < 0 ? "Remove" : "Add up to"}
-                            </span>
-                            <span className="text-2xl font-bold text-black w-8 text-center">
-                              {Math.abs(
-                                EncounterUtils.remainingCr(encounter, campaign)
-                              )}
-                            </span>
-                            <span>EV worth of monsters for</span>
-                            <TargetDifficultySelect />
-                            <span>difficulty</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                     <div className={clsx(battleStyles.adversarySection)}>
@@ -451,30 +400,133 @@ function EndedEncounterDisplay() {
   );
 }
 
-function DifficultySection() {
+function DifficultyBadgePopover() {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
   const difficulty = EncounterUtils.difficulty({
     encounter,
     campaign,
   });
+
   if (difficulty === "no-players") {
     return <div>No players in encounter</div>;
   }
+
   const difficultyCssClass = EncounterUtils.cssClassForDifficulty(difficulty);
+  const remainingCr = EncounterUtils.remainingCr(encounter, campaign);
+  const isAtTargetDifficulty = EncounterUtils.isAtTargetDifficulty(
+    encounter,
+    campaign
+  );
+
+  // Determine badge status
+  let statusText = "";
+  let statusColor = "text-gray-600";
+
+  if (isAtTargetDifficulty && remainingCr === 0) {
+    statusText = "✓ On target";
+    statusColor = "text-green-600";
+  } else if (remainingCr > 0) {
+    statusText = `+${remainingCr} EV left`;
+    statusColor = "text-gray-600";
+  } else if (remainingCr < 0) {
+    statusText = `⚠️ ${Math.abs(remainingCr)} EV over`;
+    statusColor = "text-orange-600";
+  } else {
+    statusText = "✓ On target";
+    statusColor = "text-green-600";
+  }
 
   return (
-    <div className="flex flex-col gap-2">
-      <span
-        className={clsx(
-          "text-lg rounded-md w-24 text-center",
-          difficultyCssClass
-        )}
-      >
-        {difficulty}
-      </span>
-      <EncounterBudgetSlider />
-    </div>
+    <LidndPopover
+      trigger={
+        <button
+          className={clsx(
+            "rounded-md px-2 py-1 text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col items-center min-w-[90px]",
+            difficultyCssClass
+          )}
+        >
+          <span className="text-sm font-medium">{difficulty}</span>
+          <span className={clsx("text-xs", statusColor)}>{statusText}</span>
+        </button>
+      }
+      className="w-[650px]"
+    >
+      <div className="flex flex-col gap-4 p-4">
+        {/* Header Section */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm text-gray-500">
+                Current Difficulty:{" "}
+              </span>
+              <span
+                className={clsx(
+                  "font-semibold",
+                  difficultyCssClass.split(" ")[0]
+                )}
+              >
+                {difficulty}
+              </span>
+              <span className="text-sm text-gray-500">
+                {" "}
+                ({EncounterUtils.totalCr(encounter)} EV)
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">Target:</span>
+            <TargetDifficultySelect />
+          </div>
+        </div>
+
+        {/* Slider Section */}
+        <div className="flex flex-col gap-2">
+          <EncounterBudgetSlider />
+        </div>
+
+        {/* Budget Feedback Section */}
+        <div className="flex justify-center">
+          {isAtTargetDifficulty ? (
+            <div className="text-gray-500 text-sm">
+              <span className="flex gap-2 items-baseline w-full">
+                {remainingCr === 0 ? (
+                  <>
+                    <span>At maximum EV for</span>
+                    <span className="font-medium">
+                      {encounter.target_difficulty}
+                    </span>
+                    <span>difficulty.</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Within budget for</span>
+                    <span className="font-medium">
+                      {encounter.target_difficulty}
+                    </span>
+                    <span>difficulty. Can spend up to</span>
+                    <span className="text-xl font-bold text-black">
+                      {remainingCr}
+                    </span>
+                    <span>more EV.</span>
+                  </>
+                )}
+              </span>
+            </div>
+          ) : (
+            <div className="flex gap-2 items-baseline text-gray-500 text-sm">
+              <span>{remainingCr < 0 ? "Remove" : "Add up to"}</span>
+              <span className="text-xl font-bold text-black w-8 text-center">
+                {Math.abs(remainingCr)}
+              </span>
+              <span>EV worth of monsters for</span>
+              <span className="font-medium">{encounter.target_difficulty}</span>
+              <span>difficulty</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </LidndPopover>
   );
 }
 

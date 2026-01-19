@@ -1,8 +1,9 @@
-import { campaignCreatureLink, creatureUploadSchema } from "../db/schema";
+import type { creatureUploadSchema } from "../db/schema";
+import { campaignCreatureLink } from "../db/schema";
 import { db } from "@/server/db";
 import { creatures } from "@/server/db/schema";
 import { TRPCError } from "@trpc/server";
-import { z } from "zod";
+import type { z } from "zod";
 import type { LidndContext } from "@/server/api/base-trpc";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";

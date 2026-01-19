@@ -1,4 +1,5 @@
-import { EditorContent, Editor } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
+import { EditorContent } from "@tiptap/react";
 import styles from "./lidnd-text-area.module.css";
 import clsx from "clsx";
 

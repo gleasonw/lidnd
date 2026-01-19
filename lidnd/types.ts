@@ -1,4 +1,4 @@
-import {
+import type {
   creatures,
   participant_status_effects,
   participants,
