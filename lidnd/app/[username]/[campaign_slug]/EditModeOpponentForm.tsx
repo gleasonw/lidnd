@@ -45,10 +45,7 @@ export function EditModeOpponentForm({
   const reactiveCreatureType = form.watch("type");
 
   return (
-    <Tabs
-      defaultValue="new"
-      className="max-h-full flex flex-col gap-2 h-full overflow-hidden"
-    >
+    <Tabs defaultValue="new" className="max-h-full flex flex-col gap-2 h-full">
       <span>
         <TabsList>
           <TabsTrigger value="new">
@@ -59,13 +56,13 @@ export function EditModeOpponentForm({
           </TabsTrigger>
         </TabsList>
       </span>
-      <TabsContent value="new">
+      <TabsContent value="new" className="flex max-h-full overflow-hidden">
         <FormProvider {...form}>
           <form
             // If I add a void, the form reloads the page
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-5 w-full h-full max-h-full overflow-hidden p-2"
+            className="flex flex-col gap-5 w-full h-full max-h-full p-2 overflow-auto"
           >
             <div className="flex flex-col gap-5 pt-2">
               <div className="flex items-baseline">
@@ -147,7 +144,7 @@ export function EditModeOpponentForm({
                 )}
               />
             </div>
-            <div className="flex w-full gap-5">
+            <div className="flex w-full gap-5 flex-wrap">
               <LidndLabel label="Creature type">
                 <FormField
                   control={form.control}
