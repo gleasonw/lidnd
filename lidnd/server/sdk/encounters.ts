@@ -146,12 +146,14 @@ async function addParticipant(args: {
     });
   }
 
-  const maybeCreature = await db.query.creatures.findFirst({
-    where: and(
-      eq(creatures.id, newParticipant.creature_id),
-      eq(creatures.user_id, user.id)
-    ),
-  });
+  const maybeCreature =
+    creature ??
+    (await db.query.creatures.findFirst({
+      where: and(
+        eq(creatures.id, newParticipant.creature_id),
+        eq(creatures.user_id, user.id)
+      ),
+    }));
   const mutationsToRun = [];
   if (maybeCreature === undefined) {
     mutationsToRun.push(
