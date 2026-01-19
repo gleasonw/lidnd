@@ -191,7 +191,7 @@ export function GMCreatureCard(props: CardProps) {
         ) : (
           <Image
             src={CreatureUtils.awsURL(props.participant.creature, "icon")}
-            alt={props.participant.creature.name}
+            alt={ParticipantUtils.name(props.participant)}
             style={imageStyle}
             width={props.participant.creature.icon_width}
             height={props.participant.creature.icon_height}
@@ -213,7 +213,7 @@ export function PlayerCard(props: CardProps) {
       overrideIcon={
         <Image
           src={CreatureUtils.awsURL(props.participant.creature, "icon")}
-          alt={props.participant.creature.name}
+          alt={ParticipantUtils.name(props.participant)}
           style={imageStyle}
           width={props.participant.creature.icon_width}
           height={props.participant.creature.icon_height}

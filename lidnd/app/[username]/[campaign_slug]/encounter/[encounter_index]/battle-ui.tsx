@@ -1063,8 +1063,8 @@ export function EqualizeColumnsButton() {
       {sumColumnPercents !== 100
         ? `sum: ${sumColumnPercents}? Something's off with column widths, click me`
         : null}
-      {aNegativeWidthColumn
-        ? `column ${aNegativeWidthColumn.participants[0]?.creature.name} has negative width, click me`
+      {aNegativeWidthColumn && aNegativeWidthColumn.participants[0]
+        ? `column ${ParticipantUtils.name(aNegativeWidthColumn.participants[0])} has negative width, click me`
         : null}
     </ButtonWithTooltip>
   );
@@ -1246,7 +1246,7 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
     >
       <Image
         src={CreatureUtils.awsURL(participant.creature, "icon")}
-        alt={participant.creature.name}
+        alt={ParticipantUtils.name(participant)}
         style={imageStyle}
         width={participant.creature.icon_width}
         height={participant.creature.icon_height}

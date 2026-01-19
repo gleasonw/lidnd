@@ -19,6 +19,7 @@ export function ParticipantEditDialog({
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   const [open, setOpen] = useState(false);
   const [maxHpOverride, setMaxHpOverride] = useState("");
+  const [nickname, setNickname] = useState(participant.nickname || "");
 
   const isMinion = ParticipantUtils.isMinion(participant);
 
@@ -48,6 +49,16 @@ export function ParticipantEditDialog({
     >
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-400">Name override</label>
+          <Input
+            type="text"
+            value={nickname}
+            placeholder={participant.creature.name}
+            onChange={(event) => setNickname(event.target.value)}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
           <label className="text-xs text-gray-400">
             {isMinion ? "Number of minions" : "Max HP override"}
           </label>
@@ -73,8 +84,12 @@ export function ParticipantEditDialog({
             disabled={!canSave}
             onClick={() => {
               const trimmedMaxHp = maxHpOverride.trim();
+              const trimmedNickname = nickname.trim();
               const inputValue = Number(trimmedMaxHp);
               const nextParticipant = { ...participant };
+
+              // Update nickname
+              nextParticipant.nickname = trimmedNickname || null;
 
               if (trimmedMaxHp === "") {
                 nextParticipant.max_hp_override = null;

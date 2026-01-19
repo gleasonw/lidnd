@@ -122,8 +122,8 @@ function isAdversary(p: {
   return !isFriendly(p);
 }
 
-function name(p: { creature: Pick<Creature, "name"> }) {
-  return p.creature.name;
+function name(p: { creature: Pick<Creature, "name">; nickname?: string | null }) {
+  return p.nickname || p.creature.name;
 }
 
 function creatureId(p: { creature: Pick<Creature, "id"> }) {
@@ -259,8 +259,8 @@ function sortLinearly<
   );
 }
 
-function initials({ creature }: { creature: { name: string } }) {
-  return creature.name
+function initials(p: { creature: { name: string }; nickname?: string | null }) {
+  return name(p)
     .split(" ")
     .map((word) => word.charAt(0))
     .join("")
