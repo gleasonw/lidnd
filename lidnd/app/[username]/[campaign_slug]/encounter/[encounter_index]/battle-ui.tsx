@@ -1443,14 +1443,16 @@ const MonsterSection = observer(function TurnGroupSetup() {
         {monsters.length > 0 && <CreateTurnGroupForm />}
 
         <div className="ml-auto flex items-center gap-3">
-          <Link href={appRoutes.party({ campaign, user })}>
-            <Button variant="outline" className="p-3 flex gap-2">
-              <LidndLabel label="Hero EV">{oneHeroStrength}</LidndLabel>
-              {EncounterUtils.players(encounter).map((p) => (
-                <CreatureIcon key={p.id} creature={p.creature} size="small" />
-              ))}
-            </Button>
-          </Link>
+          <AddPlayerToEncounter
+            trigger={
+              <Button variant="outline" className="p-3 flex gap-2">
+                <LidndLabel label="Hero EV">{oneHeroStrength}</LidndLabel>
+                {EncounterUtils.players(encounter).map((p) => (
+                  <CreatureIcon key={p.id} creature={p.creature} size="small" />
+                ))}
+              </Button>
+            }
+          />
         </div>
       </div>
 

@@ -70,6 +70,7 @@ export function AddPlayerToEncounter(props: AddPlayerToEncounterProps) {
 
   const mutationError = addPlayer.error ?? removeParticipant.error;
   const isMutating = addPlayer.isPending || removeParticipant.isPending;
+  const partyHref = appRoutes.party({ campaign, user });
 
   return (
     <LidndDialog
@@ -84,16 +85,18 @@ export function AddPlayerToEncounter(props: AddPlayerToEncounterProps) {
       }
       content={
         <div className="p-4 w-full min-w-[420px] max-h-[600px] overflow-auto">
+          <div className="flex justify-end mb-3">
+            <Link href={partyHref}>
+              <Button variant="outline" size="sm">
+                Manage Party
+              </Button>
+            </Link>
+          </div>
           {partyPlayers.length === 0 ? (
             <div className="flex flex-col items-start gap-3">
               <div className="text-sm text-muted-foreground">
                 No players in party yet.
               </div>
-              <Link href={appRoutes.party({ campaign, user })}>
-                <Button variant="outline" size="sm">
-                  Go to Party
-                </Button>
-              </Link>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
