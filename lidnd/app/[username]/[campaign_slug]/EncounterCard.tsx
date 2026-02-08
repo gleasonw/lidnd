@@ -65,7 +65,7 @@ export function EncounterCard({
                 style={{ opacity: onlyClientImageUrl ? 1 : 0 }}
               />
             ) : (
-              <SwordsIcon className="w-12 h-12 rounded text-gray-600" />
+              <SwordsIcon className="w-12 h-12 rounded " />
             )}
             {encounter.started_at && !encounter.ended_at && (
               <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white flex items-center justify-center">
