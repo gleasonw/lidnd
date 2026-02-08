@@ -37,7 +37,7 @@ export function ToggleEditingMode() {
   const { mutate: updateEncounter } = useUpdateEncounter();
   return (
     <Toggle
-      onClick={(e) =>
+      onClick={() =>
         updateEncounter({
           ...encounter,
           is_editing_columns: !encounter?.is_editing_columns,
@@ -94,7 +94,7 @@ export const InitiativeTracker = observer(function InitiativeTracker() {
     <div
       className={`justify-center flex overflow-visible h-20 flex-shrink-0 z-20 gap-2 w-full bottom-0`}
     >
-      <EncounterDetails />
+      <EncounterDetails showActions={false} />
       <ButtonWithTooltip
         className="h-full shadow-lg"
         variant="outline"

@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import * as R from "remeda";
 import React, {
@@ -86,7 +86,10 @@ import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
 import { EncounterUtils, type Difficulty } from "@/utils/encounters";
 import { useEncounterLinks } from "@/encounters/link-hooks";
-import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
+import {
+  EncounterDetails,
+  EncounterRunTools,
+} from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 import { Input } from "@/components/ui/input";
 import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
@@ -1037,7 +1040,10 @@ export const GroupParticipantHPOverride = observer(
   }
 );
 
-export function EqualizeColumnsButton() {
+export function EqualizeColumnsButton(props?: {
+  size?: ButtonProps["size"];
+  className?: string;
+}) {
   const { mutate: updateColumnBatch } = api.updateColumnBatch.useMutation();
   const [encounter] = useEncounter();
 
@@ -1051,7 +1057,8 @@ export function EqualizeColumnsButton() {
     <ButtonWithTooltip
       text="Equalize columns"
       variant="ghost"
-      className="flex text-gray-400 p-2"
+      size={props?.size}
+      className={clsx("flex text-gray-400 p-2", props?.className)}
       onClick={() => {
         const cols = encounter.columns;
         const newCols = StatColumnUtils.equalize(cols);
@@ -2328,9 +2335,12 @@ export const StatColumnComponent = observer(function StatColumnComponent({
       >
         {column.is_home_column ? (
           <>
-            <div className="p-3">
-              {encounter.status === "run" ? <EncounterDetails /> : null}
-              {encounter.status === "run" ? <MaliceTracker /> : null}
+            <div className="p-3 flex flex-col gap-2">
+              {encounter.status === "run" ? (
+                <EncounterDetails showActions={false} />
+              ) : null}
+              {encounter.status === "run" ? <MaliceTracker compact /> : null}
+              {encounter.status === "run" ? <EncounterRunTools /> : null}
             </div>
 
             <div className="w-full h-full flex px-3">
