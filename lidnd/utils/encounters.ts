@@ -476,17 +476,14 @@ export const EncounterUtils = {
   },
 
   /**
-   * Count only alive players for malice calculation
+   * AI got confused, we don't track player HP
    */
   alivePlayerCount(encounter: {
     participants: Array<{
       creature: Pick<Creature, "type">;
-      hp: number;
     }>;
   }) {
-    return encounter.participants.filter(
-      (p) => ParticipantUtils.isPlayer(p) && p.hp > 0
-    ).length;
+    return this.playerCount(encounter);
   },
 
   /**
@@ -502,6 +499,7 @@ export const EncounterUtils = {
   }) {
     const avgVictories = encounter.average_victories ?? 0;
     const numHeroes = this.alivePlayerCount(encounter);
+    console.log({ numHeroes });
     const initialRound = 1;
     return avgVictories + numHeroes + initialRound;
   },
@@ -524,6 +522,11 @@ export const EncounterUtils = {
     gameSession: Pick<GameSession, "victory_count"> | null;
   }) {
     const numAliveHeroes = this.alivePlayerCount(encounter);
+    console.log({
+      numAliveHeroes,
+      currentRound: encounter.current_round,
+      victoryCount: gameSession?.victory_count,
+    });
     return (
       numAliveHeroes +
       encounter.current_round +

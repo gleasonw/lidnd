@@ -124,8 +124,6 @@ import {
   uploadFileToAWS,
   readImageHeightWidth,
 } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
-import { appRoutes } from "@/app/routes";
-import { useUser } from "@/app/[username]/user-provider";
 import { MaliceTracker } from "@/encounters/[encounter_index]/MaliceTracker";
 import { Separator } from "@/components/ui/separator";
 import { AddPlayerToEncounter } from "@/encounters/[encounter_index]/AddPlayerToEncounter";
@@ -1399,7 +1397,6 @@ const MonsterSection = observer(function TurnGroupSetup() {
   useHotkey("a", () => {
     setCreatureAddDialogIsOpen(true);
   });
-  const user = useUser();
 
   const tiers = EncounterUtils.findCRBudget({
     encounter,
