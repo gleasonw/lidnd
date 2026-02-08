@@ -271,7 +271,7 @@ export function PlayerCreatureUploadForm({
           }}
         />
         <Button type="submit">
-          {isPending ? "Uploading..." : "Add participant"}
+          {isPending ? "Uploading..." : "Add party member"}
         </Button>
       </form>
     </FormProvider>

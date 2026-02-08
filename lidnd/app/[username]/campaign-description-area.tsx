@@ -16,6 +16,7 @@ export function CampaignDescriptionForm() {
 
   const editor = useEditor({
     extensions: [StarterKit, configuredPlaceholder],
+    immediatelyRender: false,
   });
 
   return <LidndTextArea editor={editor} />;

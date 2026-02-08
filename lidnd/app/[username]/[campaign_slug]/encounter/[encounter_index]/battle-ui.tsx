@@ -128,6 +128,7 @@ import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import { MaliceTracker } from "@/encounters/[encounter_index]/MaliceTracker";
 import { Separator } from "@/components/ui/separator";
+import { AddPlayerToEncounter } from "@/encounters/[encounter_index]/AddPlayerToEncounter";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -216,7 +217,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                     <div className="flex flex-col gap-3">
                       <Separator />
                       <div className="flex flex-col gap-4">
-                        <div className="font-bold">Pacing & Notes</div>
+                        <div className="">Pacing & Notes</div>
 
                         <div>
                           <ReminderInput />
@@ -409,7 +410,7 @@ function DifficultyBadgePopover() {
   });
 
   if (difficulty === "no-players") {
-    return <div>No players in encounter</div>;
+    return null;
   }
 
   const difficultyCssClass = EncounterUtils.cssClassForDifficulty(difficulty);
@@ -1064,7 +1065,9 @@ export function EqualizeColumnsButton() {
         ? `sum: ${sumColumnPercents}? Something's off with column widths, click me`
         : null}
       {aNegativeWidthColumn && aNegativeWidthColumn.participants[0]
-        ? `column ${ParticipantUtils.name(aNegativeWidthColumn.participants[0])} has negative width, click me`
+        ? `column ${ParticipantUtils.name(
+            aNegativeWidthColumn.participants[0]
+          )} has negative width, click me`
         : null}
     </ButtonWithTooltip>
   );
@@ -1404,7 +1407,11 @@ const MonsterSection = observer(function TurnGroupSetup() {
   });
 
   if (tiers === "no-players") {
-    return <div>No players in encounter</div>;
+    return (
+      <div className="flex gap-2 flex-wrap items-center">
+        <AddPlayerToEncounter />
+      </div>
+    );
   }
   const oneHeroStrength = tiers.oneHeroStrength;
 
@@ -1435,14 +1442,16 @@ const MonsterSection = observer(function TurnGroupSetup() {
         />
         {monsters.length > 0 && <CreateTurnGroupForm />}
 
-        <Link href={appRoutes.party({ campaign, user })} className="ml-auto">
-          <Button variant="outline" className="p-3 flex gap-2">
-            <LidndLabel label="Hero EV">{oneHeroStrength}</LidndLabel>
-            {EncounterUtils.players(encounter).map((p) => (
-              <CreatureIcon key={p.id} creature={p.creature} size="small" />
-            ))}
-          </Button>
-        </Link>
+        <div className="ml-auto flex items-center gap-3">
+          <Link href={appRoutes.party({ campaign, user })}>
+            <Button variant="outline" className="p-3 flex gap-2">
+              <LidndLabel label="Hero EV">{oneHeroStrength}</LidndLabel>
+              {EncounterUtils.players(encounter).map((p) => (
+                <CreatureIcon key={p.id} creature={p.creature} size="small" />
+              ))}
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className={clsx("flex flex-col gap-5")}>
