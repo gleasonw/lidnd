@@ -11,7 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { useEffect } from "react";
-import { CheckCircle, Radio } from "lucide-react";
+import { CheckCircle, Radio, SwordsIcon } from "lucide-react";
 
 type EncounterDataForCard = Pick<
   Encounter,
@@ -65,7 +65,7 @@ export function EncounterCard({
                 style={{ opacity: onlyClientImageUrl ? 1 : 0 }}
               />
             ) : (
-              <div className="w-12 h-12 rounded bg-gray-200" />
+              <SwordsIcon className="w-12 h-12 rounded text-gray-600" />
             )}
             {encounter.started_at && !encounter.ended_at && (
               <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white flex items-center justify-center">
