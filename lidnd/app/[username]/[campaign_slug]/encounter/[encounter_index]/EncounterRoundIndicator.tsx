@@ -44,22 +44,6 @@ export const EncounterRunTools = observer(function EncounterRunTools() {
         <StopCircle />
       </ButtonWithTooltip>
       <ButtonWithTooltip
-        text="Switch to prep mode"
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 text-gray-500"
-        onClick={() =>
-          updateEncounter({
-            status: "prep",
-            id: encounter.id,
-            campaign_id: encounter.campaign_id,
-            started_at: null,
-          })
-        }
-      >
-        <Edit />
-      </ButtonWithTooltip>
-      <ButtonWithTooltip
         variant="ghost"
         size="icon"
         className="h-8 w-8 text-gray-500"
