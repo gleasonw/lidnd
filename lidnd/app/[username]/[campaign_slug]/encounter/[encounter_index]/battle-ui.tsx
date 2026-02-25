@@ -2033,7 +2033,7 @@ export const StatColumns = observer(function StatColumns() {
     <StatColumnComponent column={c} index={index} key={c.id}>
       <div
         className={clsx(
-          "flex flex-col gap-4 h-full",
+          "flex flex-col gap-2 h-full",
           battleStyles.parentContainer
         )}
       >
