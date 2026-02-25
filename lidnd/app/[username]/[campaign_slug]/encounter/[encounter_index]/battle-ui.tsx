@@ -1982,7 +1982,7 @@ function GroupTurnToggles() {
     EncounterUtils.monstersWithoutTurnGroup(encounter);
 
   return (
-    <div className="flex gap-4 p-2 items-center justify-around w-full sticky top-0 z-20 bg-white">
+    <div className="flex gap-4 p-2 items-center justify-center w-full sticky top-0 z-20 bg-white">
       <div className="flex gap-3 items-center bg-blue-50 rounded-lg p-2">
         <Shield className="h-4 w-4 text-blue-600" />
         <div className="flex gap-5 flex-wrap">
