@@ -2,7 +2,6 @@ import { ServerCampaign } from "@/server/sdk/campaigns";
 import { appRoutes } from "@/app/routes";
 import { redirect } from "next/navigation";
 import { LidndAuth, UserUtils } from "@/app/authentication";
-import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
 import { SessionButton } from "@/app/[username]/[campaign_slug]/SessionButton";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { CampaignEncounters } from "@/app/[username]/[campaign_slug]/CampaignEncounters";
@@ -51,10 +50,7 @@ export default async function CampaignPage(props: {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 pb-6">
       <section className="flex flex-col gap-6">
         <div className="flex w-full justify-center">
-          <div className="flex gap-6 flex-col max-w-xl w-full">
-            <SessionButton campaignId={campaignData.id} />
-            <CreateEncounterButton />
-          </div>
+          <SessionButton campaignId={campaignData.id} />
         </div>
         <CampaignEncounters encountersInCampaign={encountersInCampaign} />
       </section>

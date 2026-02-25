@@ -11,7 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { useEffect } from "react";
-import { CheckCircle, Radio, SwordsIcon } from "lucide-react";
+import { CheckCircle, Radio } from "lucide-react";
 
 type EncounterDataForCard = Pick<
   Encounter,
@@ -27,6 +27,12 @@ type EncounterDataForCard = Pick<
       creature: Pick<Creature, "icon_width" | "icon_height" | "id">;
     }
   >;
+  tags: Array<{
+    tag: {
+      id: string;
+      name: string;
+    };
+  }>;
 };
 
 const maxMonstersToShow = 2;
@@ -50,56 +56,68 @@ export function EncounterCard({
   return (
     <Link
       href={encounterLink}
-      className="flex flex-col gap-4 rounded-lg border bg-background p-4 shadow-sm"
+      className="flex flex-col gap-3 rounded-lg border bg-background shadow-sm overflow-hidden hover:shadow-md transition-shadow"
     >
-      <div className="flex flex-col gap-2 hover:bg-gray-10">
-        <div className="flex gap-3 items-start">
-          <div className="relative flex-shrink-0">
-            {onlyClientImageUrl ? (
-              <Image
-                src={onlyClientImageUrl}
-                alt="Encounter Image"
-                width={50}
-                height={50}
-                className="rounded transition-opacity duration-200"
-                style={{ opacity: onlyClientImageUrl ? 1 : 0 }}
-              />
-            ) : (
-              <SwordsIcon className="w-12 h-12 rounded " />
-            )}
-            {encounter.started_at && !encounter.ended_at && (
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white flex items-center justify-center">
-                <Radio className="w-3.5 h-3.5 text-red-500" />
-              </div>
-            )}
-            {encounter.ended_at && (
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white flex items-center justify-center">
-                <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col gap-2 flex-1">
-            <div className="flex items-center gap-2">
-              <p className="text-base">
-                {encounter.name || "Unnamed encounter"}
-              </p>
+      {onlyClientImageUrl && (
+        <div className="relative w-full h-32 bg-muted">
+          <Image
+            src={onlyClientImageUrl}
+            alt="Encounter Image"
+            fill
+            className="object-cover"
+          />
+          {encounter.started_at && !encounter.ended_at && (
+            <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-sm">
+              <Radio className="w-4 h-4 text-red-500" />
             </div>
-            <div className="flex flex-col gap-1 text-muted-foreground">
-              {monstersByCr.slice(0, maxMonstersToShow).map((participant) => (
-                <span
-                  key={participant.id}
-                  className="flex items-center gap-2 text-sm"
-                >
-                  {ParticipantUtils.name(participant)}
-                </span>
-              ))}
-              {monstersNotShown > 0 ? (
-                <span className="text-sm text-muted-foreground">
-                  and {monstersNotShown} more...
-                </span>
-              ) : null}
+          )}
+          {encounter.ended_at && (
+            <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-sm">
+              <CheckCircle className="w-4 h-4 text-green-500" />
             </div>
+          )}
+        </div>
+      )}
+      <div className="flex flex-col gap-3 p-4">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-base font-medium flex-1">
+            {encounter.name || "Unnamed encounter"}
+          </p>
+          {!onlyClientImageUrl && encounter.started_at && !encounter.ended_at && (
+            <Radio className="w-4 h-4 text-red-500 flex-shrink-0" />
+          )}
+          {!onlyClientImageUrl && encounter.ended_at && (
+            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+          )}
+        </div>
+        
+        {encounter.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {encounter.tags.map(({ tag }) => (
+              <span
+                key={tag.id}
+                className="px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground"
+              >
+                {tag.name}
+              </span>
+            ))}
           </div>
+        )}
+
+        <div className="flex flex-col gap-1 text-muted-foreground">
+          {monstersByCr.slice(0, maxMonstersToShow).map((participant) => (
+            <span
+              key={participant.id}
+              className="flex items-center gap-2 text-sm"
+            >
+              {ParticipantUtils.name(participant)}
+            </span>
+          ))}
+          {monstersNotShown > 0 ? (
+            <span className="text-sm text-muted-foreground">
+              and {monstersNotShown} more...
+            </span>
+          ) : null}
         </div>
       </div>
     </Link>

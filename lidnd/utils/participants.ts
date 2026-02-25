@@ -122,7 +122,10 @@ function isAdversary(p: {
   return !isFriendly(p);
 }
 
-function name(p: { creature: Pick<Creature, "name">; nickname?: string | null }) {
+function name(p: {
+  creature: Pick<Creature, "name">;
+  nickname?: string | null;
+}) {
   return p.nickname || p.creature.name;
 }
 
@@ -285,7 +288,13 @@ export const ParticipantUtils = {
     if (p.creature.type !== "minion_monster") {
       return 1;
     }
-    return Math.max(1, Math.round(p.hp / p.creature.max_hp));
+    return Math.max(1, Math.ceil(p.hp / p.creature.max_hp));
+  },
+  numberOfMinionsAtFullHealth: (p: ChallengeRatingParticipant) => {
+    if (p.creature.type !== "minion_monster") {
+      return 1;
+    }
+    return Math.max(1, Math.ceil(maxHp(p) / p.creature.max_hp));
   },
   initials,
   isAdversary,

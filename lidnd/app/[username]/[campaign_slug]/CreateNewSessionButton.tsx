@@ -23,7 +23,11 @@ export function CreateNewSessionButton({
   const [campaign] = useCampaign();
   const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
   const [sessionName, setSessionName] = useState("");
-  const [startingVictories, setStartingVictories] = useState("0");
+  const [startingVictories, setStartingVictories] = useState(
+    lastSession && lastSession.victory_count > 0
+      ? String(lastSession.victory_count)
+      : ""
+  );
   const [isPending, begin] = useServerAction(startSession);
   useHotkey("s", () => {
     setSessionDialogOpen(true);
@@ -48,7 +52,7 @@ export function CreateNewSessionButton({
       }
       content={
         <form
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-10"
           onSubmit={(e) => {
             e.preventDefault();
             const parsedVictoryNumber = coerceInt(startingVictories);
@@ -65,12 +69,16 @@ export function CreateNewSessionButton({
               });
           }}
         >
-          <span className="text-lg font-bold">
-            Remember to distribute {CampaignUtils.playerCount(campaign)} hero
-            tokens to your players.
+          <span className="text-lg text-center">
+            Give{" "}
+            <span className="font-bold text-2xl px-2">
+              {CampaignUtils.playerCount(campaign)}
+            </span>{" "}
+            hero tokens to your players.
           </span>
           <LidndTextInput
             basicLabel="Name"
+            className="w-64"
             value={sessionName}
             onChange={(e) => setSessionName(e.target.value)}
             placeholder="Into the Unknown"
@@ -79,27 +87,12 @@ export function CreateNewSessionButton({
             <LidndLabel label="Starting Victories">
               <div className="flex gap-3">
                 <LidndTextInput
+                  className="w-20"
                   type="number"
                   value={startingVictories}
                   onChange={(e) => setStartingVictories(e.target.value)}
                   placeholder="0"
                 />
-                {lastSession && lastSession.victory_count > 0 && (
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setStartingVictories(
-                          lastSession.victory_count.toString()
-                        );
-                      }}
-                    >
-                      Start from last session's victories (
-                      {lastSession.victory_count})
-                    </Button>
-                  </div>
-                )}
               </div>
             </LidndLabel>
           </div>

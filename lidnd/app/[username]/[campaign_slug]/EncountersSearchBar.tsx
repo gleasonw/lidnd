@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { Spinner } from "@/components/ui/spinner";
 import { Search } from "lucide-react";
@@ -27,12 +26,12 @@ export function EncountersSearchBar({ search }: { search?: string }) {
   }, 300);
 
   return (
-    <Card className="flex gap-2 items-center py-1 px-2 shadow-none">
+    <div className="flex gap-2 items-center shadow-none border rounded-sm px-2">
       <Search className="w-5 h-5 text-gray-400" />
       <LidndTextInput
         variant="ghost"
         value={query}
-        placeholder="Search for encounter"
+        placeholder="Search"
         className="w-96"
         onChange={(e) => {
           const nextQuery = e.target.value;
@@ -45,6 +44,6 @@ export function EncountersSearchBar({ search }: { search?: string }) {
           <Spinner className="h-4 w-4 text-muted-foreground" />
         </div>
       ) : null}
-    </Card>
+    </div>
   );
 }

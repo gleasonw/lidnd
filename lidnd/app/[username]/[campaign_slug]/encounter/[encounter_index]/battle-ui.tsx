@@ -58,6 +58,7 @@ import {
   CheckCircle,
   Columns,
   Grip,
+  GripVertical,
   Group,
   ImageIcon,
   Minus,
@@ -764,21 +765,17 @@ export const ColumnDragButton = observer(function ColumnDragButton({
 }) {
   const uiStore = useEncounterUIStore();
 
-  if (!uiStore.isEditingInitiative) {
-    return null;
-  }
-
   return (
     <Button
       variant="ghost"
-      className="z-10  cursor-grab"
+      className="z-10 cursor-grab px-2"
       onDragStart={(e) => {
         typedDrag.set(e.dataTransfer, dragTypes.participant, participant);
         uiStore.startDraggingBattleCard();
       }}
       draggable
     >
-      <Grip />
+      <GripVertical />
     </Button>
   );
 });
@@ -924,14 +921,11 @@ export const ParticipantBattleData = observer(function BattleCard({
                       className="h- w-5"
                     />
                   ) : null}
-                  <div className="flex justify-between w-full flex-wrap items-center">
+                  <div className="flex w-full items-center flex-wrap">
                     <BattleCardCreatureName participant={participant} />
-                    {ParticipantUtils.isMinion(participant) ? (
-                      <div className="flex gap-1 text-gray-400 px-3">
-                        <UsersIcon className="h-5 w-5  inline-block" />
-                        <span>
-                          x {ParticipantUtils.numberOfMinions(participant)}
-                        </span>
+                    {indexInGroup === 0 ? (
+                      <div className="text-gray-300">
+                        <ColumnDragButton participant={participant} />
                       </div>
                     ) : null}
                   </div>
@@ -950,9 +944,6 @@ export const ParticipantBattleData = observer(function BattleCard({
             <div className="flex w-full flex-wrap">
               <GroupParticipantHPOverride participant={participant} />
               <div className="text-gray-500">
-                {indexInGroup === 0 ? (
-                  <ColumnDragButton participant={participant} />
-                ) : null}
                 <BattleCardTools participant={participant} />
               </div>
             </div>
@@ -963,7 +954,7 @@ export const ParticipantBattleData = observer(function BattleCard({
   );
 });
 
-function ParticipantNotes({
+export function ParticipantNotes({
   participant,
 }: {
   participant: ParticipantWithData;
@@ -1967,7 +1958,7 @@ export const RunEncounter = observer(function LinearBattleUI() {
         ref={containerRef}
       >
         <ParentWidthContext.Provider value={parentWidth}>
-          <div className="overflow-auto w-full h-full flex">
+          <div className="overflow-auto w-full h-full flex items-stretch">
             <StatColumns />
           </div>
         </ParentWidthContext.Provider>
@@ -2275,9 +2266,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
   return (
     <>
       <div
-        className={clsx(
-          `flex flex-col h-full max-h-full items-start relative flex-grow`
-        )}
+        className={clsx(`flex flex-col relative border`)}
         style={{ width: `${column.percent_width}%` }}
         onDrop={(e) => {
           const droppedParticipant = typedDrag.get(

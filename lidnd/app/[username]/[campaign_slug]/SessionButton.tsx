@@ -39,7 +39,7 @@ export async function SessionButton({ campaignId }: { campaignId: string }) {
   const lastSessionData = lastSession.at(0) || null;
 
   return (
-    <div className="w-full flex">
+    <div className="flex">
       {targetActiveSession ? (
         <ActiveSessionButton session={targetActiveSession} />
       ) : (

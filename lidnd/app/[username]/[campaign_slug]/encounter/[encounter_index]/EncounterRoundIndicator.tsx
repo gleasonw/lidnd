@@ -9,7 +9,7 @@ import {
   useEncounter,
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
-import { Edit, ListOrdered, AngryIcon, StopCircle } from "lucide-react";
+import { ListOrdered, AngryIcon, StopCircle } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 

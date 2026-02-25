@@ -10,10 +10,11 @@ import {
   useUpdateEncounterMinionParticipant,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { useDebouncedCallback } from "use-debounce";
-import { Sword } from "lucide-react";
+import { Sword, UsersIcon } from "lucide-react";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import { ParticipantUtils } from "@/utils/participants";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
+import type React from "react";
 
 export function ParticipantHealthForm({
   participant,
@@ -118,18 +119,32 @@ export function ParticipantHealthForm({
         </div>
         {extraInputs}
       </div>
-
-      <div className="w-full relative bg-red-400 flex h-6 items-center justify-center">
-        <span className="whitespace-nowrap text-white absolute z-10">
-          {participant.hp} / {ParticipantUtils.maxHp(participant)}
-        </span>
-        <div
-          className="absolute bg-emerald-400 h-full left-0"
-          style={{
-            width: `${ParticipantUtils.healthPercent(participant)}%`,
-          }}
-        />
-      </div>
+      {ParticipantUtils.isMinion(participant) ? (
+        <div className="flex items-center gap-4 text-gray-600">
+          <span className="items-center flex gap-1">
+            <span>{ParticipantUtils.numberOfMinions(participant)} / </span>
+            <span className="text-gray-400">
+              {ParticipantUtils.numberOfMinionsAtFullHealth(participant)}
+            </span>
+            <UsersIcon className="h-5 w-5  inline-block" />
+          </span>
+          <span className="text-gray-400 text-sm">
+            ({participant.hp} / {ParticipantUtils.maxHp(participant)})
+          </span>
+        </div>
+      ) : (
+        <div className="w-full relative bg-red-400 flex h-6 items-center justify-center">
+          <span className="whitespace-nowrap text-white absolute z-10">
+            {participant.hp} / {ParticipantUtils.maxHp(participant)}
+          </span>
+          <div
+            className="absolute bg-emerald-400 h-full left-0"
+            style={{
+              width: `${ParticipantUtils.healthPercent(participant)}%`,
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

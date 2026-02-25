@@ -18,6 +18,7 @@ export function CreateEncounterButton() {
   return (
     <Button
       type="submit"
+      className="w-64"
       disabled={isPending}
       onClick={() => void create({ campaign_id: campaign.id })}
     >
