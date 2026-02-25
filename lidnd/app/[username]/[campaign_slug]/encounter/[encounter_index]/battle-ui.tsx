@@ -131,6 +131,8 @@ import {
 import { MaliceTracker } from "@/encounters/[encounter_index]/MaliceTracker";
 import { Separator } from "@/components/ui/separator";
 import { AddPlayerToEncounter } from "@/encounters/[encounter_index]/AddPlayerToEncounter";
+import { appRoutes } from "@/app/routes";
+import { useUser } from "@/app/[username]/user-provider";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -275,6 +277,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
 
 function EndedEncounterDisplay() {
   const [encounter] = useEncounter();
+  const user = useUser();
   const [campaign] = useCampaign();
   const { mutate: updateEncounter } = useUpdateEncounter();
   const [activeSession] = useActiveGameSession();
@@ -396,6 +399,9 @@ function EndedEncounterDisplay() {
             >
               Reset to Prep
             </Button>
+            <Link href={appRoutes.campaign({ user, campaign })}>
+              <Button>Back to campaign</Button>
+            </Link>
           </div>
         </div>
       </Card>
@@ -2328,8 +2334,10 @@ export const StatColumnComponent = observer(function StatColumnComponent({
               {encounter.status === "run" ? (
                 <EncounterDetails showActions={false} />
               ) : null}
-              {encounter.status === "run" ? <MaliceTracker compact /> : null}
-              {encounter.status === "run" ? <EncounterRunTools /> : null}
+              <Card className="p-2">
+                {encounter.status === "run" ? <MaliceTracker compact /> : null}
+                {encounter.status === "run" ? <EncounterRunTools /> : null}
+              </Card>
             </div>
 
             <div className="w-full h-full flex px-3">

@@ -9,7 +9,7 @@ import {
   useEncounter,
   useUpdateEncounter,
 } from "@/encounters/[encounter_index]/hooks";
-import { ListOrdered, AngryIcon, StopCircle } from "lucide-react";
+import { ListOrdered, AngryIcon, Square } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 
@@ -20,29 +20,13 @@ interface EncounterDetailsProps {
 export const EncounterRunTools = observer(function EncounterRunTools() {
   const [encounter] = useEncounter();
   const uiStore = useEncounterUIStore();
-  const { mutate: updateEncounter } = useUpdateEncounter();
 
   if (encounter.status !== "run") {
     return null;
   }
 
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-1 rounded-md border bg-white p-1">
-      <ButtonWithTooltip
-        text="End encounter"
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 text-gray-500"
-        onClick={() =>
-          updateEncounter({
-            id: encounter.id,
-            campaign_id: encounter.campaign_id,
-            ended_at: new Date(),
-          })
-        }
-      >
-        <StopCircle />
-      </ButtonWithTooltip>
+    <div className="flex min-w-0 flex-wrap items-center gap-1 rounded-md bg-white">
       <ButtonWithTooltip
         variant="ghost"
         size="icon"
@@ -79,6 +63,7 @@ export const EncounterDetails = observer(function EncounterDetails({
 }: EncounterDetailsProps) {
   const [encounter] = useEncounter();
   const [now, setNow] = useState(Date.now());
+  const { mutate: updateEncounter } = useUpdateEncounter();
 
   useEffect(() => {
     const intervalTimer = setInterval(() => {
@@ -108,6 +93,21 @@ export const EncounterDetails = observer(function EncounterDetails({
             <span className="text-sm text-gray-500 whitespace-nowrap">
               {minutes === 0 ? "<1" : minutes} min
             </span>
+            <ButtonWithTooltip
+              text="End encounter"
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 text-gray-500"
+              onClick={() =>
+                updateEncounter({
+                  id: encounter.id,
+                  campaign_id: encounter.campaign_id,
+                  ended_at: new Date(),
+                })
+              }
+            >
+              <Square className="h-4 w-4" />
+            </ButtonWithTooltip>
           </div>
           {showActions ? <EncounterRunTools /> : null}
         </div>
