@@ -1604,6 +1604,7 @@ function ImageAssetAddButton() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [uploadImage, setUploadImage] = useState<File | undefined>(undefined);
+  const [imageName, setImageName] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const { data: images } = api.imageAssets.useQuery({
     search: debouncedSearch,
@@ -1616,6 +1617,9 @@ function ImageAssetAddButton() {
   }, 300);
 
   const handleImageUpload = async (file: File) => {
+    if (!imageName.trim()) {
+      return;
+    }
     setIsUploading(true);
     try {
       const { width, height } = await readImageHeightWidth(file);
@@ -1624,6 +1628,7 @@ function ImageAssetAddButton() {
         filetype: file.type,
         width,
         height,
+        name: imageName.trim(),
       });
       try {
         await uploadFileToAWS(file, data.signedUrl);
@@ -1637,6 +1642,7 @@ function ImageAssetAddButton() {
         });
         await qc.invalidateQueries();
         setUploadImage(undefined);
+        setImageName("");
       } catch (error) {
         console.error("Failed to upload image asset:", error);
         setIsUploading(false);
@@ -1662,14 +1668,31 @@ function ImageAssetAddButton() {
         <div className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-auto">
           <div className="border-b pb-4">
             <h3 className="text-sm font-medium mb-3">Upload New Image</h3>
-            <ImageUpload
-              image={uploadImage}
-              clearImage={() => setUploadImage(undefined)}
-              onUpload={handleImageUpload}
-              dropText={isUploading ? "Uploading..." : "Drop image to upload"}
-              dropIcon={<ImageIcon />}
-              fileInputProps={{ disabled: isUploading }}
-            />
+            <div className="flex flex-col gap-3">
+              <LidndTextInput
+                placeholder="Image name (required)"
+                value={imageName}
+                onChange={(e) => setImageName(e.target.value)}
+                disabled={isUploading}
+              />
+              <ImageUpload
+                image={uploadImage}
+                clearImage={() => {
+                  setUploadImage(undefined);
+                  setImageName("");
+                }}
+                onUpload={handleImageUpload}
+                dropText={
+                  !imageName.trim()
+                    ? "Enter a name first"
+                    : isUploading
+                    ? "Uploading..."
+                    : "Drop image to upload"
+                }
+                dropIcon={<ImageIcon />}
+                fileInputProps={{ disabled: isUploading || !imageName.trim() }}
+              />
+            </div>
           </div>
           <div>
             <h3 className="text-sm font-medium mb-3">

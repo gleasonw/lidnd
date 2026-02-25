@@ -94,13 +94,14 @@ export const appRouter = t.router({
         filetype: z.string(),
         width: z.number(),
         height: z.number(),
+        name: z.string().optional(),
       })
     )
     .mutation(async (opts) => {
       const imageAsset = await db
         .insert(images)
         .values({
-          name: opts.input.filename,
+          name: opts.input.name ?? opts.input.filename,
           user_id: opts.ctx.user.id,
           width: opts.input.width,
           height: opts.input.height,
