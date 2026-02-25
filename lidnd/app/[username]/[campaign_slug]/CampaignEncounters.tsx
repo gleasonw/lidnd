@@ -8,7 +8,6 @@ import { useSearchParams } from "next/navigation";
 import type { EncountersInCampaign } from "@/server/sdk/encounters";
 import { EncounterTagFilter } from "@/app/[username]/[campaign_slug]/TagSelect";
 import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
-import { Separator } from "@/components/ui/separator";
 
 //TODO: use the "filtered tag id" in the server prefetch
 // add a link to the filtered encounters in the tag label, alongside one to delete the tag
