@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import type { EncountersInCampaign } from "@/server/sdk/encounters";
 import { EncounterTagFilter } from "@/app/[username]/[campaign_slug]/TagSelect";
 import { CreateEncounterButton } from "@/app/[username]/[campaign_slug]/CreateEncounterButton";
+import { Separator } from "@/components/ui/separator";
 
 //TODO: use the "filtered tag id" in the server prefetch
 // add a link to the filtered encounters in the tag label, alongside one to delete the tag
@@ -56,9 +57,6 @@ export function CampaignEncounters({
       <div className="flex flex-col gap-8">
         {activeEncounters.length > 0 && (
           <div className="flex flex-col gap-4">
-            <h2 className="text-lg font-semibold border-b pb-2">
-              Active Encounters
-            </h2>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {activeEncounters.map((encounter) => (
                 <EncounterCard key={encounter.id} encounter={encounter} />
@@ -69,7 +67,6 @@ export function CampaignEncounters({
 
         {otherEncounters.length > 0 && (
           <div className="flex flex-col gap-4">
-            <h2 className="text-lg font-semibold border-b pb-2">Encounters</h2>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {otherEncounters.map((encounter) => (
                 <EncounterCard key={encounter.id} encounter={encounter} />
@@ -80,9 +77,6 @@ export function CampaignEncounters({
 
         {finishedEncounters.length > 0 && (
           <div className="flex flex-col gap-4">
-            <h2 className="text-lg font-semibold border-b pb-2">
-              Finished Encounters
-            </h2>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {finishedEncounters.map((encounter) => (
                 <EncounterCard key={encounter.id} encounter={encounter} />
