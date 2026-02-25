@@ -1,4 +1,3 @@
-import { EncounterImage } from "@/app/[username]/[campaign_slug]/EncounterImage";
 import type { Campaign } from "@/app/[username]/types";
 import { LidndAuth } from "@/app/authentication";
 import { appRoutes } from "@/app/routes";
@@ -104,7 +103,6 @@ export async function LidndSidebar({
                         user,
                       })}
                     >
-                      <EncounterImage encounter={encounter} />
                       {encounter.name || "<No Name>"}
                     </Link>
                   </SidebarMenuButton>
