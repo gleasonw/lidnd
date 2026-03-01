@@ -10,7 +10,7 @@ import {
 } from "@/server/db/schema";
 import { ServerEncounter } from "@/server/sdk/encounters";
 import { TRPCError } from "@trpc/server";
-import { and, eq, ilike, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, isNotNull, isNull } from "drizzle-orm";
 import { cache } from "react";
 
 export const ServerCampaign = {
@@ -30,6 +30,33 @@ export const ServerCampaign = {
         ),
       })) ?? null
     );
+  },
+  async getSessionState({
+    ctx,
+    campaignId,
+  }: {
+    ctx: LidndContext;
+    campaignId: string;
+  }) {
+    const [activeSession, previousActiveSession] = await Promise.all([
+      ServerCampaign.getActiveSession({
+        ctx,
+        campaignId,
+      }),
+      db.query.gameSessions.findFirst({
+        where: and(
+          isNotNull(gameSessions.ended_at),
+          eq(gameSessions.user_id, ctx.user.id),
+          eq(gameSessions.campaign_id, campaignId)
+        ),
+        orderBy: desc(gameSessions.ended_at),
+      }),
+    ]);
+
+    return {
+      activeSession,
+      previousActiveSession: previousActiveSession ?? null,
+    };
   },
   userCampaigns: async function (ctx: LidndContext) {
     return await db

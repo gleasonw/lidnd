@@ -17,6 +17,11 @@ export function useCampaign() {
 }
 
 export function useActiveGameSession() {
+  const [sessionState, query] = useGameSessionState();
+  return [sessionState.activeSession, query] as const;
+}
+
+export function useGameSessionState() {
   const [campaign] = useCampaign();
   return api.activeGameSession.useSuspenseQuery({
     campaignId: campaign.id,
@@ -100,7 +105,7 @@ export function useUpdateCampaign(campaign: { id: string }) {
 }
 
 export function useAddNewToParty({
-  campaign,
+  campaign: _campaign,
   form,
 }: {
   campaign: { id: string };

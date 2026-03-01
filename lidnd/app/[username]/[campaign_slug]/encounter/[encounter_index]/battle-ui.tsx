@@ -25,10 +25,11 @@ import { LidndPopover } from "@/encounters/base-popover";
 import { EffectIcon } from "./status-input";
 import {
   useCampaign,
-  useHotkey,
   useActiveGameSession,
-  useServerAction,
+  useHotkey,
 } from "@/app/[username]/[campaign_slug]/campaign-hooks";
+import { CreateNewSessionModal } from "@/app/[username]/[campaign_slug]/CreateNewSessionModal";
+import { SessionDisplay } from "@/app/[username]/[campaign_slug]/SessionDisplay";
 import { observer } from "mobx-react-lite";
 import { ParticipantUtils } from "@/utils/participants";
 import { ParticipantEffectUtils } from "@/utils/participantEffects";
@@ -61,10 +62,8 @@ import {
   GripVertical,
   Group,
   ImageIcon,
-  Minus,
   MoreHorizontal,
   PlayIcon,
-  Plus,
   PlusIcon,
   Shield,
   SkullIcon,
@@ -120,7 +119,6 @@ import { Switch } from "@/components/ui/switch";
 import {
   addImageAssetToEncounter,
   removeImageAssetFromEncounter,
-  updateSession,
 } from "@/app/[username]/actions";
 import { ImageUtils } from "@/utils/images";
 import { ImageUpload } from "@/encounters/image-upload";
@@ -136,6 +134,7 @@ import { useUser } from "@/app/[username]/user-provider";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
+  const [activeSession] = useActiveGameSession();
   const [encounter] = useEncounter();
   const { mutate: startEncounter } = useStartEncounter();
   const uiStore = useEncounterUIStore();
@@ -179,7 +178,9 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 <div className="flex gap-5 ml-auto items-center pr-2">
                   <PreviewSwitch />
                   <DifficultyBadgePopover />
-                  {campaign.system === "dnd5e" ? (
+                  {!activeSession ? (
+                    <CreateNewSessionModal />
+                  ) : campaign.system === "dnd5e" ? (
                     <Link href={rollEncounter}>
                       <Button variant="secondary">Start</Button>
                     </Link>
@@ -280,8 +281,6 @@ function EndedEncounterDisplay() {
   const user = useUser();
   const [campaign] = useCampaign();
   const { mutate: updateEncounter } = useUpdateEncounter();
-  const [activeSession] = useActiveGameSession();
-  const [isPending, updateSessionAction] = useServerAction(updateSession);
 
   let totalRuntime = "Unknown";
   if (encounter.started_at && encounter.ended_at) {
@@ -302,20 +301,6 @@ function EndedEncounterDisplay() {
     }
   }
 
-  const handleVictoryChange = (delta: number) => {
-    if (!activeSession) return;
-    const newCount = Math.max(0, (activeSession.victory_count ?? 0) + delta);
-    updateSessionAction({
-      sessionId: activeSession.id,
-      updated: {
-        ...activeSession,
-        victory_count: newCount,
-      },
-    }).catch((e) => {
-      console.error("Failed to update session", e);
-    });
-  };
-
   return (
     <div className="flex flex-col items-center justify-center gap-8 p-8 max-w-[900px] mx-auto">
       <Card className="p-8 w-full">
@@ -333,55 +318,9 @@ function EndedEncounterDisplay() {
             <span className="text-2xl font-semibold">{totalRuntime}</span>
           </div>
 
-          {campaign.system === "drawsteel" && activeSession && (
-            <div className="flex flex-col gap-3 bg-blue-50 p-4 rounded-md border border-blue-200">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-blue-900">
-                  Remember to award victories!
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-blue-800">
-                    Session Victories:
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleVictoryChange(-1)}
-                    disabled={
-                      isPending || (activeSession.victory_count ?? 0) === 0
-                    }
-                    className="h-7 w-7"
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <span className="text-xl font-bold text-blue-900 min-w-[2rem] text-center">
-                    {activeSession.victory_count ?? 0}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleVictoryChange(1)}
-                    disabled={isPending}
-                    className="h-7 w-7"
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-              <div className="text-sm text-blue-800">
-                <ul className="space-y-1">
-                  <li>
-                    • Easy/Standard encounters:{" "}
-                    <span className="font-semibold">1 victory</span>
-                  </li>
-                  <li>
-                    • Hard/Deadly encounters:{" "}
-                    <span className="font-semibold">2 victories</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          )}
+          <div className="flex justify-center">
+            <SessionDisplay />
+          </div>
 
           <div className="flex gap-3 mt-4">
             <Button

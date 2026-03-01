@@ -82,7 +82,7 @@ export const appRouter = t.router({
       })
     )
     .query(async (opts) => {
-      return await ServerCampaign.getActiveSession({
+      return await ServerCampaign.getSessionState({
         ctx: opts.ctx,
         campaignId: opts.input.campaignId,
       });

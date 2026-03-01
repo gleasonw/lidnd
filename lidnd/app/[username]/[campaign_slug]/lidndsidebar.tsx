@@ -1,3 +1,4 @@
+import { TotalVictoriesCount } from "@/app/[username]/[campaign_slug]/TotalVictoriesCount";
 import type { Campaign } from "@/app/[username]/types";
 import { LidndAuth } from "@/app/authentication";
 import { appRoutes } from "@/app/routes";
@@ -45,6 +46,9 @@ export async function LidndSidebar({
       </SidebarHeader>
       <SidebarContent className="p-1">
         <SidebarMenu className="gap-2">
+          <SidebarMenuItem>
+            <TotalVictoriesCount />
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Sessions">
               <Link href={appRoutes.sessions({ campaign, user })}>
