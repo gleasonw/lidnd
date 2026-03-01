@@ -177,7 +177,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 <EncounterNameInput />
                 <div className="flex gap-5 ml-auto items-center pr-2">
                   <PreviewSwitch />
-                  <DifficultyBadgePopover />
+
                   {!activeSession ? (
                     <CreateNewSessionModal />
                   ) : campaign.system === "dnd5e" ? (
@@ -209,7 +209,9 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   data-value="prep"
                 >
                   <div className="flex flex-col gap-10 w-full">
-                    <div className="flex flex-col gap-3">
+                    <div className="flex gap-3">
+                      <DifficultyBadgePopover />
+
                       <div className="flex-grow-0">
                         <EncounterTagger />
                       </div>
@@ -361,29 +363,6 @@ function DifficultyBadgePopover() {
   }
 
   const difficultyCssClass = EncounterUtils.cssClassForDifficulty(difficulty);
-  const remainingCr = EncounterUtils.remainingCr(encounter, campaign);
-  const isAtTargetDifficulty = EncounterUtils.isAtTargetDifficulty(
-    encounter,
-    campaign
-  );
-
-  // Determine badge status
-  let statusText = "";
-  let statusColor = "text-gray-600";
-
-  if (isAtTargetDifficulty && remainingCr === 0) {
-    statusText = "✓ On target";
-    statusColor = "text-green-600";
-  } else if (remainingCr > 0) {
-    statusText = `+${remainingCr} EV left`;
-    statusColor = "text-gray-600";
-  } else if (remainingCr < 0) {
-    statusText = `⚠️ ${Math.abs(remainingCr)} EV over`;
-    statusColor = "text-orange-600";
-  } else {
-    statusText = "✓ On target";
-    statusColor = "text-green-600";
-  }
 
   return (
     <LidndPopover
@@ -395,86 +374,108 @@ function DifficultyBadgePopover() {
           )}
         >
           <span className="text-sm font-medium">{difficulty}</span>
-          <span className={clsx("text-xs", statusColor)}>{statusText}</span>
         </button>
       }
       className="w-[650px]"
     >
-      <div className="flex flex-col gap-4 p-4">
-        {/* Header Section */}
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-sm text-gray-500">
-                Current Difficulty:{" "}
-              </span>
-              <span
-                className={clsx(
-                  "font-semibold",
-                  difficultyCssClass.split(" ")[0]
-                )}
-              >
-                {difficulty}
-              </span>
-              <span className="text-sm text-gray-500">
-                {" "}
-                ({EncounterUtils.totalCr(encounter)} EV)
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">Target:</span>
-            <TargetDifficultySelect />
+      <EncounterDifficultyDashboard className="p-4" />
+    </LidndPopover>
+  );
+}
+
+function EncounterDifficultyDashboard({ className }: { className?: string }) {
+  const [encounter] = useEncounter();
+  const [campaign] = useCampaign();
+  const difficulty = EncounterUtils.difficulty({
+    encounter,
+    campaign,
+  });
+
+  if (difficulty === "no-players") {
+    return (
+      <div className={clsx("text-sm text-gray-500", className)}>
+        Add players to see the encounter difficulty budget.
+      </div>
+    );
+  }
+
+  const difficultyCssClass = EncounterUtils.cssClassForDifficulty(difficulty);
+  const remainingCr = EncounterUtils.remainingCr(encounter, campaign);
+  const isAtTargetDifficulty = EncounterUtils.isAtTargetDifficulty(
+    encounter,
+    campaign
+  );
+
+  return (
+    <div className={clsx("flex flex-col gap-4", className)}>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-sm text-gray-500">Current Difficulty: </span>
+            <span
+              className={clsx(
+                "font-semibold",
+                difficultyCssClass.split(" ")[0]
+              )}
+            >
+              {difficulty}
+            </span>
+            <span className="text-sm text-gray-500">
+              {" "}
+              ({EncounterUtils.totalCr(encounter)} EV)
+            </span>
           </div>
         </div>
-
-        {/* Slider Section */}
-        <div className="flex flex-col gap-2">
-          <EncounterBudgetSlider />
-        </div>
-
-        {/* Budget Feedback Section */}
-        <div className="flex justify-center">
-          {isAtTargetDifficulty ? (
-            <div className="text-gray-500 text-sm">
-              <span className="flex gap-2 items-baseline w-full">
-                {remainingCr === 0 ? (
-                  <>
-                    <span>At maximum EV for</span>
-                    <span className="font-medium">
-                      {encounter.target_difficulty}
-                    </span>
-                    <span>difficulty.</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Within budget for</span>
-                    <span className="font-medium">
-                      {encounter.target_difficulty}
-                    </span>
-                    <span>difficulty. Can spend up to</span>
-                    <span className="text-xl font-bold text-black">
-                      {remainingCr}
-                    </span>
-                    <span>more EV.</span>
-                  </>
-                )}
-              </span>
-            </div>
-          ) : (
-            <div className="flex gap-2 items-baseline text-gray-500 text-sm">
-              <span>{remainingCr < 0 ? "Remove" : "Add up to"}</span>
-              <span className="text-xl font-bold text-black w-8 text-center">
-                {Math.abs(remainingCr)}
-              </span>
-              <span>EV worth of monsters for</span>
-              <span className="font-medium">{encounter.target_difficulty}</span>
-              <span>difficulty</span>
-            </div>
-          )}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">Target:</span>
+          <TargetDifficultySelect />
         </div>
       </div>
-    </LidndPopover>
+
+      <div className="flex flex-col gap-2">
+        <EncounterBudgetSlider />
+      </div>
+
+      <div className="flex justify-center">
+        {isAtTargetDifficulty ? (
+          <div className="text-gray-500 text-sm">
+            <span className="flex gap-2 items-baseline w-full">
+              {remainingCr === 0 ? (
+                <>
+                  <span>At maximum EV for</span>
+                  <span className="font-medium">
+                    {encounter.target_difficulty}
+                  </span>
+                  <span>difficulty.</span>
+                </>
+              ) : (
+                <>
+                  <span>Within budget for</span>
+                  <span className="font-medium">
+                    {encounter.target_difficulty}
+                  </span>
+                  <span>difficulty. Can spend up to</span>
+                  <span className="text-xl font-bold text-black">
+                    {remainingCr}
+                  </span>
+                  <span>more EV.</span>
+                </>
+              )}
+            </span>
+          </div>
+        ) : (
+          <div className="flex gap-2 items-baseline text-gray-500 text-sm">
+            <span>{remainingCr < 0 ? "Remove" : "Add up to"}</span>
+            <span className="text-xl font-bold text-black w-8 text-center">
+              {Math.abs(remainingCr)}
+            </span>
+            <span>EV worth of monsters for</span>
+            <span className="font-medium">{encounter.target_difficulty}</span>
+            <span>difficulty</span>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -1314,28 +1315,11 @@ const MonsterSection = observer(function TurnGroupSetup() {
   const uiStore = useEncounterUIStore();
   const [creatureAddDialogIsOpen, setCreatureAddDialogIsOpen] = useState(false);
   const [acceptDrop, setAcceptDrop] = useState(0);
+  const { mutate: removeParticipantFromEncounter } =
+    useRemoveParticipantFromEncounter();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   const monsters = EncounterUtils.monsters(encounter);
   const monstersWihoutGroup = monsters.filter((m) => !m.turn_group_id);
-  const keyForExistingCreature = getQueryKey(
-    api.addExistingCreatureAsParticipant
-  );
-  const qc = useQueryClient();
-  // i would have to prop drill a bit to get a callback into existing creature add, so instead
-  // i will do this
-  useEffect(() => {
-    return qc.getMutationCache().subscribe((event) => {
-      const { mutation, type } = event;
-      const key = (
-        mutation?.options?.mutationKey?.[0] as Array<string>
-      )?.[0] as string | undefined;
-      const targetKey = keyForExistingCreature?.[0]?.[0];
-      if (key === targetKey && type === "added") {
-        console.log(`turn group setup detected existing creature added`);
-        setCreatureAddDialogIsOpen(false);
-      }
-    });
-  }, [keyForExistingCreature, qc]);
 
   useHotkey("a", () => {
     setCreatureAddDialogIsOpen(true);
@@ -1363,10 +1347,43 @@ const MonsterSection = observer(function TurnGroupSetup() {
           onClose={() => setCreatureAddDialogIsOpen(false)}
           title="Add adversary"
           content={
-            <div className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-hidden">
-              <EditModeOpponentForm
-                onSubmitSuccess={() => setCreatureAddDialogIsOpen(false)}
-              />
+            <div className="p-6 flex flex-col gap-5 overflow-x-hidden h-[800px]">
+              <EncounterDifficultyDashboard />
+              <div className="grid grid-cols-3 gap-3">
+                {monsters
+                  .slice()
+                  .sort(
+                    (a, b) =>
+                      ParticipantUtils.challengeRating(b) -
+                      ParticipantUtils.challengeRating(a)
+                  )
+                  .map((m) => (
+                    <div
+                      className="shadow-md flex items-center gap-2"
+                      key={m.id}
+                    >
+                      <span>
+                        {ParticipantUtils.name(m)} (CR{" "}
+                        {ParticipantUtils.challengeRating(m)})
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="ml-auto text-gray-300"
+                        onClick={() =>
+                          removeParticipantFromEncounter({
+                            encounter_id: encounter.id,
+                            participant_id: m.id,
+                          })
+                        }
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+              </div>
+              <Separator />
+              <EditModeOpponentForm />
             </div>
           }
           trigger={
