@@ -1911,7 +1911,7 @@ export const StatColumns = observer(function StatColumns() {
         ))}
         {/** eventually i'll have to do a column order thing. but not now! */}
         {c.assets.map((asset) => (
-          <div key={asset.id} className="w-full h-full relative">
+          <div key={asset.id} className="w-full relative">
             {uiStore.isEditingInitiative && <AssetDragButton asset={asset} />}
             <Image
               src={ImageUtils.url(asset.image)}
