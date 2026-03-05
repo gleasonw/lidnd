@@ -51,11 +51,11 @@ import StarterKit from "@tiptap/starter-kit";
 import { Placeholder } from "@tiptap/extensions";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
 import {
+  ActiveReminders,
   ReminderInput,
   Reminders,
 } from "@/encounters/[encounter_index]/reminders";
 import {
-  AngryIcon,
   CheckCircle,
   Columns,
   Grip,
@@ -112,9 +112,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ParticipantEditDialog } from "@/encounters/[encounter_index]/ParticipantEditDialog";
 import { EncounterTagger } from "@/encounters/EncounterTagger";
 import { DeleteEncounterButton } from "@/encounters/[encounter_index]/DeleteEncounterButton";
-import { Kbd } from "@/components/ui/kbd";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Switch } from "@/components/ui/switch";
 import {
   addImageAssetToEncounter,
   removeImageAssetFromEncounter,
@@ -126,7 +123,6 @@ import {
   readImageHeightWidth,
 } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 import { MaliceTracker } from "@/encounters/[encounter_index]/MaliceTracker";
-import { Separator } from "@/components/ui/separator";
 import { AddPlayerToEncounter } from "@/encounters/[encounter_index]/AddPlayerToEncounter";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
@@ -158,25 +154,26 @@ export const EncounterBattleUI = observer(function BattleUI() {
 
   const monsters = EncounterUtils.participantsWithNoColumn(encounter);
 
-  const searchParams = useSearchParams();
-  const isPreview = searchParams.get("preview") === "true";
-
   switch (encounter.status) {
     case "prep":
       return (
         <div className="flex flex-col max-h-full h-full">
           <div
             className={clsx(
-              "flex justify-center w-full xl:max-h-full",
+              "flex justify-evenly w-full xl:max-h-full flex-wrap",
               battleStyles.root
             )}
           >
-            <div className="flex flex-col w-full px-4 gap-3 mx-auto max-w-[900px]">
+            <div className="p-4 flex-grow-0 pt-20">
+              <div className="w-[500px] h-[600px] border p-2 shadow-sm rounded-md overflow-auto">
+                <EditModeOpponentForm />
+              </div>
+            </div>
+
+            <div className="flex flex-col px-4 gap-3 w-[800px]">
               <div className="w-full flex gap-5 py-2">
                 <EncounterNameInput />
                 <div className="flex gap-5 ml-auto items-center pr-2">
-                  <PreviewSwitch />
-
                   {!activeSession ? (
                     <CreateNewSessionModal />
                   ) : campaign.system === "dnd5e" ? (
@@ -196,46 +193,32 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   )}
                 </div>
               </div>
-              {isPreview ? (
-                <div className="w-full" data-value="preview">
-                  <div className="w-full flex gap-3 h-full">
-                    <EncounterBattlePreview />
+              <div
+                className="w-full xl:max-h-full flex flex-col gap-3"
+                data-value="prep"
+              >
+                <div className="flex flex-col gap-3 w-full">
+                  <div className="flex gap-3">
+                    <DifficultyBadgePopover />
+
+                    <div className="flex-grow-0">
+                      <EncounterTagger />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div
-                  className="w-full xl:max-h-full flex flex-col gap-5"
-                  data-value="prep"
-                >
-                  <div className="flex flex-col gap-10 w-full">
-                    <div className="flex gap-3">
-                      <DifficultyBadgePopover />
 
-                      <div className="flex-grow-0">
-                        <EncounterTagger />
-                      </div>
-                    </div>
-                    <div className={clsx(battleStyles.adversarySection)}>
-                      {campaign.system === "drawsteel" ? (
-                        <MonsterSection />
-                      ) : null}
-                    </div>
-                    <div className="flex flex-col gap-3">
-                      <Separator />
-                      <div className="flex flex-col gap-4">
-                        <div className="">Pacing & Notes</div>
-
-                        <div>
-                          <ReminderInput />
-                        </div>
-                      </div>
-                      <div>
-                        <DescriptionTextArea />
-                      </div>
+                  <div className="flex flex-col gap-3">
+                    <div className="border shadow-sm rounded-sm px-2">
+                      <DescriptionTextArea />
                     </div>
                   </div>
                 </div>
-              )}
+                <div className={clsx(battleStyles.adversarySection)}>
+                  {campaign.system === "drawsteel" ? <MonsterSection /> : null}
+                </div>
+                <div className="w-full flex gap-3 h-full">
+                  <EncounterBattlePreview />
+                </div>
+              </div>
             </div>
           </div>
           <div className="w-full flex items-center justify-center p-24">
@@ -478,30 +461,6 @@ function EncounterDifficultyDashboard({ className }: { className?: string }) {
   );
 }
 
-function PreviewSwitch() {
-  const searchParams = useSearchParams();
-  const isPreview = searchParams.get("preview") === "true";
-  const router = useRouter();
-  return (
-    <LidndLabel label="Prep" className="flex items-center gap-3">
-      <Switch
-        id="group-by-tag"
-        checked={isPreview}
-        onCheckedChange={() => {
-          const params = new URLSearchParams(searchParams.toString());
-          if (isPreview) {
-            params.delete("preview");
-          } else {
-            params.set("preview", "true");
-          }
-          router.push(`?${params.toString()}`);
-        }}
-      />
-      <span className="text-sm text-gray-400">Layout</span>
-    </LidndLabel>
-  );
-}
-
 function EncounterNameInput({
   textSize = "large",
 }: {
@@ -661,20 +620,8 @@ function SliderTier({ difficulty }: { difficulty: Difficulty }) {
 function EncounterBattlePreview() {
   const { data: columns } = api.getColumns.useQuery(useEncounterId());
   const { parentWidth, containerRef } = useParentResizeObserver();
-  const [encounter] = useEncounter();
   return (
-    <div className="flex flex-col">
-      <div className="flex gap-2 items-center">
-        <EqualizeColumnsButton />
-        <div className="p-1 flex gap-2 items-center h-20">
-          <ImageAssetAddButton />
-          <div className="flex flex-wrap gap-2 mt-2">
-            {encounter.assets?.map((asset) => (
-              <AssetThumbnail key={asset.id} asset={asset} />
-            ))}
-          </div>
-        </div>
-      </div>
+    <div className="flex flex-col w-full">
       <div
         className="flex min-h-[450px] overflow-hidden w-full h-full border shadow-md"
         ref={containerRef}
@@ -1314,8 +1261,6 @@ const MonsterSection = observer(function TurnGroupSetup() {
   const uiStore = useEncounterUIStore();
   const [creatureAddDialogIsOpen, setCreatureAddDialogIsOpen] = useState(false);
   const [acceptDrop, setAcceptDrop] = useState(0);
-  const { mutate: removeParticipantFromEncounter } =
-    useRemoveParticipantFromEncounter();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   const monsters = EncounterUtils.monsters(encounter);
   const monstersWihoutGroup = monsters.filter((m) => !m.turn_group_id);
@@ -1339,63 +1284,13 @@ const MonsterSection = observer(function TurnGroupSetup() {
   const oneHeroStrength = tiers.oneHeroStrength;
 
   return (
-    <div className="flex flex-col gap-7 w-full">
+    <div className="flex flex-col gap-3 w-full">
       <div className="flex gap-4 items-center">
-        <LidndDialog
-          isOpen={creatureAddDialogIsOpen}
-          onClose={() => setCreatureAddDialogIsOpen(false)}
-          title="Add adversary"
-          content={
-            <div className="p-6 flex flex-col gap-5 overflow-x-hidden h-[800px]">
-              <EncounterDifficultyDashboard />
-              <div className="grid grid-cols-3 gap-3">
-                {monsters
-                  .slice()
-                  .sort(
-                    (a, b) =>
-                      ParticipantUtils.challengeRating(b) -
-                      ParticipantUtils.challengeRating(a)
-                  )
-                  .map((m) => (
-                    <div
-                      className="shadow-md flex items-center gap-2"
-                      key={m.id}
-                    >
-                      <span>
-                        {ParticipantUtils.name(m)} (CR{" "}
-                        {ParticipantUtils.challengeRating(m)})
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="ml-auto text-gray-300"
-                        onClick={() =>
-                          removeParticipantFromEncounter({
-                            encounter_id: encounter.id,
-                            participant_id: m.id,
-                          })
-                        }
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-              </div>
-              <Separator />
-              <EditModeOpponentForm />
-            </div>
-          }
-          trigger={
-            <Button
-              onClick={() => setCreatureAddDialogIsOpen(true)}
-              className=""
-            >
-              <AngryIcon />
-              Add adversary
-              <Kbd>A</Kbd>
-            </Button>
-          }
-        />
+        <div className="p-1 flex gap-2 items-center h-20">
+          <ImageAssetAddButton />
+        </div>
+        <ReminderInput />
+
         {monsters.length > 0 && <CreateTurnGroupForm />}
 
         <div className="ml-auto flex items-center gap-3">
@@ -1411,73 +1306,84 @@ const MonsterSection = observer(function TurnGroupSetup() {
           />
         </div>
       </div>
+      <ActiveReminders />
 
-      <div className={clsx("flex flex-col gap-5")}>
-        <div className="flex flex-col gap-4">
-          {monstersWihoutGroup.length > 0 ||
-          encounter.turn_groups.length > 0 ? (
-            <div
-              className={clsx(
-                "gap-3 gap-x-12 rounded border-2 min-h-[80px]",
-                battleStyles.adversaryGrid,
-                {
-                  "border-blue-400 bg-blue-50": acceptDrop > 0,
-                  "border-dashed": uiStore.activeDragType === "participant",
-                  "border-transparent":
-                    uiStore.activeDragType !== "participant",
-                }
-              )}
-              onDrop={(e) => {
-                e.preventDefault();
-                const droppedParticipant = typedDrag.get(
-                  e.dataTransfer,
-                  dragTypes.participant
-                );
-                if (droppedParticipant) {
-                  updateParticipant({
-                    ...droppedParticipant,
-                    created_at: new Date(droppedParticipant.created_at),
-                    turn_group_id: null,
-                  });
-                }
-                setAcceptDrop(0);
-              }}
-              onDragOver={(e) => {
-                if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
+      <div
+        className={clsx({
+          "grid grid-cols-2": creatureAddDialogIsOpen,
+        })}
+      >
+        <div className={clsx("flex flex-col gap-5")}>
+          <div className="flex flex-col gap-4">
+            {monstersWihoutGroup.length > 0 ||
+            encounter.turn_groups.length > 0 ? (
+              <div
+                className={clsx(
+                  "gap-3 gap-x-12 rounded border-2 min-h-[80px]",
+                  battleStyles.adversaryGrid,
+                  {
+                    "border-blue-400 bg-blue-50": acceptDrop > 0,
+                    "border-dashed": uiStore.activeDragType === "participant",
+                    "border-transparent":
+                      uiStore.activeDragType !== "participant",
+                  }
+                )}
+                onDrop={(e) => {
                   e.preventDefault();
-                }
-              }}
-              onDragEnter={(e) => {
-                if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
+                  const droppedParticipant = typedDrag.get(
+                    e.dataTransfer,
+                    dragTypes.participant
+                  );
+                  if (droppedParticipant) {
+                    updateParticipant({
+                      ...droppedParticipant,
+                      created_at: new Date(droppedParticipant.created_at),
+                      turn_group_id: null,
+                    });
+                  }
+                  setAcceptDrop(0);
+                }}
+                onDragOver={(e) => {
+                  if (
+                    typedDrag.includes(e.dataTransfer, dragTypes.participant)
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                onDragEnter={(e) => {
+                  if (
+                    typedDrag.includes(e.dataTransfer, dragTypes.participant)
+                  ) {
+                    e.preventDefault();
+                    setAcceptDrop((count) => count + 1);
+                  }
+                }}
+                onDragLeave={(e) => {
                   e.preventDefault();
-                  setAcceptDrop((count) => count + 1);
-                }
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault();
-                setAcceptDrop((count) => count - 1);
-              }}
-            >
-              {monstersWihoutGroup.length > 0 ? (
-                monstersWihoutGroup.map((p) => (
-                  <PrepParticipant participant={p} key={p.id} />
-                ))
-              ) : (
-                <div className="col-span-2 text-center text-gray-400 text-sm">
-                  Drag participants here to remove them from groups
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className=" text-gray-400">No monsters yet</div>
-          )}
-          {encounter.turn_groups.length > 0 && (
-            <div className={clsx("gap-4", battleStyles.adversaryGrid)}>
-              {encounter.turn_groups.map((tg) => (
-                <TurnGroupDisplay tg={tg} key={tg.id} />
-              ))}
-            </div>
-          )}
+                  setAcceptDrop((count) => count - 1);
+                }}
+              >
+                {monstersWihoutGroup.length > 0 ? (
+                  monstersWihoutGroup.map((p) => (
+                    <PrepParticipant participant={p} key={p.id} />
+                  ))
+                ) : (
+                  <div className="col-span-2 text-center text-gray-400 text-sm">
+                    Drag participants here to remove them from groups
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className=" text-gray-400">No monsters yet</div>
+            )}
+            {encounter.turn_groups.length > 0 && (
+              <div className={clsx("gap-4", battleStyles.adversaryGrid)}>
+                {encounter.turn_groups.map((tg) => (
+                  <TurnGroupDisplay tg={tg} key={tg.id} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -1511,49 +1417,7 @@ function TargetDifficultySelect() {
   );
 }
 
-function AssetThumbnail({
-  asset,
-}: {
-  asset: {
-    id: string;
-    image: { id: string; name: string; width: number; height: number };
-  };
-}) {
-  const [encounter] = useEncounter();
-  const [isPending, startTransition] = useTransition();
-  const qc = useQueryClient();
-
-  return (
-    <div className="relative group border rounded overflow-hidden">
-      <Image
-        src={ImageUtils.url(asset.image)}
-        alt={asset.image.name}
-        width={80}
-        height={80}
-        className="object-cover"
-      />
-      <Button
-        variant="ghost"
-        size="sm"
-        className="absolute top-0 right-0 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 bg-red-500 hover:bg-red-600 text-white"
-        onClick={() => {
-          startTransition(async () => {
-            await removeImageAssetFromEncounter({
-              encounterId: encounter.id,
-              assetId: asset.id,
-            });
-            await qc.invalidateQueries();
-          });
-        }}
-        disabled={isPending}
-      >
-        <Trash className="h-3 w-3" />
-      </Button>
-    </div>
-  );
-}
-
-function ImageAssetAddButton() {
+export function ImageAssetAddButton() {
   const [encounter] = useEncounter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
@@ -1614,10 +1478,13 @@ function ImageAssetAddButton() {
     <LidndDialog
       title="Add static image"
       trigger={
-        <Button variant="secondary">
+        <ButtonWithTooltip
+          text="Add static image"
+          variant="secondary"
+          size="icon"
+        >
           <ImageIcon />
-          Add static image
-        </Button>
+        </ButtonWithTooltip>
       }
       content={
         <div className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-auto">
@@ -2310,16 +2177,19 @@ export const StatColumnComponent = observer(function StatColumnComponent({
           <>
             <div className="p-3 flex flex-col gap-2">
               {encounter.status === "run" ? (
-                <EncounterDetails showActions={false} />
+                <>
+                  <EncounterDetails showActions={false} />
+
+                  <Card className="p-2">
+                    <MaliceTracker compact />
+                    <EncounterRunTools />
+                  </Card>
+                </>
               ) : null}
-              <Card className="p-2">
-                {encounter.status === "run" ? <MaliceTracker compact /> : null}
-                {encounter.status === "run" ? <EncounterRunTools /> : null}
-              </Card>
             </div>
 
-            <div className="w-full h-full flex px-3">
-              <DescriptionTextArea />
+            <div className="w-full flex px-3">
+              {encounter.status === "run" ? <DescriptionTextArea /> : null}
             </div>
           </>
         ) : null}

@@ -746,6 +746,41 @@ export const appRouter = t.router({
   //#endregion
 
   //#region Creatures
+  createCreatureInCampaign: protectedProcedure
+    .input(
+      z.object({
+        campaign_id: z.string(),
+        creature: creatureUploadSchema.omit({ column_id: true }),
+        hasStatBlock: z.boolean(),
+        hasIcon: z.boolean(),
+      })
+    )
+    .mutation(async (opts) => {
+      return await db.transaction(async (tx) => {
+        const campaign = await ServerCampaign.campaignByIdThrows(
+          opts.ctx,
+          opts.input.campaign_id,
+          tx
+        );
+        const { creature, statBlockPresigned, iconPresigned } =
+          await ServerCreature.create(
+            opts.ctx,
+            opts.input.creature,
+            {
+              hasStatBlock: opts.input.hasStatBlock,
+              hasIcon: opts.input.hasIcon,
+              campaignId: campaign.id,
+            },
+            tx
+          );
+        revalidatePath(`/`);
+        return {
+          creature,
+          statBlockPresigned,
+          iconPresigned,
+        };
+      });
+    }),
 
   updateCreature: protectedProcedure
     .input(insertCreatureSchema.omit({ user_id: true }))

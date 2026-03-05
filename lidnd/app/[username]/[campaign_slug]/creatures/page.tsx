@@ -66,7 +66,9 @@ export default async function CampaignCreaturesPage(props: {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 pb-6">
       <section className="flex flex-col gap-4">
-        <CampaignCreatureSearch defaultValue={search} />
+        <div className="flex flex-wrap items-center gap-3">
+          <CampaignCreatureSearch defaultValue={search} />
+        </div>
         {creaturesToShow.length === 0 ? (
           <p className="text-muted-foreground">
             {search ? "No creatures match your search" : "No creatures yet"}

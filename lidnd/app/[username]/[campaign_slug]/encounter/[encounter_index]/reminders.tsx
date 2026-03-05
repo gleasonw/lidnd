@@ -28,23 +28,10 @@ import { LidndPopover } from "@/encounters/base-popover";
 
 export function ReminderInput() {
   const [encounter] = useEncounter();
-  const { encounterById } = api.useUtils();
   const [alertAfterRound, setAlertAfterRound] = React.useState<string>("1");
   const [reminder, setReminder] = React.useState<string>("");
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const { mutate: removeReminder } = api.removeEncounterReminder.useMutation({
-    onMutate: async ({ reminder_id }) => {
-      await encounterById.cancel(encounter.id);
-      const previousEncounter = encounterById.getData(encounter.id);
-      encounterById.setData(encounter.id, (old) => {
-        if (!old) {
-          return;
-        }
-        return EncounterUtils.removeReminder(reminder_id, old);
-      });
-      return previousEncounter;
-    },
-  });
+  const { encounterById } = api.useUtils();
   const { mutate: addReminder } = api.addEncounterReminder.useMutation({
     onMutate: async (newReminder) => {
       await encounterById.cancel(encounter.id);
@@ -73,10 +60,9 @@ export function ReminderInput() {
   return (
     <LidndPopover
       trigger={
-        <Button variant="outline">
+        <ButtonWithTooltip text="Add round reminder" size="icon" variant="outline">
           <Timer />
-          Add round reminder
-        </Button>
+        </ButtonWithTooltip>
       }
     >
       <form
@@ -126,43 +112,65 @@ export function ReminderInput() {
             <Plus />
           </Button>
         </div>
-        {encounter?.reminders && encounter.reminders.length > 0 && (
-          <div>
-            {encounter.reminders
-              .slice()
-              .sort((a, b) => a.alert_after_round - b.alert_after_round)
-              .map((reminder) => (
-                <div
-                  className="flex gap-3 items-center px-3 py-2 hover:bg-gray-50 group"
-                  key={reminder.id}
-                >
-                  <Badge variant="secondary" className="shrink-0">
-                    {reminder.alert_after_round === 0
-                      ? "All"
-                      : `R${reminder.alert_after_round}`}
-                  </Badge>
-                  <span className="flex-1 text-sm">{reminder.reminder}</span>
-                  <ButtonWithTooltip
-                    text="Remove reminder"
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      removeReminder({
-                        reminder_id: reminder.id,
-                        encounter_id: encounter.id,
-                      });
-                    }}
-                  >
-                    <X size={16} />
-                  </ButtonWithTooltip>
-                </div>
-              ))}
-          </div>
-        )}
       </form>
     </LidndPopover>
+  );
+}
+
+export function ActiveReminders() {
+  const [encounter] = useEncounter();
+  const { encounterById } = api.useUtils();
+  const { mutate: removeReminder } = api.removeEncounterReminder.useMutation({
+    onMutate: async ({ reminder_id }) => {
+      await encounterById.cancel(encounter.id);
+      const previousEncounter = encounterById.getData(encounter.id);
+      encounterById.setData(encounter.id, (old) => {
+        if (!old) {
+          return;
+        }
+        return EncounterUtils.removeReminder(reminder_id, old);
+      });
+      return previousEncounter;
+    },
+  });
+
+  if (!encounter.reminders || encounter.reminders.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-md border">
+      {encounter.reminders
+        .slice()
+        .sort((a, b) => a.alert_after_round - b.alert_after_round)
+        .map((reminder) => (
+          <div
+            className="flex gap-3 items-center px-3 py-2 hover:bg-gray-50 group"
+            key={reminder.id}
+          >
+            <Badge variant="secondary" className="shrink-0">
+              {reminder.alert_after_round === 0
+                ? "All"
+                : `R${reminder.alert_after_round}`}
+            </Badge>
+            <span className="flex-1 text-sm">{reminder.reminder}</span>
+            <ButtonWithTooltip
+              text="Remove reminder"
+              variant="ghost"
+              size="icon"
+              className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+              onClick={() => {
+                removeReminder({
+                  reminder_id: reminder.id,
+                  encounter_id: encounter.id,
+                });
+              }}
+            >
+              <X size={16} />
+            </ButtonWithTooltip>
+          </div>
+        ))}
+    </div>
   );
 }
 

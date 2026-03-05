@@ -3,7 +3,10 @@
 import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { ButtonWithTooltip } from "@/components/ui/tip";
-import { EqualizeColumnsButton } from "@/encounters/[encounter_index]/battle-ui";
+import {
+  EqualizeColumnsButton,
+  ImageAssetAddButton,
+} from "@/encounters/[encounter_index]/battle-ui";
 import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
 import {
   useEncounter,
@@ -54,6 +57,7 @@ export const EncounterRunTools = observer(function EncounterRunTools() {
         content={<EditModeOpponentForm />}
         title="Add Opponent"
       />
+      <ImageAssetAddButton />
     </div>
   );
 });

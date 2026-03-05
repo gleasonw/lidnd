@@ -221,11 +221,7 @@ export function EditModeOpponentForm({
                 />
               </LidndLabel>
             </div>
-            <Button
-              type="submit"
-              className="col-span-2 bg-gray-200"
-              variant="outline"
-            >
+            <Button type="submit" className="w-48 mx-auto">
               <PlusIcon />
               {isPending ? "Uploading..." : "Add participant"}
             </Button>

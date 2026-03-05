@@ -16,10 +16,11 @@ import { crLabel } from "@/utils/campaigns";
 
 export function ExistingCreatureAdd() {
   const [search, setSearch] = useState("");
+  const [quantity, setQuantity] = useState("1");
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
-  const [inCampaign, setInCampaign] = useState(true);
-  const [inCrBudget, setInCrBudget] = useState<boolean>(true);
+  const [inCampaign, setInCampaign] = useState(false);
+  const [inCrBudget, setInCrBudget] = useState<boolean>(false);
   const [sortCr, setSortCr] = useState<"asc" | "desc">("desc");
 
   const creaturesQuery = api.getUserCreatures.useQuery(
@@ -43,28 +44,39 @@ export function ExistingCreatureAdd() {
 
   const creaturesToDisplay = creaturesQuery.data ?? [];
 
-  function handleAdd(creature: Creature) {
+  async function handleAdd(creature: Creature) {
     if (addMonster.isPending) return;
+    const parsedQuantity = Number.parseInt(quantity, 10);
+    const quantityToAdd =
+      Number.isNaN(parsedQuantity) || parsedQuantity < 1 ? 1 : parsedQuantity;
 
-    addMonster
-      .mutateAsync({
+    for (let i = 0; i < quantityToAdd; i++) {
+      await addMonster.mutateAsync({
         encounter_id: encounter.id,
         creature_id: creature.id,
         hp: creature.max_hp ?? 1,
-      })
-      .then(() => {
-        setSearch("");
-      })
-      .catch(console.error);
+      });
+    }
   }
   return (
     <div className="flex flex-col gap-3 p-3">
-      <div className="flex">
+      <div className="flex gap-2">
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder={`Search adversaries`}
           className="h-9 text-sm"
+        />
+        <Input
+          value={quantity}
+          onChange={(event) => setQuantity(event.target.value)}
+          type="number"
+          min={1}
+          step={1}
+          inputMode="numeric"
+          placeholder="Qty"
+          className="h-9 w-20 text-sm"
+          aria-label="Quantity"
         />
         <ButtonWithTooltip
           text={"Sort by CR"}
@@ -103,7 +115,9 @@ export function ExistingCreatureAdd() {
           <button
             key={creature.id}
             type="button"
-            onClick={() => handleAdd(creature)}
+            onClick={() => {
+              handleAdd(creature).catch(console.error);
+            }}
             className="flex w-full items-center justify-between rounded-sm border border-transparent px-3 py-2 text-left text-sm transition hover:border-border hover:bg-muted/60"
             disabled={addMonster.isPending}
           >
