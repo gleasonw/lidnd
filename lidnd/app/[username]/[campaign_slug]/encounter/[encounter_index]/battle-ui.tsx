@@ -112,10 +112,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ParticipantEditDialog } from "@/encounters/[encounter_index]/ParticipantEditDialog";
 import { EncounterTagger } from "@/encounters/EncounterTagger";
 import { DeleteEncounterButton } from "@/encounters/[encounter_index]/DeleteEncounterButton";
-import {
-  addImageAssetToEncounter,
-  removeImageAssetFromEncounter,
-} from "@/app/[username]/actions";
+import { addImageAssetToEncounter } from "@/app/[username]/actions";
 import { ImageUtils } from "@/utils/images";
 import { ImageUpload } from "@/encounters/image-upload";
 import {
