@@ -157,7 +157,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
         <div className="flex flex-col max-h-full h-full">
           <div
             className={clsx(
-              "flex w-full xl:max-h-full flex-wrap pt-5 px-10 gap-5",
+              "flex w-full xl:max-h-full flex-wrap lg:flex-nowrap pt-5 px-10 gap-5",
               battleStyles.root
             )}
           >
