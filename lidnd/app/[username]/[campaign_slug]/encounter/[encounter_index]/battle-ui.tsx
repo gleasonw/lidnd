@@ -165,7 +165,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
             <div className="flex gap-2 flex-col">
               <div className="w-full flex gap-5">
                 <EncounterNameInput />
-                <div className="flex gap-5 ml-auto items-center pr-2">
+                <div className="flex gap-5 ml-auto items-center">
                   {!activeSession ? (
                     <CreateNewSessionModal
                       trigger={
