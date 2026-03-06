@@ -62,6 +62,7 @@ import {
   GripVertical,
   Group,
   ImageIcon,
+  Maximize2,
   MoreHorizontal,
   PlayIcon,
   PlusIcon,
@@ -752,17 +753,20 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
         >
           {p[0]?.creature ? (
             <div className="w-full h-full max-h-full overflow-hidden">
-              <Button
-                variant="ghost"
-                className="z-10  cursor-grab"
-                onDragStart={(e) => {
-                  typedDrag.set(e.dataTransfer, dragTypes.participant, p[0]!);
-                  uiStore.startDraggingBattleCard();
-                }}
-                draggable
-              >
-                <Grip />
-              </Button>
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="ghost"
+                  className="z-10 cursor-grab"
+                  onDragStart={(e) => {
+                    typedDrag.set(e.dataTransfer, dragTypes.participant, p[0]!);
+                    uiStore.startDraggingBattleCard();
+                  }}
+                  draggable
+                >
+                  <Grip />
+                </Button>
+                <StatBlockFullscreenButton creature={p[0].creature} />
+              </div>
               <CreatureStatBlock creature={p[0]?.creature} />
             </div>
           ) : (
@@ -771,6 +775,37 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
         </div>
       ))}
     </div>
+  );
+}
+
+function StatBlockFullscreenButton({ creature }: { creature: Creature }) {
+  return (
+    <LidndDialog
+      title={`${creature.name} stat block`}
+      trigger={
+        <ButtonWithTooltip
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2"
+          text="Fullscreen"
+        >
+          <Maximize2 />
+        </ButtonWithTooltip>
+      }
+      content={
+        <div className="flex justify-center">
+          <Image
+            priority
+            quality={100}
+            src={CreatureUtils.awsURL(creature, "statBlock")}
+            alt={creature.name}
+            width={creature.stat_block_width}
+            height={creature.stat_block_height}
+            className="h-auto max-h-[85vh] w-auto max-w-full object-contain"
+          />
+        </div>
+      }
+    />
   );
 }
 
