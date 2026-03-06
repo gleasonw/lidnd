@@ -63,11 +63,12 @@ export function ReminderInput() {
         <ButtonWithTooltip
           text="Add round reminder"
           size="icon"
-          variant="outline"
+          variant="ghost"
         >
           <Timer />
         </ButtonWithTooltip>
       }
+      className="w-fit"
     >
       <form
         onSubmit={(e) => {
@@ -143,13 +144,13 @@ export function ActiveReminders() {
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="">
       {encounter.reminders
         .slice()
         .sort((a, b) => a.alert_after_round - b.alert_after_round)
         .map((reminder) => (
           <div
-            className="flex gap-3 items-center px-3 py-2 hover:bg-gray-50 group"
+            className="flex gap-3 items-center py-1 hover:bg-gray-50 group"
             key={reminder.id}
           >
             <Badge variant="secondary" className="shrink-0">
@@ -162,7 +163,7 @@ export function ActiveReminders() {
               text="Remove reminder"
               variant="ghost"
               size="icon"
-              className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+              className="opacity-25 group-hover:opacity-100 transition-opacity h-8 w-8"
               onClick={() => {
                 removeReminder({
                   reminder_id: reminder.id,

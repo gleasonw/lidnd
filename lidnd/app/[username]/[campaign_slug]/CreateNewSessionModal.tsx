@@ -25,9 +25,11 @@ type SessionTriggerProps = {
 export function CreateNewSessionModal({
   lastSession,
   trigger,
+  afterBegin,
 }: {
   lastSession?: GameSession | null;
   trigger?: React.ReactElement<SessionTriggerProps>;
+  afterBegin?: () => void;
 }) {
   const [campaign] = useCampaign();
   const [sessionState] = useGameSessionState();
@@ -87,6 +89,7 @@ export function CreateNewSessionModal({
             })
               .then(() => {
                 setSessionDialogOpen(false);
+                afterBegin?.();
               })
               .catch((err) => {
                 console.error("Failed to start session:", err);

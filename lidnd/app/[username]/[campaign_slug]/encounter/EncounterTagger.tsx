@@ -114,7 +114,16 @@ export function EncounterTagger() {
               <span className="p-1">{tag.tag.name}</span>
             </Link>
 
-            <Button variant="ghost" className="w-3 h-3 p-2">
+            <Button
+              variant="ghost"
+              className="w-3 h-3 p-2"
+              onClick={() =>
+                removeTag.mutate({
+                  encounter_id: encounter.id,
+                  tag_id: tag.tag_id,
+                })
+              }
+            >
               <XIcon className="w-4 h-4" />
             </Button>
           </Badge>

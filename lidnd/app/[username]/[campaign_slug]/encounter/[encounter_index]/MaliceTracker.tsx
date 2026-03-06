@@ -46,7 +46,7 @@ export function MaliceTracker({
   if (compact) {
     return (
       <div className={cn("w-full rounded-md bg-white py-1", className)}>
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-col gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <span className="text-sm font-semibold text-gray-600 whitespace-nowrap">
               Malice

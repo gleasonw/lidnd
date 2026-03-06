@@ -33,20 +33,17 @@ export const EncounterRunTools = observer(function EncounterRunTools() {
       <ButtonWithTooltip
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-gray-500"
+        className=" text-gray-500"
         text="Edit initiative and columns"
         onClick={() => uiStore.toggleParticipantEdit()}
       >
         <ListOrdered />
       </ButtonWithTooltip>
-      <EqualizeColumnsButton
-        size="icon"
-        className="h-8 w-8 text-gray-500 p-0"
-      />
+      <EqualizeColumnsButton size="icon" className=" text-gray-500" />
       <LidndDialog
         trigger={
           <ButtonWithTooltip
-            className="h-8 w-8 text-gray-500"
+            className=" text-gray-500"
             text="Add Opponent"
             variant="ghost"
             size="icon"
@@ -57,7 +54,9 @@ export const EncounterRunTools = observer(function EncounterRunTools() {
         content={<EditModeOpponentForm />}
         title="Add Opponent"
       />
-      <ImageAssetAddButton />
+      <div className="text-gray-500">
+        <ImageAssetAddButton />
+      </div>
     </div>
   );
 });
@@ -99,9 +98,9 @@ export const EncounterDetails = observer(function EncounterDetails({
             </span>
             <ButtonWithTooltip
               text="End encounter"
-              variant="outline"
+              variant="secondary"
               size="icon"
-              className="h-8 w-8 text-gray-500"
+              className="h-8 w-8  ml-auto"
               onClick={() =>
                 updateEncounter({
                   id: encounter.id,

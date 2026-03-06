@@ -4,7 +4,14 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import { ImageUpload } from "@/encounters/image-upload";
-import { Angry, FileText, ImagePlus, Plus, PlusIcon, User } from "lucide-react";
+import {
+  Angry,
+  FileText,
+  Plus,
+  PlusIcon,
+  User,
+  UserSquare,
+} from "lucide-react";
 import { FormProvider } from "react-hook-form";
 import { useState } from "react";
 import { useParticipantForm } from "@/encounters/[encounter_index]/hooks";
@@ -45,7 +52,7 @@ export function EditModeOpponentForm({
   const reactiveCreatureType = form.watch("type");
 
   return (
-    <Tabs defaultValue="new" className="max-h-full flex flex-col gap-2 h-full">
+    <Tabs defaultValue="new" className="max-h-full flex flex-col h-full">
       <span>
         <TabsList>
           <TabsTrigger value="new">
@@ -62,27 +69,25 @@ export function EditModeOpponentForm({
             // If I add a void, the form reloads the page
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-5 w-full h-full max-h-full p-2 overflow-auto"
+            className="flex flex-col gap-5 w-full h-full max-h-full px-4 overflow-auto"
           >
             <div className="flex flex-col gap-5 pt-2">
               <div className="flex items-baseline">
-                <LidndLabel label="Name">
-                  <FormField
-                    control={form.control}
-                    name={"name"}
-                    render={({ field }) => {
-                      return (
-                        <LidndTextInput
-                          variant="ghost"
-                          className="col-start-1"
-                          required
-                          placeholder="Balrog"
-                          {...field}
-                        />
-                      );
-                    }}
-                  />
-                </LidndLabel>
+                <FormField
+                  control={form.control}
+                  name={"name"}
+                  render={({ field }) => {
+                    return (
+                      <LidndTextInput
+                        variant="ghost"
+                        className="col-start-1 text-xl"
+                        required
+                        placeholder="Balrog"
+                        {...field}
+                      />
+                    );
+                  }}
+                />
                 <ButtonWithTooltip
                   tabIndex={-1}
                   variant={"ghost"}
@@ -93,7 +98,7 @@ export function EditModeOpponentForm({
                     setIsShowingIconInput(!isShowingIconInput);
                   }}
                 >
-                  <ImagePlus />
+                  <UserSquare />
                 </ButtonWithTooltip>
               </div>
 
@@ -122,12 +127,12 @@ export function EditModeOpponentForm({
               )}
             </div>
 
-            <div className="flex gap-3 h-full max-h-full overflow-auto">
+            <div className="flex gap-3 h-full max-h-full overflow-auto min-h-[300px]">
               <FormField
                 control={form.control}
                 name="statBlockImage"
                 render={({ field }) => (
-                  <div className="w-full h-full min-h-[150px]">
+                  <div className="w-full h-full">
                     <ImageUpload
                       dropContainerClassName="p-5 h-full"
                       onUpload={(image) => {
@@ -135,7 +140,7 @@ export function EditModeOpponentForm({
                       }}
                       dropText="Drop a Statblock"
                       dropIcon={<FileText />}
-                      previewSize={500}
+                      previewSize={700}
                       image={field.value}
                       clearImage={() => field.onChange(undefined)}
                       fileInputProps={{ name: "stat_block_image" }}
@@ -211,6 +216,7 @@ export function EditModeOpponentForm({
               >
                 <LidndTextInput
                   type="number"
+                  variant="ghost"
                   placeholder={
                     reactiveCreatureType === "minion_monster" ? "4" : "80"
                   }
