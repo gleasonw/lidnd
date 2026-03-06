@@ -60,7 +60,11 @@ export function ReminderInput() {
   return (
     <LidndPopover
       trigger={
-        <ButtonWithTooltip text="Add round reminder" size="icon" variant="outline">
+        <ButtonWithTooltip
+          text="Add round reminder"
+          size="icon"
+          variant="outline"
+        >
           <Timer />
         </ButtonWithTooltip>
       }
@@ -150,8 +154,8 @@ export function ActiveReminders() {
           >
             <Badge variant="secondary" className="shrink-0">
               {reminder.alert_after_round === 0
-                ? "All"
-                : `R${reminder.alert_after_round}`}
+                ? "Every"
+                : `Start of R${reminder.alert_after_round}`}
             </Badge>
             <span className="flex-1 text-sm">{reminder.reminder}</span>
             <ButtonWithTooltip

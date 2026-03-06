@@ -165,8 +165,8 @@ export const EncounterBattleUI = observer(function BattleUI() {
               battleStyles.root
             )}
           >
-            <div className="flex flex-col gap-3">
-              <div className="w-full flex gap-5 py-2">
+            <div className="flex flex-col gap-5">
+              <div className="w-full flex gap-5">
                 <EncounterNameInput />
                 <div className="flex gap-5 ml-auto items-center pr-2">
                   {!activeSession ? (
@@ -189,8 +189,6 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <DifficultyBadgePopover />
-
                 <div className="flex-grow-0">
                   <EncounterTagger />
                 </div>
@@ -226,17 +224,18 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   />
                 </div>
               </div>
-              <div className="w-[500px] h-[600px] border p-2 shadow-sm rounded-md overflow-auto">
+              <div className="w-[550px] h-[600px] border p-2 shadow-sm rounded-md overflow-auto">
                 <EditModeOpponentForm />
               </div>
             </div>
 
-            <div className="flex flex-col px-4 gap-3 w-[800px]">
+            <div className="flex flex-col px-4 gap-3 w-[700px]">
               <div
                 className="w-full xl:max-h-full flex flex-col gap-3"
                 data-value="prep"
               >
                 <div className="flex flex-col gap-3 w-full">
+                  <ActiveReminders />
                   <div className="flex flex-col gap-3">
                     <div className="border shadow-sm rounded-sm px-2">
                       <DescriptionTextArea />
@@ -1302,9 +1301,9 @@ const MonsterSection = observer(function TurnGroupSetup() {
   return (
     <div className="flex flex-col gap-3 w-full">
       <div className="flex gap-4 items-center">
+        <DifficultyBadgePopover />
         {monsters.length > 0 && <CreateTurnGroupForm />}
       </div>
-      <ActiveReminders />
 
       <div
         className={clsx({
