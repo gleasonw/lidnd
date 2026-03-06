@@ -193,15 +193,12 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   )}
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap items-center">
+                <ImageAssetAddButton />
+                <ReminderInput />
                 <div className="flex-grow-0">
                   <EncounterTagger />
                 </div>
-              </div>
-
-              <div className="flex flex-wrap gap-1">
-                <ImageAssetAddButton />
-                <ReminderInput />
               </div>
               <div className="w-[550px] h-[700px] border p-2 shadow-sm rounded-md overflow-auto">
                 <EditModeOpponentForm />
