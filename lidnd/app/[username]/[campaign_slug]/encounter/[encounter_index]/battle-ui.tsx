@@ -222,6 +222,8 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 <div className={clsx(battleStyles.adversarySection)}>
                   {campaign.system === "drawsteel" ? <MonsterSection /> : null}
                 </div>
+                {/**insert some space */}
+                <div className="py-2"></div>
                 <div className="w-full flex gap-3 h-full">
                   <EncounterBattlePreview />
                 </div>
@@ -1342,7 +1344,7 @@ const MonsterSection = observer(function TurnGroupSetup() {
   });
 
   return (
-    <div className="flex flex-col gap-3 w-full">
+    <div className="flex flex-col gap-5 w-full">
       <div className="flex gap-4 items-center">
         <DifficultyBadgePopover />
         {monsters.length > 0 && <CreateTurnGroupForm />}
