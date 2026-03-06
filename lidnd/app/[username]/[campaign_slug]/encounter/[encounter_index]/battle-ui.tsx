@@ -1291,6 +1291,7 @@ function PrepParticipant({
       </div>
       <div className="ml-auto">
         <ParticipantEditDialog participant={p} />
+        <RemoveCreatureFromEncounterButton participant={p} />
       </div>
     </Card>
   );

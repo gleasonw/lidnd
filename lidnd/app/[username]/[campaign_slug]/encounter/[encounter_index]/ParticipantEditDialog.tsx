@@ -8,7 +8,6 @@ import { LidndPopover } from "@/encounters/base-popover";
 import { ButtonWithTooltip } from "@/components/ui/tip";
 import type { ParticipantWithData } from "@/server/api/router";
 import { useUpdateEncounterParticipant } from "@/encounters/[encounter_index]/hooks";
-import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index]/battle-ui";
 import { ParticipantUtils } from "@/utils/participants";
 
 export function ParticipantEditDialog({
@@ -114,10 +113,6 @@ export function ParticipantEditDialog({
             Save
           </Button>
         </div>
-        <RemoveCreatureFromEncounterButton
-          moreText="Remove from encounter"
-          participant={participant}
-        />
       </div>
     </LidndPopover>
   );
