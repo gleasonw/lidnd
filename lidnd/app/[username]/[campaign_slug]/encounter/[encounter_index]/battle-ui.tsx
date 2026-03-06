@@ -157,7 +157,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
         <div className="flex flex-col max-h-full h-full">
           <div
             className={clsx(
-              "flex justify-evenly w-full xl:max-h-full flex-wrap pt-5 gap-2",
+              "flex w-full xl:max-h-full flex-wrap pt-5 px-10 gap-5",
               battleStyles.root
             )}
           >
@@ -207,7 +207,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
               </div>
             </div>
 
-            <div className="flex flex-col px-4 gap-3 w-[700px]">
+            <div className="flex flex-col px-4 gap-3 flex-grow">
               <div
                 className="w-full xl:max-h-full flex flex-col gap-3"
                 data-value="prep"
@@ -215,9 +215,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 <div className="flex flex-col gap-3 w-full">
                   <ActiveReminders />
                   <div className="flex flex-col gap-3">
-                    <div className="border shadow-sm rounded-sm px-2">
-                      <DescriptionTextArea />
-                    </div>
+                    <DescriptionTextArea />
                   </div>
                 </div>
                 <div className={clsx(battleStyles.adversarySection)}>

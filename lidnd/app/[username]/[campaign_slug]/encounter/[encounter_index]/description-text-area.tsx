@@ -39,7 +39,7 @@ export function DescriptionTextArea({
   }, 500);
 
   const configuredPlaceholder = Placeholder.configure({
-    placeholder: "Objectives, monster tactics, etc...",
+    placeholder: "Objectives, monster tactics, battle map images, etc...",
   });
 
   const { mutateAsync: uploadAsset } = api.upload.useMutation();
