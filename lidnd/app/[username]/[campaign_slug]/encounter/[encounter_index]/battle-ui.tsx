@@ -150,24 +150,22 @@ export const EncounterBattleUI = observer(function BattleUI() {
   });
 
   const monsters = EncounterUtils.participantsWithNoColumn(encounter);
-
+  const tiers = EncounterUtils.findCRBudget({
+    encounter,
+    campaign,
+  });
+  const oneHeroStrength = tiers !== "no-players" ? tiers.oneHeroStrength : null;
   switch (encounter.status) {
     case "prep":
       return (
         <div className="flex flex-col max-h-full h-full">
           <div
             className={clsx(
-              "flex justify-evenly w-full xl:max-h-full flex-wrap",
+              "flex justify-evenly w-full xl:max-h-full flex-wrap pt-5",
               battleStyles.root
             )}
           >
-            <div className="p-4 flex-grow-0 pt-20">
-              <div className="w-[500px] h-[600px] border p-2 shadow-sm rounded-md overflow-auto">
-                <EditModeOpponentForm />
-              </div>
-            </div>
-
-            <div className="flex flex-col px-4 gap-3 w-[800px]">
+            <div className="flex flex-col gap-3">
               <div className="w-full flex gap-5 py-2">
                 <EncounterNameInput />
                 <div className="flex gap-5 ml-auto items-center pr-2">
@@ -190,19 +188,55 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   )}
                 </div>
               </div>
+              <div className="flex gap-3">
+                <DifficultyBadgePopover />
+
+                <div className="flex-grow-0">
+                  <EncounterTagger />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <ImageAssetAddButton />
+                <ReminderInput />
+                <div className="ml-auto flex items-center gap-3">
+                  <AddPlayerToEncounter
+                    trigger={
+                      <Button
+                        variant={tiers === "no-players" ? "default" : "outline"}
+                        className="p-3 flex gap-2"
+                      >
+                        {tiers === "no-players" ? (
+                          "Add players"
+                        ) : (
+                          <LidndLabel label="Hero EV">
+                            {oneHeroStrength}
+                          </LidndLabel>
+                        )}
+
+                        {EncounterUtils.players(encounter).map((p) => (
+                          <CreatureIcon
+                            key={p.id}
+                            creature={p.creature}
+                            size="small"
+                          />
+                        ))}
+                      </Button>
+                    }
+                  />
+                </div>
+              </div>
+              <div className="w-[500px] h-[600px] border p-2 shadow-sm rounded-md overflow-auto">
+                <EditModeOpponentForm />
+              </div>
+            </div>
+
+            <div className="flex flex-col px-4 gap-3 w-[800px]">
               <div
                 className="w-full xl:max-h-full flex flex-col gap-3"
                 data-value="prep"
               >
                 <div className="flex flex-col gap-3 w-full">
-                  <div className="flex gap-3">
-                    <DifficultyBadgePopover />
-
-                    <div className="flex-grow-0">
-                      <EncounterTagger />
-                    </div>
-                  </div>
-
                   <div className="flex flex-col gap-3">
                     <div className="border shadow-sm rounded-sm px-2">
                       <DescriptionTextArea />
@@ -1254,7 +1288,6 @@ function PrepParticipant({
 
 const MonsterSection = observer(function TurnGroupSetup() {
   const [encounter] = useEncounter();
-  const [campaign] = useCampaign();
   const uiStore = useEncounterUIStore();
   const [creatureAddDialogIsOpen, setCreatureAddDialogIsOpen] = useState(false);
   const [acceptDrop, setAcceptDrop] = useState(0);
@@ -1266,42 +1299,10 @@ const MonsterSection = observer(function TurnGroupSetup() {
     setCreatureAddDialogIsOpen(true);
   });
 
-  const tiers = EncounterUtils.findCRBudget({
-    encounter,
-    campaign,
-  });
-
-  if (tiers === "no-players") {
-    return (
-      <div className="flex gap-2 flex-wrap items-center">
-        <AddPlayerToEncounter />
-      </div>
-    );
-  }
-  const oneHeroStrength = tiers.oneHeroStrength;
-
   return (
     <div className="flex flex-col gap-3 w-full">
       <div className="flex gap-4 items-center">
-        <div className="p-1 flex gap-2 items-center h-20">
-          <ImageAssetAddButton />
-        </div>
-        <ReminderInput />
-
         {monsters.length > 0 && <CreateTurnGroupForm />}
-
-        <div className="ml-auto flex items-center gap-3">
-          <AddPlayerToEncounter
-            trigger={
-              <Button variant="outline" className="p-3 flex gap-2">
-                <LidndLabel label="Hero EV">{oneHeroStrength}</LidndLabel>
-                {EncounterUtils.players(encounter).map((p) => (
-                  <CreatureIcon key={p.id} creature={p.creature} size="small" />
-                ))}
-              </Button>
-            }
-          />
-        </div>
       </div>
       <ActiveReminders />
 
