@@ -162,7 +162,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
               battleStyles.root
             )}
           >
-            <div className="flex flex-col gap-5">
+            <div className="flex gap-2 flex-col">
               <div className="w-full flex gap-5">
                 <EncounterNameInput />
                 <div className="flex gap-5 ml-auto items-center pr-2">
@@ -199,7 +199,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-1">
                 <ImageAssetAddButton />
                 <ReminderInput />
               </div>
