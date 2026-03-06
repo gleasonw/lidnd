@@ -96,7 +96,7 @@ export function EncounterTagger() {
         }
       />
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 h-8">
         {encounter.tags.map((tag) => (
           <Badge
             variant="outline"
