@@ -636,6 +636,9 @@ export const settings = pgTable("settings", {
     .notNull(),
   average_turn_seconds: integer("average_turn_seconds").default(180).notNull(),
   enable_minions: boolean("enable_minions").default(false).notNull(),
+  last_campaign_id: uuid("last_campaign_id").references(() => campaigns.id, {
+    onDelete: "set null",
+  }),
 });
 
 // renamed this table to get avoid having to cast id
@@ -677,7 +680,7 @@ export const creaturesSchema = createSelectSchema(creatures);
 export const gameSessionSchema = createInsertSchema(gameSessions);
 
 export const updateSettingsSchema = insertSettingsSchema
-  .omit({ user_id: true })
+  .omit({ user_id: true, last_campaign_id: true })
   .merge(
     z.object({
       show_health_in_discord: booleanSchema,

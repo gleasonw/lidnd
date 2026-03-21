@@ -1,6 +1,6 @@
-import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
+import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 
-import { type AppRouter } from "@/server/api/router";
+import type { AppRouter } from "@/server/api/router";
 
 function getBaseUrl() {
   if (typeof window !== "undefined") return "";

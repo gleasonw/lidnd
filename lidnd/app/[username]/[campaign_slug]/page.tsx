@@ -39,12 +39,18 @@ export default async function CampaignPage(props: {
   // lots of headaches around invaliding the next router cache after RQ mutations. The simplest way forward
   // seems to be using placeholderData, which just avoids any layout flickers, but doesn't impact the RQ cache.
   // RQ cache should be our absolute SOT.
-  const encountersInCampaign = await ServerEncounter.encountersInCampaign({
-    ctx: UserUtils.context(user),
-    campaign: { id: campaignData.id },
-    search: encounterSearch,
-    tagId: filteredTagId,
-  });
+  const [encountersInCampaign, activeGameSession] = await Promise.all([
+    ServerEncounter.encountersInCampaign({
+      ctx: UserUtils.context(user),
+      campaign: { id: campaignData.id },
+      search: encounterSearch,
+      tagId: filteredTagId,
+    }),
+    ServerCampaign.getActiveSession({
+      ctx: UserUtils.context(user),
+      campaignId: campaignData.id,
+    }),
+  ]);
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 pb-6">
@@ -52,7 +58,10 @@ export default async function CampaignPage(props: {
         <div className="flex w-full justify-center">
           <SessionDisplay />
         </div>
-        <CampaignEncounters encountersInCampaign={encountersInCampaign} />
+        <CampaignEncounters
+          encountersInCampaign={encountersInCampaign}
+          activeSession={activeGameSession}
+        />
       </section>
     </div>
   );

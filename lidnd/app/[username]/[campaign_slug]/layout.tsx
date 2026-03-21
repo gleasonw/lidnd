@@ -1,4 +1,5 @@
 import { CampaignId } from "@/app/[username]/[campaign_slug]/campaign_id";
+import { RememberLastCampaign } from "@/app/[username]/[campaign_slug]/RememberLastCampaign";
 import { LidndAuth, UserUtils } from "@/app/authentication";
 import { LidndSidebar } from "@/app/[username]/[campaign_slug]/lidndsidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -45,6 +46,7 @@ export default async function CampaignLayout(props: {
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <CampaignId value={campaign.id}>
+        <RememberLastCampaign campaignId={campaign.id} />
         <LidndSidebar
           campaign={campaign}
           topSlot={

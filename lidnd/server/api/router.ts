@@ -585,6 +585,26 @@ export const appRouter = t.router({
       return campaign;
     }),
 
+  rememberLastCampaign: protectedProcedure
+    .input(z.string())
+    .mutation(async (opts) => {
+      const campaign = await ServerCampaign.campaignById(opts.ctx, opts.input);
+
+      if (!campaign || campaign.is_archived) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Campaign not found",
+        });
+      }
+
+      await db
+        .update(settings)
+        .set({ last_campaign_id: campaign.id })
+        .where(eq(settings.user_id, opts.ctx.user.id));
+
+      return { campaignId: campaign.id };
+    }),
+
   userCampaigns: protectedProcedure.query(async (opts) => {
     return await ServerCampaign.userCampaigns(opts.ctx);
   }),

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { loggerLink, unstable_httpBatchStreamLink } from "@trpc/client";
 import superjson from "superjson";
 
-import { type AppRouter } from "@/server/api/router";
+import type { AppRouter } from "@/server/api/router";
 import { getUrl } from "./shared";
 
 export const api = createTRPCReact<AppRouter>();

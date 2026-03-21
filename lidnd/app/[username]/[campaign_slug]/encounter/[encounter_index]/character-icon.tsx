@@ -38,11 +38,31 @@ function iconDimensions(
   return { width: 512, height: 512 };
 }
 
+function iconTextClass(size?: IconSize) {
+  switch (size) {
+    case "v-small":
+      return "text-xs";
+    case "small":
+      return "text-lg";
+    case "small2":
+      return "text-3xl";
+    case "medium":
+      return "text-6xl";
+    case "large":
+      return "text-8xl";
+    default:
+      return "text-lg";
+  }
+}
+
 export const CreatureIcon = observer(function CreatureIcon({
   creature,
   size,
 }: {
-  creature: Pick<Creature, "id" | "icon_width" | "icon_height" | "type" | "name">;
+  creature: Pick<
+    Creature,
+    "id" | "icon_width" | "icon_height" | "type" | "name"
+  >;
   size?: IconSize;
 }) {
   const dimensions = iconDimensions(creature, size);
@@ -53,7 +73,14 @@ export const CreatureIcon = observer(function CreatureIcon({
 
   const initials = ParticipantUtils.initials({ creature });
   const fallbackText = initials ? initials.slice(0, 2) : "?";
-  const fallbackColor = ParticipantUtils.isPlayer({creature}) ? "#2563eb" : "#b91c1c";
+  const fallbackColor = ParticipantUtils.isPlayer({ creature })
+    ? "#2563eb"
+    : "#b91c1c";
+  const fallbackClasses = clsx(
+    "absolute inset-0 flex items-center justify-center rounded-full font-semibold uppercase tracking-wide text-white transition-opacity",
+    iconTextClass(size)
+  );
+
   if (creature.id === "pending") {
     // catch the case where we'v just uploaded but not yet set the
     // image upload status in the ui store...
@@ -63,25 +90,31 @@ export const CreatureIcon = observer(function CreatureIcon({
     return (
       <div
         className={clsx(
-          "text-lg font-semibold transition-opacity uppercase tracking-wide text-white w-10 h-10 rounded-full flex items-center justify-center"
+          "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full"
         )}
-        style={{ backgroundColor: fallbackColor }}
+        style={{
+          width: dimensions.width,
+          height: dimensions.height,
+        }}
       >
-        {fallbackText}
+        <div className={fallbackClasses} style={{ backgroundColor: fallbackColor }}>
+          {fallbackText}
+        </div>
       </div>
     );
   }
   return (
     <ImageUploadStatus creature={creature}>
       <div
-        className={clsx("relative", {
-          "w-10 h-10": size === undefined || size === "small",
-          "w-7 h-7": size === "v-small",
-        })}
+        className="relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full"
+        style={{
+          width: dimensions.width,
+          height: dimensions.height,
+        }}
       >
         <div
           className={clsx(
-            "text-lg absolute font-semibold transition-opacity uppercase tracking-wide text-white w-10 h-10 rounded-full flex items-center justify-center",
+            fallbackClasses,
             {
               "opacity-0": imageStatus !== "error",
               "opacity-100": imageStatus === "error",
@@ -98,16 +131,14 @@ export const CreatureIcon = observer(function CreatureIcon({
           height={dimensions.height}
           onLoad={() => setImageStatus("loaded")}
           className={clsx(
-            "absolute top-0 left-0 rounded-full transition-opacity",
+            "absolute inset-0 size-full rounded-full object-cover transition-opacity",
             {
               "opacity-0": imageStatus !== "loaded",
               "opacity-100": imageStatus === "loaded",
-              "h-10 w-10": size === undefined || size === "small",
-              "h-7 w-7": size === "v-small",
             }
           )}
           fetchPriority="high"
-          onError={(e) => {
+          onError={() => {
             setImageStatus("error");
           }}
         />

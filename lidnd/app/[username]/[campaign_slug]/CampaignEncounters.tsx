@@ -15,14 +15,17 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
+import type { GameSession } from "@/server/db/schema";
 
 //TODO: use the "filtered tag id" in the server prefetch
 // add a link to the filtered encounters in the tag label, alongside one to delete the tag
 
 export function CampaignEncounters({
   encountersInCampaign,
+  activeSession,
 }: {
   encountersInCampaign: EncountersInCampaign;
+  activeSession: GameSession | null;
 }) {
   const [showFinishedEncounters, setShowFinishedEncounters] = useState(false);
   const [campaign] = useCampaign();
@@ -66,7 +69,13 @@ export function CampaignEncounters({
           <div className="flex flex-col gap-4">
             <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {activeEncounters.map((encounter) => (
-                <EncounterCard key={encounter.id} encounter={encounter} />
+                <EncounterCard
+                  key={encounter.id}
+                  encounter={{
+                    ...encounter,
+                    average_victories: activeSession?.victory_count ?? 0,
+                  }}
+                />
               ))}
             </div>
           </div>
@@ -76,7 +85,13 @@ export function CampaignEncounters({
           <div className="flex flex-col gap-4">
             <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {otherEncounters.map((encounter) => (
-                <EncounterCard key={encounter.id} encounter={encounter} />
+                <EncounterCard
+                  key={encounter.id}
+                  encounter={{
+                    ...encounter,
+                    average_victories: activeSession?.victory_count ?? 0,
+                  }}
+                />
               ))}
             </div>
           </div>
@@ -89,9 +104,7 @@ export function CampaignEncounters({
             className="flex flex-col gap-4"
           >
             <CollapsibleTrigger className="flex items-center justify-between rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground transition-colors hover:text-foreground">
-              <span>
-                Finished encounters ({finishedEncounters.length})
-              </span>
+              <span>Finished encounters ({finishedEncounters.length})</span>
               <ChevronDown
                 className={`h-4 w-4 transition-transform ${
                   showFinishedEncounters ? "rotate-180" : ""
@@ -101,7 +114,13 @@ export function CampaignEncounters({
             <CollapsibleContent>
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {finishedEncounters.map((encounter) => (
-                  <EncounterCard key={encounter.id} encounter={encounter} />
+                  <EncounterCard
+                    key={encounter.id}
+                    encounter={{
+                      ...encounter,
+                      average_victories: activeSession?.victory_count ?? 0,
+                    }}
+                  />
                 ))}
               </div>
             </CollapsibleContent>

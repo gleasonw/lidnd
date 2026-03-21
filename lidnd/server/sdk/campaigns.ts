@@ -6,6 +6,7 @@ import {
   encounter_to_tag,
   encounters,
   gameSessions,
+  settings,
   type CreaturePost,
 } from "@/server/db/schema";
 import { ServerEncounter } from "@/server/sdk/encounters";
@@ -63,6 +64,27 @@ export const ServerCampaign = {
       .select()
       .from(campaigns)
       .where(eq(campaigns.user_id, ctx.user.id));
+  },
+
+  lastVisitedCampaign: async function (ctx: LidndContext) {
+    const userSettings = await db.query.settings.findFirst({
+      where: eq(settings.user_id, ctx.user.id),
+    });
+
+    if (!userSettings?.last_campaign_id) {
+      return null;
+    }
+
+    const lastCampaignId = userSettings.last_campaign_id;
+
+    return await db.query.campaigns.findFirst({
+      where: (campaigns, { and, eq }) =>
+        and(
+          eq(campaigns.id, lastCampaignId),
+          eq(campaigns.user_id, ctx.user.id),
+          eq(campaigns.is_archived, false)
+        ),
+    });
   },
 
   addCreatureToAllEncounters: async function (args: {
