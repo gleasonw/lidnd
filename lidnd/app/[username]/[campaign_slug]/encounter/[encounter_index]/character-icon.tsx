@@ -20,17 +20,17 @@ function iconDimensions(
   }
 
   if (size === "v-small") {
-    return { width: 40, height: 40 };
+    return { width: 16, height: 16 };
   }
 
   if (size === "small") {
-    return { width: 64, height: 64 };
+    return { width: 40, height: 40 };
   }
 
   if (size === "small2") {
-    return { width: 128, height: 128 };
+    return { width: 96, height: 96 };
   }
-
+  //
   if (size === "medium") {
     return { width: 250, height: 250 };
   }
@@ -43,9 +43,9 @@ function iconTextClass(size?: IconSize) {
     case "v-small":
       return "text-xs";
     case "small":
-      return "text-lg";
+      return "text-s";
     case "small2":
-      return "text-3xl";
+      return "text-2xl";
     case "medium":
       return "text-6xl";
     case "large":
@@ -97,7 +97,10 @@ export const CreatureIcon = observer(function CreatureIcon({
           height: dimensions.height,
         }}
       >
-        <div className={fallbackClasses} style={{ backgroundColor: fallbackColor }}>
+        <div
+          className={fallbackClasses}
+          style={{ backgroundColor: fallbackColor }}
+        >
           {fallbackText}
         </div>
       </div>
@@ -113,13 +116,10 @@ export const CreatureIcon = observer(function CreatureIcon({
         }}
       >
         <div
-          className={clsx(
-            fallbackClasses,
-            {
-              "opacity-0": imageStatus !== "error",
-              "opacity-100": imageStatus === "error",
-            }
-          )}
+          className={clsx(fallbackClasses, {
+            "opacity-0": imageStatus !== "error",
+            "opacity-100": imageStatus === "error",
+          })}
           style={{ backgroundColor: fallbackColor }}
         >
           {fallbackText}
@@ -131,7 +131,7 @@ export const CreatureIcon = observer(function CreatureIcon({
           height={dimensions.height}
           onLoad={() => setImageStatus("loaded")}
           className={clsx(
-            "absolute inset-0 size-full rounded-full object-cover transition-opacity",
+            "absolute inset-0 h-full w-full rounded-full object-cover transition-opacity",
             {
               "opacity-0": imageStatus !== "loaded",
               "opacity-100": imageStatus === "loaded",

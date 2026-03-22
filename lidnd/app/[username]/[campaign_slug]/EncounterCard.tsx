@@ -43,6 +43,19 @@ export function EncounterCard({
   encounter.participants[0];
   const { encounter: encounterLink } = useEncounterLinks(encounter);
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
+  const status = encounter.started_at && !encounter.ended_at
+    ? {
+        Icon: Radio,
+        label: "In progress",
+        iconClassName: "text-red-500",
+      }
+    : encounter.ended_at
+      ? {
+          Icon: CheckCircle,
+          label: "Completed",
+          iconClassName: "text-green-600",
+        }
+      : null;
 
   React.useEffect(() => {
     setImageUrl(EncounterUtils.imageUrl(encounter));
@@ -51,46 +64,50 @@ export function EncounterCard({
   return (
     <Link
       href={encounterLink}
-      className="flex rounded-lg border bg-background shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+      className="flex overflow-hidden rounded-lg border bg-background shadow-sm transition-shadow hover:shadow-md"
     >
-      {imageUrl ? (
-        <div className="flex w-full h-full items-center justify-center pl-2">
-          <div className="relative w-14 h-14 shrink-0 overflow-hidden rounded-md border bg-muted shadow-sm">
-            <Image
-              src={imageUrl}
-              alt={encounter.name || "Encounter image"}
-              fill
-              className="object-cover"
-            />
-          </div>
-        </div>
-      ) : null}
-      <div className="flex flex-col gap-3 p-4">
-        <div className="flex flex-wrap gap-1 items-center">
-          <DifficultyBadge encounter={encounter} />
-        </div>
-
-        <div className="flex gap-2 items-center">
-          {encounter.started_at && !encounter.ended_at && (
-            <Radio className="h-4 w-4 shrink-0 text-red-500" />
-          )}
-
-          {encounter.ended_at && (
-            <CheckCircle className="h-4 w-4 shrink-0 text-green-500" />
-          )}
+      <div className="flex w-full flex-col gap-3 p-4">
+        <div className="flex min-h-16 items-start gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-base font-medium text-ellipsis overflow-hidden whitespace-nowrap">
+            <p className="min-h-[3.5rem] line-clamp-2 text-lg font-semibold leading-tight tracking-tight">
               {encounter.name || "Unnamed encounter"}
             </p>
           </div>
+          {imageUrl ? (
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-muted shadow-sm">
+              <Image
+                src={imageUrl}
+                alt={encounter.name || "Encounter image"}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ) : null}
         </div>
-        <div className="flex flex-wrap gap-1">
-          {encounter.tags.map(({ tag }) => (
-            <Badge variant="secondary" key={tag.id}>
-              {tag.name}
-            </Badge>
-          ))}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <DifficultyBadge encounter={encounter} />
+          {status ? (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <status.Icon className={`h-3.5 w-3.5 shrink-0 ${status.iconClassName}`} />
+              <span>{status.label}</span>
+            </div>
+          ) : null}
         </div>
+
+        {encounter.tags.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {encounter.tags.map(({ tag }) => (
+              <Badge
+                variant="outline"
+                key={tag.id}
+                className="border-border/70 bg-muted/20 px-2 py-0 text-[11px] font-medium text-muted-foreground"
+              >
+                {tag.name}
+              </Badge>
+            ))}
+          </div>
+        ) : null}
       </div>
     </Link>
   );

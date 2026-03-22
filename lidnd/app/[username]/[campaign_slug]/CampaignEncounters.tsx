@@ -67,7 +67,7 @@ export function CampaignEncounters({
       <div className="flex flex-col gap-8">
         {activeEncounters.length > 0 && (
           <div className="flex flex-col gap-4">
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
               {activeEncounters.map((encounter) => (
                 <EncounterCard
                   key={encounter.id}
@@ -83,7 +83,7 @@ export function CampaignEncounters({
 
         {otherEncounters.length > 0 && (
           <div className="flex flex-col gap-4">
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
               {otherEncounters.map((encounter) => (
                 <EncounterCard
                   key={encounter.id}
