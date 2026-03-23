@@ -522,15 +522,9 @@ export const EncounterUtils = {
     gameSession: Pick<GameSession, "victory_count"> | null;
   }) {
     const numAliveHeroes = this.alivePlayerCount(encounter);
-    console.log({
-      numAliveHeroes,
-      currentRound: encounter.current_round,
-      victoryCount: gameSession?.victory_count,
-    });
     return (
       numAliveHeroes +
-      encounter.current_round +
-      (gameSession?.victory_count ?? 0)
+      encounter.current_round
     );
   },
 
