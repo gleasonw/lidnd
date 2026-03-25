@@ -1929,7 +1929,18 @@ export const StatColumns = observer(function StatColumns() {
             >
               {p
                 .slice()
-                .sort(ParticipantUtils.sortLinearly)
+                .sort((a, b) => {
+                  const aTurnGroupId = a.turn_group_id;
+                  const bTurnGroupId = b.turn_group_id;
+
+                  if (aTurnGroupId == null && bTurnGroupId == null) return 0;
+                  if (aTurnGroupId == null) return 1;
+                  if (bTurnGroupId == null) return -1;
+
+                  if (aTurnGroupId < bTurnGroupId) return -1;
+                  if (aTurnGroupId > bTurnGroupId) return 1;
+                  return 0;
+                })
                 .map((p, i) => (
                   <ParticipantBattleData
                     participant={p}
