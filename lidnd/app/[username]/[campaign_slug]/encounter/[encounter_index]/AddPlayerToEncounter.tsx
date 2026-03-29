@@ -15,6 +15,7 @@ import { TrashIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 
 interface AddPlayerToEncounterProps {
+  inline?: boolean;
   trigger?: React.ReactNode;
 }
 
@@ -71,6 +72,64 @@ export function AddPlayerToEncounter(props: AddPlayerToEncounterProps) {
   const mutationError = addPlayer.error ?? removeParticipant.error;
   const isMutating = addPlayer.isPending || removeParticipant.isPending;
   const partyHref = appRoutes.party({ campaign, user });
+  const content = (
+    <div className="p-4 w-full min-w-0 max-h-[600px] overflow-auto">
+      <div className="flex justify-end mb-3">
+        <Link href={partyHref}>
+          <Button variant="outline" size="sm">
+            Manage Party
+          </Button>
+        </Link>
+      </div>
+      {partyPlayers.length === 0 ? (
+        <div className="flex flex-col items-start gap-3">
+          <div className="text-sm text-muted-foreground">
+            No players in party yet.
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {partyPlayers.map((player) => {
+            const linkedParticipants =
+              playerParticipantsByCreatureId.get(player.id) ?? [];
+            const isInEncounter = linkedParticipants.length > 0;
+            return (
+              <div
+                key={player.id}
+                className="flex items-center gap-3 rounded border p-2"
+              >
+                <CreatureIcon creature={player} size="small" />
+                <div className="flex flex-col flex-1">
+                  <span className="font-medium truncate">{player.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {isInEncounter ? "In encounter" : "Not in encounter"}
+                  </span>
+                </div>
+                <Button
+                  variant={isInEncounter ? "destructive" : "secondary"}
+                  size="sm"
+                  disabled={isMutating}
+                  onClick={() => {
+                    togglePlayer(player.id, player.max_hp).catch(console.error);
+                  }}
+                >
+                  {isInEncounter ? <TrashIcon /> : <UsersIcon />}
+                  {isInEncounter ? "Remove" : "Add"}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {mutationError ? (
+        <div className="text-sm text-red-600 mt-3">{mutationError.message}</div>
+      ) : null}
+    </div>
+  );
+
+  if (props.inline) {
+    return content;
+  }
 
   return (
     <LidndDialog
@@ -83,66 +142,7 @@ export function AddPlayerToEncounter(props: AddPlayerToEncounterProps) {
           </Button>
         )
       }
-      content={
-        <div className="p-4 w-full min-w-[420px] max-h-[600px] overflow-auto">
-          <div className="flex justify-end mb-3">
-            <Link href={partyHref}>
-              <Button variant="outline" size="sm">
-                Manage Party
-              </Button>
-            </Link>
-          </div>
-          {partyPlayers.length === 0 ? (
-            <div className="flex flex-col items-start gap-3">
-              <div className="text-sm text-muted-foreground">
-                No players in party yet.
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {partyPlayers.map((player) => {
-                const linkedParticipants =
-                  playerParticipantsByCreatureId.get(player.id) ?? [];
-                const isInEncounter = linkedParticipants.length > 0;
-                return (
-                  <div
-                    key={player.id}
-                    className="flex items-center gap-3 rounded border p-2"
-                  >
-                    <CreatureIcon creature={player} size="small" />
-                    <div className="flex flex-col flex-1">
-                      <span className="font-medium truncate">
-                        {player.name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {isInEncounter ? "In encounter" : "Not in encounter"}
-                      </span>
-                    </div>
-                    <Button
-                      variant={isInEncounter ? "destructive" : "secondary"}
-                      size="sm"
-                      disabled={isMutating}
-                      onClick={() => {
-                        togglePlayer(player.id, player.max_hp).catch(
-                          console.error
-                        );
-                      }}
-                    >
-                      {isInEncounter ? <TrashIcon /> : <UsersIcon />}
-                      {isInEncounter ? "Remove" : "Add"}
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          {mutationError ? (
-            <div className="text-sm text-red-600 mt-3">
-              {mutationError.message}
-            </div>
-          ) : null}
-        </div>
-      }
+      content={content}
     />
   );
 }

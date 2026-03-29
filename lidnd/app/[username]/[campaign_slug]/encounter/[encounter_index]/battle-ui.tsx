@@ -56,8 +56,10 @@ import {
   Reminders,
 } from "@/encounters/[encounter_index]/reminders";
 import {
+  AngryIcon,
   CheckCircle,
   Columns,
+  FileEdit,
   Grip,
   GripVertical,
   Group,
@@ -68,6 +70,7 @@ import {
   PlusIcon,
   Shield,
   SkullIcon,
+  StickyNoteIcon,
   Swords,
   Trash,
   TrashIcon,
@@ -125,6 +128,49 @@ import { AddPlayerToEncounter } from "@/encounters/[encounter_index]/AddPlayerTo
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 
+const ENCOUNTER_PREP_FORM_COOKIE_NAME = "encounter_prep_form";
+const ENCOUNTER_PREP_FORM_COOKIE_MAX_AGE = 60 * 60 * 24 * 180;
+
+const encounterPrepForms = [
+  "notes",
+  "participants",
+  "partyMembers",
+  "images",
+  "reminders",
+  "turnGroups",
+] as const;
+
+type EncounterPrepForm = (typeof encounterPrepForms)[number];
+
+const isEncounterPrepForm = (
+  value: string | null | undefined
+): value is EncounterPrepForm =>
+  value != null && (encounterPrepForms as readonly string[]).includes(value);
+
+const readEncounterPrepFormCookie = (): EncounterPrepForm | null => {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const cookieValue = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(`${ENCOUNTER_PREP_FORM_COOKIE_NAME}=`))
+    ?.split("=")[1];
+
+  if (!cookieValue) {
+    return null;
+  }
+
+  const decodedValue = decodeURIComponent(cookieValue);
+  return isEncounterPrepForm(decodedValue) ? decodedValue : null;
+};
+
+const persistEncounterPrepFormCookie = (value: EncounterPrepForm) => {
+  document.cookie = `${ENCOUNTER_PREP_FORM_COOKIE_NAME}=${encodeURIComponent(
+    value
+  )}; path=/; max-age=${ENCOUNTER_PREP_FORM_COOKIE_MAX_AGE}`;
+};
+
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
   const [activeSession] = useActiveGameSession();
@@ -150,7 +196,27 @@ export const EncounterBattleUI = observer(function BattleUI() {
     }
   });
 
-  const monsters = EncounterUtils.participantsWithNoColumn(encounter);
+  const [activePrepForm, setActivePrepForm] =
+    useState<EncounterPrepForm>("notes");
+
+  const monsters = EncounterUtils.monsters(encounter);
+
+  useEffect(() => {
+    const storedForm = readEncounterPrepFormCookie();
+    if (storedForm) {
+      setActivePrepForm(storedForm);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activePrepForm === "turnGroups" && monsters.length === 0) {
+      setActivePrepForm("notes");
+    }
+  }, [activePrepForm, monsters.length]);
+
+  useEffect(() => {
+    persistEncounterPrepFormCookie(activePrepForm);
+  }, [activePrepForm]);
 
   switch (encounter.status) {
     case "prep":
@@ -162,7 +228,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
               battleStyles.root
             )}
           >
-            <div className="flex gap-2 flex-col">
+            <div className="flex gap-5 flex-col w-full">
               <div className="w-full flex gap-5">
                 <EncounterNameInput />
                 <div className="flex gap-5 ml-auto items-center">
@@ -193,36 +259,39 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   )}
                 </div>
               </div>
-              <div className="flex gap-3 flex-wrap items-center">
-                <ImageAssetAddButton />
-                <ReminderInput />
+              <div className="flex gap-2">
+                <DifficultyBadgePopover />
                 <div className="flex-grow-0">
                   <EncounterTagger />
                 </div>
               </div>
-              <div className="w-[550px] h-[700px] border p-2 shadow-sm rounded-md overflow-auto">
-                <EditModeOpponentForm />
+              <div className="flex gap-3 flex-wrap items-center">
+                <EncounterPrepFormChooser
+                  activeForm={activePrepForm}
+                  onFormChange={setActivePrepForm}
+                  showTurnGroups={monsters.length > 0}
+                />
               </div>
-            </div>
+              <div className="flex flex-col gap-3 w-full">
+                <ActiveReminders />
+              </div>
+              <div className="flex flex-wrap lg:flex-nowrap gap-5 items-start">
+                <EncounterPrepFormPanel activeForm={activePrepForm} />
+                <div
+                  className="w-full min-w-0 xl:max-h-full flex flex-col gap-3"
+                  data-value="prep"
+                >
+                  {EncounterUtils.monsters(encounter).length > 0 ? (
+                    <div className={clsx(battleStyles.adversarySection)}>
+                      {campaign.system === "drawsteel" ? (
+                        <MonsterSection />
+                      ) : null}
+                    </div>
+                  ) : null}
 
-            <div className="flex flex-col px-4 gap-3 flex-grow">
-              <div
-                className="w-full xl:max-h-full flex flex-col gap-3"
-                data-value="prep"
-              >
-                <div className="flex flex-col gap-3 w-full">
-                  <ActiveReminders />
-                  <div className="flex flex-col gap-3">
-                    <DescriptionTextArea />
+                  <div className="flex gap-3 h-full">
+                    <EncounterBattlePreview />
                   </div>
-                </div>
-                <div className={clsx(battleStyles.adversarySection)}>
-                  {campaign.system === "drawsteel" ? <MonsterSection /> : null}
-                </div>
-                {/**insert some space */}
-                <div className="py-2"></div>
-                <div className="w-full flex gap-3 h-full">
-                  <EncounterBattlePreview />
                 </div>
               </div>
             </div>
@@ -1296,7 +1365,103 @@ function PrepParticipant({
   );
 }
 
-function AddPlayersSection() {
+function EncounterPrepFormChooser({
+  activeForm,
+  onFormChange,
+  showTurnGroups,
+}: {
+  activeForm: EncounterPrepForm;
+  onFormChange: (form: EncounterPrepForm) => void;
+  showTurnGroups: boolean;
+}) {
+  const choices: Array<{
+    form: EncounterPrepForm;
+    label: string;
+    icon: React.ReactNode;
+    importance: "primary" | "secondary";
+  }> = [
+    {
+      form: "notes",
+      label: "Notes",
+      icon: <StickyNoteIcon />,
+      importance: "primary",
+    },
+    {
+      form: "participants",
+      label: "Adversaries",
+      icon: <AngryIcon />,
+      importance: "primary",
+    },
+    ...(showTurnGroups
+      ? [
+          {
+            form: "turnGroups" as const,
+            label: "Turn groups",
+            icon: <Group />,
+            importance: "primary" as const,
+          },
+        ]
+      : []),
+    {
+      form: "partyMembers",
+      label: "Party members",
+      icon: <UsersIcon />,
+      importance: "secondary",
+    },
+    {
+      form: "images",
+      label: "Static images",
+      icon: <ImageIcon />,
+      importance: "secondary",
+    },
+    {
+      form: "reminders",
+      label: "Reminders",
+      icon: <FileEdit />,
+      importance: "secondary",
+    },
+  ];
+
+  const primaryChoices = choices.filter((c) => c.importance === "primary");
+  const secondaryChoices = choices.filter((c) => c.importance === "secondary");
+
+  return (
+    <div className="flex w-full justify-between">
+      <div className="flex gap-2 flex-wrap items-center">
+        {primaryChoices.map((choice) => (
+          <Button
+            key={choice.form}
+            variant={activeForm === choice.form ? "secondary" : "ghost"}
+            onClick={() => onFormChange(choice.form)}
+            className="gap-2"
+          >
+            {choice.icon}
+            {choice.label}
+          </Button>
+        ))}
+      </div>
+      <div className="flex gap-2 flex-wrap items-center text-gray-500 text-sm">
+        {secondaryChoices.map((choice) => (
+          <ButtonWithTooltip
+            key={choice.form}
+            variant={activeForm === choice.form ? "secondary" : "ghost"}
+            onClick={() => onFormChange(choice.form)}
+            className="gap-2"
+            text={choice.label}
+          >
+            {choice.icon}
+          </ButtonWithTooltip>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EncounterPrepFormPanel({
+  activeForm,
+}: {
+  activeForm: EncounterPrepForm;
+}) {
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
   const tiers = EncounterUtils.findCRBudget({
@@ -1306,24 +1471,21 @@ function AddPlayersSection() {
   const oneHeroStrength = tiers !== "no-players" ? tiers.oneHeroStrength : null;
 
   return (
-    <AddPlayerToEncounter
-      trigger={
-        <Button
-          variant={tiers === "no-players" ? "default" : "outline"}
-          className="p-3 flex gap-2"
-        >
-          {tiers === "no-players" ? (
-            "Add players"
-          ) : (
+    <Card className="w-full max-w-[500px] 2xl:w-[550px] 2xl:min-w-[550px] min-h-[320px] h-full overflow-auto p-4 shadow-sm">
+      <div className="flex flex-col gap-4 h-full">
+        {activeForm === "partyMembers" && oneHeroStrength != null ? (
+          <div className="pt-1">
             <LidndLabel label="Hero EV">{oneHeroStrength}</LidndLabel>
-          )}
-
-          {EncounterUtils.players(encounter).map((p) => (
-            <CreatureIcon key={p.id} creature={p.creature} size="small" />
-          ))}
-        </Button>
-      }
-    />
+          </div>
+        ) : null}
+        {activeForm === "notes" && <DescriptionTextArea />}
+        {activeForm === "participants" && <EditModeOpponentForm />}
+        {activeForm === "partyMembers" && <AddPlayerToEncounter inline />}
+        {activeForm === "images" && <ImageAssetAddButton inline />}
+        {activeForm === "reminders" && <ReminderInput inline />}
+        {activeForm === "turnGroups" && <CreateTurnGroupForm inline />}
+      </div>
+    </Card>
   );
 }
 
@@ -1342,14 +1504,6 @@ const MonsterSection = observer(function TurnGroupSetup() {
 
   return (
     <div className="flex flex-col gap-5 w-full">
-      <div className="flex gap-4 items-center">
-        <DifficultyBadgePopover />
-        {monsters.length > 0 && <CreateTurnGroupForm />}
-        <div className="ml-auto flex items-center gap-3">
-          <AddPlayersSection />
-        </div>
-      </div>
-
       <div
         className={clsx({
           "grid grid-cols-2": creatureAddDialogIsOpen,
@@ -1415,9 +1569,7 @@ const MonsterSection = observer(function TurnGroupSetup() {
                   </div>
                 )}
               </div>
-            ) : (
-              <div className=" text-gray-400">No monsters yet</div>
-            )}
+            ) : null}
             {encounter.turn_groups.length > 0 && (
               <div className={clsx("gap-4", battleStyles.adversaryGrid)}>
                 {encounter.turn_groups.map((tg) => (
@@ -1459,7 +1611,7 @@ function TargetDifficultySelect() {
   );
 }
 
-export function ImageAssetAddButton() {
+export function ImageAssetAddButton({ inline = false }: { inline?: boolean }) {
   const [encounter] = useEncounter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
@@ -1516,6 +1668,86 @@ export function ImageAssetAddButton() {
     }
   };
 
+  const content = (
+    <div className="p-6 flex flex-col gap-5 w-full max-h-[800px] overflow-auto">
+      <div className="border-b pb-4">
+        <h3 className="text-sm font-medium mb-3">Upload New Image</h3>
+        <div className="flex flex-col gap-3">
+          <LidndTextInput
+            placeholder="Image name (required)"
+            value={imageName}
+            onChange={(e) => setImageName(e.target.value)}
+            disabled={isUploading}
+          />
+          <ImageUpload
+            image={uploadImage}
+            clearImage={() => {
+              setUploadImage(undefined);
+              setImageName("");
+            }}
+            onUpload={handleImageUpload}
+            dropText={
+              !imageName.trim()
+                ? "Enter a name first"
+                : isUploading
+                ? "Uploading..."
+                : "Drop image to upload"
+            }
+            dropIcon={<ImageIcon />}
+            fileInputProps={{ disabled: isUploading || !imageName.trim() }}
+          />
+        </div>
+      </div>
+      <div>
+        <h3 className="text-sm font-medium mb-3">Or Select Existing Image</h3>
+        <LidndTextInput
+          placeholder="Search images..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            debouncedSetSearch(e.target.value);
+          }}
+        />
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {images?.map((i) => (
+          <form
+            key={i.baseModel.id}
+            className="border p-2 flex flex-col gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              startTransition(async () => {
+                await addImageAssetToEncounter({
+                  encounterId: encounter.id,
+                  inputAsset: i,
+                });
+                qc.invalidateQueries().catch((err) => {
+                  console.error(err);
+                });
+              });
+            }}
+          >
+            <span>{i.baseModel.name}</span>
+            <Image
+              key={i.baseModel.id}
+              src={i.url}
+              alt="image"
+              width={100}
+              height={100}
+            />
+            <Button variant="ghost" type="submit">
+              {isPending ? "Adding..." : "Add to encounter"}
+            </Button>
+          </form>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (inline) {
+    return content;
+  }
+
   return (
     <LidndDialog
       title="Add static image"
@@ -1524,83 +1756,7 @@ export function ImageAssetAddButton() {
           <ImageIcon />
         </ButtonWithTooltip>
       }
-      content={
-        <div className="p-6 flex flex-col gap-5 w-full h-[800px] overflow-auto">
-          <div className="border-b pb-4">
-            <h3 className="text-sm font-medium mb-3">Upload New Image</h3>
-            <div className="flex flex-col gap-3">
-              <LidndTextInput
-                placeholder="Image name (required)"
-                value={imageName}
-                onChange={(e) => setImageName(e.target.value)}
-                disabled={isUploading}
-              />
-              <ImageUpload
-                image={uploadImage}
-                clearImage={() => {
-                  setUploadImage(undefined);
-                  setImageName("");
-                }}
-                onUpload={handleImageUpload}
-                dropText={
-                  !imageName.trim()
-                    ? "Enter a name first"
-                    : isUploading
-                    ? "Uploading..."
-                    : "Drop image to upload"
-                }
-                dropIcon={<ImageIcon />}
-                fileInputProps={{ disabled: isUploading || !imageName.trim() }}
-              />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium mb-3">
-              Or Select Existing Image
-            </h3>
-            <LidndTextInput
-              placeholder="Search images..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                debouncedSetSearch(e.target.value);
-              }}
-            />
-          </div>
-          <div className="grid grid-cols-3">
-            {images?.map((i) => (
-              <form
-                key={i.baseModel.id}
-                className="border p-1"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  startTransition(async () => {
-                    await addImageAssetToEncounter({
-                      encounterId: encounter.id,
-                      inputAsset: i,
-                    });
-                    qc.invalidateQueries().catch((err) => {
-                      console.error(err);
-                    });
-                  });
-                }}
-              >
-                <span>{i.baseModel.name}</span>
-                <Image
-                  key={i.baseModel.id}
-                  src={i.url}
-                  alt="image"
-                  width={100}
-                  height={100}
-                />
-                <Button variant={"ghost"} type="submit">
-                  {isPending ? "Adding..." : "Add to encounter"}
-                </Button>
-              </form>
-            ))}
-          </div>
-        </div>
-      }
+      content={content}
     />
   );
 }
@@ -1731,39 +1887,33 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
   );
 });
 
-function CreateTurnGroupForm() {
+function CreateTurnGroupForm({ inline = false }: { inline?: boolean }) {
   const [encounter] = useEncounter();
   const { mutate: createTurnGroup } = api.createTurnGroup.useMutation();
   const [name, setName] = useState("");
   const [hexColor, setHexColor] = useState(labelColors.at(0) || "#FFFFFF");
-  return (
-    <LidndPopover
-      className="w-fit"
-      trigger={
-        <Button variant="outline">
-          <Group /> Create turn group
-        </Button>
-      }
-    >
-      <div className="p-2 shadow-none ">
-        <form
-          className="flex gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            createTurnGroup({
-              encounter_id: encounter.id,
-              name,
-              hex_color: hexColor,
-            });
-          }}
-        >
-          <LidndTextInput
-            variant="ghost"
-            className="w-44"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Turn group name"
-          />
+  const content = (
+    <div className="p-2 shadow-none">
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          createTurnGroup({
+            encounter_id: encounter.id,
+            name,
+            hex_color: hexColor,
+          });
+          setName("");
+        }}
+      >
+        <LidndTextInput
+          variant="ghost"
+          className="w-full"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Turn group name"
+        />
+        <div className="flex items-center gap-3">
           <LidndPopover
             className="flex flex-wrap gap-3"
             trigger={
@@ -1797,9 +1947,27 @@ function CreateTurnGroupForm() {
             disabled={!name}
           >
             <PlusIcon />
+            Create turn group
           </Button>
-        </form>
-      </div>
+        </div>
+      </form>
+    </div>
+  );
+
+  if (inline) {
+    return content;
+  }
+
+  return (
+    <LidndPopover
+      className="w-fit"
+      trigger={
+        <Button variant="outline">
+          <Group /> Create turn group
+        </Button>
+      }
+    >
+      {content}
     </LidndPopover>
   );
 }

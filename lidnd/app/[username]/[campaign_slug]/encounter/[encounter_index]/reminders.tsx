@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { coerceInt } from "@/app/[username]/utils";
 import { LidndPopover } from "@/encounters/base-popover";
 
-export function ReminderInput() {
+export function ReminderInput({ inline = false }: { inline?: boolean }) {
   const [encounter] = useEncounter();
   const [alertAfterRound, setAlertAfterRound] = React.useState<string>("1");
   const [reminder, setReminder] = React.useState<string>("");
@@ -57,6 +57,61 @@ export function ReminderInput() {
     return null;
   }
 
+  const content = (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!reminder.trim()) return;
+        addReminder({
+          encounter_id: encounter.id,
+          alert_after_round: coerceInt(alertAfterRound),
+          reminder: reminder,
+        });
+        setAlertAfterRound("1");
+        setReminder("");
+        inputRef.current?.focus();
+      }}
+      className="flex bg-white flex-col rounded-lg"
+    >
+      <div className="flex gap-2 items-center">
+        <Select value={alertAfterRound} onValueChange={setAlertAfterRound}>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="0">Every round</SelectItem>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20].map((n) => (
+              <SelectItem key={n} value={n.toString()}>
+                Round {n}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <LidndTextInput
+          ref={inputRef}
+          variant="ghost"
+          placeholder="Reinforcements arrive..."
+          value={reminder}
+          onChange={(e) => setReminder(e.target.value)}
+          className="flex-1 min-w-0"
+        />
+
+        <Button
+          type="submit"
+          size="icon"
+          variant="outline"
+          disabled={!reminder.trim()}
+        >
+          <Plus />
+        </Button>
+      </div>
+    </form>
+  );
+
+  if (inline) {
+    return content;
+  }
+
   return (
     <LidndPopover
       trigger={
@@ -70,54 +125,7 @@ export function ReminderInput() {
       }
       className="w-fit"
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!reminder.trim()) return;
-          addReminder({
-            encounter_id: encounter.id,
-            alert_after_round: coerceInt(alertAfterRound),
-            reminder: reminder,
-          });
-          setAlertAfterRound("1");
-          setReminder("");
-          inputRef.current?.focus();
-        }}
-        className="flex bg-white flex-col rounded-lg"
-      >
-        <div className="flex gap-2 items-center">
-          <Select value={alertAfterRound} onValueChange={setAlertAfterRound}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="0">Every round</SelectItem>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20].map((n) => (
-                <SelectItem key={n} value={n.toString()}>
-                  Round {n}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <LidndTextInput
-            ref={inputRef}
-            variant="ghost"
-            placeholder="Reinforcements arrive..."
-            value={reminder}
-            onChange={(e) => setReminder(e.target.value)}
-            className="flex-1 min-w-0"
-          />
-
-          <Button
-            type="submit"
-            size="icon"
-            variant="outline"
-            disabled={!reminder.trim()}
-          >
-            <Plus />
-          </Button>
-        </div>
-      </form>
+      {content}
     </LidndPopover>
   );
 }

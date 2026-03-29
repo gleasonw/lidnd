@@ -35,7 +35,9 @@ export default async function CampaignsLayout({
 
   if (!userSettings) {
     console.error("No user settings found");
-    return redirect("/login");
+    await db.insert(settings).values({
+      user_id: user.id,
+    });
   }
 
   console.log(`app/[username] layout rendered in ${performance.now() - now}ms`);
