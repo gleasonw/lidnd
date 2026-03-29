@@ -1462,22 +1462,9 @@ function EncounterPrepFormPanel({
 }: {
   activeForm: EncounterPrepForm;
 }) {
-  const [encounter] = useEncounter();
-  const [campaign] = useCampaign();
-  const tiers = EncounterUtils.findCRBudget({
-    encounter,
-    campaign,
-  });
-  const oneHeroStrength = tiers !== "no-players" ? tiers.oneHeroStrength : null;
-
   return (
     <Card className="w-full max-w-[500px] 2xl:w-[550px] 2xl:min-w-[550px] min-h-[320px] h-full overflow-auto p-4 shadow-sm">
       <div className="flex flex-col gap-4 h-full">
-        {activeForm === "partyMembers" && oneHeroStrength != null ? (
-          <div className="pt-1">
-            <LidndLabel label="Hero EV">{oneHeroStrength}</LidndLabel>
-          </div>
-        ) : null}
         {activeForm === "notes" && <DescriptionTextArea />}
         {activeForm === "participants" && <EditModeOpponentForm />}
         {activeForm === "partyMembers" && <AddPlayerToEncounter inline />}
@@ -1780,6 +1767,11 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
   const totalCr = R.sumBy(participantsInGroup, (p) =>
     ParticipantUtils.challengeRating(p)
   );
+  const tiers = EncounterUtils.findCRBudget({
+    encounter,
+    campaign,
+  });
+  const oneHeroStrength = tiers !== "no-players" ? tiers.oneHeroStrength : null;
   const setTurnGroupColor = (hexColor: string | null) =>
     updateTurnGroup({
       ...tg,
@@ -1838,9 +1830,11 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
           <Trash />
         </Button>
         <span className="truncate">{tg.name}</span>
-        <span className="flex gap-1">
+        <span className="flex gap-3 ml-auto">
+          <span>
+            {totalCr} / {oneHeroStrength}
+          </span>
           <span>{crLabel(campaign)}</span>
-          <span>{totalCr}</span>
         </span>
         <LidndPopover
           trigger={
