@@ -204,7 +204,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
 
   useEffect(() => {
     const storedForm = readEncounterPrepFormCookie();
-    if (storedForm) {
+    if (storedForm && monsters.length > 0) {
       setActivePrepForm(storedForm);
     }
   }, []);
