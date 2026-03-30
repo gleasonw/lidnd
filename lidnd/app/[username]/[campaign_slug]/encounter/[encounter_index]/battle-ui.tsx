@@ -272,9 +272,12 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   showTurnGroups={monsters.length > 0}
                 />
               </div>
-              <div className="flex flex-col gap-3 w-full">
-                <ActiveReminders />
-              </div>
+              {encounter.reminders?.length > 0 ? (
+                <div className="flex flex-col gap-3 w-full">
+                  <ActiveReminders />
+                </div>
+              ) : null}
+
               <div className="flex flex-wrap lg:flex-nowrap gap-5 items-start">
                 <EncounterPrepFormPanel activeForm={activePrepForm} />
                 <div
