@@ -230,8 +230,12 @@ export const EncounterBattleUI = observer(function BattleUI() {
             )}
           >
             <div className="flex gap-5 flex-col w-full">
-              <div className="w-full flex gap-5">
+              <div className="w-full flex gap-5 items-center">
                 <EncounterNameInput />
+                <div className="flex-grow-0">
+                  <EncounterTagger />
+                </div>
+                <DifficultyBadgePopover />
                 <div className="flex gap-5 ml-auto items-center">
                   {!activeSession ? (
                     <CreateNewSessionModal
@@ -260,12 +264,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
                   )}
                 </div>
               </div>
-              <div className="flex gap-2">
-                <DifficultyBadgePopover />
-                <div className="flex-grow-0">
-                  <EncounterTagger />
-                </div>
-              </div>
+
               <div className="flex gap-3 flex-wrap items-center">
                 <EncounterPrepFormChooser
                   activeForm={activePrepForm}
