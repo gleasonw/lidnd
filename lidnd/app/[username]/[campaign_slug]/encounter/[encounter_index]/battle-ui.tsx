@@ -196,10 +196,11 @@ export const EncounterBattleUI = observer(function BattleUI() {
     }
   });
 
-  const [activePrepForm, setActivePrepForm] =
-    useState<EncounterPrepForm>("notes");
-
   const monsters = EncounterUtils.monsters(encounter);
+
+  const [activePrepForm, setActivePrepForm] = useState<EncounterPrepForm>(
+    monsters.length === 0 ? "participants" : "notes"
+  );
 
   useEffect(() => {
     const storedForm = readEncounterPrepFormCookie();
