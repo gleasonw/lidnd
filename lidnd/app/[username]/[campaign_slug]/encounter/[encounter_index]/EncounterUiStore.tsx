@@ -1,19 +1,22 @@
 "use client";
 
 import { isLocalDebug } from "@/app/[username]/utils";
-import type { Creature } from "@/server/api/router";
+import type { Creature, Participant } from "@/server/api/router";
 import { makeAutoObservable } from "mobx";
 import { createContext, useContext, useEffect, useMemo } from "react";
 
 type ImageUploadStatus = "idle" | "pending" | "success" | "error";
 type CreatureId = string;
+export type FocusedTurnTarget =
+  | { type: "group"; groupId: string; participantId: string }
+  | { type: "participant"; participantId: string };
 /**
  * Manages ui state that is not persisted in db
  */
 class EncounterUIStore {
   selectedParticipantId: string | null = null;
   highlightCreatureStatBlocks: Set<CreatureId> = new Set();
-  focusGroupId: string | null = null;
+  focusedTurn: FocusedTurnTarget | null = null;
   showMoreEncounterButtons = false;
 
   /** TODO: this is sort of the "this ui is only sometimes important for inputs, so only show it when we toggle this flag" bit of state. should probably find a better way to tuck away secondary inputs/ui */
@@ -64,12 +67,26 @@ class EncounterUIStore {
     }
   }
 
-  toggleFocusThisGroup = (groupId: string) => {
-    if (this.focusGroupId === groupId) {
-      this.focusGroupId = null;
-    } else {
-      this.focusGroupId = groupId;
+  focusTurnForParticipant = (
+    participant: Pick<Participant, "id" | "turn_group_id">
+  ) => {
+    if (participant.turn_group_id) {
+      this.focusedTurn = {
+        type: "group",
+        groupId: participant.turn_group_id,
+        participantId: participant.id,
+      };
+      return;
     }
+
+    this.focusedTurn = {
+      type: "participant",
+      participantId: participant.id,
+    };
+  };
+
+  clearFocusedTurn = () => {
+    this.focusedTurn = null;
   };
 
   toggleParticipantEdit = () => {

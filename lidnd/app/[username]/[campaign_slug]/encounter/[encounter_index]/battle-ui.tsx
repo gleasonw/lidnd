@@ -57,6 +57,7 @@ import {
 } from "@/encounters/[encounter_index]/reminders";
 import {
   AngryIcon,
+  Circle,
   CheckCircle,
   Columns,
   FileEdit,
@@ -84,7 +85,10 @@ import { useEncounterId } from "@/encounters/[encounter_index]/encounter-id";
 import { api } from "@/trpc/react";
 import type { StatColumn } from "@/server/api/columns-router";
 import { ButtonWithTooltip, LidndTooltip } from "@/components/ui/tip";
-import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiStore";
+import {
+  type FocusedTurnTarget,
+  useEncounterUIStore,
+} from "@/encounters/[encounter_index]/EncounterUiStore";
 import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
 import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
@@ -1158,20 +1162,20 @@ function TurnGroupLabel({
   turnGroup,
   className,
 }: {
-  turnGroup?: Pick<TurnGroup, "id" | "hex_color">;
+  turnGroup?: Pick<TurnGroup, "hex_color">;
   className?: string;
 }) {
-  const uiStore = useEncounterUIStore();
   if (!turnGroup) {
     return null;
   }
-  const { id, hex_color } = turnGroup;
+  const { hex_color } = turnGroup;
 
   return (
-    <Button
-      variant="ghost"
-      onClick={() => uiStore.toggleFocusThisGroup(id)}
-      className={clsx("rounded-sm shadow-lg", className)}
+    <span
+      className={clsx(
+        "inline-block h-5 w-5 shrink-0 rounded-sm shadow-lg",
+        className,
+      )}
       style={{ background: hex_color ?? "" }}
     />
   );
@@ -2023,13 +2027,18 @@ export const RunEncounter = observer(function LinearBattleUI() {
   );
 });
 
-function GroupTurnToggles() {
+const GroupTurnToggles = observer(function GroupTurnToggles() {
   const [encounter] = useEncounter();
+  const uiStore = useEncounterUIStore();
   const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
   const participantsByTurnGroup =
     EncounterUtils.participantsByTurnGroup(encounter);
   const participantsWithoutTurnGroup =
     EncounterUtils.monstersWithoutTurnGroup(encounter);
+
+  if (uiStore.focusedTurn) {
+    return <FocusedTurnControls focusedTurn={uiStore.focusedTurn} />;
+  }
 
   return (
     <div className="flex gap-10 p-2 items-center justify-center w-full sticky top-0 z-20 bg-white">
@@ -2037,7 +2046,11 @@ function GroupTurnToggles() {
         <Shield className="h-4 w-4 text-blue-600" />
         <div className="flex gap-5 flex-wrap">
           {EncounterUtils.players(encounter).map((p) => (
-            <TurnTakerQuickView participant={p} key={p.id} />
+            <TurnTakerQuickView
+              participant={p}
+              participantType="player"
+              key={p.id}
+            />
           ))}
         </div>
       </div>
@@ -2046,14 +2059,19 @@ function GroupTurnToggles() {
         <Swords className="h-4 w-4 text-red-600" />
         <div className="flex gap-5 flex-wrap">
           {participantsWithoutTurnGroup.map((p) => (
-            <TurnTakerQuickView participant={p} key={p.id} />
+            <TurnTakerQuickView
+              participant={p}
+              participantType="adversary"
+              key={p.id}
+            />
           ))}
           {Object.entries(participantsByTurnGroup).map(
             ([tgId, participants]) => (
               <div key={tgId}>
                 <TurnTakerQuickView
                   participant={participants[0]}
-                  buttonExtra={
+                  participantType="adversary"
+                  labelExtra={
                     <TurnGroupLabel turnGroup={turnGroupsById[tgId]} />
                   }
                 />
@@ -2061,6 +2079,64 @@ function GroupTurnToggles() {
             ),
           )}
         </div>
+      </div>
+    </div>
+  );
+});
+
+function FocusedTurnControls({
+  focusedTurn,
+}: {
+  focusedTurn: FocusedTurnTarget;
+}) {
+  const encounterId = useEncounterId();
+  const [encounter] = useEncounter();
+  const uiStore = useEncounterUIStore();
+  const { mutate: toggleParticipantHasPlayedThisRound } = useToggleGroupTurn();
+  const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
+  const focusedParticipant = encounter.participants.find(
+    (p) => p.id === focusedTurn.participantId,
+  );
+
+  const label =
+    focusedTurn.type === "group"
+      ? (turnGroupsById[focusedTurn.groupId]?.name ??
+        (focusedParticipant
+          ? ParticipantUtils.name(focusedParticipant)
+          : "Turn"))
+      : focusedParticipant
+        ? ParticipantUtils.name(focusedParticipant)
+        : "Turn";
+
+  const turnGroup =
+    focusedTurn.type === "group"
+      ? turnGroupsById[focusedTurn.groupId]
+      : undefined;
+
+  return (
+    <div className="flex p-2 items-center justify-center w-full sticky top-0 z-20 bg-white">
+      <div className="flex flex-wrap gap-3 items-center rounded-lg border border-red-200 bg-red-50 px-4 py-3 shadow-sm">
+        <Swords className="h-4 w-4 text-red-600" />
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-red-700">Running turn:</span>
+          <span className="font-medium text-gray-900">{label}</span>
+          <TurnGroupLabel turnGroup={turnGroup} className="h-4 w-4" />
+        </div>
+        <Button
+          disabled={!focusedParticipant}
+          onClick={() => {
+            toggleParticipantHasPlayedThisRound({
+              encounter_id: encounterId,
+              participant_id: focusedTurn.participantId,
+            });
+            uiStore.clearFocusedTurn();
+          }}
+        >
+          Done
+        </Button>
+        <Button variant="ghost" onClick={() => uiStore.clearFocusedTurn()}>
+          Cancel
+        </Button>
       </div>
     </div>
   );
@@ -2073,13 +2149,15 @@ export const StatColumns = observer(function StatColumns() {
   // do we actually assign participants to columns?
   const { data: columns } = api.getColumns.useQuery(encounterId);
   const uiStore = useEncounterUIStore();
-  const participantsByColumn = EncounterUtils.participantsByColumn(
-    encounter,
-    uiStore,
-  );
+  const participantsByColumn = EncounterUtils.participantsByColumn(encounter, {
+    focusedTurn: uiStore.focusedTurn,
+  });
+  const visibleColumns = uiStore.focusedTurn
+    ? columns?.filter((c) => (participantsByColumn[c.id]?.length ?? 0) > 0)
+    : columns;
   const { registerBattleCardRef } = useEncounterUIStore();
 
-  return columns?.map((c, index) => (
+  return visibleColumns?.map((c, index) => (
     <StatColumnComponent column={c} index={index} key={c.id}>
       <div
         className={clsx(
@@ -2163,20 +2241,36 @@ const RunCreatureStatBlock = observer(function RunCreatureStatBlock({
   );
 });
 
-function TurnTakerQuickView({
+const TurnTakerQuickView = observer(function TurnTakerQuickView({
   participant,
-  buttonExtra,
+  participantType,
+  labelExtra,
 }: {
   participant: ParticipantWithData;
-  buttonExtra?: React.ReactNode;
+  participantType: "player" | "adversary";
+  labelExtra?: React.ReactNode;
 }) {
   const id = useEncounterId();
   const [encounter] = useEncounter();
+  const uiStore = useEncounterUIStore();
   const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
   const turnGroupForParticipant =
     turnGroupsById[participant.turn_group_id ?? ""];
   const { mutate: toggleParticipantHasPlayedThisRound } = useToggleGroupTurn();
   const hasPlayed = EncounterUtils.participantHasPlayed(encounter, participant);
+
+  const onAction = () => {
+    if (participantType === "player" || hasPlayed) {
+      toggleParticipantHasPlayedThisRound({
+        encounter_id: id,
+        participant_id: participant.id,
+      });
+      return;
+    }
+
+    uiStore.focusTurnForParticipant(participant);
+  };
+
   return (
     <div
       className={clsx("flex flex-col p-2 rounded-lg transition-all", {
@@ -2197,27 +2291,28 @@ function TurnTakerQuickView({
       <div className="flex w-full gap-2">
         <Button
           variant="outline"
-          onClick={() =>
-            toggleParticipantHasPlayedThisRound({
-              encounter_id: id,
-              participant_id: participant.id,
-            })
-          }
+          onClick={onAction}
           className={clsx("flex p-2 gap-1 rounded-md bg-transparent border-0", {
             "bg-white shadow-lg": !hasPlayed,
           })}
         >
-          {hasPlayed ? (
+          {participantType === "player" ? (
+            hasPlayed ? (
+              <CheckCircle className="h-4 w-4 text-black" />
+            ) : (
+              <Circle className="h-4 w-4 text-black" />
+            )
+          ) : hasPlayed ? (
             <CheckCircle className="h-4 w-4 text-black" />
           ) : (
             <PlayIcon className="h-4 w-4 text-black" />
           )}
         </Button>
-        {buttonExtra}
+        {labelExtra}
       </div>
     </div>
   );
-}
+});
 
 export function CreateNewColumnButton() {
   const { getColumns } = api.useUtils();

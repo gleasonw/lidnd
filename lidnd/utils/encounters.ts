@@ -265,13 +265,21 @@ function participantsByColumn<CP extends ColumnableParticipant>(
     participants: Array<CP>;
   },
   args?: {
-    focusGroupId?: string | null;
+    focusedTurn?:
+      | { type: "group"; groupId: string; participantId: string }
+      | { type: "participant"; participantId: string }
+      | null;
   }
 ) {
+  const focusedTurn = args?.focusedTurn;
   let baseParticipants;
-  if (args?.focusGroupId) {
+  if (focusedTurn?.type === "group") {
     baseParticipants = e.participants.filter(
-      (p) => p.turn_group_id === args?.focusGroupId
+      (p) => p.turn_group_id === focusedTurn.groupId
+    );
+  } else if (focusedTurn?.type === "participant") {
+    baseParticipants = e.participants.filter(
+      (p) => p.id === focusedTurn.participantId
     );
   } else {
     baseParticipants = e.participants;
