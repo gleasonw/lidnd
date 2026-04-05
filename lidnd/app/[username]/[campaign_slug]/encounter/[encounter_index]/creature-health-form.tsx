@@ -10,8 +10,7 @@ import {
   useUpdateEncounterMinionParticipant,
 } from "@/app/[username]/[campaign_slug]/encounter/[encounter_index]/hooks";
 import { useDebouncedCallback } from "use-debounce";
-import { Sword, UsersIcon } from "lucide-react";
-import { ButtonWithTooltip } from "@/components/ui/tip";
+import { Minus, Plus, UsersIcon } from "lucide-react";
 import { ParticipantUtils } from "@/utils/participants";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import type React from "react";
@@ -72,27 +71,27 @@ export function ParticipantHealthForm({
     });
   }
 
+  function hpChangeAmount() {
+    return typeof hpDiff === "number" && hpDiff > 0 ? hpDiff : 1;
+  }
+
   return (
     <div className="flex flex-col gap-2 text-lg w-full">
+      {extraInputs}
+
       <div className="flex flex-wrap w-full gap-4">
         <div className="flex gap-2">
-          <ButtonWithTooltip
-            text="Damage"
-            variant="ghost"
-            className={
-              "bg-red-100 text-red-700 gap-3 p-2 h-8 w-8 flex items-center"
-            }
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
             onClick={(e) => {
               e.stopPropagation();
-              handleHPChange(
-                typeof hpDiff === "number"
-                  ? participant.hp - hpDiff
-                  : participant.hp
-              );
+              handleHPChange(participant.hp - hpChangeAmount());
             }}
           >
-            <Sword />
-          </ButtonWithTooltip>
+            <Minus className="h-4 w-4" />
+          </Button>
           <LidndTextInput
             placeholder="HP"
             type="number"
@@ -101,11 +100,7 @@ export function ParticipantHealthForm({
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.stopPropagation();
-                handleHPChange(
-                  typeof hpDiff === "number"
-                    ? participant.hp - hpDiff
-                    : participant.hp
-                );
+                handleHPChange(participant.hp - hpChangeAmount());
               }
             }}
             onChange={(e) => {
@@ -116,8 +111,18 @@ export function ParticipantHealthForm({
               }
             }}
           />
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleHPChange(participant.hp + hpChangeAmount());
+            }}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
-        {extraInputs}
       </div>
       {ParticipantUtils.isMinion(participant) ? (
         <div className="flex items-center gap-4 text-gray-600">
