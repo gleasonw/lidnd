@@ -1,12 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Minus, Plus, Trophy } from "lucide-react";
+import { useState } from "react";
 import { useEncounter, useUpdateEncounter } from "./hooks";
 import { useActiveGameSession } from "@/app/[username]/[campaign_slug]/campaign-hooks";
 import { cn } from "@/lib/utils";
@@ -23,25 +25,72 @@ export function MaliceTracker({
   const [encounter] = useEncounter();
   const { mutate: updateEncounter } = useUpdateEncounter();
   const [activeSession] = useActiveGameSession();
+  const [maliceDiff, setMaliceDiff] = useState<string | number>("");
 
   const currentMalice = encounter.malice ?? 0;
   const hasVictories = activeSession && activeSession.victory_count > 0;
 
-  const handleIncrement = () => {
-    updateEncounter({
-      id: encounter.id,
-      campaign_id: encounter.campaign_id,
-      malice: currentMalice + 1,
-    });
-  };
+  function maliceChangeAmount() {
+    return typeof maliceDiff === "number" && maliceDiff > 0 ? maliceDiff : 1;
+  }
 
-  const handleDecrement = () => {
+  function handleIncrement() {
+    const amount = maliceChangeAmount();
     updateEncounter({
       id: encounter.id,
       campaign_id: encounter.campaign_id,
-      malice: Math.max(0, currentMalice - 1),
+      malice: currentMalice + amount,
     });
-  };
+    setMaliceDiff("");
+  }
+
+  function handleDecrement() {
+    const amount = maliceChangeAmount();
+    updateEncounter({
+      id: encounter.id,
+      campaign_id: encounter.campaign_id,
+      malice: Math.max(0, currentMalice - amount),
+    });
+    setMaliceDiff("");
+  }
+
+  const trackerControls = (
+    <div className={cn("flex items-center gap-1 shrink-0", compact && "gap-2")}>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleDecrement}
+        disabled={currentMalice === 0}
+        className="h-8 w-8"
+      >
+        <Minus className="h-4 w-4" />
+      </Button>
+      <LidndTextInput
+        placeholder="1"
+        type="number"
+        min={1}
+        inputMode="numeric"
+        className={cn("h-8 text-center", compact ? "w-14" : "w-16")}
+        value={maliceDiff}
+        onChange={(e) => {
+          const nextValue = parseInt(e.target.value);
+          if (!isNaN(nextValue) && nextValue > 0) {
+            setMaliceDiff(nextValue);
+            return;
+          }
+          setMaliceDiff("");
+        }}
+      />
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleIncrement}
+        className="h-8 w-8"
+      >
+        <Plus className="h-4 w-4" />
+      </Button>
+    </div>
+  );
 
   if (compact) {
     return (
@@ -71,27 +120,11 @@ export function MaliceTracker({
               </Tooltip>
             ) : null}
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleDecrement}
-              disabled={currentMalice === 0}
-              className="h-8 w-8"
-            >
-              <Minus className="h-4 w-4" />
-            </Button>
+          <div className="flex flex-col gap-2">
             <span className="text-lg min-w-[2rem] text-center">
               {currentMalice}
             </span>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleIncrement}
-              className="h-8 w-8"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+            {trackerControls}
           </div>
         </div>
       </div>
@@ -122,27 +155,9 @@ export function MaliceTracker({
           </Tooltip>
         )}
       </div>
-      <div className="flex items-center gap-1">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleDecrement}
-          disabled={currentMalice === 0}
-          className="h-8 w-8"
-        >
-          <Minus className="h-4 w-4" />
-        </Button>
-        <span className="text-lg min-w-[3rem] text-center">
-          {currentMalice}
-        </span>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleIncrement}
-          className="h-8 w-8"
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+      <div className="flex items-center gap-3">
+        <span className="text-lg min-w-[3rem] text-center">{currentMalice}</span>
+        {trackerControls}
       </div>
     </div>
   );
