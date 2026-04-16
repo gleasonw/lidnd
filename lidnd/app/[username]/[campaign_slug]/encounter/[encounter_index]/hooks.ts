@@ -255,14 +255,11 @@ export function useUpdateEncounterParticipant() {
 
         if (newParticipant.hp <= 0) {
           // this should be a message to the system, draw steel/ dnd5e, because it depends
-
           // TODO: make sure that the next participant in the column gets
           // assigned the column id of this fallen monster, to avoid a weird switch
           if (newParticipant.is_active && campaign.system === "dnd5e") {
             cycleNext({ encounter_id: id });
           }
-
-          return EncounterUtils.removeParticipant(newParticipant.id, old);
         }
 
         return EncounterUtils.updateParticipant(newParticipant, old);

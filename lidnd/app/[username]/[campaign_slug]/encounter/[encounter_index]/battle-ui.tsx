@@ -1101,6 +1101,9 @@ export const BattleCardLayout = observer(function BattleCardLayout({
           "shadow-lg shadow-blue-800":
             ParticipantUtils.isFriendly(participant) && participant.is_active,
         },
+        {
+          "opacity-60 grayscale": ParticipantUtils.isDead(participant),
+        },
         className,
       )}
       {...props}
@@ -1186,6 +1189,7 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
 }: BattleCardParticipantProps) {
   const [encounter] = useEncounter();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
+  const isDead = ParticipantUtils.isDead(participant);
   return (
     <span className="flex gap-1 items-center">
       <LidndPopover
@@ -1201,6 +1205,11 @@ export const BattleCardCreatureName = observer(function BattleCardCreatureName({
             <span className="text-lg truncate max-w-full">
               {ParticipantUtils.name(participant)}
             </span>
+            {isDead ? (
+              <LidndTooltip text="Defeated">
+                <SkullIcon className="h-4 w-4 text-gray-500" />
+              </LidndTooltip>
+            ) : null}
           </Button>
         }
       >
