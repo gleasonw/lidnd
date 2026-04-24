@@ -108,6 +108,11 @@ import {
   SelectValue,
   SelectItem,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { crLabel } from "@/utils/campaigns";
 import type { EncounterAsset, TurnGroup } from "@/server/db/schema";
 import { StatColumnUtils } from "@/utils/stat-columns";
@@ -271,13 +276,6 @@ export const EncounterBattleUI = observer(function BattleUI() {
                 </div>
               </div>
 
-              <div className="flex gap-3 flex-wrap items-center">
-                <EncounterPrepFormChooser
-                  activeForm={activePrepForm}
-                  onFormChange={setActivePrepForm}
-                  showTurnGroups={monsters.length > 0}
-                />
-              </div>
               {encounter.reminders?.length > 0 ? (
                 <div className="flex flex-col gap-3 w-full">
                   <ActiveReminders />
@@ -285,7 +283,14 @@ export const EncounterBattleUI = observer(function BattleUI() {
               ) : null}
 
               <div className="flex flex-wrap lg:flex-nowrap gap-5 items-start">
-                <EncounterPrepFormPanel activeForm={activePrepForm} />
+                <div className="w-full max-w-[500px] 2xl:w-[550px] 2xl:min-w-[550px] flex flex-col gap-3">
+                  <EncounterPrepFormChooser
+                    activeForm={activePrepForm}
+                    onFormChange={setActivePrepForm}
+                    showTurnGroups={monsters.length > 0}
+                  />
+                  <EncounterPrepFormPanel activeForm={activePrepForm} />
+                </div>
                 <div
                   className="w-full min-w-0 xl:max-h-full flex flex-col gap-3"
                   data-value="prep"
@@ -1444,7 +1449,7 @@ function EncounterPrepFormChooser({
   const secondaryChoices = choices.filter((c) => c.importance === "secondary");
 
   return (
-    <div className="flex w-full justify-between">
+    <div className="flex w-full justify-between gap-2">
       <div className="flex gap-2 flex-wrap items-center">
         {primaryChoices.map((choice) => (
           <Button
@@ -1458,19 +1463,35 @@ function EncounterPrepFormChooser({
           </Button>
         ))}
       </div>
-      <div className="flex gap-2 flex-wrap items-center text-gray-500 text-sm">
-        {secondaryChoices.map((choice) => (
-          <ButtonWithTooltip
-            key={choice.form}
-            variant={activeForm === choice.form ? "secondary" : "ghost"}
-            onClick={() => onFormChange(choice.form)}
-            className="gap-2"
-            text={choice.label}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            className={clsx("gap-2", {
+              "bg-secondary text-secondary-foreground":
+                secondaryChoices.some((choice) => choice.form === activeForm),
+            })}
           >
-            {choice.icon}
-          </ButtonWithTooltip>
-        ))}
-      </div>
+            <MoreHorizontal className="h-5 w-5" />
+            More
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-52 p-1">
+          <div className="flex flex-col">
+            {secondaryChoices.map((choice) => (
+              <Button
+                key={choice.form}
+                variant={activeForm === choice.form ? "secondary" : "ghost"}
+                onClick={() => onFormChange(choice.form)}
+                className="justify-start gap-2"
+              >
+                {choice.icon}
+                {choice.label}
+              </Button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
@@ -1481,7 +1502,7 @@ function EncounterPrepFormPanel({
   activeForm: EncounterPrepForm;
 }) {
   return (
-    <Card className="w-full max-w-[500px] 2xl:w-[550px] 2xl:min-w-[550px] min-h-[320px] h-full overflow-auto p-4 shadow-sm">
+    <Card className="w-full min-h-[320px] h-full overflow-auto p-4 shadow-sm">
       <div className="flex flex-col gap-4 h-full">
         {activeForm === "notes" && <DescriptionTextArea />}
         {activeForm === "participants" && <EditModeOpponentForm />}
