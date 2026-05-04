@@ -14,6 +14,7 @@ import { Minus, Plus, UsersIcon } from "lucide-react";
 import { ParticipantUtils } from "@/utils/participants";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
 import type React from "react";
+import { RemoveCreatureFromEncounterButton } from "@/encounters/[encounter_index]/battle-ui";
 
 export function ParticipantHealthForm({
   participant,
@@ -124,6 +125,9 @@ export function ParticipantHealthForm({
           </Button>
         </div>
       </div>
+      {participant.hp <= 0 ? (
+        <RemoveCreatureFromEncounterButton participant={participant} />
+      ) : null}
       {ParticipantUtils.isMinion(participant) ? (
         <div className="flex items-center gap-4 text-gray-600">
           <span className="items-center flex gap-1">
