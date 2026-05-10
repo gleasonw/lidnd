@@ -125,7 +125,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ParticipantEditDialog } from "@/encounters/[encounter_index]/ParticipantEditDialog";
 import { EncounterTagger } from "@/encounters/EncounterTagger";
 import { DeleteEncounterButton } from "@/encounters/[encounter_index]/DeleteEncounterButton";
-import { addImageAssetToEncounter } from "@/app/[username]/actions";
+import {
+  addImageAssetToEncounter,
+  removeImageAssetFromEncounter,
+} from "@/app/[username]/actions";
 import { ImageUtils } from "@/utils/images";
 import { ImageUpload } from "@/encounters/image-upload";
 import {
@@ -1739,36 +1742,58 @@ export function ImageAssetAddButton({ inline = false }: { inline?: boolean }) {
         />
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {images?.map((i) => (
-          <form
-            key={i.baseModel.id}
-            className="border p-2 flex flex-col gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              startTransition(async () => {
-                await addImageAssetToEncounter({
-                  encounterId: encounter.id,
-                  inputAsset: i,
-                });
-                qc.invalidateQueries().catch((err) => {
-                  console.error(err);
-                });
-              });
-            }}
-          >
-            <span>{i.baseModel.name}</span>
-            <Image
+        {images?.map((i) => {
+          const attachedEncounterAsset = encounter.assets.find(
+            (asset) => asset.asset_id === i.baseModel.id,
+          );
+
+          return (
+            <form
               key={i.baseModel.id}
-              src={i.url}
-              alt="image"
-              width={100}
-              height={100}
-            />
-            <Button variant="ghost" type="submit">
-              {isPending ? "Adding..." : "Add to encounter"}
-            </Button>
-          </form>
-        ))}
+              className="border p-2 flex flex-col gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                startTransition(async () => {
+                  if (attachedEncounterAsset) {
+                    await removeImageAssetFromEncounter({
+                      encounterId: encounter.id,
+                      assetId: attachedEncounterAsset.id,
+                    });
+                  } else {
+                    await addImageAssetToEncounter({
+                      encounterId: encounter.id,
+                      inputAsset: i,
+                    });
+                  }
+                  qc.invalidateQueries().catch((err) => {
+                    console.error(err);
+                  });
+                });
+              }}
+            >
+              <span>{i.baseModel.name}</span>
+              <Image
+                key={i.baseModel.id}
+                src={i.url}
+                alt="image"
+                width={100}
+                height={100}
+              />
+              <Button
+                variant={attachedEncounterAsset ? "destructive" : "ghost"}
+                type="submit"
+              >
+                {isPending
+                  ? attachedEncounterAsset
+                    ? "Removing..."
+                    : "Adding..."
+                  : attachedEncounterAsset
+                    ? "Remove from encounter"
+                    : "Add to encounter"}
+              </Button>
+            </form>
+          );
+        })}
       </div>
     </div>
   );
@@ -2059,16 +2084,14 @@ export const RunEncounter = observer(function LinearBattleUI() {
 
   return (
     <div className="flex items-start">
-      <div className="sticky top-0 w-[400px] shrink-0 self-start border-r bg-white">
+      <div className="sticky top-0 w-[350px] shrink-0 self-start border-r bg-white">
         <div className="p-3 flex flex-col gap-2">
           {encounter.status === "run" ? (
             <>
               <EncounterDetails showActions={false} />
 
               <div className="flex flex-col gap-2">
-                <Card className="p-2">
-                  <EncounterRunTools />
-                </Card>
+                <EncounterRunTools />
                 <Card className="p-2">
                   <MaliceTracker />
                 </Card>
