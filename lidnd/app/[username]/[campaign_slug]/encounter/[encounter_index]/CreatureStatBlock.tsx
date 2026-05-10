@@ -1,5 +1,6 @@
 "use client";
 import { useUIStore } from "@/app/UIStore";
+import { StatBlockFullscreenButton } from "@/encounters/[encounter_index]/battle-ui";
 import type { Creature } from "@/server/api/router";
 import { CreatureUtils } from "@/utils/creatures";
 import { observer } from "mobx-react-lite";
@@ -48,20 +49,26 @@ function CreatureStatBlockImage({
       ({
         objectFit: "contain",
         width: creature.stat_block_width,
-      } as const),
-    [creature.stat_block_width]
+      }) as const,
+    [creature.stat_block_width],
   );
   return (
-    <Image
-      priority
-      quality={100}
-      style={style}
-      className="max-h-full w-full object-top"
-      src={CreatureUtils.awsURL(creature, "statBlock")}
-      alt={creature.name}
-      width={creature.stat_block_width}
-      height={creature.stat_block_height}
-      ref={ref}
-    />
+    <div className="relative">
+      <div className="absolute top-0 right-0">
+        <StatBlockFullscreenButton creature={creature} />
+      </div>
+
+      <Image
+        priority
+        quality={100}
+        style={style}
+        className="max-h-full w-full object-top"
+        src={CreatureUtils.awsURL(creature, "statBlock")}
+        alt={creature.name}
+        width={creature.stat_block_width}
+        height={creature.stat_block_height}
+        ref={ref}
+      />
+    </div>
   );
 }

@@ -860,7 +860,11 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
   );
 }
 
-function StatBlockFullscreenButton({ creature }: { creature: Creature }) {
+export function StatBlockFullscreenButton({
+  creature,
+}: {
+  creature: Creature;
+}) {
   return (
     <LidndDialog
       title={`${creature.name} stat block`}
@@ -2075,7 +2079,7 @@ export const RunEncounter = observer(function LinearBattleUI() {
             <div
               key={p.id}
               style={{ width: p.creature.stat_block_width }}
-              className="max-w-2xl"
+              className="max-w-md"
             >
               <ParticipantBattleData participant={p} />
               <CreatureStatBlock creature={p.creature} />
@@ -2090,7 +2094,7 @@ export const RunEncounter = observer(function LinearBattleUI() {
                   <div
                     key={p.id}
                     style={{ width: p.creature.stat_block_width }}
-                    className="shrink-0 max-w-2xl"
+                    className="shrink-0 max-w-md"
                   >
                     <ParticipantBattleData participant={p} />
                     <CreatureStatBlock creature={p.creature} />
