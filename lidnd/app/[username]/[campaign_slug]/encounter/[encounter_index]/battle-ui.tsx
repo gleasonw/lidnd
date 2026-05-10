@@ -2043,10 +2043,19 @@ const useParentResizeObserver = () => {
 
 export const RunEncounter = observer(function LinearBattleUI() {
   const [encounter] = useEncounter();
-  const participantsByTurnGroup =
-    EncounterUtils.participantsByTurnGroup(encounter);
-  const participantsWithoutTurnGroup =
-    EncounterUtils.monstersWithoutTurnGroup(encounter);
+  const uiStore = useEncounterUIStore();
+  const participantsByTurnGroup = EncounterUtils.participantsByTurnGroup(
+    encounter,
+    {
+      focusedTurn: uiStore.focusedTurn,
+    },
+  );
+  const participantsWithoutTurnGroup = EncounterUtils.monstersWithoutTurnGroup(
+    encounter,
+    {
+      focusedTurn: uiStore.focusedTurn,
+    },
+  );
 
   return (
     <div className="flex items-start">
@@ -2113,10 +2122,14 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
   const [encounter] = useEncounter();
   const uiStore = useEncounterUIStore();
   const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
-  const participantsByTurnGroup =
-    EncounterUtils.participantsByTurnGroup(encounter);
-  const participantsWithoutTurnGroup =
-    EncounterUtils.monstersWithoutTurnGroup(encounter);
+  const participantsByTurnGroup = EncounterUtils.participantsByTurnGroup(
+    encounter,
+    { focusedTurn: uiStore.focusedTurn },
+  );
+  const participantsWithoutTurnGroup = EncounterUtils.monstersWithoutTurnGroup(
+    encounter,
+    { focusedTurn: uiStore.focusedTurn },
+  );
 
   if (uiStore.focusedTurn) {
     return <FocusedTurnControls focusedTurn={uiStore.focusedTurn} />;

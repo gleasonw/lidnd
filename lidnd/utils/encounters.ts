@@ -30,7 +30,7 @@ export const ESTIMATED_TURN_SECONDS = 180;
 export const ESTIMATED_ROUNDS = 2;
 
 type EncounterWithParticipants<
-  T extends Participant = EncounterWithData["participants"][number]
+  T extends Participant = EncounterWithData["participants"][number],
 > = Encounter & {
   participants: T[];
   average_victories: number | null;
@@ -54,7 +54,7 @@ function participantHasPlayed(
   e: {
     turn_groups: Array<Pick<TurnGroup, "id" | "has_played_this_round">>;
   },
-  participant: Pick<Participant, "turn_group_id" | "has_played_this_round">
+  participant: Pick<Participant, "turn_group_id" | "has_played_this_round">,
 ) {
   const groupsById = R.indexBy(e.turn_groups, (tg) => tg.id);
   const groupForParticipant = groupsById[participant.turn_group_id ?? ""];
@@ -84,15 +84,33 @@ function participantsByTurnGroup<
   P extends Pick<
     Participant,
     "turn_group_id" | "id" | "initiative" | "created_at"
-  >
->(e: { participants: Array<P> }) {
+  >,
+>(
+  e: { participants: Array<P> },
+  opts?: {
+    focusedTurn?:
+      | { type: "group"; groupId: string; participantId: string }
+      | { type: "participant"; participantId: string }
+      | null;
+  },
+) {
+  const focusedTurn = opts?.focusedTurn;
+  const filteredParticipants = e.participants.filter((p) => {
+    if (!focusedTurn) {
+      return true;
+    }
+    if (focusedTurn.type === "group") {
+      return p.turn_group_id === focusedTurn.groupId;
+    }
+    return p.id === focusedTurn.participantId;
+  });
   const sortedParticipants = R.sort(
-    e.participants,
-    ParticipantUtils.sortLinearly
+    filteredParticipants,
+    ParticipantUtils.sortLinearly,
   );
   const groups = R.groupBy(
     sortedParticipants,
-    (p) => p.turn_group_id ?? "no-group"
+    (p) => p.turn_group_id ?? "no-group",
   );
   delete groups["no-group"];
   return groups;
@@ -105,11 +123,11 @@ function monstersWithNoColumn<
       is_ally: boolean;
       creature: Pick<Creature, "type">;
     }>;
-  }
+  },
 >(e: E): Array<E["participants"][number]> {
   return e.participants.filter(
     (p) =>
-      (!p.column_id || p.column_id === null) && ParticipantUtils.isAdversary(p)
+      (!p.column_id || p.column_id === null) && ParticipantUtils.isAdversary(p),
   );
 }
 
@@ -125,7 +143,7 @@ export type Difficulty = keyof typeof difficulties;
 
 function difficultyCssClasses(
   e: EncounterWithParticipantDifficulty,
-  c: Campaign
+  c: Campaign,
 ) {
   const difficulty = EncounterUtils.difficulty({
     encounter: e,
@@ -140,7 +158,7 @@ function difficultyCssClasses(
 function difficultyClassForCR(
   cr: number,
   e: EncounterWithParticipantDifficulty,
-  c: Pick<Campaign, "system" | "party_level">
+  c: Pick<Campaign, "system" | "party_level">,
 ) {
   const difficulty = EncounterUtils.difficultyForCR({
     cr,
@@ -199,7 +217,7 @@ function cssClassForDifficulty(d: Difficulty | Encounter["target_difficulty"]) {
 
 function start(
   e: EncounterWithData & { average_victories: number | null },
-  campaign: Pick<Campaign, "system">
+  campaign: Pick<Campaign, "system">,
 ): EncounterWithData {
   const [firstActive, firstRoundNumber] =
     EncounterUtils.firstActiveAndRoundNumber(e);
@@ -208,7 +226,7 @@ function start(
     campaign.system === "dnd5e"
       ? EncounterUtils.updateParticipant(
           { ...firstActive, is_active: true },
-          { ...e, current_round: firstRoundNumber }
+          { ...e, current_round: firstRoundNumber },
         )
       : { ...e, current_round: firstRoundNumber };
 
@@ -229,7 +247,7 @@ function start(
 
 /**encounters not in the session */
 function inactiveEncounters<E extends { label: Encounter["label"] }>(
-  encounters: E[]
+  encounters: E[],
 ) {
   return encounters.filter((e) => e.label === "inactive");
 }
@@ -238,7 +256,7 @@ const DEFAULT_LEVEL = 1;
 
 function remainingCr(
   e: EncounterWithParticipants,
-  c: Pick<Campaign, "system" | "party_level">
+  c: Pick<Campaign, "system" | "party_level">,
 ) {
   const goalCr = EncounterUtils.goalCr(e, c);
   if (goalCr === "no-players") {
@@ -269,38 +287,41 @@ function participantsByColumn<CP extends ColumnableParticipant>(
       | { type: "group"; groupId: string; participantId: string }
       | { type: "participant"; participantId: string }
       | null;
-  }
+  },
 ) {
   const focusedTurn = args?.focusedTurn;
   let baseParticipants;
   if (focusedTurn?.type === "group") {
     baseParticipants = e.participants.filter(
-      (p) => p.turn_group_id === focusedTurn.groupId
+      (p) => p.turn_group_id === focusedTurn.groupId,
     );
   } else if (focusedTurn?.type === "participant") {
     baseParticipants = e.participants.filter(
-      (p) => p.id === focusedTurn.participantId
+      (p) => p.id === focusedTurn.participantId,
     );
   } else {
     baseParticipants = e.participants;
   }
   const byCreature = R.groupBy(baseParticipants, (p) => p.creature_id);
-  const res = Object.values(byCreature)?.reduce((acc, curr) => {
-    const columnFor = curr
-      .slice()
-      .sort(ParticipantUtils.sortLinearly)
-      .at(0)?.column_id;
-    if (!columnFor) {
+  const res = Object.values(byCreature)?.reduce(
+    (acc, curr) => {
+      const columnFor = curr
+        .slice()
+        .sort(ParticipantUtils.sortLinearly)
+        .at(0)?.column_id;
+      if (!columnFor) {
+        return acc;
+      }
+      const inColumn = acc[columnFor];
+      if (inColumn && inColumn.length > 0) {
+        acc[columnFor]?.push(curr);
+        return acc;
+      }
+      acc[columnFor] = [curr];
       return acc;
-    }
-    const inColumn = acc[columnFor];
-    if (inColumn && inColumn.length > 0) {
-      acc[columnFor]?.push(curr);
-      return acc;
-    }
-    acc[columnFor] = [curr];
-    return acc;
-  }, {} as Record<string, CP[][]>);
+    },
+    {} as Record<string, CP[][]>,
+  );
   // sort each column's participants
   Object.keys(res).forEach((colId) => {
     //TODO: why are we grouping participants anymore? should make this much simpler... participants
@@ -311,7 +332,7 @@ function participantsByColumn<CP extends ColumnableParticipant>(
         .sort((pAs, pBs) => ParticipantUtils.sortLinearly(pAs[0]!, pBs[0]!)) ||
       [];
     res[colId] = sortedParticipantGroups.map((pGroup) =>
-      pGroup.slice().sort(ParticipantUtils.sortLinearly)
+      pGroup.slice().sort(ParticipantUtils.sortLinearly),
     );
   });
   return res;
@@ -319,7 +340,7 @@ function participantsByColumn<CP extends ColumnableParticipant>(
 
 function participantsForColumn(
   e: EncounterWithParticipants,
-  column: { id: string }
+  column: { id: string },
 ): ParticipantWithData[][] {
   return participantsByColumn(e)[column.id] ?? [];
 }
@@ -370,7 +391,7 @@ export const EncounterUtils = {
 
   goalCr(
     e: EncounterWithParticipants,
-    c: Pick<Campaign, "system" | "party_level">
+    c: Pick<Campaign, "system" | "party_level">,
   ) {
     const tiers = this.findCRBudget({
       encounter: e,
@@ -396,7 +417,7 @@ export const EncounterUtils = {
 
   nextTierAndDistance(
     e: EncounterWithParticipants,
-    c: Pick<Campaign, "system" | "party_level">
+    c: Pick<Campaign, "system" | "party_level">,
   ): [Difficulty, number] | "no-players" {
     const difficulty = this.difficulty({
       encounter: e,
@@ -438,7 +459,7 @@ export const EncounterUtils = {
       index_in_campaign: number;
     },
     campaign: { slug: string },
-    user: LidndUser
+    user: LidndUser,
   ) {
     if (encounter.started_at) {
       return `${appRoutes.encounter({ campaign, encounter, user })}/run`;
@@ -530,10 +551,7 @@ export const EncounterUtils = {
     gameSession: Pick<GameSession, "victory_count"> | null;
   }) {
     const numAliveHeroes = this.alivePlayerCount(encounter);
-    return (
-      numAliveHeroes +
-      encounter.current_round
-    );
+    return numAliveHeroes + encounter.current_round;
   },
 
   findCRBudget(args: {
@@ -562,7 +580,7 @@ export const EncounterUtils = {
         }
 
         const foundLevel = encounterCRPerCharacter.find(
-          (cr) => cr.level === playersLevel
+          (cr) => cr.level === playersLevel,
         );
 
         const alliesWeighted = _.sumBy(encounter?.participants, (p) => {
@@ -600,7 +618,7 @@ export const EncounterUtils = {
         const threeHeroStrength = oneHeroStrength * 3;
         if (partyEncounterStrength === undefined) {
           throw new Error(
-            `No EV budget found for this number of heroes: ${adjustedHeroCount}`
+            `No EV budget found for this number of heroes: ${adjustedHeroCount}`,
           );
         }
         return {
@@ -624,22 +642,22 @@ export const EncounterUtils = {
     opts?: {
       estimatedRounds?: number | null;
       estimatedTurnSeconds?: number | null;
-    }
+    },
   ) {
     const difficulty = this.difficulty({
       encounter,
       campaign,
     });
     const finalEstimatedRounds =
-      opts?.estimatedRounds ?? difficulty === "Deadly"
+      (opts?.estimatedRounds ?? difficulty === "Deadly")
         ? 5
         : difficulty === "Hard"
-        ? 4
-        : difficulty === "Standard"
-        ? 3
-        : difficulty === "Easy"
-        ? 2
-        : 1;
+          ? 4
+          : difficulty === "Standard"
+            ? 3
+            : difficulty === "Easy"
+              ? 2
+              : 1;
     const finalTurnSeconds = opts?.estimatedTurnSeconds ?? 180;
     const estimateEncounterSeconds =
       (encounter.participants.length *
@@ -652,7 +670,7 @@ export const EncounterUtils = {
 
   optimisticParticipants<E extends CyclableEncounter>(
     status: "loadingNext" | "loadingPrevious" | "idle",
-    encounter: E
+    encounter: E,
   ): E {
     if (status === "loadingNext") {
       const { updatedEncounter } = EncounterUtils.cycleNextTurn(encounter);
@@ -675,14 +693,14 @@ export const EncounterUtils = {
       throw new Error(
         `Encounter has more than one active participant: ${JSON.stringify(
           this.participantsInInitiativeOrder(encounter).filter(
-            (p) => p.is_active
-          )
-        )}`
+            (p) => p.is_active,
+          ),
+        )}`,
       );
     }
 
     const activeIndex = this.participantsInInitiativeOrder(encounter).findIndex(
-      (p) => p.is_active
+      (p) => p.is_active,
     );
 
     return activeIndex;
@@ -696,7 +714,7 @@ export const EncounterUtils = {
 
   isAtTargetDifficulty(
     encounter: EncounterWithParticipants,
-    campaign: Pick<Campaign, "system" | "party_level">
+    campaign: Pick<Campaign, "system" | "party_level">,
   ) {
     const currentDifficulty = this.difficulty({
       encounter,
@@ -769,11 +787,11 @@ export const EncounterUtils = {
     P extends { creature: { name: string } } & Pick<
       Participant,
       "initiative" | "created_at" | "id"
-    >
+    >,
   >(encounter: { participants: Array<P> }) {
     return R.sort(encounter.participants, (a, b) => {
       const res = ParticipantUtils.name(a).localeCompare(
-        ParticipantUtils.name(b)
+        ParticipantUtils.name(b),
       );
       if (res === 0) {
         return ParticipantUtils.sortLinearly(a, b);
@@ -800,14 +818,28 @@ export const EncounterUtils = {
   },
 
   monstersWithoutTurnGroup(
-    encounter: EncounterWithParticipants<ParticipantWithData>
+    encounter: EncounterWithParticipants<ParticipantWithData>,
+    opts?: {
+      focusedTurn?:
+        | { type: "group"; groupId: string; participantId: string }
+        | { type: "participant"; participantId: string }
+        | null;
+    },
   ) {
+    const focusedTurn = opts?.focusedTurn;
     return this.participantsByName(encounter).filter(
       // TODO: inanimate is a janky hack to allow malice and other things the dm needs to track to sit inside the
       // column layout. really we should have some "encounter element" system that lets us add things
       // to the column layout without those things becoming participants.
 
-      (p) => !ParticipantUtils.isFriendly(p) && !p.turn_group_id
+      (p) =>
+        !ParticipantUtils.isFriendly(p) &&
+        !p.turn_group_id &&
+        (!focusedTurn ||
+          (focusedTurn.type === "participant" &&
+            p.id === focusedTurn.participantId) ||
+          (focusedTurn.type === "group" &&
+            p.turn_group_id === focusedTurn.groupId)),
     );
   },
 
@@ -819,7 +851,7 @@ export const EncounterUtils = {
       .sort(
         (a, b) =>
           ParticipantUtils.challengeRating(b) -
-          ParticipantUtils.challengeRating(a)
+          ParticipantUtils.challengeRating(a),
       );
   },
 
@@ -832,7 +864,7 @@ export const EncounterUtils = {
   players(encounter: EncounterWithParticipants<ParticipantWithData>) {
     return R.sort(
       this.participants(encounter).filter((p) => ParticipantUtils.isPlayer(p)),
-      ParticipantUtils.sortLinearly
+      ParticipantUtils.sortLinearly,
     );
   },
 
@@ -846,13 +878,13 @@ export const EncounterUtils = {
           >;
         } & Pick<Participant, "initiative" | "created_at" | "id">
       >;
-    }
+    },
   ) {
     // if we have a description, try to extract the first image from it
     if (encounter.description && typeof DOMParser !== "undefined") {
       const doc = new DOMParser().parseFromString(
         encounter.description,
-        "text/html"
+        "text/html",
       );
       const img = doc.querySelector("img");
       if (img && img.src) {
@@ -874,7 +906,7 @@ export const EncounterUtils = {
   },
 
   placeholder(
-    encounter: Partial<Encounter> & { campaign_id: string }
+    encounter: Partial<Encounter> & { campaign_id: string },
   ): Encounter {
     return {
       id: encounter.id ?? Math.random().toString(),
@@ -933,13 +965,13 @@ export const EncounterUtils = {
     return {
       ...encounter,
       participants: encounter.participants.filter(
-        (p) => p.id !== participantId
+        (p) => p.id !== participantId,
       ),
     };
   },
 
   firstActiveAndRoundNumber(
-    encounter: EncounterWithParticipants
+    encounter: EncounterWithParticipants,
   ): [Participant, number] {
     const participants = this.participantsInInitiativeOrder(encounter);
 
@@ -947,7 +979,7 @@ export const EncounterUtils = {
 
     if (!firstActive) {
       throw new Error(
-        "No participant found to start the encounter... empty list?"
+        "No participant found to start the encounter... empty list?",
       );
     }
 
@@ -965,7 +997,7 @@ export const EncounterUtils = {
     return reminders.filter(
       (reminder) =>
         reminder.alert_after_round === current_round ||
-        reminder.alert_after_round === 0
+        reminder.alert_after_round === 0,
     );
   },
 
@@ -977,7 +1009,7 @@ export const EncounterUtils = {
     // once we guarantee creatures always have the same column
     return Object.values(participantsByColumn)
       .flatMap((columnParticipants) =>
-        columnParticipants.map((group) => group[0])
+        columnParticipants.map((group) => group[0]),
       )
       .filter((p) => p !== undefined);
   },
@@ -1025,14 +1057,14 @@ export const EncounterUtils = {
 
   destinationColumnForNewParticipant(
     newParticipant: { creature: Pick<Creature, "id" | "type"> },
-    encounter: EncounterWithData
+    encounter: EncounterWithData,
   ) {
     if (newParticipant.creature.type === "player") {
       return null;
     }
     const columnLeaders = this.participantColumnLeaders(encounter);
     const participantOfSameCreature = columnLeaders.find(
-      (p) => p.creature_id === newParticipant.creature.id
+      (p) => p.creature_id === newParticipant.creature.id,
     );
     if (participantOfSameCreature) {
       return participantOfSameCreature.column_id;
@@ -1040,7 +1072,7 @@ export const EncounterUtils = {
     return (
       R.firstBy(
         encounter.columns.filter((col) => !col.is_home_column),
-        (col) => col.participants.length
+        (col) => col.participants.length,
       )?.id || null
     );
   },
@@ -1052,15 +1084,15 @@ export const EncounterUtils = {
   }): EncounterWithData {
     const { newParticipant, encounter, creatureForParticipant } = args;
     const creatureWithDefaults = CreatureUtils.withDefaults(
-      creatureForParticipant
+      creatureForParticipant,
     );
     const participantWithDefaults = ParticipantUtils.withDefaults(
       { ...newParticipant, creature_id: creatureWithDefaults.id },
-      creatureWithDefaults
+      creatureWithDefaults,
     );
     const destColumnId = this.destinationColumnForNewParticipant(
       participantWithDefaults,
-      encounter
+      encounter,
     );
     if (destColumnId) {
       participantWithDefaults.column_id = destColumnId;
@@ -1122,7 +1154,7 @@ export const EncounterUtils = {
     const turnGroupsById = R.indexBy(encounter.turn_groups, (tg) => tg.id);
     const participants = this.participantsInInitiativeOrder(encounter);
     const participantWhoPlayed = participants.find(
-      (p) => p.id === participant.id
+      (p) => p.id === participant.id,
     );
     if (!participantWhoPlayed) {
       throw new Error("Participant not found");
@@ -1163,7 +1195,7 @@ export const EncounterUtils = {
     }
 
     const allHavePlayed = encounterWithUpdate.participants.every((p) =>
-      this.participantHasPlayed(encounterWithUpdate, p)
+      this.participantHasPlayed(encounterWithUpdate, p),
     );
     if (allHavePlayed) {
       const encounterWithNewRound = this.moveToNextGroupTurnRound(encounter);
@@ -1187,9 +1219,9 @@ export const EncounterUtils = {
   },
 
   groupEncountersByTag<
-    TEncounter extends { tags: Array<{ tag: { id: string } }> }
+    TEncounter extends { tags: Array<{ tag: { id: string } }> },
   >(
-    encounters: Array<TEncounter> | null
+    encounters: Array<TEncounter> | null,
   ): Record<
     string,
     Array<{
@@ -1200,7 +1232,7 @@ export const EncounterUtils = {
     return R.pipe(
       encounters ?? [],
       R.flatMap((e) => e.tags.map((et) => ({ tag: et.tag, encounter: e }))),
-      R.groupBy((et) => et.tag.id)
+      R.groupBy((et) => et.tag.id),
     );
   },
 
@@ -1220,7 +1252,7 @@ export const EncounterUtils = {
   },
 
   cycleNextTurn<E extends CyclableEncounter>(
-    encounter: E
+    encounter: E,
   ): UpdateTurnOrderReturn<E> {
     return this.cycleTurn({
       updateActiveAndRoundNumber: (participants) => {
@@ -1257,7 +1289,7 @@ export const EncounterUtils = {
   },
 
   cyclePreviousTurn<E extends CyclableEncounter>(
-    encounter: E
+    encounter: E,
   ): UpdateTurnOrderReturn<E> {
     return this.cycleTurn({
       updateActiveAndRoundNumber: (participants) => {
@@ -1300,12 +1332,12 @@ export const EncounterUtils = {
     const participants = encounter.participants;
     const sortedParticipants = R.sort(
       participants,
-      ParticipantUtils.sortLinearly
+      ParticipantUtils.sortLinearly,
     );
 
     if (!sortedParticipants.some((p) => p.is_active)) {
       console.warn(
-        "No active participant found, which is odd. Setting first participant active"
+        "No active participant found, which is odd. Setting first participant active",
       );
       if (!sortedParticipants[0]) {
         throw new Error("No participants! Egads");
@@ -1314,7 +1346,7 @@ export const EncounterUtils = {
     }
 
     const candidates = sortedParticipants.filter(
-      ParticipantUtils.isActivatable
+      ParticipantUtils.isActivatable,
     );
 
     const { updatedEncounter, newlyActiveParticipant } =
@@ -1341,7 +1373,7 @@ export const EncounterUtils = {
 
 type CycleTurnArgs<E extends CyclableEncounter> = {
   updateActiveAndRoundNumber: (
-    participants: E["participants"]
+    participants: E["participants"],
   ) => Omit<UpdateTurnOrderReturn<E>, "updatedParticipants">;
   encounter: E;
 };
