@@ -14,14 +14,10 @@ import { useActiveGameSession } from "@/app/[username]/[campaign_slug]/campaign-
 import { cn } from "@/lib/utils";
 
 interface MaliceTrackerProps {
-  compact?: boolean;
   className?: string;
 }
 
-export function MaliceTracker({
-  compact = false,
-  className,
-}: MaliceTrackerProps) {
+export function MaliceTracker({ className }: MaliceTrackerProps) {
   const [encounter] = useEncounter();
   const { mutate: updateEncounter } = useUpdateEncounter();
   const [activeSession] = useActiveGameSession();
@@ -55,7 +51,7 @@ export function MaliceTracker({
   }
 
   const trackerControls = (
-    <div className={cn("flex items-center gap-1 shrink-0", compact && "gap-2")}>
+    <div className={cn("flex items-center gap-1 shrink-0")}>
       <Button
         variant="outline"
         size="icon"
@@ -70,7 +66,7 @@ export function MaliceTracker({
         type="number"
         min={1}
         inputMode="numeric"
-        className={cn("h-8 text-center", compact ? "w-14" : "w-16")}
+        className={cn("h-8 text-center w-16")}
         value={maliceDiff}
         onChange={(e) => {
           const nextValue = parseInt(e.target.value);
@@ -91,45 +87,6 @@ export function MaliceTracker({
       </Button>
     </div>
   );
-
-  if (compact) {
-    return (
-      <div className={cn("w-full rounded-md bg-white py-1", className)}>
-        <div className="flex min-w-0 flex-col gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="text-sm font-semibold text-gray-600 whitespace-nowrap">
-              Malice
-            </span>
-            {hasVictories ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1 text-xs text-amber-600 whitespace-nowrap">
-                    <Trophy className="h-3 w-3" />
-                    <span>+{activeSession.victory_count}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-sm">
-                    Session victories are adding {activeSession.victory_count}{" "}
-                    to malice each turn.
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Modify victory count from the campaign home page.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            ) : null}
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-lg min-w-[2rem] text-center">
-              {currentMalice}
-            </span>
-            {trackerControls}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={cn("flex items-center justify-between gap-5", className)}>
@@ -156,7 +113,9 @@ export function MaliceTracker({
         )}
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-lg min-w-[3rem] text-center">{currentMalice}</span>
+        <span className="text-lg min-w-[3rem] text-center">
+          {currentMalice}
+        </span>
         {trackerControls}
       </div>
     </div>

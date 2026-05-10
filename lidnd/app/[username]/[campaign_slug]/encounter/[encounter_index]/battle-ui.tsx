@@ -2065,12 +2065,12 @@ export const RunEncounter = observer(function LinearBattleUI() {
             <>
               <EncounterDetails showActions={false} />
 
-              <div className="flex gap-3 flex-wrap">
+              <div className="flex flex-col gap-2">
                 <Card className="p-2">
                   <EncounterRunTools />
                 </Card>
                 <Card className="p-2">
-                  <MaliceTracker compact />
+                  <MaliceTracker />
                 </Card>
               </div>
             </>
@@ -2586,12 +2586,12 @@ export const StatColumnComponent = observer(function StatColumnComponent({
                 <>
                   <EncounterDetails showActions={false} />
 
-                  <div className="flex gap-3 flex-wrap">
+                  <div className="flex flex-col gap-3">
                     <Card className="p-2">
                       <EncounterRunTools />
                     </Card>
                     <Card className="p-2">
-                      <MaliceTracker compact />
+                      <MaliceTracker />
                     </Card>
                   </div>
                 </>
