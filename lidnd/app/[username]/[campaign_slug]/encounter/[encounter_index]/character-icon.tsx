@@ -13,7 +13,7 @@ type IconSize = "v-small" | "small" | "small2" | "medium" | "large";
 
 function iconDimensions(
   creature: { icon_width: number; icon_height: number },
-  size?: IconSize
+  size?: IconSize,
 ): { width: number; height: number } {
   if (!size) {
     return { width: creature.icon_width, height: creature.icon_height };
@@ -78,7 +78,7 @@ export const CreatureIcon = observer(function CreatureIcon({
     : "#b91c1c";
   const fallbackClasses = clsx(
     "absolute inset-0 flex items-center justify-center rounded-full font-semibold uppercase tracking-wide text-white transition-opacity",
-    iconTextClass(size)
+    iconTextClass(size),
   );
 
   if (creature.id === "pending") {
@@ -90,7 +90,7 @@ export const CreatureIcon = observer(function CreatureIcon({
     return (
       <div
         className={clsx(
-          "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full"
+          "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full",
         )}
         style={{
           width: dimensions.width,
@@ -135,7 +135,7 @@ export const CreatureIcon = observer(function CreatureIcon({
             {
               "opacity-0": imageStatus !== "loaded",
               "opacity-100": imageStatus === "loaded",
-            }
+            },
           )}
           fetchPriority="high"
           onError={() => {

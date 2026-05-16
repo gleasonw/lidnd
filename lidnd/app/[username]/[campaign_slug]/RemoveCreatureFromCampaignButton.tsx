@@ -1,6 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { removeCreatureFromCampaign } from "@/creatures/creatureActions";
+import { TrashIcon } from "lucide-react";
 
 export function RemoveCreatureFromCampaign({
   creature,
@@ -11,7 +12,7 @@ export function RemoveCreatureFromCampaign({
 }) {
   return (
     <Button
-      variant="outline"
+      variant="ghost"
       onClick={() =>
         removeCreatureFromCampaign({
           creatureId: creature.id,
@@ -19,7 +20,7 @@ export function RemoveCreatureFromCampaign({
         })
       }
     >
-      Remove
+      <TrashIcon />
     </Button>
   );
 }

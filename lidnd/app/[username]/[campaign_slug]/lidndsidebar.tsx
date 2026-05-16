@@ -37,12 +37,12 @@ export async function LidndSidebar({
     <Sidebar collapsible="icon" className="bg-white">
       <SidebarHeader className="p-1 text-lg pb-4">
         {topSlot}
-        <SidebarMenuButton asChild tooltip={`${campaign.name} Home`}>
-          <Link href={appRoutes.campaign({ campaign, user })}>
+        <Link href={appRoutes.campaign({ campaign, user })}>
+          <SidebarMenuButton tooltip={`${campaign.name} Home`}>
             <HomeIcon />
             {campaign.name}
-          </Link>
-        </SidebarMenuButton>
+          </SidebarMenuButton>
+        </Link>
       </SidebarHeader>
       <SidebarContent className="p-1">
         <SidebarMenu className="gap-2">
@@ -50,40 +50,40 @@ export async function LidndSidebar({
             <TotalVictoriesCount />
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Sessions">
-              <Link href={appRoutes.sessions({ campaign, user })}>
+            <Link href={appRoutes.sessions({ campaign, user })}>
+              <SidebarMenuButton tooltip="Sessions">
                 <CalendarDays />
                 Sessions
-              </Link>
-            </SidebarMenuButton>
+              </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Creatures">
-              <Link href={appRoutes.creaturesForCampaign({ campaign, user })}>
+            <Link href={appRoutes.creaturesForCampaign({ campaign, user })}>
+              <SidebarMenuButton tooltip="Creatures">
                 <AngryIcon />
                 <span>Creatures</span>
-              </Link>
-            </SidebarMenuButton>
+              </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Party">
-              <Link href={appRoutes.party({ campaign, user })}>
+            <Link href={appRoutes.party({ campaign, user })}>
+              <SidebarMenuButton tooltip="Party">
                 <Users />
                 <span>Party</span>
-              </Link>
-            </SidebarMenuButton>
+              </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-1">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="All Campaigns">
-              <Link href={appRoutes.dashboard(user)}>
+            <Link href={appRoutes.dashboard(user)}>
+              <SidebarMenuButton tooltip="All Campaigns">
                 <LayoutGrid />
                 <span>All Campaigns</span>
-              </Link>
-            </SidebarMenuButton>
+              </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

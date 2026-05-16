@@ -11,6 +11,7 @@ import { RemoveCreatureFromCampaign } from "@/app/[username]/[campaign_slug]/Rem
 import { CreatureUpdateForm } from "@/creatures/creatures-page";
 import { LidndDialog } from "@/components/ui/lidnd_dialog";
 import { CampaignCreatureSearch } from "@/app/[username]/[campaign_slug]/CampaignCreatureSearch";
+import { PenIcon } from "lucide-react";
 
 export default async function CampaignCreaturesPage(props: {
   params: Promise<{
@@ -30,7 +31,7 @@ export default async function CampaignCreaturesPage(props: {
 
   const campaignData = await ServerCampaign.campaignFromSlug(
     UserUtils.context(user),
-    params.campaign_slug
+    params.campaign_slug,
   );
 
   if (!campaignData) {
@@ -48,9 +49,9 @@ export default async function CampaignCreaturesPage(props: {
       .where(
         and(
           eq(campaignCreatureLink.campaign_id, campaignData.id),
-          eq(campaignCreatureLink.creature_id, creatures.id)
-        )
-      )
+          eq(campaignCreatureLink.creature_id, creatures.id),
+        ),
+      ),
   );
 
   const filters = [eq(creatures.user_id, user.id), onlyCampaignFilter];
@@ -76,21 +77,22 @@ export default async function CampaignCreaturesPage(props: {
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3">
             {creaturesToShow.map((c) => (
-              <div key={c.id} className="flex gap-2">
-                <LidndDialog
-                  title="Update Creature"
-                  trigger={
-                    <Button variant="ghost">
-                      <CreatureIcon creature={c} size="medium" />
-                      <span>{c.name}</span>
-                    </Button>
-                  }
-                  content={<CreatureUpdateForm creature={c} />}
-                />
+              <div key={c.id} className="flex">
                 <RemoveCreatureFromCampaign
                   creature={c}
                   campaign={campaignData}
                 />
+                <LidndDialog
+                  title="Update Creature"
+                  trigger={
+                    <Button variant="ghost">
+                      <PenIcon />
+                    </Button>
+                  }
+                  content={<CreatureUpdateForm creature={c} />}
+                />
+                <CreatureIcon creature={c} size="small" />
+                <span>{c.name}</span>
               </div>
             ))}
           </div>

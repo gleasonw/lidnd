@@ -2108,11 +2108,7 @@ export const RunEncounter = observer(function LinearBattleUI() {
         <GroupTurnToggles />
         <div className="flex flex-wrap w-full">
           {participantsWithoutTurnGroup.map((p) => (
-            <div
-              key={p.id}
-              style={{ width: p.creature.stat_block_width }}
-              className="max-w-md"
-            >
+            <div key={p.id} style={{ width: p.creature.stat_block_width }}>
               <ParticipantBattleData participant={p} />
               <CreatureStatBlock creature={p.creature} />
             </div>
@@ -2126,7 +2122,6 @@ export const RunEncounter = observer(function LinearBattleUI() {
                   <div
                     key={p.id}
                     style={{ width: p.creature.stat_block_width }}
-                    className="shrink-0 max-w-md"
                   >
                     <ParticipantBattleData participant={p} />
                     <CreatureStatBlock creature={p.creature} />
