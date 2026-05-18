@@ -916,12 +916,6 @@ export const ParticipantBattleData = observer(function BattleCard({
   ...props
 }: BattleCardProps) {
   const encounterUiStore = useEncounterUIStore();
-  const [encounter] = useEncounter();
-  const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
-  const tgForParticipant = participant.turn_group_id
-    ? turnGroupsById[participant.turn_group_id]
-    : undefined;
-
   return (
     <div
       className={clsx(`relative flex-col gap-6 w-full flex px-1`)}
@@ -936,12 +930,6 @@ export const ParticipantBattleData = observer(function BattleCard({
                 <div className="flex gap-2 items-center relative w-full">
                   {ParticipantUtils.hasIcon(participant) ? (
                     <BattleCardCreatureIcon participant={participant} />
-                  ) : null}
-                  {tgForParticipant ? (
-                    <TurnGroupLabel
-                      turnGroup={tgForParticipant}
-                      className="h- w-5"
-                    />
                   ) : null}
                   <div className="flex w-full items-center flex-wrap">
                     <BattleCardCreatureName participant={participant} />
@@ -1104,7 +1092,7 @@ export const BattleCardLayout = observer(function BattleCardLayout({
   return (
     <div
       className={clsx(
-        "bg-white h-full max-h-full overflow-hidden w-full flex flex-col transition-all group",
+        " h-full max-h-full overflow-hidden w-full flex flex-col transition-all group",
         {
           "shadow-lg shadow-red-800":
             !ParticipantUtils.isFriendly(participant) && participant.is_active,
@@ -2068,19 +2056,8 @@ const useParentResizeObserver = () => {
 
 export const RunEncounter = observer(function LinearBattleUI() {
   const [encounter] = useEncounter();
-  const uiStore = useEncounterUIStore();
-  const participantsByTurnGroup = EncounterUtils.participantsByTurnGroup(
-    encounter,
-    {
-      focusedTurn: uiStore.focusedTurn,
-    },
-  );
-  const participantsWithoutTurnGroup = EncounterUtils.monstersWithoutTurnGroup(
-    encounter,
-    {
-      focusedTurn: uiStore.focusedTurn,
-    },
-  );
+
+  const creatures = EncounterUtils.uniqueCreatures(encounter);
 
   return (
     <div className="flex items-start">
@@ -2107,29 +2084,11 @@ export const RunEncounter = observer(function LinearBattleUI() {
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <GroupTurnToggles />
         <div className="flex flex-wrap w-full">
-          {participantsWithoutTurnGroup.map((p) => (
-            <div key={p.id} style={{ width: p.creature.stat_block_width }}>
-              <ParticipantBattleData participant={p} />
-              <CreatureStatBlock creature={p.creature} />
+          {creatures.map((c) => (
+            <div key={c.id} style={{ width: c.stat_block_width }}>
+              <CreatureStatBlock creature={c} />
             </div>
           ))}
-        </div>
-        <div className="flex flex-col gap-2 pb-2">
-          {Object.entries(participantsByTurnGroup).map(
-            ([tgId, participants]) => (
-              <div key={tgId} className="flex w-full overflow-auto">
-                {participants.map((p) => (
-                  <div
-                    key={p.id}
-                    style={{ width: p.creature.stat_block_width }}
-                  >
-                    <ParticipantBattleData participant={p} />
-                    <CreatureStatBlock creature={p.creature} />
-                  </div>
-                ))}
-              </div>
-            ),
-          )}
         </div>
       </div>
     </div>
@@ -2154,7 +2113,7 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
   }
 
   return (
-    <div className="flex gap-10 p-2 items-center justify-center w-full sticky top-0 z-20 bg-white">
+    <div className="flex flex-col p-2 gap-3">
       <div className="flex gap-3 items-center bg-blue-50 rounded-lg p-2">
         <Shield className="h-4 w-4 text-blue-600" />
         <div className="flex gap-5 flex-wrap">
@@ -2167,7 +2126,6 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
           ))}
         </div>
       </div>
-      <div className="h-12 w-px bg-gray-300" />
       <div className="flex gap-3 items-center bg-red-50 rounded-lg p-2">
         <Swords className="h-4 w-4 text-red-600" />
         <div className="flex gap-5 flex-wrap">
@@ -2176,6 +2134,7 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
               participant={p}
               participantType="adversary"
               key={p.id}
+              participantZone={<ParticipantBattleData participant={p} />}
             />
           ))}
           {Object.entries(participantsByTurnGroup).map(
@@ -2187,6 +2146,9 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
                   labelExtra={
                     <TurnGroupLabel turnGroup={turnGroupsById[tgId]} />
                   }
+                  participantZone={participants.map((p) => (
+                    <ParticipantBattleData participant={p} key={p.id} />
+                  ))}
                 />
               </div>
             ),
@@ -2358,14 +2320,15 @@ const TurnTakerQuickView = observer(function TurnTakerQuickView({
   participant,
   participantType,
   labelExtra,
+  participantZone,
 }: {
   participant: ParticipantWithData;
   participantType: "player" | "adversary";
   labelExtra?: React.ReactNode;
+  participantZone?: React.ReactNode;
 }) {
   const id = useEncounterId();
   const [encounter] = useEncounter();
-  const uiStore = useEncounterUIStore();
   const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
   const turnGroupForParticipant =
     turnGroupsById[participant.turn_group_id ?? ""];
@@ -2373,23 +2336,22 @@ const TurnTakerQuickView = observer(function TurnTakerQuickView({
   const hasPlayed = EncounterUtils.participantHasPlayed(encounter, participant);
 
   const onAction = () => {
-    if (participantType === "player" || hasPlayed) {
-      toggleParticipantHasPlayedThisRound({
-        encounter_id: id,
-        participant_id: participant.id,
-      });
-      return;
-    }
-
-    uiStore.focusTurnForParticipant(participant);
+    toggleParticipantHasPlayedThisRound({
+      encounter_id: id,
+      participant_id: participant.id,
+    });
+    return;
   };
 
   return (
     <div
-      className={clsx("flex flex-col p-2 rounded-lg transition-all", {
-        "opacity-60 border-transparent": hasPlayed,
-        "shadow-md bg-white": !hasPlayed,
-      })}
+      className={clsx(
+        "flex flex-col p-2 rounded-lg transition-all flex-grow-0",
+        {
+          "opacity-60 border-transparent": hasPlayed,
+          "shadow-md bg-white": !hasPlayed,
+        },
+      )}
     >
       <span
         className={clsx("text-sm font-medium", {
@@ -2423,6 +2385,7 @@ const TurnTakerQuickView = observer(function TurnTakerQuickView({
         </Button>
         {labelExtra}
       </div>
+      <div className="flex w-full flex-wrap">{participantZone}</div>
     </div>
   );
 });

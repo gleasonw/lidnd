@@ -345,7 +345,18 @@ function participantsForColumn(
   return participantsByColumn(e)[column.id] ?? [];
 }
 
+function uniqueCreatures(e: EncounterWithParticipants): Creature[] {
+  const creatures: Record<string, Creature> = {};
+  e.participants.forEach((p) => {
+    if (!creatures[p.creature.id]) {
+      creatures[p.creature.id] = p.creature;
+    }
+  });
+  return Object.values(creatures);
+}
+
 export const EncounterUtils = {
+  uniqueCreatures,
   participantsByTurnGroup,
   participantHasPlayed,
   participantsByColumn,
