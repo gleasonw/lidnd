@@ -348,7 +348,7 @@ function participantsForColumn(
 function uniqueCreatures(e: EncounterWithParticipants): Creature[] {
   const creatures: Record<string, Creature> = {};
   e.participants.forEach((p) => {
-    if (!creatures[p.creature.id]) {
+    if (!creatures[p.creature.id] && !CreatureUtils.isPlayer(p.creature)) {
       creatures[p.creature.id] = p.creature;
     }
   });
