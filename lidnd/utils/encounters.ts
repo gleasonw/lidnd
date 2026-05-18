@@ -350,9 +350,13 @@ function uniqueCreatures(e: EncounterWithParticipants): Creature[] {
     }
   });
   return (
-    Object.values(creatures)?.sort(
-      (a, b) => b.challenge_rating - a.challenge_rating
-    ) || []
+    Object.values(creatures)?.sort((a, b) => {
+      if (a.challenge_rating === b.challenge_rating) {
+        return a.name.localeCompare(b.name);
+      } else {
+        return b.challenge_rating - a.challenge_rating;
+      }
+    }) || []
   );
 }
 
