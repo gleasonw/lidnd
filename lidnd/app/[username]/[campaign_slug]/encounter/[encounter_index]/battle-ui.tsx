@@ -89,7 +89,10 @@ import {
   type FocusedTurnTarget,
   useEncounterUIStore,
 } from "@/encounters/[encounter_index]/EncounterUiStore";
-import { CreatureStatBlock } from "@/encounters/[encounter_index]/CreatureStatBlock";
+import {
+  CreatureStatBlock,
+  ResizeableImage,
+} from "@/encounters/[encounter_index]/CreatureStatBlock";
 import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
 import { EncounterUtils, type Difficulty } from "@/utils/encounters";
@@ -115,6 +118,7 @@ import {
 } from "@/components/ui/popover";
 import { crLabel } from "@/utils/campaigns";
 import type { EncounterAsset, TurnGroup } from "@/server/db/schema";
+import type { EncounterWithData } from "@/server/sdk/encounters";
 import { StatColumnUtils } from "@/utils/stat-columns";
 import * as CampaignUtils from "@/utils/campaigns";
 import { labelColors } from "@/lib/utils";
@@ -2089,11 +2093,42 @@ export const RunEncounter = observer(function LinearBattleUI() {
               <CreatureStatBlock creature={c} />
             </div>
           ))}
+          {encounter.assets.map((asset) => (
+            <RunEncounterImageAsset asset={asset} key={asset.id} />
+          ))}
         </div>
       </div>
     </div>
   );
 });
+
+function RunEncounterImageAsset({
+  asset,
+}: {
+  asset: EncounterWithData["assets"][number];
+}) {
+  const { mutate: updateImage } = api.updateImage.useMutation();
+
+  return (
+    <div style={{ width: asset.image.width }}>
+      <ResizeableImage
+        key={`${asset.image.width}-${asset.image.height}`}
+        src={ImageUtils.url(asset.image)}
+        alt={asset.image.name}
+        width={asset.image.width}
+        height={asset.image.height}
+        className="block"
+        onResizeEnd={(size) => {
+          updateImage({
+            id: asset.image.id,
+            width: size.width,
+            height: size.height,
+          });
+        }}
+      />
+    </div>
+  );
+}
 
 const GroupTurnToggles = observer(function GroupTurnToggles() {
   const [encounter] = useEncounter();

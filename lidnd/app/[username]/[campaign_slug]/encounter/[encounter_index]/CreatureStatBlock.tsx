@@ -1,6 +1,6 @@
 import { useUpdateCreature } from "@/encounters/[encounter_index]/hooks";
 import type { Creature } from "@/server/api/router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { CreatureUtils } from "@/utils/creatures";
 import { MoveDiagonal2 } from "lucide-react";
@@ -41,23 +41,6 @@ function CreatureStatBlockResizeable({
 }) {
   const { mutate: updateCreature } = useUpdateCreature();
 
-  const [localSize, setLocalSize] = useState({
-    width: creature.stat_block_width,
-    height: creature.stat_block_height,
-  });
-
-  const [dragState, setDragState] = useState<DragState>({ type: "idle" });
-
-  const imageStyle = useMemo(
-    () =>
-      ({
-        objectFit: "contain",
-        width: `${localSize.width}px`,
-        height: `${localSize.height}px`,
-      }) as const,
-    [localSize.width, localSize.height],
-  );
-
   function handleResizeEnd(nextSize: { width: number; height: number }) {
     updateCreature({
       ...creature,
@@ -65,6 +48,45 @@ function CreatureStatBlockResizeable({
       stat_block_height: nextSize.height,
     });
   }
+
+  return (
+    <ResizeableImage
+      priority
+      quality={100}
+      src={CreatureUtils.awsURL(creature, "statBlock")}
+      alt={creature.name}
+      width={creature.stat_block_width}
+      height={creature.stat_block_height}
+      className="block object-top"
+      ref={ref}
+      onResizeEnd={handleResizeEnd}
+    />
+  );
+}
+
+export function ResizeableImage({
+  src,
+  alt,
+  width,
+  height,
+  className,
+  priority,
+  quality,
+  ref,
+  onResizeEnd,
+}: {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+  priority?: boolean;
+  quality?: number;
+  ref?: React.ForwardedRef<HTMLImageElement>;
+  onResizeEnd: (size: { width: number; height: number }) => void;
+}) {
+  const [localSize, setLocalSize] = useState({ width, height });
+  const [dragState, setDragState] = useState<DragState>({ type: "idle" });
 
   return (
     <div
@@ -75,14 +97,18 @@ function CreatureStatBlockResizeable({
       }}
     >
       <Image
-        priority
-        quality={100}
-        style={imageStyle}
-        className="block object-top"
-        src={CreatureUtils.awsURL(creature, "statBlock")}
-        alt={creature.name}
-        width={creature.stat_block_width}
-        height={creature.stat_block_height}
+        priority={priority}
+        quality={quality}
+        style={{
+          objectFit: "contain",
+          width: `${localSize.width}px`,
+          height: `${localSize.height}px`,
+        }}
+        className={className}
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
         ref={ref}
       />
 
@@ -91,7 +117,7 @@ function CreatureStatBlockResizeable({
         setSize={setLocalSize}
         dragState={dragState}
         setDragState={setDragState}
-        onResizeEnd={handleResizeEnd}
+        onResizeEnd={onResizeEnd}
       />
     </div>
   );

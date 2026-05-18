@@ -204,6 +204,35 @@ export const appRouter = t.router({
       return [...urlsForStatBlocks, ...urlsForPlainAssetes];
     }),
 
+  updateImage: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        width: z.number(),
+        height: z.number(),
+      })
+    )
+    .mutation(async (opts) => {
+      const result = await db
+        .update(images)
+        .set({
+          width: opts.input.width,
+          height: opts.input.height,
+        })
+        .where(
+          and(eq(images.id, opts.input.id), eq(images.user_id, opts.ctx.user.id))
+        )
+        .returning();
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update image",
+        });
+      }
+      revalidatePath("/");
+      return result[0];
+    }),
+
   encountersInCampaign: protectedProcedure
     .input(
       z.object({
