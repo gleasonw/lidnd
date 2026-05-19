@@ -159,7 +159,7 @@ const encounterPrepForms = [
 type EncounterPrepForm = (typeof encounterPrepForms)[number];
 
 const isEncounterPrepForm = (
-  value: string | null | undefined,
+  value: string | null | undefined
 ): value is EncounterPrepForm =>
   value != null && (encounterPrepForms as readonly string[]).includes(value);
 
@@ -183,7 +183,7 @@ const readEncounterPrepFormCookie = (): EncounterPrepForm | null => {
 
 const persistEncounterPrepFormCookie = (value: EncounterPrepForm) => {
   document.cookie = `${ENCOUNTER_PREP_FORM_COOKIE_NAME}=${encodeURIComponent(
-    value,
+    value
   )}; path=/; max-age=${ENCOUNTER_PREP_FORM_COOKIE_MAX_AGE}`;
 };
 
@@ -217,7 +217,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
     EncounterUtils.participantsWithNoColumn(encounter);
 
   const [activePrepForm, setActivePrepForm] = useState<EncounterPrepForm>(
-    monsters.length === 0 ? "participants" : "notes",
+    monsters.length === 0 ? "participants" : "notes"
   );
 
   useEffect(() => {
@@ -244,7 +244,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
           <div
             className={clsx(
               "flex w-full xl:max-h-full flex-wrap lg:flex-nowrap pt-5 px-10 gap-5",
-              battleStyles.root,
+              battleStyles.root
             )}
           >
             <div className="flex gap-5 flex-col w-full">
@@ -448,7 +448,7 @@ function DifficultyBadgePopover() {
         <button
           className={clsx(
             "rounded-md px-2 py-1 text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col items-center min-w-[90px]",
-            difficultyCssClass,
+            difficultyCssClass
           )}
         >
           <span className="text-sm font-medium">{difficulty}</span>
@@ -481,7 +481,7 @@ function EncounterDifficultyDashboard({ className }: { className?: string }) {
   const remainingCr = EncounterUtils.remainingCr(encounter, campaign);
   const isAtTargetDifficulty = EncounterUtils.isAtTargetDifficulty(
     encounter,
-    campaign,
+    campaign
   );
 
   return (
@@ -493,7 +493,7 @@ function EncounterDifficultyDashboard({ className }: { className?: string }) {
             <span
               className={clsx(
                 "font-semibold",
-                difficultyCssClass.split(" ")[0],
+                difficultyCssClass.split(" ")[0]
               )}
             >
               {difficulty}
@@ -596,7 +596,7 @@ export interface RemoveCreatureFromEncounterButtonProps {
 }
 
 export function RemoveCreatureFromEncounterButton(
-  props: RemoveCreatureFromEncounterButtonProps,
+  props: RemoveCreatureFromEncounterButtonProps
 ) {
   const { participant } = props;
 
@@ -686,12 +686,12 @@ function SliderTier({ difficulty }: { difficulty: Difficulty }) {
     color === "gray"
       ? "bg-gray-400"
       : color === "blue"
-        ? "bg-blue-400"
-        : color === "green"
-          ? "bg-green-400"
-          : color === "yellow"
-            ? "bg-yellow-400"
-            : "bg-red-400";
+      ? "bg-blue-400"
+      : color === "green"
+      ? "bg-green-400"
+      : color === "yellow"
+      ? "bg-yellow-400"
+      : "bg-red-400";
 
   return (
     <div
@@ -823,7 +823,7 @@ function PreviewCardsForColumn({ column }: { column: StatColumn }) {
   const [encounter] = useEncounter();
   const participantsInColumn = EncounterUtils.participantsForColumn(
     encounter,
-    column,
+    column
   );
   const uiStore = useEncounterUIStore();
 
@@ -1007,7 +1007,7 @@ export const GroupParticipantHPOverride = observer(
   }) {
     const uiStore = useEncounterUIStore();
     const [maxHpOverride, setMaxHpOverride] = useState(
-      participant.max_hp_override?.toString() ?? "",
+      participant.max_hp_override?.toString() ?? ""
     );
     const { mutate: updateParticipant } = useUpdateEncounterParticipant();
     if (!uiStore.isEditingInitiative) {
@@ -1042,7 +1042,7 @@ export const GroupParticipantHPOverride = observer(
         </Button>
       </div>
     );
-  },
+  }
 );
 
 export function EqualizeColumnsButton(props?: {
@@ -1053,10 +1053,10 @@ export function EqualizeColumnsButton(props?: {
   const [encounter] = useEncounter();
 
   const sumColumnPercents = Math.round(
-    R.sumBy(encounter.columns, (c) => c.percent_width),
+    R.sumBy(encounter.columns, (c) => c.percent_width)
   );
   const aNegativeWidthColumn = encounter.columns.find(
-    (c) => c.percent_width < 0,
+    (c) => c.percent_width < 0
   );
   return (
     <ButtonWithTooltip
@@ -1076,7 +1076,7 @@ export function EqualizeColumnsButton(props?: {
         : null}
       {aNegativeWidthColumn && aNegativeWidthColumn.participants[0]
         ? `column ${ParticipantUtils.name(
-            aNegativeWidthColumn.participants[0],
+            aNegativeWidthColumn.participants[0]
           )} has negative width, click me`
         : null}
     </ButtonWithTooltip>
@@ -1108,7 +1108,7 @@ export const BattleCardLayout = observer(function BattleCardLayout({
         {
           "opacity-60 grayscale": ParticipantUtils.isDead(participant),
         },
-        className,
+        className
       )}
       {...props}
     >
@@ -1181,7 +1181,7 @@ function TurnGroupLabel({
     <span
       className={clsx(
         "inline-block h-5 w-5 shrink-0 rounded-sm shadow-lg",
-        className,
+        className
       )}
       style={{ background: hex_color ?? "" }}
     />
@@ -1259,10 +1259,10 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
 
           "opacity-50": EncounterUtils.participantHasPlayed(
             encounter,
-            participant,
+            participant
           ),
         },
-        "relative flex flex-shrink-0 h-10 w-10",
+        "relative flex flex-shrink-0 h-10 w-10"
       )}
       style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
     >
@@ -1298,7 +1298,7 @@ export function HealthMeterOverlay({
         {
           "bg-gray-500": percentDamage >= 100,
           "bg-red-500": percentDamage !== 100,
-        },
+        }
       )}
     />
   );
@@ -1344,7 +1344,7 @@ function PrepParticipant({
         {
           "border-none shadow-none": tgForParticipant,
           "cursor-grab": encounter.turn_groups.length > 0,
-        },
+        }
       )}
       draggable={encounter.turn_groups.length > 0}
       onDragStart={(e) => {
@@ -1468,7 +1468,7 @@ function EncounterPrepFormChooser({
             variant="ghost"
             className={clsx("gap-2", {
               "bg-secondary text-secondary-foreground": secondaryChoices.some(
-                (choice) => choice.form === activeForm,
+                (choice) => choice.form === activeForm
               ),
             })}
           >
@@ -1546,13 +1546,13 @@ const MonsterSection = observer(function TurnGroupSetup() {
                     "border-dashed": uiStore.activeDragType === "participant",
                     "border-transparent":
                       uiStore.activeDragType !== "participant",
-                  },
+                  }
                 )}
                 onDrop={(e) => {
                   e.preventDefault();
                   const droppedParticipant = typedDrag.get(
                     e.dataTransfer,
-                    dragTypes.participant,
+                    dragTypes.participant
                   );
                   if (droppedParticipant) {
                     updateParticipant({
@@ -1714,8 +1714,8 @@ export function ImageAssetAddButton({ inline = false }: { inline?: boolean }) {
               !imageName.trim()
                 ? "Enter a name first"
                 : isUploading
-                  ? "Uploading..."
-                  : "Drop image to upload"
+                ? "Uploading..."
+                : "Drop image to upload"
             }
             dropIcon={<ImageIcon />}
             fileInputProps={{ disabled: isUploading || !imageName.trim() }}
@@ -1736,7 +1736,7 @@ export function ImageAssetAddButton({ inline = false }: { inline?: boolean }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {images?.map((i) => {
           const attachedEncounterAsset = encounter.assets.find(
-            (asset) => asset.asset_id === i.baseModel.id,
+            (asset) => asset.asset_id === i.baseModel.id
           );
 
           return (
@@ -1780,8 +1780,8 @@ export function ImageAssetAddButton({ inline = false }: { inline?: boolean }) {
                     ? "Removing..."
                     : "Adding..."
                   : attachedEncounterAsset
-                    ? "Remove from encounter"
-                    : "Add to encounter"}
+                  ? "Remove from encounter"
+                  : "Add to encounter"}
               </Button>
             </form>
           );
@@ -1824,7 +1824,7 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
   const { mutate: deleteTurnGroup } = api.deleteTurnGroup.useMutation();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   const totalCr = R.sumBy(participantsInGroup, (p) =>
-    ParticipantUtils.challengeRating(p),
+    ParticipantUtils.challengeRating(p)
   );
   const tiers = EncounterUtils.findCRBudget({
     encounter,
@@ -1848,7 +1848,7 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
         e.preventDefault();
         const droppedParticipant = typedDrag.get(
           e.dataTransfer,
-          dragTypes.participant,
+          dragTypes.participant
         );
         if (droppedParticipant) {
           updateParticipant({
@@ -2088,13 +2088,15 @@ export const RunEncounter = observer(function LinearBattleUI() {
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <GroupTurnToggles />
         <div className="flex flex-wrap w-full">
+          {encounter.assets.map((asset) => (
+            <RunEncounterImageAsset asset={asset} key={asset.id} />
+          ))}
+        </div>
+        <div className="flex flex-wrap w-full">
           {creatures.map((c) => (
             <div key={c.id} style={{ width: c.stat_block_width }}>
               <CreatureStatBlock creature={c} />
             </div>
-          ))}
-          {encounter.assets.map((asset) => (
-            <RunEncounterImageAsset asset={asset} key={asset.id} />
           ))}
         </div>
       </div>
@@ -2136,11 +2138,11 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
   const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
   const participantsByTurnGroup = EncounterUtils.participantsByTurnGroup(
     encounter,
-    { focusedTurn: uiStore.focusedTurn },
+    { focusedTurn: uiStore.focusedTurn }
   );
   const participantsWithoutTurnGroup = EncounterUtils.monstersWithoutTurnGroup(
     encounter,
-    { focusedTurn: uiStore.focusedTurn },
+    { focusedTurn: uiStore.focusedTurn }
   );
 
   if (uiStore.focusedTurn) {
@@ -2186,7 +2188,7 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
                   ))}
                 />
               </div>
-            ),
+            )
           )}
         </div>
       </div>
@@ -2205,18 +2207,18 @@ function FocusedTurnControls({
   const { mutate: toggleParticipantHasPlayedThisRound } = useToggleGroupTurn();
   const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
   const focusedParticipant = encounter.participants.find(
-    (p) => p.id === focusedTurn.participantId,
+    (p) => p.id === focusedTurn.participantId
   );
 
   const label =
     focusedTurn.type === "group"
-      ? (turnGroupsById[focusedTurn.groupId]?.name ??
+      ? turnGroupsById[focusedTurn.groupId]?.name ??
         (focusedParticipant
           ? ParticipantUtils.name(focusedParticipant)
-          : "Turn"))
+          : "Turn")
       : focusedParticipant
-        ? ParticipantUtils.name(focusedParticipant)
-        : "Turn";
+      ? ParticipantUtils.name(focusedParticipant)
+      : "Turn";
 
   const turnGroup =
     focusedTurn.type === "group"
@@ -2272,7 +2274,7 @@ export const StatColumns = observer(function StatColumns() {
       <div
         className={clsx(
           "flex flex-col gap-2 h-full",
-          battleStyles.parentContainer,
+          battleStyles.parentContainer
         )}
       >
         {participantsByColumn[c.id]?.slice().map((p) => (
@@ -2385,7 +2387,7 @@ const TurnTakerQuickView = observer(function TurnTakerQuickView({
         {
           "opacity-60 border-transparent": hasPlayed,
           "shadow-md bg-white": !hasPlayed,
-        },
+        }
       )}
     >
       <span
@@ -2486,7 +2488,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
           return ParticipantUtils.assignColumn(
             encounter,
             newColumn.column_id,
-            newColumn.participant_id,
+            newColumn.participant_id
           );
         });
         return { previousEncounter };
@@ -2544,7 +2546,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         onDrop={(e) => {
           const droppedParticipant = typedDrag.get(
             e.dataTransfer,
-            dragTypes.participant,
+            dragTypes.participant
           );
           const droppedAsset = typedDrag.get(e.dataTransfer, dragTypes.asset);
 
@@ -2571,7 +2573,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
           e.stopPropagation();
           const hasParticipant = typedDrag.includes(
             e.dataTransfer,
-            dragTypes.participant,
+            dragTypes.participant
           );
           const hasAsset = typedDrag.includes(e.dataTransfer, dragTypes.asset);
 
@@ -2583,7 +2585,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         onDragOver={(e) => {
           const hasParticipant = typedDrag.includes(
             e.dataTransfer,
-            dragTypes.participant,
+            dragTypes.participant
           );
           const hasAsset = typedDrag.includes(e.dataTransfer, dragTypes.asset);
 
@@ -2650,7 +2652,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
             "flex flex-col gap-3 w-full max-h-full h-full bg-white",
             {
               "bg-blue-500": acceptDrop > 0,
-            },
+            }
           )}
         >
           {children}
@@ -2682,11 +2684,11 @@ function StatColumnSplitter({ leftColumnIndex }: { leftColumnIndex: number }) {
     const currentColumns = getColumns.getData(encounterId);
     const leftColumnStart = currentColumns?.find((c) => c.id === leftColumnId);
     const rightColumnStart = currentColumns?.find(
-      (c) => c.id === rightColumnId,
+      (c) => c.id === rightColumnId
     );
     if (!leftColumnStart || !rightColumnStart) {
       throw new Error(
-        "no columns found when attempting to update percent width",
+        "no columns found when attempting to update percent width"
       );
     }
     let isPendingSetStateForFrame: number | null = null;
