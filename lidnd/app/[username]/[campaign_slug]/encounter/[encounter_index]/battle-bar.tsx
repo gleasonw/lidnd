@@ -94,7 +94,7 @@ export const InitiativeTracker = observer(function InitiativeTracker() {
     <div
       className={`justify-center flex overflow-visible h-20 flex-shrink-0 z-20 gap-2 w-full bottom-0`}
     >
-      <EncounterDetails showActions={false} />
+      <EncounterDetails />
       <ButtonWithTooltip
         className="h-full shadow-lg"
         variant="outline"

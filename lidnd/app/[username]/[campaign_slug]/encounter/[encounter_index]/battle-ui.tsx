@@ -7,8 +7,6 @@ import * as R from "remeda";
 import React, {
   createContext,
   useContext,
-  useEffect,
-  useRef,
   useState,
   useTransition,
 } from "react";
@@ -50,17 +48,12 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Placeholder } from "@tiptap/extensions";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-import {
-  ActiveReminders,
-  ReminderInput,
-  Reminders,
-} from "@/encounters/[encounter_index]/reminders";
+import { Reminders } from "@/encounters/[encounter_index]/reminders";
 import {
   AngryIcon,
   Circle,
   CheckCircle,
   Columns,
-  FileEdit,
   Grip,
   GripVertical,
   Group,
@@ -71,7 +64,6 @@ import {
   PlusIcon,
   Shield,
   SkullIcon,
-  StickyNoteIcon,
   Swords,
   Trash,
   TrashIcon,
@@ -99,7 +91,7 @@ import { EncounterUtils, type Difficulty } from "@/utils/encounters";
 import { useEncounterLinks } from "@/encounters/link-hooks";
 import {
   EncounterDetails,
-  EncounterRunTools,
+  EncounterTools,
 } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 import { Input } from "@/components/ui/input";
 import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
@@ -111,11 +103,6 @@ import {
   SelectValue,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { crLabel } from "@/utils/campaigns";
 import type { EncounterAsset, TurnGroup } from "@/server/db/schema";
 import type { EncounterWithData } from "@/server/sdk/encounters";
@@ -140,52 +127,8 @@ import {
   readImageHeightWidth,
 } from "@/app/[username]/[campaign_slug]/CreatureUploadForm";
 import { MaliceTracker } from "@/encounters/[encounter_index]/MaliceTracker";
-import { AddPlayerToEncounter } from "@/encounters/[encounter_index]/AddPlayerToEncounter";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
-
-const ENCOUNTER_PREP_FORM_COOKIE_NAME = "encounter_prep_form";
-const ENCOUNTER_PREP_FORM_COOKIE_MAX_AGE = 60 * 60 * 24 * 180;
-
-const encounterPrepForms = [
-  "notes",
-  "participants",
-  "partyMembers",
-  "images",
-  "reminders",
-  "turnGroups",
-] as const;
-
-type EncounterPrepForm = (typeof encounterPrepForms)[number];
-
-const isEncounterPrepForm = (
-  value: string | null | undefined
-): value is EncounterPrepForm =>
-  value != null && (encounterPrepForms as readonly string[]).includes(value);
-
-const readEncounterPrepFormCookie = (): EncounterPrepForm | null => {
-  if (typeof document === "undefined") {
-    return null;
-  }
-
-  const cookieValue = document.cookie
-    .split("; ")
-    .find((cookie) => cookie.startsWith(`${ENCOUNTER_PREP_FORM_COOKIE_NAME}=`))
-    ?.split("=")[1];
-
-  if (!cookieValue) {
-    return null;
-  }
-
-  const decodedValue = decodeURIComponent(cookieValue);
-  return isEncounterPrepForm(decodedValue) ? decodedValue : null;
-};
-
-const persistEncounterPrepFormCookie = (value: EncounterPrepForm) => {
-  document.cookie = `${ENCOUNTER_PREP_FORM_COOKIE_NAME}=${encodeURIComponent(
-    value
-  )}; path=/; max-age=${ENCOUNTER_PREP_FORM_COOKIE_MAX_AGE}`;
-};
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -216,144 +159,73 @@ export const EncounterBattleUI = observer(function BattleUI() {
   const monstersWithoutColumn =
     EncounterUtils.participantsWithNoColumn(encounter);
 
-  const [activePrepForm, setActivePrepForm] = useState<EncounterPrepForm>(
-    monsters.length === 0 ? "participants" : "notes"
-  );
-
-  useEffect(() => {
-    const storedForm = readEncounterPrepFormCookie();
-    if (storedForm && monsters.length > 0) {
-      setActivePrepForm(storedForm);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (activePrepForm === "turnGroups" && monsters.length === 0) {
-      setActivePrepForm("notes");
-    }
-  }, [activePrepForm, monsters.length]);
-
-  useEffect(() => {
-    persistEncounterPrepFormCookie(activePrepForm);
-  }, [activePrepForm]);
-
-  switch (encounter.status) {
-    case "prep":
-      return (
-        <div className="flex flex-col max-h-full h-full">
-          <div
-            className={clsx(
-              "flex w-full xl:max-h-full flex-wrap lg:flex-nowrap pt-5 px-10 gap-5",
-              battleStyles.root
-            )}
-          >
-            <div className="flex gap-5 flex-col w-full">
-              <div className="w-full flex gap-5 items-center">
-                <EncounterNameInput />
-                <div className="flex-grow-0">
-                  <EncounterTagger />
-                </div>
-                <DifficultyBadgePopover />
-                <div className="flex gap-5 ml-auto items-center">
-                  {!activeSession ? (
-                    <CreateNewSessionModal
-                      trigger={
-                        <Button variant="secondary">
-                          <PlayIcon />
-                          Start
-                        </Button>
-                      }
-                      afterBegin={() => startEncounter(encounter.id)}
-                    />
-                  ) : campaign.system === "dnd5e" ? (
-                    <Link href={rollEncounter}>
-                      <Button variant="secondary">Start</Button>
-                    </Link>
-                  ) : (
-                    <Button
-                      onClick={() => {
-                        startEncounter(encounter.id);
-                      }}
-                      variant="secondary"
-                    >
-                      <PlayIcon />
-                      Start
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {encounter.reminders?.length > 0 ? (
-                <div className="flex flex-col gap-3 w-full">
-                  <ActiveReminders />
-                </div>
-              ) : null}
-
-              <div className="flex flex-wrap lg:flex-nowrap gap-5 items-start">
-                <Card className="w-full max-w-[800px] flex flex-col gap-3 min-h-[320px] h-full overflow-auto p-4 shadow-sm">
-                  <EncounterPrepFormChooser
-                    activeForm={activePrepForm}
-                    onFormChange={setActivePrepForm}
-                    showTurnGroups={monsters.length > 0}
-                  />
-                  <EncounterPrepFormPanel activeForm={activePrepForm} />
-                </Card>
-                <div
-                  className="w-full min-w-0 xl:max-h-full flex flex-col gap-3"
-                  data-value="prep"
-                >
-                  {EncounterUtils.monsters(encounter).length > 0 ? (
-                    <div className={clsx(battleStyles.adversarySection)}>
-                      {campaign.system === "drawsteel" ? (
-                        <MonsterSection />
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  <div className="flex gap-3 h-full">
-                    <EncounterBattlePreview />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="w-full flex items-center justify-center p-24">
-            <DeleteEncounterButton encounter={encounter} />
-          </div>
-        </div>
-      );
-    case "run":
-      // Check if encounter has ended
-      if (encounter.ended_at) {
-        return <EndedEncounterDisplay />;
-      }
-      return (
-        <section className="flex flex-col max-h-full min-h-0 h-full">
-          {campaign.system === "dnd5e" ? <InitiativeTracker /> : null}
-
-          <Reminders />
-          <div className="flex gap-4 flex-col w-full h-full">
-            {monstersWithoutColumn.length > 0 ? (
-              <div className="flex w-full flex-wrap">
-                {monsters.map((p) => (
-                  <div key={p.id}>
-                    <span>{ParticipantUtils.name(p)}</span>
-                    <ColumnDragButton participant={p} />
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
-            <RunEncounter />
-          </div>
-        </section>
-      );
-    default: {
-      //@ts-expect-error - exhaustive check
-      const _: never = encounter.status;
-      throw new Error(`Unhandled case: ${encounter.status}`);
-    }
+  if (encounter.ended_at) {
+    return <EndedEncounterDisplay />;
   }
+  return (
+    <section className="flex flex-col max-h-full min-h-0 h-full">
+      <div className="w-full flex gap-5 items-center">
+        <EncounterNameInput />
+        {encounter.status === "prep" ? (
+          <>
+            <div className="flex-grow-0">
+              <EncounterTagger />
+            </div>
+            <DifficultyBadgePopover />
+          </>
+        ) : null}
+        <div className="flex gap-5 ml-auto items-center">
+          {!activeSession ? (
+            <CreateNewSessionModal
+              trigger={
+                <Button variant="secondary">
+                  <PlayIcon />
+                  Start
+                </Button>
+              }
+              afterBegin={() => startEncounter(encounter.id)}
+            />
+          ) : campaign.system === "dnd5e" ? (
+            <Link href={rollEncounter}>
+              <Button variant="secondary">Start</Button>
+            </Link>
+          ) : encounter.status === "run" ? (
+            <EncounterDetails />
+          ) : (
+            <Button
+              onClick={() => {
+                startEncounter(encounter.id);
+              }}
+              variant="secondary"
+            >
+              <PlayIcon />
+              Start
+            </Button>
+          )}
+        </div>
+      </div>
+      {campaign.system === "dnd5e" ? <InitiativeTracker /> : null}
+
+      <Reminders />
+      <div className="flex gap-4 flex-col w-full h-full">
+        {monstersWithoutColumn.length > 0 ? (
+          <div className="flex w-full flex-wrap">
+            {monsters.map((p) => (
+              <div key={p.id}>
+                <span>{ParticipantUtils.name(p)}</span>
+                <ColumnDragButton participant={p} />
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        <RunEncounter />
+      </div>
+      <div className="w-full flex items-center justify-center p-24">
+        <DeleteEncounterButton encounter={encounter} />
+      </div>
+    </section>
+  );
 });
 
 function EndedEncounterDisplay() {
@@ -713,39 +585,6 @@ function SliderTier({ difficulty }: { difficulty: Difficulty }) {
   );
 }
 
-function EncounterBattlePreview() {
-  const { data: columns } = api.getColumns.useQuery(useEncounterId());
-  const { parentWidth, containerRef } = useParentResizeObserver();
-  return (
-    <div className="flex flex-col w-full">
-      <div
-        className="flex min-h-[450px] overflow-hidden w-full h-full border shadow-md"
-        ref={containerRef}
-      >
-        <ParentWidthContext.Provider value={parentWidth}>
-          {columns?.map((c, i) => (
-            <StatColumnComponent column={c} index={i} key={c.id}>
-              <PreviewCardsForColumn column={c} />
-              {c.assets.map((asset) => (
-                <div key={asset.id} className="flex flex-col relative">
-                  <AssetDragButton asset={asset} />
-                  <Image
-                    src={ImageUtils.url(asset.image)}
-                    alt={asset.image.name}
-                    key={asset.id}
-                    width={asset.image.width}
-                    height={asset.image.height}
-                  />
-                </div>
-              ))}
-            </StatColumnComponent>
-          ))}
-        </ParentWidthContext.Provider>
-      </div>
-    </div>
-  );
-}
-
 export const ColumnDragButton = observer(function ColumnDragButton({
   participant,
 }: {
@@ -819,54 +658,6 @@ function BattleCardTools({ participant }: { participant: Participant }) {
   );
 }
 
-function PreviewCardsForColumn({ column }: { column: StatColumn }) {
-  const [encounter] = useEncounter();
-  const participantsInColumn = EncounterUtils.participantsForColumn(
-    encounter,
-    column
-  );
-  const uiStore = useEncounterUIStore();
-
-  return (
-    <div className="flex flex-col max-h-full overflow-hidden">
-      {participantsInColumn.length === 0 ? (
-        <div className="">No stat blocks yet</div>
-      ) : null}
-      {participantsInColumn.map((p) => (
-        <div
-          className="flex flex-col overflow-hidden"
-          key={p
-            .sort(ParticipantUtils.sortLinearly)
-            .map((p) => p.id)
-            .join("-")}
-        >
-          {p[0]?.creature ? (
-            <div className="w-full h-full max-h-full overflow-hidden">
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="ghost"
-                  className="z-10 cursor-grab"
-                  onDragStart={(e) => {
-                    typedDrag.set(e.dataTransfer, dragTypes.participant, p[0]!);
-                    uiStore.startDraggingBattleCard();
-                  }}
-                  draggable
-                >
-                  <Grip />
-                </Button>
-                <StatBlockFullscreenButton creature={p[0].creature} />
-              </div>
-              <CreatureStatBlock creature={p[0]?.creature} />
-            </div>
-          ) : (
-            <div> no creature for first participant... a bug</div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export function StatBlockFullscreenButton({
   creature,
 }: {
@@ -912,61 +703,63 @@ export type BattleCardProps = {
   indexInGroup?: number;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export const ParticipantBattleData = observer(function BattleCard({
-  participant,
-  extraHeaderButtons,
-  ref,
-  indexInGroup,
-  ...props
-}: BattleCardProps) {
-  const encounterUiStore = useEncounterUIStore();
-  return (
-    <div
-      className={clsx(`relative flex-col gap-6 w-full flex px-1`)}
-      ref={ref}
-      {...props}
-    >
-      <BattleCardLayout key={participant.id} participant={participant}>
-        <div className="flex flex-col gap-3 w-full">
-          <div className="flex gap-2 items-center justify-between py-2">
-            <div className="flex flex-col gap-1 w-full">
-              <div className="flex gap-3 w-full">
-                <div className="flex gap-2 items-center relative w-full">
-                  {ParticipantUtils.hasIcon(participant) ? (
-                    <BattleCardCreatureIcon participant={participant} />
-                  ) : null}
-                  <div className="flex w-full items-center flex-wrap">
-                    <BattleCardCreatureName participant={participant} />
-                    {indexInGroup === 0 ? (
-                      <div className="text-gray-300">
-                        <ColumnDragButton participant={participant} />
-                      </div>
+export const ParticipantBattleData = observer(
+  function ParticipantBattleDataForRun({
+    participant,
+    extraHeaderButtons,
+    ref,
+    indexInGroup,
+    ...props
+  }: BattleCardProps) {
+    const encounterUiStore = useEncounterUIStore();
+    return (
+      <div
+        className={clsx(`relative flex-col gap-6 w-full flex px-1`)}
+        ref={ref}
+        {...props}
+      >
+        <BattleCardLayout key={participant.id} participant={participant}>
+          <div className="flex flex-col gap-3 w-full">
+            <div className="flex gap-2 items-center justify-between py-2">
+              <div className="flex flex-col gap-1 w-full">
+                <div className="flex gap-3 w-full">
+                  <div className="flex gap-2 items-center relative w-full">
+                    {ParticipantUtils.hasIcon(participant) ? (
+                      <BattleCardCreatureIcon participant={participant} />
                     ) : null}
+                    <div className="flex w-full items-center flex-wrap">
+                      <BattleCardCreatureName participant={participant} />
+                      {indexInGroup === 0 ? (
+                        <div className="text-gray-300">
+                          <ColumnDragButton participant={participant} />
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex justify-between">
-                <ParticipantHealthForm
-                  participant={participant}
-                  extraInputs={<ParticipantNotes participant={participant} />}
-                />
+                <div className="flex justify-between">
+                  <ParticipantHealthForm
+                    participant={participant}
+                    extraInputs={<ParticipantNotes participant={participant} />}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {encounterUiStore.isEditingInitiative && (
-            <div className="flex w-full flex-wrap">
-              <GroupParticipantHPOverride participant={participant} />
-              <div className="text-gray-500">
-                <BattleCardTools participant={participant} />
+            {encounterUiStore.isEditingInitiative && (
+              <div className="flex w-full flex-wrap">
+                <GroupParticipantHPOverride participant={participant} />
+                <div className="text-gray-500">
+                  <BattleCardTools participant={participant} />
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </BattleCardLayout>
-    </div>
-  );
-});
+            )}
+          </div>
+        </BattleCardLayout>
+      </div>
+    );
+  }
+);
 
 export function ParticipantNotes({
   participant,
@@ -1387,221 +1180,91 @@ function PrepParticipant({
   );
 }
 
-function EncounterPrepFormChooser({
-  activeForm,
-  onFormChange,
-  showTurnGroups,
-}: {
-  activeForm: EncounterPrepForm;
-  onFormChange: (form: EncounterPrepForm) => void;
-  showTurnGroups: boolean;
-}) {
-  const choices: Array<{
-    form: EncounterPrepForm;
-    label: string;
-    icon: React.ReactNode;
-    importance: "primary" | "secondary";
-  }> = [
-    {
-      form: "notes",
-      label: "Notes",
-      icon: <StickyNoteIcon />,
-      importance: "primary",
-    },
-    {
-      form: "participants",
-      label: "Adversaries",
-      icon: <AngryIcon />,
-      importance: "primary",
-    },
-    ...(showTurnGroups
-      ? [
-          {
-            form: "turnGroups" as const,
-            label: "Turn groups",
-            icon: <Group />,
-            importance: "primary" as const,
-          },
-        ]
-      : []),
-    {
-      form: "partyMembers",
-      label: "Party members",
-      icon: <UsersIcon />,
-      importance: "secondary",
-    },
-    {
-      form: "images",
-      label: "Static images",
-      icon: <ImageIcon />,
-      importance: "secondary",
-    },
-    {
-      form: "reminders",
-      label: "Reminders",
-      icon: <FileEdit />,
-      importance: "secondary",
-    },
-  ];
-
-  const primaryChoices = choices.filter((c) => c.importance === "primary");
-  const secondaryChoices = choices.filter((c) => c.importance === "secondary");
-
-  return (
-    <div className="flex w-full justify-between gap-2">
-      <div className="flex gap-2 flex-wrap items-center">
-        {primaryChoices.map((choice) => (
-          <Button
-            key={choice.form}
-            variant={activeForm === choice.form ? "secondary" : "ghost"}
-            onClick={() => onFormChange(choice.form)}
-            className="gap-2"
-          >
-            {choice.icon}
-            {choice.label}
-          </Button>
-        ))}
-      </div>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            className={clsx("gap-2", {
-              "bg-secondary text-secondary-foreground": secondaryChoices.some(
-                (choice) => choice.form === activeForm
-              ),
-            })}
-          >
-            <MoreHorizontal className="h-5 w-5" />
-            More
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-52 p-1">
-          <div className="flex flex-col">
-            {secondaryChoices.map((choice) => (
-              <Button
-                key={choice.form}
-                variant={activeForm === choice.form ? "secondary" : "ghost"}
-                onClick={() => onFormChange(choice.form)}
-                className="justify-start gap-2"
-              >
-                {choice.icon}
-                {choice.label}
-              </Button>
-            ))}
-          </div>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
-
-function EncounterPrepFormPanel({
-  activeForm,
-}: {
-  activeForm: EncounterPrepForm;
-}) {
-  return (
-    <div className="flex flex-col gap-4 h-full">
-      {activeForm === "notes" && <DescriptionTextArea />}
-      {activeForm === "participants" && <EditModeOpponentForm />}
-      {activeForm === "partyMembers" && <AddPlayerToEncounter inline />}
-      {activeForm === "images" && <ImageAssetAddButton inline />}
-      {activeForm === "reminders" && <ReminderInput inline />}
-      {activeForm === "turnGroups" && <CreateTurnGroupForm inline />}
-    </div>
-  );
-}
-
 const MonsterSection = observer(function TurnGroupSetup() {
   const [encounter] = useEncounter();
   const uiStore = useEncounterUIStore();
-  const [creatureAddDialogIsOpen, setCreatureAddDialogIsOpen] = useState(false);
   const [acceptDrop, setAcceptDrop] = useState(0);
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   const monsters = EncounterUtils.monsters(encounter);
-  const monstersWihoutGroup = monsters.filter((m) => !m.turn_group_id);
-
-  useHotkey("a", () => {
-    setCreatureAddDialogIsOpen(true);
-  });
+  const monstersWithoutGroup = monsters.filter((m) => !m.turn_group_id);
 
   return (
     <div className="flex flex-col gap-5 w-full">
-      <div
-        className={clsx({
-          "grid grid-cols-2": creatureAddDialogIsOpen,
-        })}
-      >
-        <div className={clsx("flex flex-col gap-5")}>
-          <div className="flex flex-col gap-4">
-            {monstersWihoutGroup.length > 0 ||
-            encounter.turn_groups.length > 0 ? (
-              <div
-                className={clsx(
-                  "gap-3 gap-x-12 rounded border-2 min-h-[80px]",
-                  battleStyles.adversaryGrid,
-                  {
-                    "border-blue-400 bg-blue-50": acceptDrop > 0,
-                    "border-dashed": uiStore.activeDragType === "participant",
-                    "border-transparent":
-                      uiStore.activeDragType !== "participant",
-                  }
-                )}
-                onDrop={(e) => {
+      <div className={clsx("flex flex-col gap-5")}>
+        <div className="flex gap-2 max-w-xl">
+          <CreateTurnGroupForm />
+          <LidndDialog
+            trigger={
+              <Button>
+                <AngryIcon />
+                Add adversary
+              </Button>
+            }
+            content={<EditModeOpponentForm />}
+            title="Add Opponent"
+          />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          {monstersWithoutGroup.length > 0 ||
+          encounter.turn_groups.length > 0 ? (
+            <div
+              className={clsx(
+                "gap-3 gap-x-12 rounded border-2 min-h-[80px]",
+                battleStyles.adversaryGrid,
+                {
+                  "border-blue-400 bg-blue-50": acceptDrop > 0,
+                  "border-dashed": uiStore.activeDragType === "participant",
+                  "border-transparent":
+                    uiStore.activeDragType !== "participant",
+                }
+              )}
+              onDrop={(e) => {
+                e.preventDefault();
+                const droppedParticipant = typedDrag.get(
+                  e.dataTransfer,
+                  dragTypes.participant
+                );
+                if (droppedParticipant) {
+                  updateParticipant({
+                    ...droppedParticipant,
+                    created_at: new Date(droppedParticipant.created_at),
+                    turn_group_id: null,
+                  });
+                }
+                setAcceptDrop(0);
+              }}
+              onDragOver={(e) => {
+                if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
                   e.preventDefault();
-                  const droppedParticipant = typedDrag.get(
-                    e.dataTransfer,
-                    dragTypes.participant
-                  );
-                  if (droppedParticipant) {
-                    updateParticipant({
-                      ...droppedParticipant,
-                      created_at: new Date(droppedParticipant.created_at),
-                      turn_group_id: null,
-                    });
-                  }
-                  setAcceptDrop(0);
-                }}
-                onDragOver={(e) => {
-                  if (
-                    typedDrag.includes(e.dataTransfer, dragTypes.participant)
-                  ) {
-                    e.preventDefault();
-                  }
-                }}
-                onDragEnter={(e) => {
-                  if (
-                    typedDrag.includes(e.dataTransfer, dragTypes.participant)
-                  ) {
-                    e.preventDefault();
-                    setAcceptDrop((count) => count + 1);
-                  }
-                }}
-                onDragLeave={(e) => {
+                }
+              }}
+              onDragEnter={(e) => {
+                if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
                   e.preventDefault();
-                  setAcceptDrop((count) => count - 1);
-                }}
-              >
-                {monstersWihoutGroup.length > 0 ? (
-                  monstersWihoutGroup.map((p) => (
+                  setAcceptDrop((count) => count + 1);
+                }
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                setAcceptDrop((count) => count - 1);
+              }}
+            >
+              {monstersWithoutGroup.length > 0 ? (
+                monstersWithoutGroup.map((p) => (
+                  <div key={p.id} className="max-w-lg">
                     <PrepParticipant participant={p} key={p.id} />
-                  ))
-                ) : (
-                  <div className="col-span-2 text-center text-gray-400 text-sm">
-                    Drag participants here to remove them from groups
                   </div>
-                )}
-              </div>
-            ) : null}
-            {encounter.turn_groups.length > 0 && (
-              <div className={clsx("gap-4", battleStyles.adversaryGrid)}>
-                {encounter.turn_groups.map((tg) => (
-                  <TurnGroupDisplay tg={tg} key={tg.id} />
-                ))}
-              </div>
-            )}
-          </div>
+                ))
+              ) : (
+                <div className="col-span-2 text-center text-gray-400 text-sm">
+                  Drag participants here to remove them from groups
+                </div>
+              )}
+            </div>
+          ) : null}
+          {encounter.turn_groups.map((tg) => (
+            <TurnGroupDisplay tg={tg} key={tg.id} />
+          ))}
         </div>
       </div>
     </div>
@@ -2027,66 +1690,34 @@ function CreateTurnGroupForm({ inline = false }: { inline?: boolean }) {
 
 const ParentWidthContext = createContext<number | null>(null);
 
-const useParentResizeObserver = () => {
-  const [parentWidth, setParentWidth] = useState<number | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) {
-      return;
-    }
-
-    setParentWidth(containerRef.current.getBoundingClientRect().width);
-    const observer = new ResizeObserver(([entry]) => {
-      if (!entry) {
-        throw new Error(`no element to observe in DraggableColumnContainer`);
-      }
-      if (entry.contentRect.width === 0) {
-        console.log(`does entry no longer exist? ${entry}`);
-        return;
-      }
-      setParentWidth(entry.contentRect.width);
-    });
-
-    observer.observe(containerRef.current);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
-
-  return { parentWidth, containerRef };
-};
-
-export const RunEncounter = observer(function LinearBattleUI() {
+export const RunEncounter = observer(function RunEncounter() {
   const [encounter] = useEncounter();
 
   const creatures = EncounterUtils.uniqueCreatures(encounter);
 
   return (
     <div className="flex items-start">
-      <div className="sticky top-0 w-[350px] shrink-0 self-start border-r bg-white">
+      <div className="sticky top-0 w-[350px] shrink-0 self-start bg-white">
         <div className="p-3 flex flex-col gap-2">
-          {encounter.status === "run" ? (
-            <>
-              <EncounterDetails showActions={false} />
-
-              <div className="flex flex-col gap-2">
-                <EncounterRunTools />
-                <Card className="p-2">
-                  <MaliceTracker />
-                </Card>
-              </div>
-            </>
-          ) : null}
+          <div className="flex flex-col gap-2">
+            {encounter.status === "run" && (
+              <Card className="p-2">
+                <MaliceTracker />
+              </Card>
+            )}
+          </div>
         </div>
 
         <div className="w-full flex px-3">
-          {encounter.status === "run" ? <DescriptionTextArea /> : null}
+          <DescriptionTextArea />
         </div>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <GroupTurnToggles />
+        {encounter.status === "run" ? (
+          <GroupTurnToggles />
+        ) : (
+          <PrepParticipants />
+        )}
         <div className="flex flex-wrap w-full">
           {encounter.assets.map((asset) => (
             <RunEncounterImageAsset asset={asset} key={asset.id} />
@@ -2103,6 +1734,24 @@ export const RunEncounter = observer(function LinearBattleUI() {
     </div>
   );
 });
+
+function PrepParticipants() {
+  const [encounter] = useEncounter();
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap gap-2">
+        {EncounterUtils.players(encounter).map((p) => (
+          <div className="flex items-center gap-2">
+            <CreatureIcon creature={p.creature} size="small" />
+            <span>{ParticipantUtils.name(p)}</span>
+          </div>
+        ))}
+      </div>
+      <MonsterSection />
+    </div>
+  );
+}
 
 function RunEncounterImageAsset({
   asset,
@@ -2189,6 +1838,11 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
                 />
               </div>
             )
+          )}
+          {encounter.status === "prep" && (
+            <div className="flex flex-col">
+              <CreateTurnGroupForm />
+            </div>
           )}
         </div>
       </div>
@@ -2602,11 +2256,9 @@ export const StatColumnComponent = observer(function StatColumnComponent({
             <div className="p-3 flex flex-col gap-2">
               {encounter.status === "run" ? (
                 <>
-                  <EncounterDetails showActions={false} />
-
                   <div className="flex flex-col gap-3">
                     <Card className="p-2">
-                      <EncounterRunTools />
+                      <EncounterTools />
                     </Card>
                     <Card className="p-2">
                       <MaliceTracker />
