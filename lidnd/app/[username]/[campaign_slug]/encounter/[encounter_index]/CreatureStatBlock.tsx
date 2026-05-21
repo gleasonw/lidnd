@@ -90,7 +90,7 @@ export function ResizeableImage({
 
   return (
     <div
-      className="relative inline-block"
+      className="relative inline-block border"
       style={{
         width: localSize.width,
         height: localSize.height,
