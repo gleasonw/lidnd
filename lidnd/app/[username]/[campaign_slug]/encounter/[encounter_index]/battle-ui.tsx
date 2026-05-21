@@ -48,7 +48,10 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Placeholder } from "@tiptap/extensions";
 import { LidndTextArea } from "@/components/ui/lidnd-text-area";
-import { Reminders } from "@/encounters/[encounter_index]/reminders";
+import {
+  ReminderInput,
+  Reminders,
+} from "@/encounters/[encounter_index]/reminders";
 import {
   AngryIcon,
   Circle,
@@ -62,7 +65,6 @@ import {
   MoreHorizontal,
   PlayIcon,
   PlusIcon,
-  Shield,
   SkullIcon,
   Swords,
   Trash,
@@ -129,6 +131,7 @@ import {
 import { MaliceTracker } from "@/encounters/[encounter_index]/MaliceTracker";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
+import { AddPlayerToEncounter } from "@/encounters/[encounter_index]/AddPlayerToEncounter";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -164,14 +167,13 @@ export const EncounterBattleUI = observer(function BattleUI() {
   }
   return (
     <section className="flex flex-col max-h-full min-h-0 h-full">
-      <div className="w-full flex gap-5 items-center">
+      <div className="w-full flex gap-5 items-center p-2">
         <EncounterNameInput />
         {encounter.status === "prep" ? (
           <>
             <div className="flex-grow-0">
               <EncounterTagger />
             </div>
-            <DifficultyBadgePopover />
           </>
         ) : null}
         <div className="flex gap-5 ml-auto items-center">
@@ -206,7 +208,7 @@ export const EncounterBattleUI = observer(function BattleUI() {
       </div>
       {campaign.system === "dnd5e" ? <InitiativeTracker /> : null}
 
-      <Reminders />
+      {encounter.status === "run" && <Reminders />}
       <div className="flex gap-4 flex-col w-full h-full">
         {monstersWithoutColumn.length > 0 ? (
           <div className="flex w-full flex-wrap">
@@ -319,7 +321,7 @@ function DifficultyBadgePopover() {
       trigger={
         <button
           className={clsx(
-            "rounded-md px-2 py-1 text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col items-center min-w-[90px]",
+            "rounded-md px-2 py-1 justify-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col text-center min-w-[90px]",
             difficultyCssClass,
           )}
         >
@@ -714,7 +716,7 @@ export const ParticipantBattleData = observer(
     const encounterUiStore = useEncounterUIStore();
     return (
       <div
-        className={clsx(`relative flex-col gap-6 w-full flex px-1`)}
+        className={clsx(`relative flex-col gap-6 flex px-1 w-[200px]`)}
         ref={ref}
         {...props}
       >
@@ -961,16 +963,27 @@ export function BattleCardStatusEffects({
 function TurnGroupLabel({
   turnGroup,
   className,
+  editable = false,
 }: {
-  turnGroup?: Pick<TurnGroup, "hex_color">;
+  turnGroup?: Pick<
+    TurnGroup,
+    | "id"
+    | "encounter_id"
+    | "name"
+    | "is_active"
+    | "has_played_this_round"
+    | "created_at"
+    | "hex_color"
+  >;
   className?: string;
+  editable?: boolean;
 }) {
   if (!turnGroup) {
     return null;
   }
   const { hex_color } = turnGroup;
 
-  return (
+  const colorLabel = (
     <span
       className={clsx(
         "inline-block h-5 w-5 shrink-0 rounded-sm shadow-lg",
@@ -978,6 +991,71 @@ function TurnGroupLabel({
       )}
       style={{ background: hex_color ?? "" }}
     />
+  );
+
+  if (!editable) {
+    return colorLabel;
+  }
+
+  return (
+    <EditableTurnGroupColorLabel turnGroup={turnGroup} className={className} />
+  );
+}
+
+function EditableTurnGroupColorLabel({
+  turnGroup,
+  className,
+}: {
+  turnGroup: TurnGroup;
+  className?: string;
+}) {
+  const { mutate: updateTurnGroup, isPending } =
+    api.updateTurnGroup.useMutation();
+
+  const setTurnGroupColor = (hexColor: string | null) => {
+    updateTurnGroup({
+      ...turnGroup,
+      hex_color: hexColor,
+    });
+  };
+
+  return (
+    <LidndPopover
+      trigger={
+        <button
+          type="button"
+          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={`Edit ${turnGroup.name ?? "turn group"} color`}
+        >
+          <span
+            className={clsx(
+              "inline-block h-5 w-5 rounded-sm shadow-lg",
+              className,
+            )}
+            style={{ background: turnGroup.hex_color ?? "" }}
+          />
+        </button>
+      }
+      className="w-40"
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        {labelColors.map((color) => (
+          <Button
+            key={color}
+            variant="ghost"
+            disabled={isPending}
+            className={clsx("h-6 w-6 border p-0", {
+              "ring-2 ring-ring": turnGroup.hex_color === color,
+            })}
+            style={{ backgroundColor: color }}
+            onClick={() =>
+              setTurnGroupColor(turnGroup.hex_color === color ? null : color)
+            }
+            aria-label={`Set turn group color to ${color}`}
+          />
+        ))}
+      </div>
+    </LidndPopover>
   );
 }
 
@@ -1123,19 +1201,15 @@ function PrepParticipant({
   const [encounter] = useEncounter();
   const [campaign] = useCampaign();
   const uiStore = useEncounterUIStore();
-  const tgForParticipant = EncounterUtils.turnGroupForParticipant({
-    encounter,
-    participant: p,
-  });
+
   const crLabel = CampaignUtils.crLabel;
 
   return (
     <Card
       key={p.id}
       className={clsx(
-        "flex gap-2 items-center active:cursor-grabbing max-h-fit p-1 ",
+        "flex gap-2 items-center active:cursor-grabbing max-h-fit p-1 border-none shadow-none",
         {
-          "border-none shadow-none": tgForParticipant,
           "cursor-grab": encounter.turn_groups.length > 0,
         },
       )}
@@ -1189,10 +1263,12 @@ const MonsterSection = observer(function TurnGroupSetup() {
   const monstersWithoutGroup = monsters.filter((m) => !m.turn_group_id);
 
   return (
-    <div className="flex flex-col gap-5 w-full">
+    <div className="flex flex-col gap-5 w-full px-1">
       <div className={clsx("flex flex-col gap-5")}>
-        <div className="flex gap-2 max-w-xl">
-          <CreateTurnGroupForm />
+        <div className="flex gap-2 w-full">
+          <div>
+            <CreateTurnGroupForm />
+          </div>
           <LidndDialog
             trigger={
               <Button>
@@ -1203,18 +1279,22 @@ const MonsterSection = observer(function TurnGroupSetup() {
             content={<EditModeOpponentForm />}
             title="Add Opponent"
           />
+          <AddPlayerToEncounter />
+          <div className="ml-auto flex">
+            <DifficultyBadgePopover />
+          </div>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {monstersWithoutGroup.length > 0 ||
           encounter.turn_groups.length > 0 ? (
             <div
               className={clsx(
-                "gap-3 gap-x-12 rounded border-2 min-h-[80px]",
-                battleStyles.adversaryGrid,
+                " gap-x-12 rounded border-2 min-h-[80px] p-2 flex flex-col gap-1",
                 {
                   "border-blue-400 bg-blue-50": acceptDrop > 0,
                   "border-dashed": uiStore.activeDragType === "participant",
                   "border-transparent":
+                    uiStore.activeDragType &&
                     uiStore.activeDragType !== "participant",
                 },
               )}
@@ -1697,18 +1777,10 @@ export const RunEncounter = observer(function RunEncounter() {
 
   return (
     <div className="flex items-start">
-      <div className="sticky top-0 w-[350px] shrink-0 self-start bg-white">
-        <div className="p-3 flex flex-col gap-2">
-          <div className="flex flex-col gap-2">
-            {encounter.status === "run" && (
-              <Card className="p-2">
-                <MaliceTracker />
-              </Card>
-            )}
-          </div>
-        </div>
-
-        <div className="w-full flex px-3">
+      <div className="sticky top-0 w-[350px] shrink-0 self-start bg-white p-2">
+        {encounter.status === "run" && <MaliceTracker />}
+        {encounter.status === "prep" && <ReminderInput />}
+        <div className="w-full flex px-3 h-full">
           <DescriptionTextArea />
         </div>
       </div>
@@ -1736,18 +1808,8 @@ export const RunEncounter = observer(function RunEncounter() {
 });
 
 function PrepParticipants() {
-  const [encounter] = useEncounter();
-
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-2">
-        {EncounterUtils.players(encounter).map((p) => (
-          <div className="flex items-center gap-2" key={p.id}>
-            <CreatureIcon creature={p.creature} size="small" />
-            <span>{ParticipantUtils.name(p)}</span>
-          </div>
-        ))}
-      </div>
       <MonsterSection />
     </div>
   );
@@ -1800,8 +1862,7 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
 
   return (
     <div className="flex flex-col p-2 gap-3">
-      <div className="flex gap-3 items-center bg-blue-50 rounded-lg p-2">
-        <Shield className="h-4 w-4 text-blue-600" />
+      <div className="flex gap-3 items-center bg-blue-50 rounded-lg p-3">
         <div className="flex gap-5 flex-wrap">
           {EncounterUtils.players(encounter).map((p) => (
             <TurnTakerQuickView
@@ -1812,8 +1873,7 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
           ))}
         </div>
       </div>
-      <div className="flex gap-3 items-center bg-red-50 rounded-lg p-2">
-        <Swords className="h-4 w-4 text-red-600" />
+      <div className="flex gap-3 items-center bg-red-50 rounded-lg p-3">
         <div className="flex gap-5 flex-wrap">
           {participantsWithoutTurnGroup.map((p) => (
             <TurnTakerQuickView
@@ -1830,7 +1890,7 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
                   participant={participants[0]}
                   participantType="adversary"
                   labelExtra={
-                    <TurnGroupLabel turnGroup={turnGroupsById[tgId]} />
+                    <TurnGroupLabel turnGroup={turnGroupsById[tgId]} editable />
                   }
                   participantZone={participants.map((p) => (
                     <ParticipantBattleData participant={p} key={p.id} />
@@ -2253,20 +2313,16 @@ export const StatColumnComponent = observer(function StatColumnComponent({
       >
         {column.is_home_column ? (
           <>
-            <div className="p-3 flex flex-col gap-2">
-              {encounter.status === "run" ? (
-                <>
-                  <div className="flex flex-col gap-3">
-                    <Card className="p-2">
-                      <EncounterTools />
-                    </Card>
-                    <Card className="p-2">
-                      <MaliceTracker />
-                    </Card>
-                  </div>
-                </>
-              ) : null}
-            </div>
+            {encounter.status === "run" ? (
+              <div className="flex flex-col gap-3">
+                <Card className="p-2">
+                  <EncounterTools />
+                </Card>
+                <Card className="p-2">
+                  <MaliceTracker />
+                </Card>
+              </div>
+            ) : null}
 
             <div className="w-full flex px-3">
               {encounter.status === "run" ? <DescriptionTextArea /> : null}

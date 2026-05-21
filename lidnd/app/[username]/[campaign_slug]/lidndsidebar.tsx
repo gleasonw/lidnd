@@ -47,9 +47,6 @@ export async function LidndSidebar({
       <SidebarContent className="p-1">
         <SidebarMenu className="gap-2">
           <SidebarMenuItem>
-            <TotalVictoriesCount />
-          </SidebarMenuItem>
-          <SidebarMenuItem>
             <Link href={appRoutes.sessions({ campaign, user })}>
               <SidebarMenuButton tooltip="Sessions">
                 <CalendarDays />
@@ -72,6 +69,9 @@ export async function LidndSidebar({
                 <span>Party</span>
               </SidebarMenuButton>
             </Link>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <TotalVictoriesCount />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>

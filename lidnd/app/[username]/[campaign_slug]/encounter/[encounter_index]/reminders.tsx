@@ -12,7 +12,7 @@ import { useEncounterUIStore } from "@/encounters/[encounter_index]/EncounterUiS
 import { useEncounter } from "@/encounters/[encounter_index]/hooks";
 import { api } from "@/trpc/react";
 import { EncounterUtils } from "@/utils/encounters";
-import { Plus, Timer, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React from "react";
 import {
@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { coerceInt } from "@/app/[username]/utils";
-import { LidndPopover } from "@/encounters/base-popover";
 
 export function ReminderInput({ inline = false }: { inline?: boolean }) {
   const [encounter] = useEncounter();
@@ -46,7 +45,7 @@ export function ReminderInput({ inline = false }: { inline?: boolean }) {
             reminder: newReminder.reminder ?? "",
             ...newReminder,
           },
-          old
+          old,
         );
       });
       return previousEncounter;
@@ -57,76 +56,58 @@ export function ReminderInput({ inline = false }: { inline?: boolean }) {
     return null;
   }
 
-  const content = (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!reminder.trim()) return;
-        addReminder({
-          encounter_id: encounter.id,
-          alert_after_round: coerceInt(alertAfterRound),
-          reminder: reminder,
-        });
-        setAlertAfterRound("1");
-        setReminder("");
-        inputRef.current?.focus();
-      }}
-      className="flex bg-white flex-col rounded-lg"
-    >
-      <div className="flex gap-2 items-center">
-        <Select value={alertAfterRound} onValueChange={setAlertAfterRound}>
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="0">Every round</SelectItem>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20].map((n) => (
-              <SelectItem key={n} value={n.toString()}>
-                Round {n}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <LidndTextInput
-          ref={inputRef}
-          variant="ghost"
-          placeholder="Reinforcements arrive..."
-          value={reminder}
-          onChange={(e) => setReminder(e.target.value)}
-          className="flex-1 min-w-0"
-        />
-
-        <Button
-          type="submit"
-          size="icon"
-          variant="outline"
-          disabled={!reminder.trim()}
-        >
-          <Plus />
-        </Button>
-      </div>
-    </form>
-  );
-
-  if (inline) {
-    return content;
-  }
-
   return (
-    <LidndPopover
-      trigger={
-        <ButtonWithTooltip
-          text="Add round reminder"
-          size="icon"
-          variant="ghost"
-        >
-          <Timer />
-        </ButtonWithTooltip>
-      }
-      className="w-fit"
-    >
-      {content}
-    </LidndPopover>
+    <div className="flex flex-col">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!reminder.trim()) return;
+          addReminder({
+            encounter_id: encounter.id,
+            alert_after_round: coerceInt(alertAfterRound),
+            reminder: reminder,
+          });
+          setAlertAfterRound("1");
+          setReminder("");
+          inputRef.current?.focus();
+        }}
+        className="flex bg-white flex-col rounded-lg"
+      >
+        <div className="flex gap-2 items-center">
+          <Select value={alertAfterRound} onValueChange={setAlertAfterRound}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">Every round</SelectItem>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20].map((n) => (
+                <SelectItem key={n} value={n.toString()}>
+                  Round {n}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <LidndTextInput
+            ref={inputRef}
+            variant="ghost"
+            placeholder="Reinforcements..."
+            value={reminder}
+            onChange={(e) => setReminder(e.target.value)}
+            className="flex-1 min-w-0 text-sm"
+          />
+
+          <Button
+            type="submit"
+            size="icon"
+            variant="outline"
+            disabled={!reminder.trim()}
+          >
+            <Plus />
+          </Button>
+        </div>
+      </form>
+      <ActiveReminders />
+    </div>
   );
 }
 

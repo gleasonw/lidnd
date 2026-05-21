@@ -55,8 +55,8 @@ export function AddPlayerToEncounter(props: AddPlayerToEncounterProps) {
           removeParticipant.mutateAsync({
             encounter_id: encounter.id,
             participant_id: participant.id,
-          })
-        )
+          }),
+        ),
       );
       return;
     }
@@ -136,9 +136,13 @@ export function AddPlayerToEncounter(props: AddPlayerToEncounterProps) {
       title="Party members"
       trigger={
         props.trigger ?? (
-          <Button>
-            <UsersIcon />
-            Add players
+          <Button variant="outline" className="flex">
+            <span>Party</span>
+            {partyPlayers.map((p, i) => (
+              <div className={`${i !== 0 && "-ml-4"}`} key={p.id}>
+                <CreatureIcon creature={p} size="small" />
+              </div>
+            ))}
           </Button>
         )
       }
