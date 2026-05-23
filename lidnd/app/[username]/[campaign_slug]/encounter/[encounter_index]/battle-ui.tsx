@@ -53,13 +53,11 @@ import {
   Reminders,
 } from "@/encounters/[encounter_index]/reminders";
 import {
-  AngryIcon,
   Circle,
   CheckCircle,
   Columns,
   Grip,
   GripVertical,
-  Group,
   ImageIcon,
   Maximize2,
   MoreHorizontal,
@@ -132,6 +130,8 @@ import { MaliceTracker } from "@/encounters/[encounter_index]/MaliceTracker";
 import { appRoutes } from "@/app/routes";
 import { useUser } from "@/app/[username]/user-provider";
 import { AddPlayerToEncounter } from "@/encounters/[encounter_index]/AddPlayerToEncounter";
+import { Separator } from "@/components/ui/separator";
+import { ExistingCreatureAdd } from "@/encounters/[encounter_index]/ExistingCreatureAdd";
 
 export const EncounterBattleUI = observer(function BattleUI() {
   const [campaign] = useCampaign();
@@ -322,7 +322,7 @@ function DifficultyBadgePopover() {
         <button
           className={clsx(
             "rounded-md px-2 py-1 justify-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col text-center min-w-[90px]",
-            difficultyCssClass,
+            difficultyCssClass
           )}
         >
           <span className="text-sm font-medium">{difficulty}</span>
@@ -355,7 +355,7 @@ function EncounterDifficultyDashboard({ className }: { className?: string }) {
   const remainingCr = EncounterUtils.remainingCr(encounter, campaign);
   const isAtTargetDifficulty = EncounterUtils.isAtTargetDifficulty(
     encounter,
-    campaign,
+    campaign
   );
 
   return (
@@ -367,7 +367,7 @@ function EncounterDifficultyDashboard({ className }: { className?: string }) {
             <span
               className={clsx(
                 "font-semibold",
-                difficultyCssClass.split(" ")[0],
+                difficultyCssClass.split(" ")[0]
               )}
             >
               {difficulty}
@@ -470,7 +470,7 @@ export interface RemoveCreatureFromEncounterButtonProps {
 }
 
 export function RemoveCreatureFromEncounterButton(
-  props: RemoveCreatureFromEncounterButtonProps,
+  props: RemoveCreatureFromEncounterButtonProps
 ) {
   const { participant } = props;
 
@@ -560,12 +560,12 @@ function SliderTier({ difficulty }: { difficulty: Difficulty }) {
     color === "gray"
       ? "bg-gray-400"
       : color === "blue"
-        ? "bg-blue-400"
-        : color === "green"
-          ? "bg-green-400"
-          : color === "yellow"
-            ? "bg-yellow-400"
-            : "bg-red-400";
+      ? "bg-blue-400"
+      : color === "green"
+      ? "bg-green-400"
+      : color === "yellow"
+      ? "bg-yellow-400"
+      : "bg-red-400";
 
   return (
     <div
@@ -760,7 +760,7 @@ export const ParticipantBattleData = observer(
         </BattleCardLayout>
       </div>
     );
-  },
+  }
 );
 
 export function ParticipantNotes({
@@ -802,7 +802,7 @@ export const GroupParticipantHPOverride = observer(
   }) {
     const uiStore = useEncounterUIStore();
     const [maxHpOverride, setMaxHpOverride] = useState(
-      participant.max_hp_override?.toString() ?? "",
+      participant.max_hp_override?.toString() ?? ""
     );
     const { mutate: updateParticipant } = useUpdateEncounterParticipant();
     if (!uiStore.isEditingInitiative) {
@@ -837,7 +837,7 @@ export const GroupParticipantHPOverride = observer(
         </Button>
       </div>
     );
-  },
+  }
 );
 
 export function EqualizeColumnsButton(props?: {
@@ -848,10 +848,10 @@ export function EqualizeColumnsButton(props?: {
   const [encounter] = useEncounter();
 
   const sumColumnPercents = Math.round(
-    R.sumBy(encounter.columns, (c) => c.percent_width),
+    R.sumBy(encounter.columns, (c) => c.percent_width)
   );
   const aNegativeWidthColumn = encounter.columns.find(
-    (c) => c.percent_width < 0,
+    (c) => c.percent_width < 0
   );
   return (
     <ButtonWithTooltip
@@ -871,7 +871,7 @@ export function EqualizeColumnsButton(props?: {
         : null}
       {aNegativeWidthColumn && aNegativeWidthColumn.participants[0]
         ? `column ${ParticipantUtils.name(
-            aNegativeWidthColumn.participants[0],
+            aNegativeWidthColumn.participants[0]
           )} has negative width, click me`
         : null}
     </ButtonWithTooltip>
@@ -903,7 +903,7 @@ export const BattleCardLayout = observer(function BattleCardLayout({
         {
           "opacity-60 grayscale": ParticipantUtils.isDead(participant),
         },
-        className,
+        className
       )}
       {...props}
     >
@@ -987,7 +987,7 @@ function TurnGroupLabel({
     <span
       className={clsx(
         "inline-block h-5 w-5 shrink-0 rounded-sm shadow-lg",
-        className,
+        className
       )}
       style={{ background: hex_color ?? "" }}
     />
@@ -1030,7 +1030,7 @@ function EditableTurnGroupColorLabel({
           <span
             className={clsx(
               "inline-block h-5 w-5 rounded-sm shadow-lg",
-              className,
+              className
             )}
             style={{ background: turnGroup.hex_color ?? "" }}
           />
@@ -1130,10 +1130,10 @@ export const BattleCardCreatureIcon = observer(function BattleCardCreatureIcon({
 
           "opacity-50": EncounterUtils.participantHasPlayed(
             encounter,
-            participant,
+            participant
           ),
         },
-        "relative flex flex-shrink-0 h-10 w-10",
+        "relative flex flex-shrink-0 h-10 w-10"
       )}
       style={{ borderColor: ParticipantUtils.iconHexColor(participant) }}
     >
@@ -1169,7 +1169,7 @@ export function HealthMeterOverlay({
         {
           "bg-gray-500": percentDamage >= 100,
           "bg-red-500": percentDamage !== 100,
-        },
+        }
       )}
     />
   );
@@ -1211,7 +1211,7 @@ function PrepParticipant({
         "flex gap-2 items-center active:cursor-grabbing max-h-fit p-1 border-none shadow-none",
         {
           "cursor-grab": encounter.turn_groups.length > 0,
-        },
+        }
       )}
       draggable={encounter.turn_groups.length > 0}
       onDragStart={(e) => {
@@ -1263,89 +1263,89 @@ const MonsterSection = observer(function TurnGroupSetup() {
   const monstersWithoutGroup = monsters.filter((m) => !m.turn_group_id);
 
   return (
-    <div className="flex flex-col gap-5 w-full px-1">
-      <div className={clsx("flex flex-col gap-5")}>
-        <div className="flex gap-2 w-full">
-          <div>
-            <CreateTurnGroupForm />
-          </div>
-          <LidndDialog
-            trigger={
-              <Button>
-                <AngryIcon />
-                Add adversary
-              </Button>
-            }
-            content={<EditModeOpponentForm />}
-            title="Add Opponent"
-          />
-          <AddPlayerToEncounter />
-          <div className="ml-auto flex">
-            <DifficultyBadgePopover />
-          </div>
+    <div className="flex flex-col gap-5">
+      <div className="flex gap-2 w-full">
+        <AddPlayerToEncounter />
+        <ImageAssetAddButton />
+        <div className="ml-auto flex">
+          <DifficultyBadgePopover />
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          {monstersWithoutGroup.length > 0 ||
-          encounter.turn_groups.length > 0 ? (
-            <div
-              className={clsx(
-                " gap-x-12 rounded border-2 min-h-[80px] p-2 flex flex-col gap-1",
-                {
-                  "border-blue-400 bg-blue-50": acceptDrop > 0,
-                  "border-dashed": uiStore.activeDragType === "participant",
-                  "border-transparent":
-                    uiStore.activeDragType &&
-                    uiStore.activeDragType !== "participant",
-                },
-              )}
-              onDrop={(e) => {
+      </div>
+      <div className="flex mx-auto">
+        <div className="flex max-w-7xl gap-5 flex-wrap sm:flex-nowrap">
+          <div className="w-full">
+            <ExistingCreatureAdd />
+          </div>
+          <Card className="p-2 w-full">
+            <EditModeOpponentForm />
+          </Card>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        {monstersWithoutGroup.length > 0 || encounter.turn_groups.length > 0 ? (
+          <Card
+            className={clsx(
+              " gap-x-12 rounded min-h-[80px] p-2 flex flex-col gap-1",
+              {
+                "border-blue-400 bg-blue-50": acceptDrop > 0,
+                "border-dashed": uiStore.activeDragType === "participant",
+                "border-transparent":
+                  uiStore.activeDragType &&
+                  uiStore.activeDragType !== "participant",
+              }
+            )}
+            onDrop={(e) => {
+              e.preventDefault();
+              const droppedParticipant = typedDrag.get(
+                e.dataTransfer,
+                dragTypes.participant
+              );
+              if (droppedParticipant) {
+                updateParticipant({
+                  ...droppedParticipant,
+                  created_at: new Date(droppedParticipant.created_at),
+                  turn_group_id: null,
+                });
+              }
+              setAcceptDrop(0);
+            }}
+            onDragOver={(e) => {
+              if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
                 e.preventDefault();
-                const droppedParticipant = typedDrag.get(
-                  e.dataTransfer,
-                  dragTypes.participant,
-                );
-                if (droppedParticipant) {
-                  updateParticipant({
-                    ...droppedParticipant,
-                    created_at: new Date(droppedParticipant.created_at),
-                    turn_group_id: null,
-                  });
-                }
-                setAcceptDrop(0);
-              }}
-              onDragOver={(e) => {
-                if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
-                  e.preventDefault();
-                }
-              }}
-              onDragEnter={(e) => {
-                if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
-                  e.preventDefault();
-                  setAcceptDrop((count) => count + 1);
-                }
-              }}
-              onDragLeave={(e) => {
+              }
+            }}
+            onDragEnter={(e) => {
+              if (typedDrag.includes(e.dataTransfer, dragTypes.participant)) {
                 e.preventDefault();
-                setAcceptDrop((count) => count - 1);
-              }}
-            >
-              {monstersWithoutGroup.length > 0 ? (
-                monstersWithoutGroup.map((p) => (
-                  <div key={p.id} className="max-w-lg">
-                    <PrepParticipant participant={p} key={p.id} />
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-2 text-center text-gray-400 text-sm">
-                  Drag participants here to remove them from groups
+                setAcceptDrop((count) => count + 1);
+              }
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setAcceptDrop((count) => count - 1);
+            }}
+          >
+            {monstersWithoutGroup.length > 0 ? (
+              monstersWithoutGroup.map((p) => (
+                <div key={p.id} className="max-w-lg">
+                  <PrepParticipant participant={p} key={p.id} />
                 </div>
-              )}
-            </div>
-          ) : null}
-          {encounter.turn_groups.map((tg) => (
-            <TurnGroupDisplay tg={tg} key={tg.id} />
-          ))}
-        </div>
+              ))
+            ) : (
+              <div className="col-span-2 text-center text-gray-400 text-sm">
+                Drag participants here to remove them from groups
+              </div>
+            )}
+          </Card>
+        ) : null}
+        {encounter.turn_groups.map((tg) => (
+          <TurnGroupDisplay tg={tg} key={tg.id} />
+        ))}
+        {encounter.status === "prep" && (
+          <Card className="flex flex-col">
+            <CreateTurnGroupForm />
+          </Card>
+        )}
       </div>
     </div>
   );
@@ -1457,8 +1457,8 @@ export function ImageAssetAddButton({ inline = false }: { inline?: boolean }) {
               !imageName.trim()
                 ? "Enter a name first"
                 : isUploading
-                  ? "Uploading..."
-                  : "Drop image to upload"
+                ? "Uploading..."
+                : "Drop image to upload"
             }
             dropIcon={<ImageIcon />}
             fileInputProps={{ disabled: isUploading || !imageName.trim() }}
@@ -1479,7 +1479,7 @@ export function ImageAssetAddButton({ inline = false }: { inline?: boolean }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {images?.map((i) => {
           const attachedEncounterAsset = encounter.assets.find(
-            (asset) => asset.asset_id === i.baseModel.id,
+            (asset) => asset.asset_id === i.baseModel.id
           );
 
           return (
@@ -1523,8 +1523,8 @@ export function ImageAssetAddButton({ inline = false }: { inline?: boolean }) {
                     ? "Removing..."
                     : "Adding..."
                   : attachedEncounterAsset
-                    ? "Remove from encounter"
-                    : "Add to encounter"}
+                  ? "Remove from encounter"
+                  : "Add to encounter"}
               </Button>
             </form>
           );
@@ -1567,7 +1567,7 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
   const { mutate: deleteTurnGroup } = api.deleteTurnGroup.useMutation();
   const { mutate: updateParticipant } = useUpdateEncounterParticipant();
   const totalCr = R.sumBy(participantsInGroup, (p) =>
-    ParticipantUtils.challengeRating(p),
+    ParticipantUtils.challengeRating(p)
   );
   const tiers = EncounterUtils.findCRBudget({
     encounter,
@@ -1591,7 +1591,7 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
         e.preventDefault();
         const droppedParticipant = typedDrag.get(
           e.dataTransfer,
-          dragTypes.participant,
+          dragTypes.participant
         );
         if (droppedParticipant) {
           updateParticipant({
@@ -1683,12 +1683,12 @@ const TurnGroupDisplay = observer(function TurnGroupDisplay({
   );
 });
 
-function CreateTurnGroupForm({ inline = false }: { inline?: boolean }) {
+function CreateTurnGroupForm() {
   const [encounter] = useEncounter();
   const { mutate: createTurnGroup } = api.createTurnGroup.useMutation();
   const [name, setName] = useState("");
   const [hexColor, setHexColor] = useState(labelColors.at(0) || "#FFFFFF");
-  const content = (
+  return (
     <div className="p-2 shadow-none">
       <form
         className="flex flex-col gap-3"
@@ -1749,23 +1749,6 @@ function CreateTurnGroupForm({ inline = false }: { inline?: boolean }) {
       </form>
     </div>
   );
-
-  if (inline) {
-    return content;
-  }
-
-  return (
-    <LidndPopover
-      className="w-fit"
-      trigger={
-        <Button variant="outline">
-          <Group /> Create turn group
-        </Button>
-      }
-    >
-      {content}
-    </LidndPopover>
-  );
 }
 
 const ParentWidthContext = createContext<number | null>(null);
@@ -1776,20 +1759,17 @@ export const RunEncounter = observer(function RunEncounter() {
   const creatures = EncounterUtils.uniqueCreatures(encounter);
 
   return (
-    <div className="flex items-start">
-      <div className="sticky top-0 w-[350px] shrink-0 self-start bg-white p-2">
+    <div className="flex items-start flex-col px-3">
+      <div className="flex flex-col w-full">
         {encounter.status === "run" && <MaliceTracker />}
         {encounter.status === "prep" && <ReminderInput />}
-        <div className="w-full flex px-3 h-full">
+        <div className="w-full flex h-full">
           <DescriptionTextArea />
         </div>
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        {encounter.status === "run" ? (
-          <GroupTurnToggles />
-        ) : (
-          <PrepParticipants />
-        )}
+      <div className="flex min-w-0 flex-1 w-full flex-col gap-5">
+        {encounter.status === "run" ? <GroupTurnToggles /> : <MonsterSection />}
+        <Separator />
         <div className="flex flex-wrap w-full">
           {encounter.assets.map((asset) => (
             <RunEncounterImageAsset asset={asset} key={asset.id} />
@@ -1806,14 +1786,6 @@ export const RunEncounter = observer(function RunEncounter() {
     </div>
   );
 });
-
-function PrepParticipants() {
-  return (
-    <div className="flex flex-col gap-3">
-      <MonsterSection />
-    </div>
-  );
-}
 
 function RunEncounterImageAsset({
   asset,
@@ -1849,11 +1821,11 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
   const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
   const participantsByTurnGroup = EncounterUtils.participantsByTurnGroup(
     encounter,
-    { focusedTurn: uiStore.focusedTurn },
+    { focusedTurn: uiStore.focusedTurn }
   );
   const participantsWithoutTurnGroup = EncounterUtils.monstersWithoutTurnGroup(
     encounter,
-    { focusedTurn: uiStore.focusedTurn },
+    { focusedTurn: uiStore.focusedTurn }
   );
 
   if (uiStore.focusedTurn) {
@@ -1897,12 +1869,7 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
                   ))}
                 />
               </div>
-            ),
-          )}
-          {encounter.status === "prep" && (
-            <div className="flex flex-col">
-              <CreateTurnGroupForm />
-            </div>
+            )
           )}
         </div>
       </div>
@@ -1921,18 +1888,18 @@ function FocusedTurnControls({
   const { mutate: toggleParticipantHasPlayedThisRound } = useToggleGroupTurn();
   const turnGroupsById = EncounterUtils.turnGroupsById(encounter);
   const focusedParticipant = encounter.participants.find(
-    (p) => p.id === focusedTurn.participantId,
+    (p) => p.id === focusedTurn.participantId
   );
 
   const label =
     focusedTurn.type === "group"
-      ? (turnGroupsById[focusedTurn.groupId]?.name ??
+      ? turnGroupsById[focusedTurn.groupId]?.name ??
         (focusedParticipant
           ? ParticipantUtils.name(focusedParticipant)
-          : "Turn"))
+          : "Turn")
       : focusedParticipant
-        ? ParticipantUtils.name(focusedParticipant)
-        : "Turn";
+      ? ParticipantUtils.name(focusedParticipant)
+      : "Turn";
 
   const turnGroup =
     focusedTurn.type === "group"
@@ -1988,7 +1955,7 @@ export const StatColumns = observer(function StatColumns() {
       <div
         className={clsx(
           "flex flex-col gap-2 h-full",
-          battleStyles.parentContainer,
+          battleStyles.parentContainer
         )}
       >
         {participantsByColumn[c.id]?.slice().map((p) => (
@@ -2101,7 +2068,7 @@ const TurnTakerQuickView = observer(function TurnTakerQuickView({
         {
           "opacity-60 border-transparent": hasPlayed,
           "shadow-md bg-white": !hasPlayed,
-        },
+        }
       )}
     >
       <span
@@ -2202,7 +2169,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
           return ParticipantUtils.assignColumn(
             encounter,
             newColumn.column_id,
-            newColumn.participant_id,
+            newColumn.participant_id
           );
         });
         return { previousEncounter };
@@ -2260,7 +2227,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         onDrop={(e) => {
           const droppedParticipant = typedDrag.get(
             e.dataTransfer,
-            dragTypes.participant,
+            dragTypes.participant
           );
           const droppedAsset = typedDrag.get(e.dataTransfer, dragTypes.asset);
 
@@ -2287,7 +2254,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
           e.stopPropagation();
           const hasParticipant = typedDrag.includes(
             e.dataTransfer,
-            dragTypes.participant,
+            dragTypes.participant
           );
           const hasAsset = typedDrag.includes(e.dataTransfer, dragTypes.asset);
 
@@ -2299,7 +2266,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
         onDragOver={(e) => {
           const hasParticipant = typedDrag.includes(
             e.dataTransfer,
-            dragTypes.participant,
+            dragTypes.participant
           );
           const hasAsset = typedDrag.includes(e.dataTransfer, dragTypes.asset);
 
@@ -2360,7 +2327,7 @@ export const StatColumnComponent = observer(function StatColumnComponent({
             "flex flex-col gap-3 w-full max-h-full h-full bg-white",
             {
               "bg-blue-500": acceptDrop > 0,
-            },
+            }
           )}
         >
           {children}
@@ -2392,11 +2359,11 @@ function StatColumnSplitter({ leftColumnIndex }: { leftColumnIndex: number }) {
     const currentColumns = getColumns.getData(encounterId);
     const leftColumnStart = currentColumns?.find((c) => c.id === leftColumnId);
     const rightColumnStart = currentColumns?.find(
-      (c) => c.id === rightColumnId,
+      (c) => c.id === rightColumnId
     );
     if (!leftColumnStart || !rightColumnStart) {
       throw new Error(
-        "no columns found when attempting to update percent width",
+        "no columns found when attempting to update percent width"
       );
     }
     let isPendingSetStateForFrame: number | null = null;

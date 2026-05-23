@@ -45,7 +45,7 @@ export function ReminderInput({ inline = false }: { inline?: boolean }) {
             reminder: newReminder.reminder ?? "",
             ...newReminder,
           },
-          old,
+          old
         );
       });
       return previousEncounter;
@@ -74,6 +74,14 @@ export function ReminderInput({ inline = false }: { inline?: boolean }) {
         className="flex bg-white flex-col rounded-lg"
       >
         <div className="flex gap-2 items-center">
+          <Button
+            type="submit"
+            size="icon"
+            variant="outline"
+            disabled={!reminder.trim()}
+          >
+            <Plus />
+          </Button>
           <Select value={alertAfterRound} onValueChange={setAlertAfterRound}>
             <SelectTrigger className="w-32">
               <SelectValue />
@@ -95,15 +103,6 @@ export function ReminderInput({ inline = false }: { inline?: boolean }) {
             onChange={(e) => setReminder(e.target.value)}
             className="flex-1 min-w-0 text-sm"
           />
-
-          <Button
-            type="submit"
-            size="icon"
-            variant="outline"
-            disabled={!reminder.trim()}
-          >
-            <Plus />
-          </Button>
         </div>
       </form>
       <ActiveReminders />

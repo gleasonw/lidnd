@@ -59,7 +59,7 @@ export function ExistingCreatureAdd() {
     }
   }
   return (
-    <div className="flex flex-col gap-3 p-3">
+    <div className="flex flex-col gap-3 p-3 max-w-xl">
       <div className="flex gap-2">
         <Input
           value={search}
@@ -110,7 +110,7 @@ export function ExistingCreatureAdd() {
         />
       </LidndLabel>
 
-      <div className="space-y-1 overflow-y-auto">
+      <div className="space-y-1 overflow-y-auto max-h-96">
         {creaturesToDisplay.map((creature) => (
           <button
             key={creature.id}
