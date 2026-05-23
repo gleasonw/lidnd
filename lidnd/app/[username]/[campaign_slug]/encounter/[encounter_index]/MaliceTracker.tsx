@@ -89,7 +89,7 @@ export function MaliceTracker({ className }: MaliceTrackerProps) {
   );
 
   return (
-    <div className={cn("flex items-center justify-between gap-5", className)}>
+    <div className={cn("flex items-center gap-5", className)}>
       <div className="flex flex-col gap-0.5">
         <span className="text-sm font-semibold text-gray-600">Malice</span>
         {hasVictories && (
