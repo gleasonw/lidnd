@@ -69,6 +69,8 @@ import {
   TrashIcon,
   UsersIcon,
   X,
+  ListOrdered,
+  AngryIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { imageStyle, InitiativeTracker } from "./battle-bar";
@@ -89,10 +91,7 @@ import { CreatureUtils } from "@/utils/creatures";
 import Image from "next/image";
 import { EncounterUtils, type Difficulty } from "@/utils/encounters";
 import { useEncounterLinks } from "@/encounters/link-hooks";
-import {
-  EncounterDetails,
-  EncounterTools,
-} from "@/encounters/[encounter_index]/EncounterRoundIndicator";
+import { EncounterDetails } from "@/encounters/[encounter_index]/EncounterRoundIndicator";
 import { Input } from "@/components/ui/input";
 import { EditModeOpponentForm } from "@/app/[username]/[campaign_slug]/EditModeOpponentForm";
 import { LidndTextInput } from "@/components/ui/lidnd-text-input";
@@ -716,7 +715,7 @@ export const ParticipantBattleData = observer(
     const encounterUiStore = useEncounterUIStore();
     return (
       <div
-        className={clsx(`relative flex-col gap-6 flex px-1 w-[200px]`)}
+        className={clsx(`relative flex-col gap-6 flex px-1 w-[250px]`)}
         ref={ref}
         {...props}
       >
@@ -726,9 +725,6 @@ export const ParticipantBattleData = observer(
               <div className="flex flex-col gap-1 w-full">
                 <div className="flex gap-3 w-full">
                   <div className="flex gap-2 items-center relative w-full">
-                    {ParticipantUtils.hasIcon(participant) ? (
-                      <BattleCardCreatureIcon participant={participant} />
-                    ) : null}
                     <div className="flex w-full items-center flex-wrap">
                       <BattleCardCreatureName participant={participant} />
                       {indexInGroup === 0 ? (
@@ -1845,7 +1841,7 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
           ))}
         </div>
       </div>
-      <div className="flex gap-3 items-center bg-red-50 rounded-lg p-3">
+      <div className="flex flex-col gap-3 items-center bg-red-50 rounded-lg p-3">
         <div className="flex gap-5 flex-wrap">
           {participantsWithoutTurnGroup.map((p) => (
             <TurnTakerQuickView
@@ -1872,7 +1868,57 @@ const GroupTurnToggles = observer(function GroupTurnToggles() {
             )
           )}
         </div>
+        <EncounterTools />
       </div>
+    </div>
+  );
+});
+
+const EncounterTools = observer(function EncounterTools() {
+  const uiStore = useEncounterUIStore();
+
+  return (
+    <div className="flex min-w-0 items-center gap-1 rounded-md bg-white">
+      <ButtonWithTooltip
+        variant="ghost"
+        size="icon"
+        className=" text-gray-500"
+        text="Edit initiative and columns"
+        onClick={() => uiStore.toggleParticipantEdit()}
+      >
+        <ListOrdered />
+      </ButtonWithTooltip>
+      <div className="text-gray-500">
+        <ImageAssetAddButton />
+      </div>
+      <LidndDialog
+        trigger={
+          <ButtonWithTooltip
+            text="Add new adversary"
+            variant="ghost"
+            className="text-gray-500"
+            size="icon"
+          >
+            <PlusIcon />
+          </ButtonWithTooltip>
+        }
+        content={<EditModeOpponentForm />}
+        title="Add new Opponent"
+      />
+      <LidndDialog
+        trigger={
+          <ButtonWithTooltip
+            text="Add existing adversary"
+            variant="ghost"
+            className="text-gray-500"
+            size="icon"
+          >
+            <AngryIcon />
+          </ButtonWithTooltip>
+        }
+        content={<ExistingCreatureAdd />}
+        title="Add existing Opponent"
+      />
     </div>
   );
 });
