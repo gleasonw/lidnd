@@ -296,6 +296,7 @@ export async function createCampaign(formdata: FormData) {
       ...campaign.value,
       user_id: user.id,
       slug: campaignSlug,
+      system: "drawsteel",
     })
     .returning();
 

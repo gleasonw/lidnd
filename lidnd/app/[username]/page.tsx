@@ -97,11 +97,13 @@ export default async function Page(props: {
                         <SelectValue placeholder="Select a system" />
                       </SelectTrigger>
                       <SelectContent>
-                        {systemsEnumValues.map((system) => (
-                          <SelectItem key={system} value={system}>
-                            {system}
-                          </SelectItem>
-                        ))}
+                        {systemsEnumValues
+                          .filter((system) => system !== "dnd5e")
+                          .map((system) => (
+                            <SelectItem key={system} value={system}>
+                              {system}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>

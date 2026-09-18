@@ -25,6 +25,10 @@ const nextConfig = {
       },
     ],
     minimumCacheTTL: 2678400,
+    // The MinIO container above is reached over localhost, which Next.js's
+    // image optimizer otherwise refuses as a private IP (SSRF guard). Only
+    // needed in dev/test mode - real deployments serve images from AWS S3.
+    dangerouslyAllowLocalIP: process.env.DEV_LOGIN_ENABLED === "true",
   },
   reactCompiler: true,
   // Re-exposes these to the client bundle under their original (non
