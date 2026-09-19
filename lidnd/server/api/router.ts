@@ -35,11 +35,8 @@ import {
 import { db } from "@/server/db";
 import { z } from "zod";
 import { getIconAWSname, getStatBlockAWSname } from "@/server/api/utils";
-import {
-  DeleteObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { createS3Client } from "@/server/sdk/s3-client";
 import {
   ServerEncounter,
   type EncounterWithData,
@@ -115,13 +112,7 @@ export const appRouter = t.router({
         });
       }
       const image = imageAsset[0]!;
-      const s3Client = new S3Client({
-        region: process.env.AWS_REGION,
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-        },
-      });
+      const s3Client = createS3Client();
       const signedUrl = await getSignedUrl(
         //@ts-expect-error weird aws type error. initialize not assignable to serialize?
         s3Client,
@@ -878,13 +869,7 @@ export const appRouter = t.router({
           message: "Failed to delete creature",
         });
       }
-      const s3Client = new S3Client({
-        region: process.env.AWS_REGION,
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-        },
-      });
+      const s3Client = createS3Client();
       try {
         const dc = deletedCreature[0];
 

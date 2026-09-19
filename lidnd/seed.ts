@@ -47,10 +47,7 @@ interface SpellBook {
   spell: Spell[];
 }
 
-const db_url =
-  process.env.NODE_ENV === "production"
-    ? process.env.DATABASE_URL
-    : "postgresql://postgres:postgres@localhost:5432/dnd";
+const db_url = process.env.DATABASE_URL;
 if (!db_url) {
   throw new Error("DATABASE_URL not set");
 }

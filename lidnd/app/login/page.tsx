@@ -1,4 +1,5 @@
 import { DiscordIcon } from "@/app/login/discord";
+import { isDevLoginEnabled } from "@/server/auth/dev-user";
 import "@/app/globals.css";
 import Link from "next/link";
 
@@ -21,6 +22,15 @@ export default async function Login(
         >
           <DiscordIcon className="max-w-40" />
         </Link>
+
+        {isDevLoginEnabled() && (
+          <Link
+            className="shadow p-5 rounded-md text-center border-2 border-dashed hover:bg-gray-200 transition-all"
+            href={`/api/dev-login?redirect=${searchParams.redirect}`}
+          >
+            Log in as test user (dev mode)
+          </Link>
+        )}
       </div>
     </main>
   );

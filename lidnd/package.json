@@ -8,8 +8,12 @@
     "build": "DATABASE_URL=$DATABASE_PUBLIC_URL next build",
     "start": "next start",
     "lint": "eslint .",
-    "migrate": "drizzle-kit generate:pg && bun run migrate.ts",
-    "generate-api-types": "pnpm dlx openapi-typescript http://localhost:8000/openapi.json -o ./app/schema.d.ts"
+    "generate-api-types": "pnpm dlx openapi-typescript http://localhost:8000/openapi.json -o ./app/schema.d.ts",
+    "dev:up": "docker compose up -d --wait db minio && docker compose up minio-init",
+    "dev:down": "docker compose down",
+    "dev:migrate": "yes | drizzle-kit push",
+    "dev:seed": "tsx --env-file=.env seed-dev-user.ts",
+    "dev:mock": "pnpm run dev:up && pnpm run dev:migrate && pnpm run dev:seed && pnpm run dev"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.676.0",
@@ -117,6 +121,7 @@
     "globals": "^15.11.0",
     "openapi-typescript": "^6.7.6",
     "postcss-import": "^16.1.0",
+    "tsx": "^4.23.13",
     "typescript": "5.7.2",
     "typescript-eslint": "^7.18.0"
   },
