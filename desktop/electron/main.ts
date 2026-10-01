@@ -1,11 +1,16 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { join, dirname } from 'node:path';
+import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { LocalDatabase } from './database';
 import { AssetStore } from './assets';
 
 const here = dirname(fileURLToPath(import.meta.url));
+if (process.env.LIDND_DEV_DATA_DIR && process.env.LIDND_DEV_URL) {
+  mkdirSync(process.env.LIDND_DEV_DATA_DIR, { recursive: true });
+  app.setPath('userData', process.env.LIDND_DEV_DATA_DIR);
+}
 const id = z.string().uuid();
 const text = z.string().trim().min(1);
 const system = z.enum(['drawsteel', 'dnd5e']);

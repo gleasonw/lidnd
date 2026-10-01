@@ -12,12 +12,16 @@ pnpm dev
 
 `pnpm dev` starts Vite and Electron. Renderer edits update through HMR; main-process edits rebuild and restart Electron. Run `pnpm build` to type-check and build without opening a window, `pnpm test` for persistence and rules checks, and `pnpm smoke:ux` after building to walk through campaign, session, run, creature upload, and party creation in an isolated Electron profile. After a schema edit, run `pnpm db:generate` and commit the generated migration. The app applies committed migrations when it opens.
 
+Use Node 20.19 or newer. For an isolated development profile, set `LIDND_DEV_DATA_DIR` before `pnpm dev`; the directory is created automatically. A production build opened with `electron .` reads built files and does not hot reload. Running `pnpm build` while `pnpm dev` is open rebuilds the main bundle and restarts the dev window.
+
 ## Implemented so far
 
 - Local campaigns, party membership, shared or campaign-only creatures, encounter plans, sessions, and separate run snapshots.
 - Drizzle/PGlite persistence with a generated migration, narrow Electron IPC, and runtime input validation.
 - Plan search and tags, notes, reminders, roster quantities, Draw Steel standard-adversary EV feedback, and run history.
 - Basic live run controls for HP, temporary HP, effects, reminders, malice, rounds, and 5e initiative.
+- Creature editing in a full-width workspace with stat-block previews, plus session run lists and read-only completed runs.
+- A focused combat layout that hides campaign navigation during a run and keeps participants beside references and notes.
 - Autosaved encounter plans and run notes, with queued local writes.
 - App-managed PNG, JPEG, WebP, and GIF uploads for creature stat blocks, icons, and encounter references.
 - shadcn/ui controls with a Tailwind based dark theme.

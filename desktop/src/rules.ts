@@ -1,4 +1,4 @@
-import type { Creature, EncounterPlan } from './domain';
+import type { Creature, EncounterPlan, EncounterRun, RunParticipant } from './domain';
 
 const evPerHero = [6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
 
@@ -28,4 +28,27 @@ export function drawSteelPlanDifficulty(plan: EncounterPlan, creatures: Creature
 export function nextDrawSteelRound(round: number, malice: number, heroCount: number, victories: number) {
   const nextRound = round + 1;
   return { round: nextRound, malice: malice + heroCount + victories + nextRound };
+}
+
+export function markDrawSteelActed(run: EncounterRun, participantId: string, acted: boolean, heroCount: number, victories: number): EncounterRun {
+  const participants = run.participants.map(item => item.id === participantId ? { ...item, acted } : item);
+  if (!acted || participants.length === 0 || !participants.every(item => item.acted)) return { ...run, participants };
+  return {
+    ...run,
+    ...nextDrawSteelRound(run.round, run.malice, heroCount, victories),
+    participants: participants.map(item => ({ ...item, acted: false })),
+    reminders: run.reminders.map(item => ({ ...item, dismissed: false })),
+  };
+}
+
+export function applyDamage(participant: RunParticipant, amount: number): RunParticipant {
+  if (!Number.isFinite(amount) || amount <= 0 || participant.hp === null) return participant;
+  const damage = Math.floor(amount);
+  const absorbed = Math.min(participant.temporaryHp, damage);
+  return { ...participant, temporaryHp: participant.temporaryHp - absorbed, hp: Math.max(0, participant.hp - damage + absorbed) };
+}
+
+export function applyHealing(participant: RunParticipant, amount: number): RunParticipant {
+  if (!Number.isFinite(amount) || amount <= 0 || participant.hp === null) return participant;
+  return { ...participant, hp: Math.min(participant.maxHp ?? 0, participant.hp + Math.floor(amount)) };
 }

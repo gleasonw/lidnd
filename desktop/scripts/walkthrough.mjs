@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { _electron as electron } from 'playwright-core';
@@ -20,7 +20,7 @@ try {
   ({ instance: app } = await open());
   let window = await app.firstWindow();
   const actualDataDir = await app.evaluate(({ app }) => app.getPath('userData'));
-  assert.equal(actualDataDir, dataDir, 'Smoke test must use isolated local data');
+  assert.equal(await realpath(actualDataDir), await realpath(dataDir), 'Smoke test must use isolated local data');
 
   await window.getByPlaceholder('Campaign name').fill('The Ash Road');
   await window.getByRole('button', { name: 'Create campaign' }).click();
@@ -65,7 +65,9 @@ try {
   assert.ok(state.creatures[0].statBlockAssetId);
   assert.equal(state.runs[0].participants[0].statBlockAssetId, state.creatures[0].statBlockAssetId);
 
+  await window.getByRole('button', { name: 'Plan', exact: false }).click();
   await window.getByRole('tab', { name: 'Creatures' }).click();
+  await window.getByRole('button', { name: '+ New', exact: true }).click();
   const heroForm = window.getByRole('heading', { name: 'New creature' }).locator('..');
   await heroForm.getByRole('textbox', { name: 'Name' }).fill('Mira');
   await heroForm.getByRole('combobox', { name: 'Role' }).selectOption('hero');
