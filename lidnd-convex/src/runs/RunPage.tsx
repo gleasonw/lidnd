@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { MarkdownNotes } from "@/components/Markdown";
 import { Stepper } from "@/components/Stepper";
+import { StatBlockBoard } from "@/creatures/StatBlockBoard";
 import { AdversaryPicker } from "@/creatures/AdversaryPicker";
 import { toastError } from "@/lib/errors";
 import {
@@ -687,7 +688,7 @@ function ReferencePane({
   selected: RunParticipant | undefined;
 }) {
   const updateNotes = useMutation(api.runs.updateNotes);
-  // One stat block per creature, with the selected participant's first.
+  // One stat block per creature. Keep positions stable when selection changes.
   const statBlocks = [
     ...new Map(
       data.participants
@@ -697,17 +698,11 @@ function ReferencePane({
           {
             name: p.name.replace(/ \d+$/, ""),
             url: p.statBlockUrl!,
-            creatureId: p.creatureId,
+            id: p.creatureId,
           },
         ]),
     ).values(),
-  ].sort((a, b) =>
-    a.creatureId === selected?.creatureId
-      ? -1
-      : b.creatureId === selected?.creatureId
-        ? 1
-        : 0,
-  );
+  ];
   const planStatBlocks = data.images.filter((i) => i.kind === "statBlock");
   const references = data.images.filter((i) => i.kind === "reference");
 
@@ -735,41 +730,23 @@ function ReferencePane({
           <h2 id="statblocks-heading" className="mb-2 text-sm font-semibold">
             Stat blocks
           </h2>
-          <div className="columns-2 gap-3 [&>*]:mb-3 2xl:columns-3">
-            {statBlocks.map((s) => (
-              <figure
-                key={s.creatureId}
-                className={cn(
-                  "break-inside-avoid rounded-md border",
-                  s.creatureId === selected?.creatureId &&
-                    "ring-2 ring-primary",
-                )}
-              >
-                <figcaption className="px-2 py-1 text-xs font-medium">
-                  {s.name}
-                </figcaption>
-                <img
-                  src={s.url}
-                  alt={`${s.name} stat block`}
-                  className="w-full"
-                />
-              </figure>
-            ))}
-            {planStatBlocks.map((i) =>
-              i.url ? (
-                <figure
-                  key={i._id}
-                  className="break-inside-avoid rounded-md border"
-                >
-                  <img
-                    src={i.url}
-                    alt="Stat block"
-                    className="w-full rounded-md"
-                  />
-                </figure>
-              ) : null,
-            )}
-          </div>
+          <StatBlockBoard
+            selectedId={selected?.creatureId}
+            blocks={[
+              ...statBlocks,
+              ...planStatBlocks.flatMap((image, index) =>
+                image.url
+                  ? [
+                      {
+                        id: image._id,
+                        name: `Plan stat block ${index + 1}`,
+                        url: image.url,
+                      },
+                    ]
+                  : [],
+              ),
+            ]}
+          />
         </section>
       )}
       {references.length > 0 && (

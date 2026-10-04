@@ -113,3 +113,10 @@
     @apply border px-2 py-1;
   }
 }
+
+/* Use the reference pane width, not the viewport width. */
+@container (min-width: 580px) {
+  .stat-block-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
