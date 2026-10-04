@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/LoadingState";
 import { Layout } from "@/Layout";
 import { SignInForm } from "@/SignInForm";
 import { UserMenu } from "@/components/UserMenu";
@@ -29,7 +30,7 @@ export default function App() {
       }
     >
       <AuthLoading>
-        <p className="px-4 py-6 text-sm text-muted-foreground">Loading…</p>
+        <LoadingState className="px-4 py-6" />
       </AuthLoading>
       <Unauthenticated>
         <SignInForm />

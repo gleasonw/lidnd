@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/LoadingState";
 import { Button } from "@/components/ui/button";
 import { useCampaign } from "@/campaigns/useCampaign";
 import { formatDate, formatDuration } from "@/lib/time";
@@ -24,7 +25,7 @@ export function SessionsPage() {
         )}
       </div>
       {sessions === undefined ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <LoadingState />
       ) : sessions.length === 0 ? (
         <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
           No sessions yet. Start one when you sit down to play; encounters you

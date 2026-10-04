@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/LoadingState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,7 +52,7 @@ export function RunPage() {
   const { runId = "" } = useParams();
   const data = useQuery(api.runs.get, { runId });
   if (data === undefined) {
-    return <p className="px-4 py-6 text-sm text-muted-foreground">Loading…</p>;
+    return <LoadingState className="px-4 py-6" />;
   }
   if (data === null) {
     return (

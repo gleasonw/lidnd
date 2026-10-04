@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/LoadingState";
 import { Button } from "@/components/ui/button";
 import { useCampaign } from "@/campaigns/useCampaign";
 import { PlusIcon } from "@radix-ui/react-icons";
@@ -34,7 +35,7 @@ export function PartyPage() {
         </Button>
       </div>
       {creatures === undefined ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <LoadingState />
       ) : creatures.heroes.length === 0 ? (
         <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
           No heroes yet. Add the player characters so encounters can count them

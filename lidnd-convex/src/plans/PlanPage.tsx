@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/LoadingState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +38,7 @@ export function PlanPage() {
   const { planId = "" } = useParams();
   const data = useQuery(api.plans.get, { planId });
   if (data === undefined) {
-    return <p className="text-sm text-muted-foreground">Loading…</p>;
+    return <LoadingState />;
   }
   if (data === null) {
     return (

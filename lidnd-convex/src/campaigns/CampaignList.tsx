@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/LoadingState";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { useQuery } from "convex/react";
@@ -22,7 +23,7 @@ export function CampaignList() {
         )}
       </div>
       {campaigns === undefined ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <LoadingState />
       ) : campaigns.length === 0 ? (
         <div className="flex flex-col items-start gap-3 rounded-lg border border-dashed p-6">
           <p className="text-sm text-muted-foreground">

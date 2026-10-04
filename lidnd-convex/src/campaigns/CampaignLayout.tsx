@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/LoadingState";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,7 +37,7 @@ export function CampaignGate({
   const { campaignId = "" } = useParams();
   const campaign = useQuery(api.campaigns.get, { campaignId });
   if (campaign === undefined) {
-    return <p className="px-4 py-6 text-sm text-muted-foreground">Loading…</p>;
+    return <LoadingState className="px-4 py-6" />;
   }
   if (campaign === null) {
     return (
@@ -67,6 +68,18 @@ const tabs = [
 ];
 
 function Campaign({ campaign }: { campaign: Doc<"campaigns"> }) {
+  // Keep tab subscriptions alive across route changes so revisiting a tab
+  // renders current data immediately. Convex shares matching subscriptions
+  // with the page's useQuery calls.
+  useQuery(api.plans.list, {
+    campaignId: campaign._id,
+    search: "",
+    tagIds: [],
+  });
+  useQuery(api.plans.listTags, { campaignId: campaign._id });
+  useQuery(api.creatures.listForCampaign, { campaignId: campaign._id });
+  useQuery(api.sessions.list, { campaignId: campaign._id });
+
   const update = useMutation(api.campaigns.update).withOptimisticUpdate(
     (store, { campaignId, name, partyLevel }) => {
       const current = store.getQuery(api.campaigns.get, { campaignId });

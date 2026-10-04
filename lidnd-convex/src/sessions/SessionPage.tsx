@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/LoadingState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +30,7 @@ export function SessionPage() {
   const [deleting, setDeleting] = useState(false);
 
   if (data === undefined)
-    return <p className="text-sm text-muted-foreground">Loading…</p>;
+    return <LoadingState />;
   if (data === null) return <p>This session doesn't exist.</p>;
   const { session, campaign, runs } = data;
   const active = session.endedAt === undefined;

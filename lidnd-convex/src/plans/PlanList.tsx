@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/LoadingState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCampaign } from "@/campaigns/useCampaign";
@@ -82,7 +83,7 @@ export function PlanList() {
         </div>
       )}
       {plans === undefined ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <LoadingState />
       ) : plans.length === 0 ? (
         <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
           {filtering
