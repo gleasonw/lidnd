@@ -29,7 +29,7 @@ export function SignInForm() {
     <div className="container my-auto">
       <div className="mx-auto flex max-w-[384px] flex-col gap-4 pb-8">
         <h2 className="text-2xl font-semibold tracking-tight">
-          Sign in to LiDnD
+          Sign in to Runsheet
         </h2>
         <Button
           variant="outline"

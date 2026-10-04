@@ -27,7 +27,6 @@ export function PartyPage() {
             {creatures
               ? `${creatures.heroes.length} hero${creatures.heroes.length === 1 ? "" : "es"} · level ${campaign.partyLevel}. `
               : ""}
-            LiDnD doesn't track hero HP.
           </p>
         </div>
         <Button size="sm" onClick={() => setEditing("new")}>

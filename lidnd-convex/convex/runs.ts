@@ -398,7 +398,7 @@ export const redo = mutation({
 
 function requireTracked(p: Doc<"runParticipants">) {
   if (p.kind === "hero") {
-    throw new ConvexError("LiDnD doesn't track player-character HP");
+    throw new ConvexError("Runsheet doesn't track player-character HP");
   }
 }
 

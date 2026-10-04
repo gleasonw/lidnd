@@ -13,7 +13,7 @@ export function Layout({
       <header className="sticky top-0 z-10 flex h-12 shrink-0 border-b bg-background/80 backdrop-blur">
         <nav className="flex w-full flex-row items-center justify-between gap-6 px-4">
           <Link to="/" className="text-base font-semibold">
-            LiDnD
+            Runsheet
           </Link>
           {menu}
         </nav>
