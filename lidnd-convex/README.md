@@ -83,7 +83,9 @@ Convex deploy has already happened during the build.
 `CONVEX_DEPLOY_KEY` is a prod deploy key, set in Vercel for the Production
 environment only. Vercel's ignored-build-step setting skips every non-production
 build, so branches and PRs don't get preview deployments. These settings live on
-the Vercel project, not in `vercel.json`, which the dev project also uses.
+the Vercel project, not in `vercel.json`, which the dev project also uses. Don't
+add `buildCommand` to `vercel.json`: it overrides the project setting, so prod
+would skip the tests and the Convex deploy.
 
 Don't keep the prod deploy key in your shell profile. While it's set, every
 `npx convex` command targets prod instead of your dev deployment.
@@ -97,9 +99,9 @@ Production and Preview environments set `VITE_CONVEX_URL` to
 `SITE_URL` is the hosted dev frontend, so local Discord sign-in also returns there.
 
 This project is also connected to this GitHub repo, so a push to `main` rebuilds
-the dev frontend too. It uses the default build command (`pnpm run build` from
-`vercel.json`), which builds only the frontend and never deploys Convex. Run
-`convex dev` to bring the dev backend up to date with the pushed code.
+the dev frontend too. Its build command (`pnpm run build`, set on the Vercel
+project) builds only the frontend and never deploys Convex. Run `convex dev` to
+bring the dev backend up to date with the pushed code.
 
 To update the stable dev URL from your working tree, run from this directory:
 
