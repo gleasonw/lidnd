@@ -15,6 +15,98 @@ async function getRun(gm: Client, runId: Id<"runs">) {
 }
 
 describe("draw steel runs", () => {
+  test("starting difficulty is preserved when victories, party level, or the roster change", async () => {
+    const { alice } = await setup();
+    const { planId } = await drawSteelPlan(alice);
+    const runId = await alice.mutation(api.runs.start, { planId });
+    const before = await getRun(alice, runId);
+    expect(before.run.startingDifficulty).toBe("easy");
+    await alice.mutation(api.runs.setVictories, { runId, victories: 8 });
+    await alice.mutation(api.campaigns.update, {
+      campaignId: before.campaign._id,
+      partyLevel: 5,
+    });
+    await alice.mutation(api.runs.removeParticipant, {
+      participantId: before.byName("Ogre")._id,
+    });
+    expect((await getRun(alice, runId)).run.startingDifficulty).toBe("easy");
+  });
+
+  test.each([0, 1, 2, 3])(
+    "ending records an editable award of %i per hero",
+    async (award) => {
+      const { alice } = await setup();
+      const { planId } = await drawSteelPlan(alice, { victories: 2 });
+      const runId = await alice.mutation(api.runs.start, { planId });
+      await alice.mutation(api.runs.end, { runId, victoriesAwarded: award });
+      const ended = await getRun(alice, runId);
+      expect(ended.run.victoriesAwarded).toBe(award);
+      expect(ended.session?.victories).toBe(2 + award);
+      await expect(
+        alice.mutation(api.runs.end, { runId, victoriesAwarded: award }),
+      ).rejects.toThrow("ended");
+      expect((await getRun(alice, runId)).session?.victories).toBe(2 + award);
+    },
+  );
+
+  test("invalid and unauthorized awards leave the run and session unchanged", async () => {
+    const { alice, bob } = await setup();
+    const { planId } = await drawSteelPlan(alice);
+    const runId = await alice.mutation(api.runs.start, { planId });
+    for (const award of [-1, 0.5]) {
+      await expect(
+        alice.mutation(api.runs.end, { runId, victoriesAwarded: award }),
+      ).rejects.toThrow("whole number");
+    }
+    await expect(
+      bob.mutation(api.runs.end, { runId, victoriesAwarded: 2 }),
+    ).rejects.toThrow("Campaign not found");
+    const state = await getRun(alice, runId);
+    expect(state.run.endedAt).toBeUndefined();
+    expect(state.session?.victories).toBe(0);
+  });
+
+  test("older runs can end with a manually chosen award", async () => {
+    const { alice, t } = await setup();
+    const { planId } = await drawSteelPlan(alice);
+    const runId = await alice.mutation(api.runs.start, { planId });
+    await t.run((ctx) =>
+      ctx.db.patch("runs", runId, { startingDifficulty: undefined }),
+    );
+    await alice.mutation(api.runs.end, { runId, victoriesAwarded: 2 });
+    const state = await getRun(alice, runId);
+    expect(state.run.startingDifficulty).toBeUndefined();
+    expect(state.run.victoriesAwarded).toBe(2);
+    expect(state.session?.victories).toBe(2);
+  });
+
+  test("older clients ending a run do not implicitly award Victories", async () => {
+    const { alice } = await setup();
+    const { planId } = await drawSteelPlan(alice, { victories: 3 });
+    const runId = await alice.mutation(api.runs.start, { planId });
+    await alice.mutation(api.runs.end, { runId });
+    const state = await getRun(alice, runId);
+    expect(state.session?.victories).toBe(3);
+    expect(state.run.victoriesAwarded).toBe(0);
+  });
+
+  test("5e runs have no Victory suggestion or award", async () => {
+    const { alice, t } = await setup();
+    const { planId, campaignId } = await drawSteelPlan(alice);
+    await t.run((ctx) =>
+      ctx.db.patch("campaigns", campaignId, { system: "dnd5e" }),
+    );
+    const runId = await alice.mutation(api.runs.start, { planId });
+    expect((await getRun(alice, runId)).run.startingDifficulty).toBeUndefined();
+    await expect(
+      alice.mutation(api.runs.end, { runId, victoriesAwarded: 1 }),
+    ).rejects.toThrow("only used in Draw Steel");
+    await alice.mutation(api.runs.end, { runId });
+    const state = await getRun(alice, runId);
+    expect(state.run.victoriesAwarded).toBeUndefined();
+    expect(state.session?.victories).toBe(0);
+  });
+
   test("start snapshots the roster and sets initial malice", async () => {
     const { alice } = await setup();
     const { planId } = await drawSteelPlan(alice, { victories: 2 });

@@ -104,6 +104,22 @@ export function budget({
 export type Difficulty = "trivial" | "easy" | "standard" | "hard" | "extreme";
 export type TargetDifficulty = "easy" | "standard" | "hard";
 
+/** Typical Victories per surviving hero on objective success (Monsters p. 10).
+ * Extreme encounters can award more; the Director chooses the final amount.
+ */
+export function suggestedVictories(difficulty: Difficulty) {
+  switch (difficulty) {
+    case "trivial":
+      return 0;
+    case "easy":
+    case "standard":
+      return 1;
+    case "hard":
+    case "extreme":
+      return 2;
+  }
+}
+
 /**
  * Trivial is less than ES minus one hero; easy is less than ES; standard is up
  * to ES plus one hero; hard is up to ES plus three heroes; above is extreme.

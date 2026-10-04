@@ -208,12 +208,38 @@ export const start = mutation({
 
     const isDrawSteel = campaign.system === "drawSteel";
     const heroes = withCreatures.filter((x) => x.creature.kind === "hero");
+    const startingBudget = isDrawSteel
+      ? drawSteel.budget({
+          level: campaign.partyLevel,
+          heroCount: heroes.length,
+          allyCount: withCreatures.filter(
+            ({ row, creature }) =>
+              creature.kind !== "hero" && row.side === "ally",
+          ).length,
+          victories: session.victories,
+        })
+      : null;
+    const startingDifficulty = startingBudget
+      ? drawSteel.difficulty(
+          drawSteel.totalEV(
+            withCreatures.map(({ row, creature }) => ({
+              kind: creature.kind,
+              side: row.side,
+              ev: creature.challenge,
+              minionCount: row.minionCount,
+              creatureId: creature._id,
+            })),
+          ),
+          startingBudget,
+        )
+      : undefined;
     const runId = await ctx.db.insert("runs", {
       campaignId: campaign._id,
       planId,
       sessionId: session._id,
       name: plan.name,
       notes: plan.notes,
+      ...(startingDifficulty !== undefined && { startingDifficulty }),
       startedAt: Date.now(),
       // 5e starts in initiative setup (round 0).
       round: isDrawSteel ? 1 : 0,
@@ -277,10 +303,37 @@ export const start = mutation({
 
 // Undo history isn't kept after the run ends; the final state is.
 export const end = mutation({
-  args: { runId: v.id("runs") },
-  handler: async (ctx, { runId }) => {
-    await requireActiveRun(ctx, runId);
-    await ctx.db.patch("runs", runId, { endedAt: Date.now() });
+  args: { runId: v.id("runs"), victoriesAwarded: v.optional(v.number()) },
+  handler: async (ctx, { runId, victoriesAwarded }) => {
+    const { run, campaign } = await requireActiveRun(ctx, runId);
+    const isDrawSteel = campaign.system === "drawSteel";
+    if (victoriesAwarded !== undefined) {
+      if (!isDrawSteel)
+        throw new ConvexError("Victories are only used in Draw Steel");
+      if (!Number.isSafeInteger(victoriesAwarded) || victoriesAwarded < 0) {
+        throw new ConvexError(
+          "Victory award must be a non-negative whole number",
+        );
+      }
+    }
+    // Older clients may omit the award. Ending alone never implies success.
+    const award = victoriesAwarded ?? 0;
+    if (isDrawSteel) {
+      const session = await ctx.db.get("sessions", run.sessionId);
+      if (session === null || session.endedAt !== undefined) {
+        throw new ConvexError("This run's session is no longer active");
+      }
+      if (!Number.isSafeInteger(session.victories + award)) {
+        throw new ConvexError("Victory total is too large");
+      }
+      await ctx.db.patch("sessions", session._id, {
+        victories: session.victories + award,
+      });
+    }
+    await ctx.db.patch("runs", runId, {
+      endedAt: Date.now(),
+      ...(isDrawSteel && { victoriesAwarded: award }),
+    });
     await deleteRunLog(ctx, runId);
   },
 });

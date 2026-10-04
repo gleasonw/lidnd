@@ -183,7 +183,7 @@ function TopBar({
       >
         ← {campaign.name}
       </Link>
-      <div className="flex items-baseline gap-2">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <h1 className="text-base font-semibold">{run.name}</h1>
         <Link
           to={`/campaigns/${campaign._id}/plans/${run.planId}`}
@@ -192,6 +192,12 @@ function TopBar({
           Plan
         </Link>
         <span className="text-xs text-muted-foreground">{session?.name}</span>
+        {readOnly && isDrawSteel && run.victoriesAwarded !== undefined && (
+          <span className="text-xs text-muted-foreground">
+            Awarded {run.victoriesAwarded}{" "}
+            {run.victoriesAwarded === 1 ? "Victory" : "Victories"} per hero
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-3 text-sm">
         <span className="font-semibold">
@@ -329,7 +335,9 @@ function TopBar({
           </Button>
         </div>
       )}
-      <EndRunDialog data={data} open={ending} onOpenChange={setEnding} />
+      {ending && (
+        <EndRunDialog data={data} open={ending} onOpenChange={setEnding} />
+      )}
     </div>
   );
 }
@@ -813,8 +821,38 @@ function EndRunDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const end = useMutation(api.runs.end);
+  const isDrawSteel = data.campaign.system === "drawSteel";
+  const startingDifficulty = data.run.startingDifficulty;
+  const suggested =
+    startingDifficulty === undefined
+      ? undefined
+      : drawSteel.suggestedVictories(startingDifficulty);
+  const [award, setAward] = useState(suggested ?? 0);
+  const [saving, setSaving] = useState(false);
+
+  async function finish() {
+    setSaving(true);
+    try {
+      await end({
+        runId: data.run._id,
+        ...(isDrawSteel && { victoriesAwarded: award }),
+      });
+      onOpenChange(false);
+      if (isDrawSteel && award > 0) {
+        toast(
+          `Awarded ${award} ${award === 1 ? "Victory" : "Victories"} per hero`,
+        );
+      }
+    } catch (error) {
+      toastError(error);
+      setSaving(false);
+    }
+  }
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => !saving && onOpenChange(next)}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>End this run?</AlertDialogTitle>
@@ -823,12 +861,73 @@ function EndRunDialog({
             stays ready to run again. Undo history is cleared.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {isDrawSteel && (
+          <div className="space-y-4 rounded-lg border p-4">
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold">
+                {suggested === undefined
+                  ? "Choose a Victory award"
+                  : `Suggested: ${suggested} ${suggested === 1 ? "Victory" : "Victories"} per hero`}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {startingDifficulty === undefined ? (
+                  "No starting difficulty was recorded for this run. Choose the award based on how the encounter played out."
+                ) : (
+                  <>
+                    Based on{" "}
+                    <span className="capitalize">{startingDifficulty}</span>{" "}
+                    difficulty at the start of the encounter.
+                    {startingDifficulty === "extreme" &&
+                      " Extreme encounters can earn 2 or more Victories."}
+                  </>
+                )}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Award for surviving and achieving the objective. Choose 0 if the
+                heroes failed or fled, and adjust for how the encounter played
+                out.
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <label htmlFor="victory-award" className="text-sm font-medium">
+                Victories per hero
+              </label>
+              <fieldset
+                disabled={saving}
+                className={saving ? "opacity-50" : undefined}
+              >
+                <Stepper
+                  id="victory-award"
+                  label="Victory award"
+                  min={0}
+                  max={99}
+                  value={award}
+                  onChange={setAward}
+                />
+              </fieldset>
+            </div>
+            {data.session && (
+              <p className="text-sm text-muted-foreground" aria-live="polite">
+                Session Victories: {data.session.victories} →{" "}
+                {data.session.victories + award}
+              </p>
+            )}
+          </div>
+        )}
         <AlertDialogFooter>
-          <AlertDialogCancel>Keep running</AlertDialogCancel>
+          <AlertDialogCancel disabled={saving}>Keep running</AlertDialogCancel>
           <AlertDialogAction
-            onClick={() => void end({ runId: data.run._id }).catch(toastError)}
+            disabled={saving}
+            onClick={(event) => {
+              event.preventDefault();
+              void finish();
+            }}
           >
-            End run
+            {saving
+              ? "Ending…"
+              : isDrawSteel && award > 0
+                ? "End run & award Victories"
+                : "End run"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

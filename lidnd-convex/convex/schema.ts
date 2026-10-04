@@ -127,6 +127,18 @@ export default defineSchema({
     round: v.number(),
     /** Draw Steel. */
     malice: v.number(),
+    /** Draw Steel difficulty when the run started; absent on older runs. */
+    startingDifficulty: v.optional(
+      v.union(
+        v.literal("trivial"),
+        v.literal("easy"),
+        v.literal("standard"),
+        v.literal("hard"),
+        v.literal("extreme"),
+      ),
+    ),
+    /** Draw Steel Victories awarded per hero when ending the run. */
+    victoriesAwarded: v.optional(v.number()),
     /** Draw Steel: the side that goes first, every round. Unset until chosen. */
     firstSide: v.optional(combatSide),
     /** Draw Steel: the d10 rolled to decide who chooses the first side. */

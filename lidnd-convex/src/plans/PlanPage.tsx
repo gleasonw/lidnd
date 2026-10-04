@@ -186,10 +186,17 @@ function RunHistory({ data }: { data: PlanData }) {
             <li key={run._id}>
               <Link
                 to={`/campaigns/${data.campaign._id}/runs/${run._id}`}
-                className="flex items-center gap-3 px-3 py-1.5 hover:bg-accent"
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5 hover:bg-accent"
               >
                 <span>{formatDate(run.startedAt)}</span>
                 <span className="text-muted-foreground">{run.sessionName}</span>
+                {run.victoriesAwarded !== undefined && (
+                  <span className="text-xs text-muted-foreground">
+                    +{run.victoriesAwarded}{" "}
+                    {run.victoriesAwarded === 1 ? "Victory" : "Victories"} per
+                    hero
+                  </span>
+                )}
                 <span className="ml-auto text-xs text-muted-foreground">
                   {run.endedAt === undefined
                     ? "In progress"

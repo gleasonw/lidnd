@@ -4,6 +4,7 @@ import {
   budget,
   damageSquad,
   difficulty,
+  suggestedVictories,
   evPerHero,
   groupEV,
   hasActed,
@@ -18,6 +19,19 @@ import {
 } from "./drawSteel";
 
 // Examples are from Draw Steel: Monsters v1.01 and Heroes v1.01b.
+
+test.each([
+  ["trivial", 0],
+  ["easy", 1],
+  ["standard", 1],
+  ["hard", 2],
+  ["extreme", 2],
+] as const)(
+  "%s encounters suggest %i Victories per hero",
+  (difficulty, award) => {
+    expect(suggestedVictories(difficulty)).toBe(award);
+  },
+);
 
 describe("encounter value", () => {
   test("hero ES is 4 + 2 per level", () => {
