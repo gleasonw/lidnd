@@ -19,6 +19,14 @@ export const imageKind = v.union(
   v.literal("reference"),
   v.literal("statBlock"),
 );
+export const statBlockColumns = v.union(v.literal(1), v.literal(2));
+/** A region of an image, as fractions of its width and height. */
+export const imageBox = v.object({
+  left: v.number(),
+  top: v.number(),
+  right: v.number(),
+  bottom: v.number(),
+});
 
 export default defineSchema({
   ...authTables,
@@ -89,6 +97,23 @@ export default defineSchema({
   })
     .index("by_planId", ["planId"])
     .index("by_tagId", ["tagId"]),
+
+  // How a stat block image is laid out on its printed page, measured in the
+  // browser the first time it's shown. Keyed by image, so one layout serves
+  // every creature, run, and plan that uses it.
+  statBlockLayouts: defineTable({
+    ownerId: v.id("users"),
+    storageId: v.id("_storage"),
+    width: v.number(),
+    height: v.number(),
+    /** Detected printed text columns. */
+    columns: statBlockColumns,
+    /** Crops; see src/lib/statBlockLayout.ts. */
+    content: imageBox,
+    split: v.optional(v.array(imageBox)),
+    /** The owner's correction when detection gets it wrong. */
+    columnsOverride: v.optional(statBlockColumns),
+  }).index("by_ownerId_and_storageId", ["ownerId", "storageId"]),
 
   planImages: defineTable({
     planId: v.id("plans"),

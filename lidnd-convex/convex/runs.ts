@@ -10,7 +10,7 @@ import {
 } from "../rules/hp";
 import { Doc, Id } from "./_generated/dataModel";
 import { mutation, MutationCtx, query, QueryCtx } from "./_generated/server";
-import { imageUrl } from "./files";
+import { imageUrl, statBlockLayout } from "./files";
 import {
   requireActiveRun,
   requireActiveRunParticipant,
@@ -75,6 +75,11 @@ export const get = query({
         effects: effects.filter((e) => e.participantId === p._id),
         iconUrl: await imageUrl(ctx, p.iconId),
         statBlockUrl: await imageUrl(ctx, p.statBlockId),
+        statBlockLayout: await statBlockLayout(
+          ctx,
+          campaign.ownerId,
+          p.statBlockId,
+        ),
       })),
     );
     const images = await ctx.db
@@ -111,6 +116,10 @@ export const get = query({
         images.map(async (image) => ({
           ...image,
           url: await imageUrl(ctx, image.storageId),
+          layout:
+            image.kind === "statBlock"
+              ? await statBlockLayout(ctx, campaign.ownerId, image.storageId)
+              : null,
         })),
       ),
       undoLabel: lastDone?.label ?? null,

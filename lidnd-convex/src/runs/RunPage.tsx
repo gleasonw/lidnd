@@ -13,6 +13,12 @@ import { Button } from "@/components/ui/button";
 import { MarkdownNotes } from "@/components/Markdown";
 import { Stepper } from "@/components/Stepper";
 import { AdversaryPicker } from "@/creatures/AdversaryPicker";
+import {
+  StatBlockGrid,
+  StatBlockItem,
+  StatBlockSizeControl,
+} from "@/creatures/StatBlockGrid";
+import { useStatBlockSize } from "@/creatures/useStatBlockSize";
 import { toastError } from "@/lib/errors";
 import {
   formatClock,
@@ -696,28 +702,34 @@ function ReferencePane({
   selected: RunParticipant | undefined;
 }) {
   const updateNotes = useMutation(api.runs.updateNotes);
-  // One stat block per creature, with the selected participant's first.
-  const statBlocks = [
+  const statBlockSize = useStatBlockSize();
+  // One stat block per creature, then the plan's own.
+  const statBlocks: StatBlockItem[] = [
     ...new Map(
       data.participants
-        .filter((p) => p.statBlockUrl)
+        .filter((p) => p.statBlockId && p.statBlockUrl)
         .map((p) => [
           p.creatureId,
           {
+            key: p.creatureId,
             name: p.name.replace(/ \d+$/, ""),
             url: p.statBlockUrl!,
-            creatureId: p.creatureId,
+            storageId: p.statBlockId!,
+            layout: p.statBlockLayout,
+            selected: p.creatureId === selected?.creatureId,
           },
         ]),
     ).values(),
-  ].sort((a, b) =>
-    a.creatureId === selected?.creatureId
-      ? -1
-      : b.creatureId === selected?.creatureId
-        ? 1
-        : 0,
-  );
-  const planStatBlocks = data.images.filter((i) => i.kind === "statBlock");
+    ...data.images
+      .filter((i) => i.kind === "statBlock" && i.url)
+      .map((i) => ({
+        key: i._id,
+        name: "Stat block",
+        url: i.url!,
+        storageId: i.storageId,
+        layout: i.layout,
+      })),
+  ];
   const references = data.images.filter((i) => i.kind === "reference");
 
   return (
@@ -739,46 +751,19 @@ function ReferencePane({
           }
         />
       </section>
-      {(statBlocks.length > 0 || planStatBlocks.length > 0) && (
+      {statBlocks.length > 0 && (
         <section aria-labelledby="statblocks-heading">
-          <h2 id="statblocks-heading" className="mb-2 text-sm font-semibold">
-            Stat blocks
-          </h2>
-          <div className="columns-2 gap-3 [&>*]:mb-3 2xl:columns-3">
-            {statBlocks.map((s) => (
-              <figure
-                key={s.creatureId}
-                className={cn(
-                  "break-inside-avoid rounded-md border",
-                  s.creatureId === selected?.creatureId &&
-                    "ring-2 ring-primary",
-                )}
-              >
-                <figcaption className="px-2 py-1 text-xs font-medium">
-                  {s.name}
-                </figcaption>
-                <img
-                  src={s.url}
-                  alt={`${s.name} stat block`}
-                  className="w-full"
-                />
-              </figure>
-            ))}
-            {planStatBlocks.map((i) =>
-              i.url ? (
-                <figure
-                  key={i._id}
-                  className="break-inside-avoid rounded-md border"
-                >
-                  <img
-                    src={i.url}
-                    alt="Stat block"
-                    className="w-full rounded-md"
-                  />
-                </figure>
-              ) : null,
-            )}
+          <div className="mb-2 flex items-center justify-between">
+            <h2 id="statblocks-heading" className="text-sm font-semibold">
+              Stat blocks
+            </h2>
+            <StatBlockSizeControl {...statBlockSize} />
           </div>
+          <StatBlockGrid
+            items={statBlocks}
+            size={statBlockSize.size}
+            readOnly={readOnly}
+          />
         </section>
       )}
       {references.length > 0 && (
