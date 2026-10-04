@@ -21,13 +21,27 @@ npx convex env set AUTH_DISCORD_ID <client id>
 npx convex env set AUTH_DISCORD_SECRET <client secret>
 ```
 
-For local testing without Discord, a dev deployment can enable a shared "Dev GM" user:
+For local development without Discord, enable anonymous developer sessions on
+your personal Convex dev deployment:
 
 ```
 npx convex env set DEV_SIGN_IN true
 ```
 
-This adds a "Sign in as dev user" button. Never set it on a production deployment.
+Running `pnpm run dev` adds a "Continue as local developer" button. Each new
+sign-in creates a separate ordinary user with their own campaigns; the browser
+keeps its session across reloads. Signing out or clearing browser storage means
+the next developer sign-in creates a new user. Existing shared dev-user data is
+not transferred to these new users.
+
+The button is omitted from built/hosted clients. The backend provider is disabled
+unless `DEV_SIGN_IN` is `true`; never set it on a production deployment.
+
+Each developer should use their own Convex dev deployment. On first setup,
+`npx convex dev` configures the deployment and writes its URLs to `.env.local`.
+Complete the [Convex Auth setup](https://labs.convex.dev/auth/setup) to generate
+the deployment's session signing keys, then set `DEV_SIGN_IN` as above. Discord
+credentials are only needed if you also want to test Discord sign-in.
 
 ### Hosted dev client
 

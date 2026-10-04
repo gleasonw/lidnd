@@ -3,11 +3,27 @@ import { toastError } from "@/lib/errors";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { DiscordLogoIcon } from "@radix-ui/react-icons";
 import { useQuery } from "convex/react";
+import { useState } from "react";
 import { api } from "../convex/_generated/api";
 
 export function SignInForm() {
   const { signIn } = useAuthActions();
-  const devSignInEnabled = useQuery(api.users.devSignInEnabled);
+  const devSignInEnabled = useQuery(
+    api.users.devSignInEnabled,
+    import.meta.env.DEV ? {} : "skip",
+  );
+  const [signingIn, setSigningIn] = useState(false);
+
+  async function signInAsDeveloper() {
+    setSigningIn(true);
+    try {
+      await signIn("anonymous");
+    } catch (error) {
+      toastError(error);
+    } finally {
+      setSigningIn(false);
+    }
+  }
 
   return (
     <div className="container my-auto">
@@ -26,9 +42,10 @@ export function SignInForm() {
           <Button
             variant="ghost"
             type="button"
-            onClick={() => void signIn("dev").catch(toastError)}
+            disabled={signingIn}
+            onClick={() => void signInAsDeveloper()}
           >
-            Sign in as dev user
+            Continue as local developer
           </Button>
         )}
       </div>
